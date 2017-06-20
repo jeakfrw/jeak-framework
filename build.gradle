@@ -1,18 +1,82 @@
 group 'de.fearnixx'
-version '1.0-SNAPSHOT'
+project.ext.artifactId = 't3serverbot'
+version '1.0.0-dev'
 
 apply plugin: 'java'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenLocal()
     mavenCentral()
 }
 
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+    }
+    api {
+        java {
+            srcDirs = ['src/api/java']
+        }
+    }
+    dev {
+        java {
+            srcDirs = ['src/dev/java']
+        }
+    }
+}
+
 dependencies {
-    compile group: 'de.mlessmann', name: 'javacommon', version: '2.3.3'
-    compile group: 'de.mlessmann', name: 'configurate', version: '1.0.0'
-    compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'de.mlessmann', name: 'javacommon', version: '2.3.6'
+    compile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
+    compile sourceSets.api.output
+
+    devCompile group: 'de.mlessmann', name: 'javacommon', version: '2.3.6'
+    devCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
+    devCompile group: 'org.reflections', name: 'reflections', version: '0.9.10'
+    devCompile sourceSets.api.output
+    devCompile sourceSets.main.output
+}
+
+compileJava {
+    dependsOn tasks.compileApiJava
+    source = [sourceSets.api.allJava, sourceSets.main.allJava]
+}
+
+compileDevJava {
+    dependsOn tasks.compileJava
+}
+
+task apiJar (type: Jar){
+    from sourceSets.api.output
+    from sourceSets.api.allSource
+    classifier 'api'
+}
+
+jar {
+
+}
+
+build {
+    dependsOn tasks.jar
+    dependsOn tasks.apiJar
+    dependsOn publishToMavenLocal
+}
+
+publishing {
+    publications {
+        main(MavenPublication) {
+            groupId project.group
+            artifactId project.ext.artifactId
+            version project.version
+
+            artifact jar
+        }
+    }
 }

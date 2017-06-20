@@ -1,7 +1,12 @@
 ## IDEA ##
 out/
 .idea/
+run/
 
 ## Gradle ##
 .gradle
 build/
+
+## Plugins (Added using submodules) ##
+plugins/
+
