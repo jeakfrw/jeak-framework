@@ -1,0 +1,4 @@
+[submodule "plugins/channelmgmt"]
+	path = plugins/channelmgmt
+	url = git@gitlab.com:fearnixxgaming/t3sb_channelmgmt.git
+	branch = bleeding
