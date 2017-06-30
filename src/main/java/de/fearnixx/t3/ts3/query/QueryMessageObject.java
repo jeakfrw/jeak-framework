@@ -16,6 +16,14 @@ public class QueryMessageObject implements IQueryMessageObject {
         properties = new HashMap<>();
     }
 
+    public void copyFrom(IQueryMessageObject obj) {
+        synchronized (lock) {
+            obj.getKeys().forEach(k -> {
+                properties.put(k, obj.getProperty(k).get());
+            });
+        }
+    }
+
     @Override
     public boolean hasProperty(String key) {
         synchronized (lock) {

@@ -1,9 +1,5 @@
 package de.fearnixx.t3.ts3;
 
-import de.fearnixx.t3.task.ITask;
-import de.fearnixx.t3.task.TaskManager;
-import de.fearnixx.t3.ts3.channel.IChannel;
-import de.fearnixx.t3.ts3.keys.PropertyKeys;
 import de.fearnixx.t3.event.IEventManager;
 import de.fearnixx.t3.event.query.IQueryEvent;
 import de.fearnixx.t3.event.server.TS3ServerEvent;
@@ -12,8 +8,14 @@ import de.fearnixx.t3.query.IQueryMessage;
 import de.fearnixx.t3.query.IQueryMessageObject;
 import de.fearnixx.t3.query.IQueryRequest;
 import de.fearnixx.t3.reflect.annotation.Listener;
+import de.fearnixx.t3.task.ITask;
+import de.fearnixx.t3.task.TaskManager;
+import de.fearnixx.t3.ts3.channel.IChannel;
 import de.fearnixx.t3.ts3.channel.TS3Channel;
 import de.fearnixx.t3.ts3.channel.TS3Spacer;
+import de.fearnixx.t3.ts3.client.IClient;
+import de.fearnixx.t3.ts3.client.TS3Client;
+import de.fearnixx.t3.ts3.keys.PropertyKeys;
 import de.fearnixx.t3.ts3.query.QueryConnectException;
 import de.fearnixx.t3.ts3.query.QueryConnection;
 import de.mlessmann.logging.ILogReceiver;
@@ -92,8 +94,11 @@ public class TS3Server implements ITS3Server {
     }
 
     @Override
-    public List<IClient> getClients() {
-        return dm.getClients();
+    public Map<Integer, IClient> getClientMap() { return Collections.unmodifiableMap(dm.getClients()); }
+
+    @Override
+    public List<IClient> getClientList() {
+        return Collections.unmodifiableList(new ArrayList<>(dm.getClients().values()));
     }
 
     @Override
@@ -131,7 +136,7 @@ public class TS3Server implements ITS3Server {
                     mainConnection.sendRequest(clientListRequest);
                 })
                 .build();
-        private IQueryMessage clientListMessage;
+        private Map<Integer, TS3Client> clientMap;
 
         // == CHANNELLIST == //
         private final IQueryRequest channelListRequest = IQueryRequest.builder()
@@ -152,12 +157,14 @@ public class TS3Server implements ITS3Server {
         private Map<Integer, TS3Channel> channelMap;
 
         private DataManager() {
-            channelMap = new HashMap<>();
+            clientMap = new HashMap<>(50);
+            channelMap = new HashMap<>(60);
         }
 
         private void reset() {
             synchronized (lock) {
-                clientListMessage = null;
+                clientMap.forEach((clid, c) -> c.invalidate());
+                clientMap.clear();
                 channelMap.forEach((cid, c) -> c.invalidate());
                 channelMap.clear();
             }
@@ -175,8 +182,10 @@ public class TS3Server implements ITS3Server {
             return l;
         }
 
-        public List<IQueryMessageObject> getClients() {
-            return getListFrom(clientListMessage);
+        public Map<Integer, IClient> getClients() {
+            synchronized (lock) {
+                return new HashMap<>(clientMap);
+            }
         }
 
         public Map<Integer, IChannel> getChannels() {
@@ -190,8 +199,61 @@ public class TS3Server implements ITS3Server {
             if (event.getMessage().getError().getID() != 0)
                 return;
             if (event.getRequest() == clientListRequest) {
+                List<IQueryMessageObject> objects = event.getMessage().getObjects();
+                // Just a lock to be used when the new or old mapping is accessed
+                final Object tempLock = new Object();
+                final Map<Integer, TS3Client> newMap = new HashMap<>(objects.size(), 1.1f);
+                synchronized (lock) {
+                    objects.parallelStream().forEach(o -> {
+                        try {
+                            Integer cid = Integer.parseInt(o.getProperty(PropertyKeys.Client.ID).orElse("-1"));
+                            if (cid == -1) {
+                                log.warning("Skipping a client due to invalid ID");
+                                return;
+                            }
+                            TS3Client c;
+                            synchronized (tempLock) {
+                                c = clientMap.getOrDefault(cid, null);
+                            }
+                            if (c == null) {
+                                // Client is new - New reference
+                                c = new TS3Client();
+                                c.copyFrom(o);
+                            } else {
+                                // Client not new - Update values
+                                c.copyFrom(o);
+                            }
+                            synchronized (tempLock) {
+                                newMap.put(cid, c);
+                            }
+                        } catch (Exception e) {
+                            log.warning("Failed to parse a client", e);
+                        }
+                    });
+                    TS3Client o;
+                    Integer oID;
+                    TS3Client n;
+                    Integer[] cIDs = clientMap.keySet().toArray(new Integer[clientMap.keySet().size()]);
+                    for (int i = clientMap.size() - 1; i >= 0; i--) {
+                        oID = cIDs[i];
+                        o = clientMap.get(oID);
+                        n = newMap.getOrDefault(oID, null);
+                        if (n == null) {
+                            // Client removed - invalidate & remove
+                            o.invalidate();
+                            channelMap.remove(oID);
+                            continue;
+                        } else {
+                            newMap.remove(oID);
+                            continue;
+                        }
+                    }
+                    // All others are new - Add them
+                    newMap.forEach(clientMap::put);
+                    newMap.clear();
+                }
+
                 log.finer("Clientlist updated");
-                clientListMessage = event.getMessage();
                 eventMgr.fireEvent(new TS3ServerEvent.DataEvent.ClientsUpdated(TS3Server.this));
 
             } else if (event.getRequest() == channelListRequest) {
@@ -280,6 +342,7 @@ public class TS3Server implements ITS3Server {
                         parent.addSubChannel(c);
                     });
                 }
+                newMap.clear();
 
                 log.finer("Channellist updated");
                 eventMgr.fireEvent(new TS3ServerEvent.DataEvent.ChannelsUpdated(TS3Server.this));

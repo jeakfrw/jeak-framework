@@ -1,6 +1,7 @@
 package de.fearnixx.t3;
 
 import de.fearnixx.t3.service.IServiceManager;
+import de.fearnixx.t3.service.db.IDBReader;
 import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.task.ITaskManager;
 import de.fearnixx.t3.event.IEventManager;
@@ -42,4 +43,10 @@ public interface IT3Bot {
      * @return The service manager
      */
     IServiceManager getServiceManager();
+
+    /**
+     * A way to access values stored in the TS3DB
+     * @return The DB reader
+     */
+    IDBReader getDBReader();
 }

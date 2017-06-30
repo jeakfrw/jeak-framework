@@ -26,7 +26,15 @@ public interface ITS3Server {
      * @implNote Refreshed periodically thus always slightly outdated!
      * @return List of all clients
      */
-    List<IClient> getClients();
+    List<IClient> getClientList();
+
+    /**
+     * Map of all clients by ClientID
+     * @see #getClientList()  for additional info
+     * @return Map of all clients
+     */
+    Map<Integer, IClient> getClientMap();
+
 
     /**
      * List of all channels

@@ -2,15 +2,17 @@ package de.fearnixx.t3;
 
 import de.fearnixx.t3.event.EventManager;
 import de.fearnixx.t3.event.state.BotStateEvent;
-import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.reflect.annotation.Inject;
 import de.fearnixx.t3.reflect.plugins.PluginContainer;
 import de.fearnixx.t3.reflect.plugins.persistent.PluginManager;
 import de.fearnixx.t3.reflect.plugins.persistent.PluginRegistry;
 import de.fearnixx.t3.service.IServiceManager;
 import de.fearnixx.t3.service.ServiceManager;
+import de.fearnixx.t3.service.db.DBReader;
+import de.fearnixx.t3.service.db.IDBReader;
 import de.fearnixx.t3.task.ITaskManager;
 import de.fearnixx.t3.task.TaskManager;
+import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.ts3.TS3Server;
 import de.fearnixx.t3.ts3.query.QueryConnectException;
 import de.mlessmann.config.ConfigNode;
@@ -53,7 +55,8 @@ public class T3Bot implements Runnable, IT3Bot {
 
     private EventManager eventManager;
     private TaskManager taskManager;
-    private IServiceManager serviceManager;
+    private ServiceManager serviceManager;
+    private DBReader dbReader;
 
     private final Object lock = new Object();
 
@@ -119,9 +122,12 @@ public class T3Bot implements Runnable, IT3Bot {
         }
         plugins = new HashMap<>();
         eventManager = new EventManager(log.getChild("EM"));
-        taskManager = new TaskManager(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
-        taskManager.start();
         serviceManager = new ServiceManager();
+        taskManager = new TaskManager(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        server = new TS3Server(eventManager, log.getChild("SVR"));
+        dbReader = new DBReader(log.getChild("DBR"), server);
+
+        taskManager.start();
 
         pMgr.load(true);
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
@@ -135,7 +141,6 @@ public class T3Bot implements Runnable, IT3Bot {
         String user = config.getNode("user").getString();
         String pass = config.getNode("pass").getString();
         Integer instID = config.getNode("instance").getInt();
-        server = new TS3Server(eventManager, log.getChild("SVR"));
         eventManager.fireEvent(new BotStateEvent.PreConnect(this));
         try {
             server.connect(host, port, user, pass, instID);
@@ -286,12 +291,17 @@ public class T3Bot implements Runnable, IT3Bot {
         return server;
     }
 
+    public IDBReader getDBReader() {
+        return dbReader;
+    }
+
     // * * * RUNTIME * * * //
 
     public void shutdown() {
         eventManager.fireEvent(new BotStateEvent.PreShutdown(this));
         saveConfig();
         taskManager.shutdown();
+        dbReader.shutdown();
         server.shutdown();
         eventManager.fireEvent(new BotStateEvent.PostShutdown(this));
     }
