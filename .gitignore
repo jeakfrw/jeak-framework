@@ -2,6 +2,7 @@
 out/
 .idea/
 run/
+*.iml
 
 ## Gradle ##
 .gradle

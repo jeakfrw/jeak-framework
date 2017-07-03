@@ -32,12 +32,12 @@ sourceSets {
 }
 
 dependencies {
-    compile group: 'de.mlessmann', name: 'javacommon', version: '2.3.6'
+    compile group: 'de.mlessmann', name: 'javacommon', version: '2.3.8'
     compile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
     compile sourceSets.api.output
 
-    devCompile group: 'de.mlessmann', name: 'javacommon', version: '2.3.6'
+    devCompile group: 'de.mlessmann', name: 'javacommon', version: '2.3.8'
     devCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
     devCompile group: 'org.reflections', name: 'reflections', version: '0.9.10'
     devCompile sourceSets.api.output
