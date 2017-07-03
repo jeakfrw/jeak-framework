@@ -17,31 +17,12 @@ public interface IQueryEvent extends IEvent {
         IQueryRequest getRequest();
     }
 
-    /**
-     * Created by MarkL4YG on 31.05.17.
-     */
-    interface INotification extends IMessage {
+    public static interface INotifyEvent extends IQueryEvent {
 
-        IQueryMessage.MsgType getType();
+        IQueryMessage getMessage();
 
-        public interface Server extends INotification {
+        public static interface IClientEnterView extends INotifyEvent {}
 
-        }
-
-        public interface Channel extends INotification {
-
-        }
-
-        public interface TextServer extends INotification {
-
-        }
-
-        public interface TextChannel extends INotification {
-
-        }
-
-        public interface TextPrivate extends INotification {
-
-        }
+        public static interface IClientLeftView extends INotifyEvent {}
     }
 }

@@ -38,10 +38,18 @@ public class DBReader implements IDBReader {
                 .addKey("cldbid", Integer.valueOf(cldbid).toString())
                 .build();
         final IQueryEvent.IMessage[] qE = new IQueryEvent.IMessage[]{null};
-        server.getConnection().sendRequest(req, e -> qE[0] = e);
+        server.getConnection().sendRequest(req, e -> {
+            synchronized (lock) {
+                qE[0] = e;
+            }
+        });
         try {
-            while (!terminated && qE[0] == null)
+            while (!terminated) {
                 Thread.sleep(250);
+                synchronized (lock) {
+                    if (qE[0] != null) break;
+                }
+            }
         } catch (InterruptedException e) {
             log.warning("Interrupted");
             return Optional.empty();

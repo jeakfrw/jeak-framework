@@ -63,8 +63,8 @@ public class Main {
             loader.save(config);
             System.exit(1);
         } else {
-            mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));
-            mgr.addDir(new File("plugins"));
+            mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));;
+            mgr.addSource(new File("plugins"));
 
             Map<String, ConfigNode> nodes = bots.get();
             nodes.forEach((k, node) -> {

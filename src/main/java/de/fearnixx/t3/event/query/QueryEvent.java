@@ -42,40 +42,20 @@ public class QueryEvent implements IQueryEvent {
         }
     }
 
-    public static class Notification extends Message implements IQueryEvent.INotification {
+    public static class Notification extends Message implements IQueryEvent.INotifyEvent {
 
-        public Notification(QueryConnection conn, IQueryRequest req, IQueryMessage msg) {
-            super(conn, req, msg);
-        }
-
-        @Override
-        public IQueryMessage.MsgType getType() {
-            return getMessage().getType();
+        public Notification(QueryConnection conn, IQueryMessage msg) {
+            super(conn, null, msg);
         }
 
-        public static class Server extends Notification implements IQueryEvent.INotification.Server {
-            public Server(QueryConnection conn, IQueryRequest req, IQueryMessage msg) {
-                super(conn, req, msg);
+        public static class ClientENTER extends Notification implements IQueryEvent.INotifyEvent.IClientEnterView {
+            public ClientENTER(QueryConnection conn, IQueryMessage msg) {
+                super(conn, msg);
             }
         }
-        public static class Channel extends Notification implements IQueryEvent.INotification.Channel {
-            public Channel(QueryConnection conn, IQueryRequest req, IQueryMessage msg) {
-                super(conn, req, msg);
-            }
-        }
-        public static class TextServer extends Notification implements IQueryEvent.INotification.TextServer {
-            public TextServer(QueryConnection conn, IQueryRequest req, IQueryMessage msg) {
-                super(conn, req, msg);
-            }
-        }
-        public static class TextChannel extends Notification implements IQueryEvent.INotification.TextChannel {
-            public TextChannel(QueryConnection conn, IQueryRequest req, IQueryMessage msg) {
-                super(conn, req, msg);
-            }
-        }
-        public static class TextPrivate extends Notification implements IQueryEvent.INotification.TextPrivate {
-            public TextPrivate(QueryConnection conn, IQueryRequest req, IQueryMessage msg) {
-                super(conn, req, msg);
+        public static class ClientLEAVE extends Notification implements IQueryEvent.INotifyEvent.IClientLeftView {
+            public ClientLEAVE(QueryConnection conn, IQueryMessage msg) {
+                super(conn, msg);
             }
         }
     }

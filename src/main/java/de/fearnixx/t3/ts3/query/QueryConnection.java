@@ -5,7 +5,10 @@ import de.fearnixx.t3.event.IEventManager;
 import de.fearnixx.t3.event.query.IQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.query.IQueryConnection;
+import de.fearnixx.t3.query.IQueryNotification;
 import de.fearnixx.t3.query.IQueryRequest;
+import de.fearnixx.t3.ts3.keys.PropertyKeys;
+import de.mlessmann.logging.ANSIColors;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.io.IOException;
@@ -95,7 +98,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
     @Override
     public void run() {
-
         final int[] timeout = new int[]{0};
         final boolean[] keepAliveSent = new boolean[]{false};
         IQueryRequest keepAliveReq = IQueryRequest.builder()
@@ -110,7 +112,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
         final byte[] buffer = new byte[128];
         final byte[] rByte = new byte[1];
         final StringBuilder largeBuff = new StringBuilder();
-
         boolean setNext;
 
         while (true) {
@@ -169,27 +170,49 @@ public class QueryConnection extends Thread implements IQueryConnection {
     }
 
     private void processLine(String line) {
+        boolean err = line.startsWith("error");
+        boolean errOc = !line.startsWith("error id=0");
+        String col = null;
+        String blockCol = null;
+        if (!err)
+            col = ANSIColors.Font.CYAN + ANSIColors.Background.BLACK;
+        else if (errOc) {
+            col = ANSIColors.Font.RED + ANSIColors.Background.BLACK;
+            blockCol = ANSIColors.Background.RED;
+        } else {
+            col = ANSIColors.Font.CYAN + ANSIColors.Background.BLACK;
+        }
+        if (line.length() > 120) {
+            log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line.substring(0, 120), "...", ANSIColors.RESET);
+        } else {
+            log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line, ANSIColors.RESET);
+        }
+
         // "notify" triggers events
         if (line.startsWith("notify")) {
-            QueryMessage notification = new QueryMessage();
+            QueryMessage msg = new QueryMessage();
             try {
-                notification.parseResponse(line);
+                msg.parseResponse(line);
             } catch (QueryParseException e) {
                 log.severe("Failed to parse QueryMessage!", e);
                 return;
             }
-            IQueryEvent.INotification n = null;
-            switch (notification.getType()) {
-                case NOTIFYSERVER: n = new QueryEvent.Notification.Server(this, null, notification); break;
-                case NOTIFYCHANNEL: n = new QueryEvent.Notification.Channel(this, null, notification); break;
-                case NOTIFYTEXTSERVER: n = new QueryEvent.Notification.TextServer(this, null, notification); break;
-                case NOTIFYTEXTCHANNEL: n = new QueryEvent.Notification.TextChannel(this, null, notification); break;
-                case NOTIFYTEXTPRIVATE: n = new QueryEvent.Notification.TextPrivate(this, null, notification); break;
-                default:
-                    log.warning("Notification with type ", notification.getType(), " found! Ignoring.");
-                    return;
+            IQueryNotification n = msg.getNotification().get();
+            IQueryEvent.INotifyEvent e = null;
+            switch (n.getNotificationType()) {
+                case VIEW_CLIENT_ENTER:
+                    e = new QueryEvent.Notification.ClientENTER(this, msg);
+                    break;
+                case VIEW_CLIENT_LEAVE:
+                    e = new QueryEvent.Notification.ClientLEAVE(this, msg);
+                    break;
             }
-            eventMgr.fireEvent(n);
+            if (e == null) {
+                log.warning("There has been an error creating a notification event for type:", n.getNotificationType().toString());
+                return;
+            }
+
+            eventMgr.fireEvent(e);
         } else {
             if (currentRequest == null) {
                 log.warning("Received response without sending a request: ",
@@ -274,7 +297,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
             if (!mySock.isConnected()) return;
             try {
                 String msg = reqB.append('\n').toString();
-                log.finest("-->", msg.substring(0, msg.length()-1));
+                log.finest(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, msg.substring(0, msg.length()-1));
                 sOut.write(msg.getBytes());
                 sOut.flush();
                 reqDelay = Math.round(REQ_DELAY * SOCKET_TIMEOUT_MILLIS);
@@ -339,6 +362,15 @@ public class QueryConnection extends Thread implements IQueryConnection {
             log.warning("Command 'use' failed: ", rLogin.getMessage().getError().getID(), ' ', rLogin.getMessage().getError().getMessage());
         }
         return success;
+    }
+
+    public void setNickName(String newNick) {
+        if (newNick == null) return;
+        IQueryRequest r = IQueryRequest.builder()
+                .command("clientupdate")
+                .addKey(PropertyKeys.Client.NICKNAME, newNick)
+                .build();
+        sendRequest(r);
     }
 
     /* RUNTIME CONTROL */

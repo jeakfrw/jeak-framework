@@ -149,6 +149,7 @@ public class T3Bot implements Runnable, IT3Bot {
             shutdown();
             return;
         }
+        server.getConnection().setNickName(config.getNode("nick").optString(null));
         server.scheduleTasks(taskManager);
         log.info("Connected");
         eventManager.fireEvent(new BotStateEvent.PostConnect(this));
@@ -304,5 +305,6 @@ public class T3Bot implements Runnable, IT3Bot {
         dbReader.shutdown();
         server.shutdown();
         eventManager.fireEvent(new BotStateEvent.PostShutdown(this));
+        eventManager.shutdown();
     }
 }

@@ -1,6 +1,7 @@
 package de.fearnixx.t3.query;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by MarkL4YG on 31.05.17.
@@ -38,4 +39,6 @@ public interface IQueryMessage {
     MsgType getType();
 
     IQueryMessageObject.IError getError();
+
+    Optional<IQueryNotification> getNotification();
 }

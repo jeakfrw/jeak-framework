@@ -9,6 +9,10 @@ import java.util.function.Consumer;
  */
 public interface IQueryConnection {
 
+    boolean blockingLogin(Integer instanceID, String user, String pass);
+    void setNickName(String newNickName);
+
     void sendRequest(IQueryRequest req);
     void sendRequest(IQueryRequest req, Consumer<IQueryEvent.IMessage> onDone);
+
 }

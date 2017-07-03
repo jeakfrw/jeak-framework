@@ -66,6 +66,17 @@ public class TS3Server implements ITS3Server {
         if (!mainConnection.blockingLogin(instID, user, pass)) {
             throw new QueryConnectException("BlockingLogin failed: See log");
         }
+        /* Subscribe to basic events */
+        IQueryRequest r = IQueryRequest.builder()
+                .command("servernotifyregister")
+                .addKey("event", "server")
+                .build();
+        mainConnection.sendRequest(r, e -> {
+            IQueryMessageObject.IError err = e.getMessage().getError();
+            if (err.getID() != 0)
+                log.warning("Failed to subscribe to event: server", err.getID(), err.getMessage());
+        });
+
         eventMgr.registerListener(dm);
     }
 
@@ -311,6 +322,7 @@ public class TS3Server implements ITS3Server {
                     for (int i = channelMap.size() - 1; i >= 0; i--) {
                         oID = cIDs[i];
                         o = channelMap.get(oID);
+                        o.clearChildren();
                         n = newMap.getOrDefault(oID, null);
                         if (n == null) {
                             // Channel removed - invalidate & remove
@@ -346,7 +358,6 @@ public class TS3Server implements ITS3Server {
 
                 log.finer("Channellist updated");
                 eventMgr.fireEvent(new TS3ServerEvent.DataEvent.ChannelsUpdated(TS3Server.this));
-
             }
         }
     }

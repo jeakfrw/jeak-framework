@@ -49,7 +49,7 @@ public class PluginManager {
         sources = new ArrayList<>();
     }
 
-    public void addDir(File dir) {
+    public void addSource(File dir) {
         if (dir.exists())
             sources.add(dir);
     }
@@ -80,29 +80,36 @@ public class PluginManager {
             }
         });
         URL[] urls = urlList.toArray(new URL[urlList.size()]);
+        List<Class<?>> candidates = new ArrayList<>();
         if (urls.length == 0) {
             log.warning("No sources defined!");
-            return;
-        }
-        URLClassLoader loader = new URLClassLoader(urls);
-        Reflections reflect = new Reflections(new ConfigurationBuilder()
-                .addUrls(urls)
-                .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner()));
-        /* WORK-AROUND for #getTypesAnnotatedWith(T3BotPlugin.class) returning an empty set */
-        // Set<Class<?>> candidates = reflect.getTypesAnnotatedWith(T3BotPlugin.class, true);
-        List<Class<?>> candidates = new ArrayList<>();
-        Set<String> classNames = reflect.getAllTypes();
-        classNames.parallelStream().forEach(n -> {
-            try {
-                Class<?> c = loader.loadClass(n);
-                if (c.getAnnotation(T3BotPlugin.class) != null)
-                    candidates.add(c);
-            } catch (ClassNotFoundException e) {
-                // Ignore
-            }
-        });
-        log.info(candidates.size(), "candidates found");
+        } else {
+            URLClassLoader loader = new URLClassLoader(urls);
+            ConfigurationBuilder builder = new ConfigurationBuilder()
+                    .addUrls(urls)
+                    .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
+            Reflections reflect = new Reflections(builder);
 
+        /* WORK-AROUND for #getTypesAnnotatedWith(T3BotPlugin.class) returning an empty set */
+            // Set<Class<?>> candidates = reflect.getTypesAnnotatedWith(T3BotPlugin.class, true);
+            Set<String> classNames = reflect.getAllTypes();
+            classNames.parallelStream().forEach(n -> {
+                try {
+                    Class<?> c = loader.loadClass(n);
+                    if (c.getAnnotation(T3BotPlugin.class) != null)
+                        candidates.add(c);
+                } catch (ClassNotFoundException e) {
+                    // Ignore
+                }
+            });
+        }
+        if (includeCP) {
+            log.info("Including classpath");
+            Reflections r = new Reflections();
+            candidates.addAll(r.getTypesAnnotatedWith(T3BotPlugin.class));
+        }
+
+        log.info(candidates.size(), "candidates found");
         candidates.forEach(c -> {
             Optional<PluginRegistry> r = PluginRegistry.getFor(c);
             if (r.isPresent()) {

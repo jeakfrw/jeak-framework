@@ -47,7 +47,7 @@ public class TaskManager extends Thread implements ITaskManager {
                 return;
             tasks.put(task, delay);
         }
-        log.fine("Task", task.getName(), "scheduled for", delay, "seconds");
+        log.fine("Task", task.getName(), " scheduled for ", delay, " seconds");
     }
 
     @Override
@@ -70,13 +70,13 @@ public class TaskManager extends Thread implements ITaskManager {
         synchronized (tasks) {
             tasks.remove(task);
         }
-        log.finer("Running task", task.getName());
+        log.finer("Running task ", task.getName());
         Runnable r = task.getRunnable();
         Thread t = new Thread(() -> {
             try {
                 r.run();
             } catch (Throwable e) {
-                log.warning("Uncaught exception from task:", task.getName(), e);
+                log.warning("Uncaught exception from task: ", task.getName(), e);
             }
             if (task.getType() == ITask.TaskType.REPEAT) {
                 scheduleTask(task);
@@ -96,7 +96,7 @@ public class TaskManager extends Thread implements ITaskManager {
                             toDo.add(t);
                         } else {
                             if (l % 100 == 0)
-                                log.finer(t.getName(), "has", l, "left");
+                                log.finer(t.getName(), " has ", l, " seconds left");
                             tasks.replace(t, l);
                         }
                     });
@@ -115,7 +115,8 @@ public class TaskManager extends Thread implements ITaskManager {
 
     public void kill() {
         synchronized (tasks) {
-            log.finer(tasks.size(), "task scheduled upon shutdown.");
+            log.finer(tasks.size(), " task(s) scheduled upon shutdown.");
+            tasks.clear();
             terminated = true;
         }
     }

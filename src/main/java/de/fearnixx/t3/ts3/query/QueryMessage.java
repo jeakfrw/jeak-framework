@@ -2,11 +2,13 @@ package de.fearnixx.t3.ts3.query;
 
 import de.fearnixx.t3.query.IQueryMessage;
 import de.fearnixx.t3.query.IQueryMessageObject;
+import de.fearnixx.t3.query.IQueryNotification;
 
 import java.nio.BufferOverflowException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by MarkL4YG on 31.05.17.
@@ -16,6 +18,7 @@ public class QueryMessage implements IQueryMessage {
     private IQueryMessage.MsgType type = MsgType.RESPONSE;
     private List<QueryMessageObject> objects = new ArrayList<>();
     private QueryMessageObject.Error error;
+    private QueryNotification notification;
 
     /* Parsing */
 
@@ -39,7 +42,7 @@ public class QueryMessage implements IQueryMessage {
         String capt = null;
         if (firstSpace >= 0 && firstSpace < firstEquals) {
             // Response has a caption - extract it
-            capt = s.substring(0, firstSpace);
+            capt = s.substring(0, firstSpace).toLowerCase();
             s = s.substring(firstSpace + 1);
         }
 
@@ -88,11 +91,19 @@ public class QueryMessage implements IQueryMessage {
         if (capt != null  && "error".equals(capt)) {
             error = workingObj.new Error();
         } else if (capt != null && capt.startsWith("notify")) {
-            try {
-                type = IQueryMessage.MsgType.valueOf(capt.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new QueryParseException("Cannot determine notification type!", e);
+            String notifyCapt = capt.substring(6);
+            IQueryNotification.NotifyType type = IQueryNotification.NotifyType.UNKNOWN;
+            if (notifyCapt.endsWith("view")) {
+                if (notifyCapt.startsWith("cliententer")) {
+                    type = IQueryNotification.NotifyType.VIEW_CLIENT_ENTER;
+                } else if (notifyCapt.startsWith("clientleft")) {
+                    type = IQueryNotification.NotifyType.VIEW_CLIENT_LEAVE;
+                }
             }
+            if (type == IQueryNotification.NotifyType.UNKNOWN) {
+                throw new QueryParseException("Failed to determine notification type: " + notifyCapt);
+            }
+            this.notification = new QueryNotification(type);
             error = QueryMessageObject.ERROR_OK;
         }
         return true;
@@ -128,6 +139,11 @@ public class QueryMessage implements IQueryMessage {
     @Override
     public List<IQueryMessageObject> getObjects() {
         return Collections.unmodifiableList(objects.subList(0, objects.size()-1));
+    }
+
+    @Override
+    public Optional<IQueryNotification> getNotification() {
+        return Optional.ofNullable(notification);
     }
 
     @Override

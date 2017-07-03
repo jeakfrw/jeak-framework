@@ -134,6 +134,12 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
         return Integer.parseInt(getProperty(Channel.QUALITY).orElse("0"));
     }
 
+    public void clearChildren() {
+        synchronized (super.lock) {
+            children.clear();
+        }
+    }
+
     @Override
     public List<IChannel> getSubChannels() {
         synchronized (super.lock) {

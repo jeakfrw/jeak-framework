@@ -9,6 +9,7 @@ import de.fearnixx.t3.query.IQueryRequest;
 import de.fearnixx.t3.reflect.annotation.Inject;
 import de.fearnixx.t3.reflect.annotation.Listener;
 import de.fearnixx.t3.reflect.annotation.T3BotPlugin;
+import de.fearnixx.t3.ts3.client.IClient;
 import de.mlessmann.config.api.ConfigLoader;
 import de.mlessmann.logging.ILogReceiver;
 
@@ -52,7 +53,7 @@ public class TestPluginOne {
 
     @Listener
     public void onClientList(ITS3ServerEvent.IDataEvent.IClientsUpdated event) {
-        List<IQueryMessageObject> list = event.getServer().getClients();
+        List<IClient> list = event.getServer().getClientList();
         int c = list.size();
         for (int i = 0; i < c; i++) {
             Optional<String> nick = list.get(i).getProperty("client_nickname");
@@ -66,7 +67,7 @@ public class TestPluginOne {
                         .build();
                 myBot.getServer().getConnection().sendRequest(r, this::onAnswer);
             } else {
-                log.finest("Wrong client nickname:", nick.orElse("NULL"));
+                //log.finest("Wrong client nickname:", nick.orElse("NULL"));
             }
         }
     }
