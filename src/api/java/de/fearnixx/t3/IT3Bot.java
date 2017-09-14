@@ -59,4 +59,9 @@ public interface IT3Bot {
      * @return The DB reader
      */
     IDBReader getDBReader();
+
+    /**
+     * Shut down this bot
+     */
+    void shutdown();
 }
