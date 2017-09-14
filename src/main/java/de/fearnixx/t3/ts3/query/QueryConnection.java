@@ -114,7 +114,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 .build();
 
         int buffPos = 0;
-        boolean lf = false;
+        boolean lf;
         // TeamSpeak terminates command responses using LF
         final char lfChar = '\n';
         final char crChar = '\r';
@@ -191,7 +191,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
         boolean err = line.startsWith("error");
         boolean errOc = !line.startsWith("error id=0");
-        String col = null;
+        String col;
         String blockCol = null;
         if (!err)
             col = ANSIColors.Font.CYAN + ANSIColors.Background.BLACK;

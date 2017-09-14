@@ -40,8 +40,8 @@ public class QueryEncoder {
      */
     public static char[] encodeBuffer(char[] origin, int upTo) {
         // Evaluate the new size first
-        int pos = 0;
-        int innerPos = 0;
+        int pos;
+        int innerPos;
         int replaced = 0;
         for (pos = 0; pos < upTo; pos++) {
             for (innerPos = 0; innerPos < critChars.length; innerPos++)
@@ -53,7 +53,7 @@ public class QueryEncoder {
         char[] dest = new char[upTo + replaced];
 
         replaced = 0;
-        int destPos = 0;
+        int destPos;
         outer: for (pos = 0; pos < upTo; pos++) {
             destPos = pos + replaced;
             for (innerPos = 0; innerPos < critChars.length; innerPos++) {

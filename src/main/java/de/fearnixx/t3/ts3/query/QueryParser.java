@@ -36,7 +36,7 @@ public class QueryParser {
         try {
         /* Set up variables */
             QueryMessage workingMessage = null;
-            List<QueryMessageObject> workingObjects = null;
+            List<QueryMessageObject> workingObjects;
             QueryMessageObject workingObject = null;
 
         /* Determine message type (check for notification) */

@@ -27,7 +27,7 @@ public class EventManager implements IEventManager {
 
     @Override
     public void fireEvent(IEvent event) {
-        Thread t = null;
+        Thread t;
         // Run on a copy so adding new listeners during an event doesn't cause a dead-lock!
         // Also run on a temporary copy so firing events during events doesn't cause a dead-lock!
         synchronized (addedContainers) {

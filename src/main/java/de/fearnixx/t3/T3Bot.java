@@ -220,7 +220,7 @@ public class T3Bot implements Runnable, IT3Bot {
         final Object p = c.getPlugin();
 
         try {
-            boolean a = false;
+            boolean a;
             // Logging
             log.finer("Injecting logReceivers");
 
@@ -267,6 +267,7 @@ public class T3Bot implements Runnable, IT3Bot {
                     f.set(p, cl);
                     confInjected = true;
                 }
+                f.setAccessible(a);
             }
 
             // Bot

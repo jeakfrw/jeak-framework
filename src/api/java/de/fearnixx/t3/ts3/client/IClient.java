@@ -1,7 +1,6 @@
 package de.fearnixx.t3.ts3.client;
 
 import de.fearnixx.t3.ts3.query.IQueryMessageObject;
-import de.fearnixx.t3.ts3.comm.ICommChannel;
 
 import java.time.LocalDateTime;
 import java.util.List;

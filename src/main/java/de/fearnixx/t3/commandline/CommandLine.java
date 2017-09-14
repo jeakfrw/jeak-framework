@@ -1,7 +1,6 @@
 package de.fearnixx.t3.commandline;
 
 import de.fearnixx.t3.Main;
-import de.fearnixx.t3.T3Bot;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ public class CommandLine implements Runnable {
         byte[] buffer = new byte[1024];
         byte[] cc = new byte[1];
         int buffPos = 0;
-        boolean lf = false;
+        boolean lf;
 
         terminated = false;
         outer: while (true) {

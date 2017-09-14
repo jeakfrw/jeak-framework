@@ -11,6 +11,7 @@ import java.time.ZoneOffset;
 /**
  * Created by MarkL4YG on 30.06.17.
  */
+@SuppressWarnings("ConstantConditions")
 public class TS3DBClient extends QueryMessageObject implements IDBClient {
 
     private boolean invalidated = false;

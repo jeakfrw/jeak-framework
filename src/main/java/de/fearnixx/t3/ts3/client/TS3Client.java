@@ -12,6 +12,7 @@ import java.util.List;
 /**
  * Created by MarkL4YG on 20.06.17.
  */
+@SuppressWarnings("ConstantConditions")
 public class TS3Client extends QueryMessageObject implements IClient {
 
     boolean invalidated = false;

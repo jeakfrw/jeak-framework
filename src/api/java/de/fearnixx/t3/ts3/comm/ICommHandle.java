@@ -2,7 +2,6 @@ package de.fearnixx.t3.ts3.comm;
 
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 /**
  * Created by Life4YourGames on 05.07.17.
