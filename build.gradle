@@ -76,5 +76,12 @@ publishing {
 
             artifact jar
         }
+        api(MavenPublication) {
+            groupId project.group
+            artifactId project.ext.artifactId
+            version project.version
+
+            artifact apiJar
+        }
     }
 }
