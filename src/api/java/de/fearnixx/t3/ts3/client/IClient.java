@@ -50,8 +50,8 @@ public interface IClient extends IQueryMessageObject {
     String getVersion();
 
     enum ClientType {
-        QUERY,
-        VOICE
+        VOICE,
+        QUERY
     }
     ClientType getClientType();
 
