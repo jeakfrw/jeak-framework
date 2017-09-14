@@ -1,4 +1,4 @@
-package de.fearnixx.t3.service.comm;
+package de.fearnixx.t3.ts3.comm;
 
 import de.fearnixx.t3.ts3.comm.ICommMessage;
 import de.fearnixx.t3.ts3.keys.TargetType;

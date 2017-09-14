@@ -1,4 +1,4 @@
-package de.fearnixx.t3.service.comm.except;
+package de.fearnixx.t3.ts3.comm.except;
 
 /**
  * Created by Life4YourGames on 05.07.17.
@@ -17,6 +17,7 @@ public class CommException extends Exception {
 
         public enum CloseReason {
             INTERNAL,
+            CHANNEL_DELETED,
             CLIENT_DISCONNECTED,
             CLIENT_CLOSED,
             CONNECTION_LOST

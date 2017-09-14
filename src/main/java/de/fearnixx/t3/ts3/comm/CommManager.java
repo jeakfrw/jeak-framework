@@ -1,24 +1,16 @@
-package de.fearnixx.t3.service.comm;
+package de.fearnixx.t3.ts3.comm;
 
 import de.fearnixx.t3.event.query.IQueryEvent;
-import de.fearnixx.t3.event.query.QueryNotificationEvent;
 import de.fearnixx.t3.event.server.ITS3ServerEvent;
-import de.fearnixx.t3.query.IQueryConnection;
-import de.fearnixx.t3.query.IQueryRequest;
+import de.fearnixx.t3.ts3.query.IQueryConnection;
+import de.fearnixx.t3.ts3.query.IQueryRequest;
 import de.fearnixx.t3.reflect.annotation.Listener;
-import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.ts3.channel.IChannel;
-import de.fearnixx.t3.ts3.comm.ICommChannel;
-import de.fearnixx.t3.ts3.comm.ICommManager;
 import de.fearnixx.t3.ts3.comm.except.CommException;
-import de.fearnixx.t3.ts3.keys.NotificationType;
-import de.fearnixx.t3.ts3.keys.PropertyKeys;
 import de.fearnixx.t3.ts3.keys.TargetType;
 import de.mlessmann.logging.ILogReceiver;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by Life4YourGames on 06.07.17.
@@ -40,6 +32,7 @@ public class CommManager extends Thread implements ICommManager {
         this.log = log;
         this.conn = conn;
         serverChannel = new CommChannel(log.getChild("sc"),TargetType.SERVER, 0);
+        channelList = new ArrayList<>();
         channelChannel = new HashMap<>();
         clientChannel = new HashMap<>();
     }
@@ -53,8 +46,17 @@ public class CommManager extends Thread implements ICommManager {
     }
 
     @Override
-    public ICommChannel getCommChannel(NotificationType type, int id) {
-        return null;
+    public Optional<ICommChannel> getCommChannel(TargetType type, Integer id) {
+        switch (type) {
+            case SERVER:
+                return Optional.of(serverChannel);
+            case CHANNEL:
+                return Optional.ofNullable(getChannelChannel(id));
+            case CLIENT:
+                return Optional.ofNullable(getClientChannel(id));
+            default:
+                return Optional.empty();
+        }
     }
 
     @Override
@@ -85,9 +87,10 @@ public class CommManager extends Thread implements ICommManager {
                 .addKey("target", id.toString())
                 .addKey("msg", msg)
                 .build();
+        final Integer fID = id;
         conn.sendRequest(r, e -> {
             if (e.getMessage().getError().getID() != 0) {
-                log.warning("Failed to send message to: ", id, ' ', c.getTargetType(), ':', e.getMessage().getError());
+                log.warning("Failed to send message to: ", fID, ' ', c.getTargetType(), ':', e.getMessage().getError());
             }
         });
     }
@@ -96,6 +99,9 @@ public class CommManager extends Thread implements ICommManager {
         synchronized (lock) {
             terminated = true;
             conn = null;
+            serverChannel.invalidate(CommException.Closed.CloseReason.INTERNAL);
+            channelChannel.forEach((id, c) -> c.invalidate(CommException.Closed.CloseReason.INTERNAL));
+            clientChannel.forEach((id, c) -> c.invalidate(CommException.Closed.CloseReason.INTERNAL));
         }
     }
 
@@ -134,9 +140,10 @@ public class CommManager extends Thread implements ICommManager {
 
     @Listener
     public void onClientLeave(IQueryEvent.INotification.ITargetClient.IClientLeftView event) {
-        CommChannel c = getClientChannel(event.getTarget().getClientID());
         synchronized (lock) {
-            clientChannel.remove(c.getTargetID()).invalidate(CommException.Closed.CloseReason.CLIENT_DISCONNECTED);
+            CommChannel c = getClientChannel(event.getTarget().getClientID());
+            if (c != null)
+                c.invalidate(CommException.Closed.CloseReason.CLIENT_DISCONNECTED);
         }
     }
 
@@ -152,6 +159,18 @@ public class CommManager extends Thread implements ICommManager {
                     .forEach(c -> {
                         Integer id = c.getID();
                         channelChannel.put(id, new CommChannel(log.getChild("cc" + id), TargetType.CHANNEL, id));
+                    });
+        }
+    }
+
+    @Listener
+    public void onClientsUpdated(ITS3ServerEvent.IDataEvent.IClientsUpdated event) {
+        synchronized (lock) {
+            event.getServer().getClientList().stream()
+                    .filter(c -> getClientChannel(c.getClientID()) == null)
+                    .forEach(c -> {
+                        Integer id = c.getClientID();
+                        clientChannel.put(id, new CommChannel(log.getChild("cc" + id), TargetType.CLIENT, id));
                     });
         }
     }

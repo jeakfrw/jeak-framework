@@ -14,35 +14,35 @@ public interface IQueryEvent extends IEvent {
 
     IQueryConnection getConnection();
 
-    public static interface IMessage extends IQueryEvent {
+    interface IMessage extends IQueryEvent {
         IQueryMessage getMessage();
         IQueryRequest getRequest();
     }
 
-    public static interface INotification extends IQueryEvent {
+    interface INotification extends IQueryEvent {
 
         IQueryMessage getMessage();
 
-        public static interface ITargetClient extends INotification {
+        interface ITargetClient extends INotification {
 
             IClient getTarget();
 
-            public static interface IClientEnterView extends ITargetClient {
+            interface IClientEnterView extends ITargetClient {
             }
 
-            public static interface IClientLeftView extends ITargetClient {
+            interface IClientLeftView extends ITargetClient {
             }
         }
 
-        public static interface ITextMessage extends INotification {
+        interface ITextMessage extends INotification {
 
             ICommMessage getTextMessage();
 
-            public static interface ITextPrivate extends ITextMessage {}
+            interface ITextPrivate extends ITextMessage {}
 
-            public static interface ITextChannel extends ITextMessage {}
+            interface ITextChannel extends ITextMessage {}
 
-            public static interface ITextServer extends ITextMessage {}
+            interface ITextServer extends ITextMessage {}
         }
     }
 }

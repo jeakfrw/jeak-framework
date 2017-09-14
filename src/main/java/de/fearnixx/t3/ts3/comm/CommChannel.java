@@ -1,9 +1,6 @@
-package de.fearnixx.t3.service.comm;
+package de.fearnixx.t3.ts3.comm;
 
-import de.fearnixx.t3.query.IQueryConnection;
 import de.fearnixx.t3.ts3.comm.except.CommException;
-import de.fearnixx.t3.ts3.comm.ICommChannel;
-import de.fearnixx.t3.ts3.comm.ICommHandle;
 import de.fearnixx.t3.ts3.keys.TargetType;
 import de.mlessmann.logging.ILogReceiver;
 
@@ -13,11 +10,11 @@ import java.util.List;
 /**
  * Created by Life4YourGames on 06.07.17.
  */
-public class CommChannel extends Thread implements ICommChannel {
+public class CommChannel implements ICommChannel {
 
     private ILogReceiver log;
 
-    private final Object lock = new Object();;
+    private final Object lock = new Object();
     private boolean invalid;
     private final TargetType targetType;
     private final int id;
@@ -36,10 +33,24 @@ public class CommChannel extends Thread implements ICommChannel {
         this.id = id;
     }
 
+    public String next(){
+        synchronized (lock) {
+            if (currentLock == null && handleQueue.size() > 0) {
+                openWith(handleQueue.remove(0));
+                messageQueue.clear();
+                messageQueue.addAll(msgQueue.remove(0));
+                return next();
+            }
+            if (handleQueue.size() > 0)
+                return messageQueue.remove(0);
+            return null;
+        }
+    }
+
     @Override
     public boolean openWith(ICommHandle h) {
         synchronized (lock) {
-            if (currentLock != null) return false;
+            if (currentLock != null && currentLock != h) return false;
             currentLock = h;
             currentLockThread = Thread.currentThread();
             return true;
@@ -69,12 +80,12 @@ public class CommChannel extends Thread implements ICommChannel {
 
     @Override
     public void sendMessage(String msg) {
-
+        sendMessageWithThread(Thread.currentThread(), msg);
     }
 
     @Override
     public void sendMessage(ICommHandle h, String msg) {
-
+        sendMessageWithHandle(h, msg);
     }
 
     protected List<String> getListForHandle(ICommHandle h) {
@@ -90,12 +101,22 @@ public class CommChannel extends Thread implements ICommChannel {
         }
     }
 
-    protected void sendMessageWithThread(ICommHandle h, Thread t, String s) {
+    protected void sendMessageWithThread(Thread t, String s) {
         synchronized (lock) {
-            if (currentLockThread != null && t != currentLockThread)
+            if (currentLockThread != null && currentLockThread != t)
+                return;
+            else
+                messageQueue.add(s);
+        }
+    }
+
+    protected void sendMessageWithHandle(ICommHandle h, String s) {
+        synchronized (lock) {
+            if (currentLock != null && currentLock != h) {
                 if (h == null) return;
-                else
-                    getListForHandle(h).add(s);
+                getListForHandle(h).add(s);
+            } else
+                messageQueue.add(s);
         }
     }
 
@@ -111,8 +132,18 @@ public class CommChannel extends Thread implements ICommChannel {
 
     @Override
     public void sendMessageBlocking(ICommHandle h, String msg) throws CommException.Closed {
-        synchronized (lock) {
-            if (closeReason != null) throw new CommException.Closed(closeReason);
+        try {
+            while (true) {
+                Thread.sleep(100);
+                synchronized (lock) {
+                    if (openWith(h))
+                        break;
+                    if (closeReason != null) throw new CommException.Closed(closeReason);
+                }
+            }
+            sendMessage(h, msg);
+        } catch (InterruptedException ex) {
+            log.warning("Interrupted");
         }
     }
 
