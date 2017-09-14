@@ -8,12 +8,12 @@ import de.fearnixx.t3.ts3.ITS3Server;
  */
 public interface ITS3ServerEvent extends IEvent {
 
-    public ITS3Server getServer();
+    ITS3Server getServer();
 
-    public static interface IDataEvent extends ITS3ServerEvent {
+    interface IDataEvent extends ITS3ServerEvent {
 
-        public static interface IClientsUpdated extends IDataEvent {}
+        interface IClientsUpdated extends IDataEvent {}
 
-        public static interface IChannelsUpdated extends IDataEvent {}
+        interface IChannelsUpdated extends IDataEvent {}
     }
 }

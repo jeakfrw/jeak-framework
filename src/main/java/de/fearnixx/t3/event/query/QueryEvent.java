@@ -1,7 +1,7 @@
 package de.fearnixx.t3.event.query;
 
-import de.fearnixx.t3.query.IQueryRequest;
-import de.fearnixx.t3.query.IQueryMessage;
+import de.fearnixx.t3.ts3.query.IQueryRequest;
+import de.fearnixx.t3.ts3.query.IQueryMessage;
 import de.fearnixx.t3.ts3.query.QueryConnection;
 
 /**
@@ -39,24 +39,6 @@ public class QueryEvent implements IQueryEvent {
         @Override
         public IQueryRequest getRequest() {
             return req;
-        }
-    }
-
-    public static class Notification extends Message implements IQueryEvent.INotifyEvent {
-
-        public Notification(QueryConnection conn, IQueryMessage msg) {
-            super(conn, null, msg);
-        }
-
-        public static class ClientENTER extends Notification implements IQueryEvent.INotifyEvent.IClientEnterView {
-            public ClientENTER(QueryConnection conn, IQueryMessage msg) {
-                super(conn, msg);
-            }
-        }
-        public static class ClientLEAVE extends Notification implements IQueryEvent.INotifyEvent.IClientLeftView {
-            public ClientLEAVE(QueryConnection conn, IQueryMessage msg) {
-                super(conn, msg);
-            }
         }
     }
 }

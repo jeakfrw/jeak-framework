@@ -7,7 +7,7 @@ import de.fearnixx.t3.IT3Bot;
  */
 public interface IEvent {
 
-    public static interface IBotEvent extends IEvent {
+    interface IBotEvent extends IEvent {
 
         IT3Bot getBot();
     }

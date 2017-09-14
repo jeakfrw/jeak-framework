@@ -1,20 +1,23 @@
-package de.fearnixx.t3.query;
+package de.fearnixx.t3.ts3.query;
+
+import de.fearnixx.t3.event.query.IQueryEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Created by MarkL4YG on 31.05.17.
  */
 public interface IQueryRequest {
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
-    public static class Builder {
+    class Builder {
         private String command;
         private Map<String, String> currentObj;
         private List<Map<String, String>> chain;

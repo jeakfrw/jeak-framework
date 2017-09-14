@@ -46,6 +46,10 @@ public class Main {
         logger.setLogTrace(false);
         logger.disableErrOut();
         ILogReceiver r = logger.getLogReceiver();
+        File logDir = new File("logs");
+        if (!logDir.isDirectory() && logDir.mkdirs()) {
+            // TODO: Add actual file logging
+        }
 
         loader = new JSONConfigLoader();
         File f = new File("t3.json");
@@ -59,11 +63,11 @@ public class Main {
         if (!bots.isPresent()) {
             System.err.println("No bots configured");
             config.getNode("bots", "bot_0").getNode("config").setValue("configs/bot_0");
-            new File("config/bot_0").mkdirs();
+            new File("bot_0").mkdirs();
             loader.save(config);
             System.exit(1);
         } else {
-            mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));;
+            mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));
             mgr.addSource(new File("plugins"));
 
             Map<String, ConfigNode> nodes = bots.get();
@@ -80,8 +84,11 @@ public class Main {
                     }
                 }
                 T3Bot bot = new T3Bot(logger.getLogReceiver().getChild(k));
-                bot.setPluginManager(mgr);
+                bot.setLogDir(new File("logs"));
+                bot.setBaseDir(new File(k));
+                bot.setConfDir(new File(bot.getDir(),"config"));
                 bot.setConfig(botConf);
+                bot.setPluginManager(mgr);
                 t3bots.add(bot);
                 new Thread(bot, k).start();
             });

@@ -15,6 +15,7 @@ import de.fearnixx.t3.task.TaskManager;
 import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.ts3.TS3Server;
 import de.fearnixx.t3.ts3.query.QueryConnectException;
+import de.fearnixx.t3.ts3.query.QueryConnection;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
@@ -42,8 +43,12 @@ public class T3Bot implements Runnable, IT3Bot {
 
     // * * * FIELDS * * * //
 
-    private ILogReceiver log;
+    private File baseDir;
+    private File logDir;
+    private File confDir;
     private File confFile;
+
+    private ILogReceiver log;
     private ConfigLoader loader;
 
     private ConfigNode config;
@@ -83,13 +88,17 @@ public class T3Bot implements Runnable, IT3Bot {
     @Override
     public void run() {
         log.info("Initializing T3Bot version " + VERSION);
+
         if (initCalled) {
-            throw new RuntimeException("Reinitialization of T3Bot instances is not supported! Completely shut down the instance beforehand and/or create a new one.");
+            throw new RuntimeException("Reinitialization of T3Bot instances is not supported! Completely shut down beforehand and/or create a new one.");
         }
+
+        setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
         initCalled = true;
         loader = new JSONConfigLoader();
         loader.setEncoding(CHAR_ENCODING);
         config = loader.loadFromFile(confFile);
+
         if (loader.hasError()) {
             throw new RuntimeException("Can't read configuration! " + confFile.getPath(), loader.getError());
         }
@@ -120,6 +129,7 @@ public class T3Bot implements Runnable, IT3Bot {
         if (rewrite) {
             saveConfig();
         }
+
         plugins = new HashMap<>();
         eventManager = new EventManager(log.getChild("EM"));
         serviceManager = new ServiceManager();
@@ -133,7 +143,9 @@ public class T3Bot implements Runnable, IT3Bot {
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
         // Load all plugins - This is where dependencies are being enforced
         regMap.forEach((n, pr) -> loadPlugin(regMap, n, pr));
-        log.info(plugins.size(), "plugins loaded");
+        StringBuilder b = new StringBuilder();
+        plugins.forEach((k, v) -> b.append(k).append(", "));
+        log.info("Loaded ", plugins.size(), " plugin(s): ", b.toString());
         eventManager.fireEvent(new BotStateEvent.PluginsLoaded(this));
 
         String host = config.getNode("host").getString();
@@ -142,6 +154,7 @@ public class T3Bot implements Runnable, IT3Bot {
         String pass = config.getNode("pass").getString();
         Integer instID = config.getNode("instance").getInt();
         eventManager.fireEvent(new BotStateEvent.PreConnect(this));
+
         try {
             server.connect(host, port, user, pass, instID);
         } catch (QueryConnectException e) {
@@ -149,6 +162,17 @@ public class T3Bot implements Runnable, IT3Bot {
             shutdown();
             return;
         }
+
+        ConfigNode netDumpNode = config.getNode("debug", "network", "dump");
+
+        if (netDumpNode.optBoolean(false)) {
+            File netDumpFile = new File(logDir, "bot_" + instID);
+            if (!netDumpFile.isDirectory())
+                netDumpFile.mkdirs();
+            netDumpFile = new File(netDumpFile, "net_dump.main.log");
+            ((QueryConnection) server.getConnection()).setNetworkDump(netDumpFile);
+        }
+
         server.getConnection().setNickName(config.getNode("nick").optString(null));
         server.scheduleTasks(taskManager);
         log.info("Connected");
@@ -159,8 +183,10 @@ public class T3Bot implements Runnable, IT3Bot {
         ILogReceiver log  = this.log.getChild("PLINIT");
         log.fine("Loading plugin ", id);
         PluginContainer c = plugins.getOrDefault(id, null);
+
         if (c == null) c = pr.newContainer();
         plugins.put(id, c);
+
         if (c.getState() == PluginContainer.State.DEPENDENCIES) {
             log.severe("Possible circular dependency detected! Plugin ", id, " was resolving dependencies when requested!");
             return true;
@@ -170,7 +196,9 @@ public class T3Bot implements Runnable, IT3Bot {
         } else if (c.getState() != PluginContainer.State.INIT) {
             throw new IllegalStateException(new ConcurrentModificationException("Attempt to load plugin in invalid state!"));
         }
+
         c.setState(PluginContainer.State.DEPENDENCIES);
+
         for (String dep : pr.getHARD_depends()) {
             if (!reg.containsKey(dep) || !loadPlugin(reg, dep, reg.get(dep))) {
                 log.severe("Unresolvable HARD dependency: ", dep, " for plugin ", id);
@@ -178,7 +206,9 @@ public class T3Bot implements Runnable, IT3Bot {
                 return false;
             }
         }
+
         c.setState(PluginContainer.State.INJECT);
+
         try {
             c.construct();
         } catch (Throwable e) {
@@ -186,11 +216,14 @@ public class T3Bot implements Runnable, IT3Bot {
             c.setState(PluginContainer.State.FAILED);
             return false;
         }
+
         final Object p = c.getPlugin();
+
         try {
             boolean a = false;
             // Logging
             log.finer("Injecting logReceivers");
+
             for (Field f : c.getInjectionsFor(ILogReceiver.class)) {
                 log.finest("Injecting field ", f.getName());
                 Inject i = f.getAnnotation(Inject.class);
@@ -203,14 +236,17 @@ public class T3Bot implements Runnable, IT3Bot {
                 }
                 f.setAccessible(a);
             }
+
             // Configuration
             log.finer("Injecting configs");
             boolean confInjected = false;
+
             for (Field f : c.getInjectionsFor(ConfigLoader.class)) {
                 log.finest("Injecting field ", f.getName());
                 Inject i = f.getAnnotation(Inject.class);
                 a = f.isAccessible();
                 f.setAccessible(true);
+
                 if (i.id().isEmpty()) {
                     if (confInjected) {
                         throw new IllegalStateException("Configuration has already been injected! Use custom IDs for multiple configs!");
@@ -232,6 +268,7 @@ public class T3Bot implements Runnable, IT3Bot {
                     confInjected = true;
                 }
             }
+
             // Bot
             log.finer("Injecting bot");
             for (Field f : c.getInjectionsFor(IT3Bot.class)) {
@@ -246,11 +283,13 @@ public class T3Bot implements Runnable, IT3Bot {
                 }
                 f.setAccessible(a);
             }
+
         } catch (Exception e) {
             log.severe("Failed to run injections for: ", id, e);
             c.setState(PluginContainer.State.FAILED);
             return false;
         }
+
         eventManager.addContainer(c.getListener());
         c.setState(PluginContainer.State.DONE);
         log.fine("Initialized plugin ", id);
@@ -267,11 +306,36 @@ public class T3Bot implements Runnable, IT3Bot {
         }
     }
 
+    public void setBaseDir(File baseDir) {
+        this.baseDir = baseDir;
+        log.fine("Base directory changed to: ", baseDir.toString());
+    }
+
+    public void setLogDir(File logDir) {
+        this.logDir = logDir;
+        log.fine("Log directory changed to: ", logDir.toString());
+    }
+
+    public void setConfDir(File confDir) {
+        this.confDir = confDir;
+        log.fine("Conf directory changed to: ", confDir.toString());
+    }
+
     // * * * MISC * * * //
 
     @Override
     public File getDir() {
-        return confFile.getAbsoluteFile().getParentFile().getParentFile();
+        return baseDir;
+    }
+
+    @Override
+    public File getConfDir() {
+        return confDir;
+    }
+
+    @Override
+    public File getLogDir() {
+        return logDir;
     }
 
     @Override

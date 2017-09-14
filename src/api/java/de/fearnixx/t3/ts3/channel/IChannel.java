@@ -1,7 +1,7 @@
 package de.fearnixx.t3.ts3.channel;
 
 import de.fearnixx.t3.ts3.ITS3Server;
-import de.fearnixx.t3.query.IQueryMessageObject;
+import de.fearnixx.t3.ts3.query.IQueryMessageObject;
 
 import java.util.List;
 
@@ -73,7 +73,7 @@ public interface IChannel extends IQueryMessageObject {
      * @return The channel persistence mode
      */
     ChannelPersistence getPersistence();
-    public enum ChannelPersistence {
+    enum ChannelPersistence {
         TEMPORARY,
         SEMI_PERMANENT,
         PERMANENT,

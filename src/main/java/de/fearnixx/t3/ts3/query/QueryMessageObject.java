@@ -1,7 +1,5 @@
 package de.fearnixx.t3.ts3.query;
 
-import de.fearnixx.t3.query.IQueryMessageObject;
-
 import java.util.*;
 
 /**
@@ -50,18 +48,26 @@ public class QueryMessageObject implements IQueryMessageObject {
         return Collections.unmodifiableSet(properties.keySet());
     }
 
-    public class Error implements IQueryMessageObject.IError {
+    public static class Error extends QueryMessageObject implements IQueryMessageObject.IError {
+
+        public static Error OK = new Error(0, "");
 
         private int id;
         private String message;
 
         public Error() {
-            this(Integer.parseInt(getProperty("id").orElse("-1")), getProperty("msg").orElse("NO_MSG"));
+            super();
         }
 
-        protected Error(int id, String message) {
-            this.id = id;
-            this.message = message;
+        private Error(int id, String msg) {
+            this();
+            this.id = 0;
+            this.message = msg;
+        }
+
+        protected void read() {
+            this.id = Integer.parseInt(getProperty("id").orElse("-1"));
+            this.message = getProperty("msg").orElse("NO_MSG");
         }
 
         @Override
@@ -73,7 +79,10 @@ public class QueryMessageObject implements IQueryMessageObject {
         public String getMessage() {
             return message;
         }
-    }
 
-    public static Error ERROR_OK = new QueryMessageObject().new Error(0, "OK");
+        @Override
+        public String toString() {
+            return "error{" + id + ", " + message + '}';
+        }
+    }
 }

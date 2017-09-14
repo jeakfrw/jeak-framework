@@ -3,10 +3,10 @@ package de.fearnixx.t3.ts3;
 import de.fearnixx.t3.event.IEventManager;
 import de.fearnixx.t3.event.query.IQueryEvent;
 import de.fearnixx.t3.event.server.TS3ServerEvent;
-import de.fearnixx.t3.query.IQueryConnection;
-import de.fearnixx.t3.query.IQueryMessage;
-import de.fearnixx.t3.query.IQueryMessageObject;
-import de.fearnixx.t3.query.IQueryRequest;
+import de.fearnixx.t3.ts3.keys.NotificationType;
+import de.fearnixx.t3.ts3.query.IQueryConnection;
+import de.fearnixx.t3.ts3.query.IQueryMessageObject;
+import de.fearnixx.t3.ts3.query.IQueryRequest;
 import de.fearnixx.t3.reflect.annotation.Listener;
 import de.fearnixx.t3.task.ITask;
 import de.fearnixx.t3.task.TaskManager;
@@ -66,16 +66,10 @@ public class TS3Server implements ITS3Server {
         if (!mainConnection.blockingLogin(instID, user, pass)) {
             throw new QueryConnectException("BlockingLogin failed: See log");
         }
-        /* Subscribe to basic events */
-        IQueryRequest r = IQueryRequest.builder()
-                .command("servernotifyregister")
-                .addKey("event", "server")
-                .build();
-        mainConnection.sendRequest(r, e -> {
-            IQueryMessageObject.IError err = e.getMessage().getError();
-            if (err.getID() != 0)
-                log.warning("Failed to subscribe to event: server", err.getID(), err.getMessage());
-        });
+        mainConnection.subscribeNotification(NotificationType.CLIENT_ENTER);
+        mainConnection.subscribeNotification(NotificationType.CLIENT_LEAVE);
+        mainConnection.subscribeNotification(NotificationType.TEXT_PRIVATE);
+        mainConnection.subscribeNotification(NotificationType.TEXT_SERVER, mainConnection.getInstanceID());
 
         eventMgr.registerListener(dm);
     }
@@ -179,18 +173,6 @@ public class TS3Server implements ITS3Server {
                 channelMap.forEach((cid, c) -> c.invalidate());
                 channelMap.clear();
             }
-        }
-
-        private List<IQueryMessageObject> getListFrom(IQueryMessage msg) {
-            List<IQueryMessageObject> l = new ArrayList<>(msg.getObjectCount());
-            synchronized (lock) {
-                if (msg != null && msg.getObjectCount() > 0) {
-                    for (int i = 0; i < msg.getObjectCount(); i++) {
-                        l.add(msg.getObject(i));
-                    }
-                }
-            }
-            return l;
         }
 
         public Map<Integer, IClient> getClients() {

@@ -87,21 +87,26 @@ public class PluginManager {
             URLClassLoader loader = new URLClassLoader(urls);
             ConfigurationBuilder builder = new ConfigurationBuilder()
                     .addUrls(urls)
+                    .addClassLoader(loader)
                     .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
             Reflections reflect = new Reflections(builder);
 
         /* WORK-AROUND for #getTypesAnnotatedWith(T3BotPlugin.class) returning an empty set */
-            // Set<Class<?>> candidates = reflect.getTypesAnnotatedWith(T3BotPlugin.class, true);
-            Set<String> classNames = reflect.getAllTypes();
+            candidates.addAll(reflect.getTypesAnnotatedWith(T3BotPlugin.class, true));
+            /*Set<String> classNames = reflect.getAllTypes();
             classNames.parallelStream().forEach(n -> {
                 try {
                     Class<?> c = loader.loadClass(n);
-                    if (c.getAnnotation(T3BotPlugin.class) != null)
+                    if (c.getAnnotation(T3BotPlugin.class) != null) {
+                        log.finest("Adding plugin class: ", n);
                         candidates.add(c);
+                    } else {
+                        log.finer("Ignoring class: ", n, " Plugin annotation missing");
+                    }
                 } catch (ClassNotFoundException e) {
-                    // Ignore
+                    throw new RuntimeException("ClassNotFound on result of #getAllTypes! Something has been completely broken!");
                 }
-            });
+            });*/
         }
         if (includeCP) {
             log.info("Including classpath");

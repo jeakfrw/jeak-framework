@@ -11,6 +11,14 @@ package de.fearnixx.t3.ts3.keys;
  */
 public class PropertyKeys {
 
+    public static class TextMessage {
+        public static final String TARGET_TYPE = "targetmode";
+        public static final String SOURCE_ID = "invokerid";
+        public static final String SOURCE_NICKNAME = "invokername";
+        public static final String SOURCE_UID = "invokeruid";
+        public static final String MESSAGE = "msg";
+    }
+
     /**
      * All available client properties (clientlist response)
      */
@@ -85,6 +93,7 @@ public class PropertyKeys {
 
         public static final String CLIENT_COUNT = "total_clients";
         public static final String MAX_CLIENTS = "channel_maxclients";
+        public static final String FLAG_MAX_CLIENTS_UNLIMITED = "channel_flag_maxclients_unlimited";
         public static final String CLIENT_COUNT_FAMILY = "total_clients_family";
         public static final String MAX_CLIENTS_FAMILY = "channel_maxfamilyclients";
 

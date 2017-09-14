@@ -49,7 +49,7 @@ public class PluginRegistry {
     }
 
     protected boolean analyze() {
-        log.fine("Analyzing class: ", pluginClass.toGenericString());
+        log.fine("Analyzing class: ", pluginClass.toGenericString(), " from ", pluginClass.getProtectionDomain().getCodeSource().getLocation().getPath());
         log.finer("Reading tag");
         tag = pluginClass.getAnnotation(T3BotPlugin.class);
         if (tag == null) {
@@ -102,7 +102,7 @@ public class PluginRegistry {
         log.finer("Pre-processing injections");
         injections = new HashMap<>();
         Field[] fields = pluginClass.getFields();
-        for (Field field : fields) {;
+        for (Field field : fields) {
             if (field.getAnnotation(Inject.class) == null) continue;
             int mod = field.getModifiers();
             if (!Modifier.isPublic(mod) || Modifier.isAbstract(mod) || Modifier.isFinal(mod) || Modifier.isVolatile(mod)) {

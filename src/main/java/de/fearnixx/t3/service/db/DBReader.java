@@ -1,14 +1,15 @@
 package de.fearnixx.t3.service.db;
 
 import de.fearnixx.t3.event.query.IQueryEvent;
-import de.fearnixx.t3.query.IQueryMessage;
-import de.fearnixx.t3.query.IQueryMessageObject;
-import de.fearnixx.t3.query.IQueryRequest;
+import de.fearnixx.t3.ts3.query.IQueryMessage;
+import de.fearnixx.t3.ts3.query.IQueryMessageObject;
+import de.fearnixx.t3.ts3.query.IQueryRequest;
 import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.ts3.client.IDBClient;
 import de.fearnixx.t3.ts3.client.TS3DBClient;
 import de.mlessmann.logging.ILogReceiver;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -56,16 +57,17 @@ public class DBReader implements IDBReader {
         }
         IQueryMessage msg = qE[0].getMessage();
         IQueryMessageObject.IError e = msg.getError();
+        List<IQueryMessageObject> objects = msg.getObjects();
         if (e.getID() != 0) {
             log.info("ClientDBReq for cldbid", cldbid, "returned:", e.getID(),e.getMessage());
             return Optional.empty();
         }
-        if (msg.getObjectCount() != 1) {
-            log.info("Wrong number of QMSG-objects in ClientDBReq for cldbid", cldbid, ':', msg.getObjectCount());
+        if (objects.size() != 1) {
+            log.info("Wrong number of QMSG-objects in ClientDBReq for cldbid", cldbid, ':', objects.size());
             return Optional.empty();
         }
         log.finer("Successful ClientDBReq for cldbid", cldbid);
-        IQueryMessageObject o = msg.getObject(0);
+        IQueryMessageObject o = objects.get(0);
         TS3DBClient c = new TS3DBClient();
         c.copyFrom(o);
         return Optional.of(c);

@@ -1,7 +1,7 @@
 package de.fearnixx.t3.ts3.channel;
 
 import de.fearnixx.t3.ts3.keys.PropertyKeys.Channel;
-import de.fearnixx.t3.query.IQueryMessageObject;
+import de.fearnixx.t3.ts3.query.IQueryMessageObject;
 import de.fearnixx.t3.ts3.query.QueryMessageObject;
 
 import java.util.ArrayList;
@@ -31,7 +31,7 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
 
     public void invalidate() {
         synchronized (super.lock) {
-            children.clear();
+            clearChildren();
             invalidated = true;
         }
     }

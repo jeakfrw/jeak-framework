@@ -7,23 +7,23 @@ import de.fearnixx.t3.event.IEvent;
  */
 public interface IBotStateEvent extends IEvent.IBotEvent {
 
-    public static interface IPluginsLoaded extends IBotStateEvent {
+    interface IPluginsLoaded extends IBotStateEvent {
 
     }
 
-    public static interface IPreConnect extends IBotStateEvent {
+    interface IPreConnect extends IBotStateEvent {
 
     }
 
-    public static interface IPostConnect extends IBotStateEvent {
+    interface IPostConnect extends IBotStateEvent {
 
     }
 
-    public static interface IPreShutdown extends IBotStateEvent {
+    interface IPreShutdown extends IBotStateEvent {
 
     }
 
-    public static interface IPostShutdown extends IBotStateEvent {
+    interface IPostShutdown extends IBotStateEvent {
 
     }
 }

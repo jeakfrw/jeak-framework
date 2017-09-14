@@ -1,4 +1,4 @@
-package de.fearnixx.t3.query;
+package de.fearnixx.t3.ts3.query;
 
 import java.util.Optional;
 import java.util.Set;
@@ -14,7 +14,7 @@ public interface IQueryMessageObject {
 
     Set<String> getKeys();
 
-    public interface IError {
+    interface IError extends IQueryMessageObject {
 
         int getID();
         String getMessage();

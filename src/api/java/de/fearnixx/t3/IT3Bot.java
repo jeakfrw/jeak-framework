@@ -21,6 +21,16 @@ public interface IT3Bot {
     File getDir();
 
     /**
+     * @return The configuration directory assigned to this bot instance
+     */
+    File getConfDir();
+
+    /**
+     * @return The logs directory assigned to this bot instance
+     */
+    File getLogDir();
+
+    /**
      * Abstract representation of the TS3 server this bot is connected with
      * @return The server representation
      */

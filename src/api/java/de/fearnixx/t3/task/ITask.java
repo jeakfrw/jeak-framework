@@ -12,14 +12,14 @@ import java.util.concurrent.TimeUnit;
  */
 public interface ITask {
 
-    public static Builder builder() {
+    static Builder builder() {
         return new Builder();
     }
 
     /**
      * Builder to construct an object implementing {@link ITask}
      */
-    public static class Builder {
+    class Builder {
         private long l;
         private TimeUnit tu;
         private TaskType type;
@@ -139,7 +139,7 @@ public interface ITask {
      * Determines the type of the task
      * Delayed or Repeated
      */
-    public enum TaskType {
+    enum TaskType {
         REPEAT,
         DELAY
     }

@@ -55,7 +55,7 @@ public class ListenerContainer {
     }
 
     public void fireEvent(IEvent event) throws Exception {
-        Class<? extends IEvent> cls = (Class<? extends IEvent>) event.getClass();
+        Class<? extends IEvent> cls = event.getClass();
         boolean refire = false;
         synchronized (mappedListeners) {
             if (mappedListeners.containsKey(cls)) {
@@ -64,7 +64,7 @@ public class ListenerContainer {
                     method.invoke(victim, event);
                 }
             } else {
-                List<Method> list = new ArrayList();
+                List<Method> list = new ArrayList<>();
                 for (Method m : listeners) {
                     if (m.getParameterTypes()[0].isAssignableFrom(cls)) {
                         list.add(m);

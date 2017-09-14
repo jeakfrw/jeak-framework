@@ -1,7 +1,6 @@
 package de.fearnixx.t3.ts3.query;
 
 import de.fearnixx.t3.event.query.IQueryEvent;
-import de.fearnixx.t3.query.IQueryRequest;
 
 import java.util.function.Consumer;
 

@@ -4,25 +4,24 @@ import de.fearnixx.t3.T3Bot;
 import de.fearnixx.t3.event.IEventManager;
 import de.fearnixx.t3.event.query.IQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
-import de.fearnixx.t3.query.IQueryConnection;
-import de.fearnixx.t3.query.IQueryNotification;
-import de.fearnixx.t3.query.IQueryRequest;
+import de.fearnixx.t3.event.query.QueryNotificationEvent;
+import de.fearnixx.t3.ts3.comm.CommManager;
+import de.fearnixx.t3.ts3.comm.ICommManager;
+import de.fearnixx.t3.ts3.keys.NotificationType;
 import de.fearnixx.t3.ts3.keys.PropertyKeys;
+
+import de.mlessmann.common.annotations.Nullable;
 import de.mlessmann.logging.ANSIColors;
 import de.mlessmann.logging.ILogReceiver;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
@@ -33,10 +32,11 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
     public static final int SOCKET_TIMEOUT_MILLIS = 500;
     public static final int KEEP_ALIVE_SECS = 240;
-    public static final float REQ_DELAY = 0.5f;
+    public static final float REQ_DELAY = 0.25f;
 
     private ILogReceiver log;
     private IEventManager eventMgr;
+    private CommManager commManager;
 
     private int reqDelay;
     private boolean terminated;
@@ -47,16 +47,23 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private InputStream sIn;
     private OutputStream sOut;
     private OutputStreamWriter wOut;
+    private BufferedWriter netDumpOutput;
 
     private final List<RequestContainer> reqQueue;
     private RequestContainer currentRequest;
-    private QueryMessage currentResp;
+    private QueryParser parser;
+
+    private Integer instanceID;
+    private IQueryMessage whoami;
+    private int notifSubsciptions = 0;
 
     public QueryConnection(IEventManager eventMgr, ILogReceiver log, Consumer<IQueryConnection> onClose) {
         this.log = log;
-        mySock = new Socket();
-        reqQueue = new ArrayList<>();
+        this.mySock = new Socket();
+        this.reqQueue = new ArrayList<>();
+        this.parser = new QueryParser();
         this.eventMgr = eventMgr;
+        this.commManager = new CommManager(log.getChild("CM"), this);
         this.onClose = onClose;
     }
 
@@ -94,6 +101,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
             pos++;
         }
         log.info("Connected to query at " + mySock.getInetAddress().toString());
+        this.commManager.start();
+        this.eventMgr.registerListener(this.commManager);
     }
 
     @Override
@@ -132,9 +141,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                     if (rByte[0] == crChar)
                         continue;
                     lf = rByte[0] == lfChar;
-                    // Exclude LF for simplicity
-                    if (!lf)
-                        buffer[buffPos++] = rByte[0];
+                    buffer[buffPos++] = rByte[0];
                     if (buffPos == buffer.length || lf) {
                         largeBuff.append(new String(Arrays.copyOf(buffer, buffPos), T3Bot.CHAR_ENCODING));
                         // Response complete? -> Send to processor
@@ -170,6 +177,18 @@ public class QueryConnection extends Thread implements IQueryConnection {
     }
 
     private void processLine(String line) {
+        if (netDumpOutput != null) {
+            try {
+                String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + " <== " + line;
+                if (!ln.endsWith("\n"))
+                    ln = ln + "\n";
+                netDumpOutput.write(ln);
+                netDumpOutput.flush();
+            } catch (IOException e) {
+                log.warning("Failed to write to network dump - disabling", e);
+                netDumpOutput = null;
+            }
+        }
         boolean err = line.startsWith("error");
         boolean errOc = !line.startsWith("error id=0");
         String col = null;
@@ -182,37 +201,40 @@ public class QueryConnection extends Thread implements IQueryConnection {
         } else {
             col = ANSIColors.Font.CYAN + ANSIColors.Background.BLACK;
         }
-        if (line.length() > 120) {
+        int len = line.length();
+        if (len > 120) {
             log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line.substring(0, 120), "...", ANSIColors.RESET);
         } else {
-            log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line, ANSIColors.RESET);
+            log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
         }
-
-        // "notify" triggers events
-        if (line.startsWith("notify")) {
-            QueryMessage msg = new QueryMessage();
-            try {
-                msg.parseResponse(line);
-            } catch (QueryParseException e) {
-                log.severe("Failed to parse QueryMessage!", e);
+        Optional<QueryMessage> optMessage;
+        try {
+            optMessage = parser.parse(line);
+        } catch (QueryParseException e) {
+            log.severe("Failed to parse QueryMessage!", e);
+            return;
+        }
+        if (!optMessage.isPresent())
+            return;
+        QueryMessage qm = optMessage.get();
+        IQueryEvent event;
+        if (qm instanceof QueryNotification) {
+            NotificationType nType = ((QueryNotification) qm).getNotificationType();
+            if (!hasSubscribed(nType) && nType.getMod() != 0) {
+                log.fine("Skipping notification: ", nType.toString(), " not subscribed");
                 return;
             }
-            IQueryNotification n = msg.getNotification().get();
-            IQueryEvent.INotifyEvent e = null;
-            switch (n.getNotificationType()) {
-                case VIEW_CLIENT_ENTER:
-                    e = new QueryEvent.Notification.ClientENTER(this, msg);
-                    break;
-                case VIEW_CLIENT_LEAVE:
-                    e = new QueryEvent.Notification.ClientLEAVE(this, msg);
-                    break;
-            }
-            if (e == null) {
-                log.warning("There has been an error creating a notification event for type:", n.getNotificationType().toString());
-                return;
-            }
+            switch (nType) {
+                case CLIENT_ENTER: event = new QueryNotificationEvent.TargetClient.ClientENTER(this, qm); break;
+                case CLIENT_LEAVE: event = new QueryNotificationEvent.TargetClient.ClientLEAVE(this, qm); break;
 
-            eventMgr.fireEvent(e);
+                case TEXT_PRIVATE: event = new QueryNotificationEvent.TextMessage.TextPrivate(this, ((QueryNotification.Text) qm)); break;
+                case TEXT_CHANNEL: event = new QueryNotificationEvent.TextMessage.TextChannel(this, ((QueryNotification.Text) qm)); break;
+                case TEXT_SERVER: event = new QueryNotificationEvent.TextMessage.TextServer(this, ((QueryNotification.Text) qm)); break;
+                default:
+                    log.warning("Unknown notification type: ", ((QueryNotification) qm).getNotificationType().toString());
+                    return;
+            }
         } else {
             if (currentRequest == null) {
                 log.warning("Received response without sending a request: ",
@@ -220,34 +242,19 @@ public class QueryConnection extends Thread implements IQueryConnection {
                         "...");
                 return;
             }
-            if (currentResp == null) {
-                currentResp = new QueryMessage();
-            }
+            event = new QueryEvent.Message(this, currentRequest.request, qm);
             try {
-                if (!currentResp.parseResponse(line)) {
-                    log.warning("Response was unable to accept line: ",
-                            line.substring(0, line.length() >= 33 ? 33 : line.length()),
-                            "...");
-                }
-            } catch (QueryParseException e) {
-                log.severe("Failed to parse QueryMessage!", e);
-                return;
+                if (currentRequest.onDone != null)
+                    currentRequest.onDone.accept(((IQueryEvent.IMessage) event));
+            } catch (Exception e) {
+                log.severe("Encountered uncaught exception from callback!", e);
             }
-            if (currentResp.isComplete()) {
-                QueryEvent.Message event = new QueryEvent.Message(this, currentRequest.request, currentResp);
-                try {
-                    if (currentRequest.onDone != null)
-                        currentRequest.onDone.accept(event);
-                } catch (Exception e) {
-                    log.severe("Encountered uncaught exception from callback!", e);
-                }
-                eventMgr.fireEvent(event);
-                synchronized (reqQueue) {
-                    currentRequest = null;
-                    currentResp = null;
-                }
+            // Previously the event would be fired before this - doesn't matter since the thread is blocked anyways
+            synchronized (reqQueue) {
+                currentRequest = null;
             }
         }
+        eventMgr.fireEvent(event);
     }
 
     private void nextRequest() {
@@ -296,6 +303,17 @@ public class QueryConnection extends Thread implements IQueryConnection {
         synchronized (mySock) {
             if (!mySock.isConnected()) return;
             try {
+                if (netDumpOutput != null) {
+                    try {
+                        String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + " ==> " + reqB.toString();
+                        if (!ln.endsWith("\n"))
+                            ln = ln + "\n";
+                        netDumpOutput.write(ln);
+                    } catch (IOException e) {
+                        log.warning("Failed to write to network dump - disabling", e);
+                        netDumpOutput = null;
+                    }
+                }
                 String msg = reqB.append('\n').toString();
                 log.finest(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, msg.substring(0, msg.length()-1));
                 sOut.write(msg.getBytes());
@@ -308,6 +326,23 @@ public class QueryConnection extends Thread implements IQueryConnection {
             } catch (IOException e) {
                 log.warning("Failed to send request: ", e.getClass().getSimpleName(), e);
             }
+        }
+    }
+
+    /* DEBUG */
+
+    public void setNetworkDump(File file) {
+        if (file.isDirectory()) {
+            log.warning("Network dump path is a directory: ", file.toString());
+            return;
+        }
+        try {
+            if (!file.isFile() || !file.exists())
+                file.createNewFile();
+            netDumpOutput = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+        } catch (IOException e) {
+            log.warning("Unable to open dump path for writing: ", file.toString(), e);
+            netDumpOutput = null;
         }
     }
 
@@ -336,14 +371,20 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 .addOption(user)
                 .addOption(pass)
                 .build();
+        IQueryRequest whoami = IQueryRequest.builder()
+                .command("whoami")
+                .build();
         // Wait for and lock receiver to prevent commands from returning too early
         final Map<Integer, IQueryEvent.IMessage> map = new ConcurrentHashMap<>(4);
         synchronized (mySock) {
             sendRequest(use, r -> map.put(0, r));
             sendRequest(login, r -> map.put(1, r));
+            sendRequest(whoami, r -> map.put(2, r));
         }
         try {
-            while (map.getOrDefault(0, null) == null && map.getOrDefault(1, null) == null) {
+            while (map.getOrDefault(0, null) == null
+                    || map.getOrDefault(1, null) == null
+                    || map.getOrDefault(2, null) == null) {
                 Thread.sleep(100);
             }
         } catch (InterruptedException e) {
@@ -351,17 +392,28 @@ public class QueryConnection extends Thread implements IQueryConnection {
             return false;
         }
         IQueryEvent.IMessage rUse = map.get(0);
-        IQueryEvent.IMessage rLogin = map.get(0);
+        IQueryEvent.IMessage rLogin = map.get(1);
+        IQueryEvent.IMessage rWhoAmI = map.get(2);
+        this.whoami = rWhoAmI.getMessage();
         boolean success = true;
         if (rUse.getMessage().getError().getID() != 0) {
             success = false;
-            log.warning("Command 'use' failed: ", rUse.getMessage().getError().getID(), ' ',rUse.getMessage().getError().getMessage());
+            log.warning("Command 'use' failed: ", rUse.getMessage().getError().toString());
+            instanceID = instID;
         }
         if (rLogin.getMessage().getError().getID() != 0) {
             success = false;
-            log.warning("Command 'use' failed: ", rLogin.getMessage().getError().getID(), ' ', rLogin.getMessage().getError().getMessage());
+            log.warning("Command 'login' failed: ", rLogin.getMessage().getError().toString());
+        }
+        if (rWhoAmI.getMessage().getError().getID() != 0) {
+            success = false;
+            log.warning("Command 'whoami' failed: ", rWhoAmI.getMessage().getError().toString());
         }
         return success;
+    }
+
+    public Integer getInstanceID() {
+        return instanceID;
     }
 
     public void setNickName(String newNick) {
@@ -370,7 +422,87 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 .command("clientupdate")
                 .addKey(PropertyKeys.Client.NICKNAME, newNick)
                 .build();
-        sendRequest(r);
+        sendRequest(r, msg -> {
+            if (msg.getMessage().getError().getID() == 0)
+                whoami.getObjects().get(0).setProperty(PropertyKeys.Client.NICKNAME, newNick);
+        });
+    }
+
+    public void loadWhoAmI() {
+        sendRequest(IQueryRequest.builder().command("whoami").build(), msg -> {
+            whoami = msg.getMessage();
+        });
+    }
+
+    @Override
+    public IQueryMessage getWhoAmI() {
+        return whoami;
+    }
+
+    @Override
+    public ICommManager getCommManager() {
+        return commManager;
+    }
+
+    private boolean hasSubscribed(NotificationType type) {
+        synchronized (reqQueue) {
+            return ((notifSubsciptions & type.getMod()) > 0); // Per channel subscriptions will use mod 0
+        }
+    }
+
+    @Override
+    public void subscribeNotification(NotificationType type) {
+        subscribeNotification(type, null);
+    }
+
+    public void subscribeNotification(NotificationType type, @Nullable Integer channelID) {
+        if (hasSubscribed(type)) return; // Already subscribed
+        IQueryRequest.Builder req = IQueryRequest.builder()
+                .command("servernotifyregister")
+                .addKey("event", type.getQueryID());
+        if (channelID != null)
+            req.addKey("id", channelID.toString());
+        this.sendRequest(req.build(), (msg) -> {
+            if (msg.getMessage().getError().getID() != 0) {
+                log.warning("Failed to subscribe to event: ", type.getQueryID(), " :", msg.getMessage().getError().toString());
+                return;
+            } else {
+                log.fine("Subscribed to event: ", type.getQueryID(), " for channel: ", channelID);
+            }
+            synchronized (reqQueue) {
+                // Insert bit for this subscription
+                notifSubsciptions = notifSubsciptions | type.getMod();
+            }
+        });
+    }
+
+    @Override
+    public void unsubscribeNotification(NotificationType type) {
+        subscribeNotification(type, null);
+    }
+
+    public void unsubscribeNotification(NotificationType type, @Nullable Integer channelID) {
+        synchronized (reqQueue) {
+            int mod = type.getMod();
+            if (mod != 0 && (notifSubsciptions & mod) == mod) return; // Not subscribed - Per channel subscriptions will use mod 0
+        }
+        IQueryRequest.Builder req = IQueryRequest.builder()
+                .command("servernotifyunregister")
+                .addKey("event", type.getQueryID());
+        if (channelID != null)
+            req.addKey("id", channelID.toString());
+        this.sendRequest(req.build(), (msg) -> {
+            if (msg.getMessage().getError().getID() != 0) {
+                log.warning("Failed to unsubscribe from event: ", type.getQueryID(), " :", msg.getMessage().getError().toString());
+                return;
+            } else {
+                log.fine("Unsubscribed from event: ", type.getQueryID(), " for channel: ", channelID);
+            }
+            synchronized (reqQueue) {
+                // Remove bit for this subscription - (The bit is 1 in both thus XOR removes it from the output)
+                notifSubsciptions = notifSubsciptions ^ type.getMod();
+            }
+        });
     }
 
     /* RUNTIME CONTROL */
@@ -383,12 +515,22 @@ public class QueryConnection extends Thread implements IQueryConnection {
         synchronized (mySock) {
             if (terminated) return;
             log.warning("Kill requested");
+            this.commManager.terminate();
             if (mySock.isConnected()) {
                 try {
                     mySock.close();
                 } catch (IOException e) {
                     log.warning(e);
                 }
+            }
+            if (netDumpOutput != null) {
+                try {
+                    netDumpOutput.write("=== CLOSED ===");
+                    netDumpOutput.close();
+                } catch (IOException e) {
+                    // pass
+                }
+                netDumpOutput = null;
             }
             terminated = true;
         }

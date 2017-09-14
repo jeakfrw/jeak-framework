@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
+import java.util.regex.Pattern;
 
 /**
  * Created by MarkL4YG on 18.06.17.
@@ -28,7 +30,6 @@ public class CommandLine implements Runnable {
     }
 
     public void run() {
-
         StringBuilder b = new StringBuilder(128);
         byte[] buffer = new byte[1024];
         byte[] cc = new byte[1];
@@ -38,7 +39,7 @@ public class CommandLine implements Runnable {
         terminated = false;
         outer: while (true) {
             try {
-                while (in.available() == 0) {
+                do {
                     synchronized (lock) {
                         if (terminated) {
                             log.info("Commandline closed");
@@ -46,20 +47,20 @@ public class CommandLine implements Runnable {
                         }
                     }
                     Thread.sleep(200);
-                }
+                } while (in.available() <= 0);
                 if (in.read(cc) == -1) {
                     log.severe("Commandline reached EOS");
                     synchronized (lock) {
                         kill();
                         break outer;
                     }
-                };
+                }
 
                 lf = cc[0] == '\n';
 
                 buffer[buffPos++] = cc[0];
                 if (lf || buffPos == buffer.length) {
-                    b.append(new String(buffer, 0, buffPos-1, T3Bot.CHAR_ENCODING));
+                    b.append(new String(buffer, 0, buffPos-1, Charset.defaultCharset()));
                     buffPos = 0;
                     if (lf) processCommand(b.toString());
                 }
@@ -73,11 +74,16 @@ public class CommandLine implements Runnable {
         }
     }
 
+    private static final Pattern commp = Pattern.compile("[\\w\\d]+");
     private void processCommand(String command) throws IOException {
+        if (!commp.matcher(command).matches()) {
+            log.warning("Unknown command!");
+            return;
+        }
         switch (command) {
-            case "stop": ;
-            case "quit": ;
-            case "exit": ;
+            case "stop":
+            case "quit":
+            case "exit":
             case "shutdown":
                 Main.getInstance().shutdown();
                 break;
@@ -95,6 +101,11 @@ public class CommandLine implements Runnable {
     public void kill() {
         synchronized (lock) {
             terminated = true;
+            try {
+                in.close();
+            } catch (IOException e) {
+                // Ignore
+            }
         }
     }
 }

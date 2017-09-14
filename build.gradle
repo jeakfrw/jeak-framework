@@ -60,12 +60,10 @@ task apiJar (type: Jar){
 }
 
 jar {
-
+    dependsOn tasks.apiJar
 }
 
 build {
-    dependsOn tasks.jar
-    dependsOn tasks.apiJar
     dependsOn publishToMavenLocal
 }
 

@@ -1,6 +1,6 @@
 package de.fearnixx.t3.ts3;
 
-import de.fearnixx.t3.query.IQueryConnection;
+import de.fearnixx.t3.ts3.query.IQueryConnection;
 import de.fearnixx.t3.ts3.channel.IChannel;
 import de.fearnixx.t3.ts3.client.IClient;
 
