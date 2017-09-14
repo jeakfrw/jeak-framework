@@ -2,3 +2,6 @@
 	path = plugins/channelmgmt
 	url = git@gitlab.com:fearnixxgaming/t3sb_channelmgmt.git
 	branch = bleeding
+[submodule "plugins/t3sb_afkmove"]
+	path = plugins/t3sb_afkmove
+	url = git@gitlab.com:fearnixxgaming/t3sb_afkmove

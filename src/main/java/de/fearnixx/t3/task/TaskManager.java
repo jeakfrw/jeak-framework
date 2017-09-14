@@ -85,6 +85,7 @@ public class TaskManager extends Thread implements ITaskManager {
         t.start();
     }
 
+    @Override
     public void run() {
         List<ITask> toDo = new ArrayList<>();
         while (!terminated) {

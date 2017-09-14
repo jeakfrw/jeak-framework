@@ -348,6 +348,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
     /* Interaction */
 
+    @Override
     public void sendRequest(IQueryRequest request, Consumer<IQueryEvent.IMessage> onDone) {
         RequestContainer c = new RequestContainer();
         c.request = request;
@@ -357,10 +358,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
     }
 
+    @Override
     public void sendRequest(IQueryRequest request) {
         sendRequest(request, null);
     }
 
+    @Override
     public boolean blockingLogin(Integer instID, String user, String pass) {
         IQueryRequest use = IQueryRequest.builder()
                 .command("use")
@@ -412,10 +415,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
         return success;
     }
 
+    @Override
     public Integer getInstanceID() {
         return instanceID;
     }
 
+    @Override
     public void setNickName(String newNick) {
         if (newNick == null) return;
         IQueryRequest r = IQueryRequest.builder()
@@ -455,6 +460,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         subscribeNotification(type, null);
     }
 
+    @Override
     public void subscribeNotification(NotificationType type, @Nullable Integer channelID) {
         if (hasSubscribed(type)) return; // Already subscribed
         IQueryRequest.Builder req = IQueryRequest.builder()

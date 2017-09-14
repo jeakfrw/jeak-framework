@@ -10,6 +10,9 @@ targetCompatibility = 1.8
 
 repositories {
     mavenLocal()
+    maven {
+        url uri('https://maven.fearnixx.de/maven2')
+    }
     mavenCentral()
 }
 

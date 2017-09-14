@@ -22,6 +22,7 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
         children = new ArrayList<>();
     }
 
+    @Override
     public void copyFrom(IQueryMessageObject obj) {
         synchronized (super.lock) {
             obj.getKeys().forEach(k -> {
