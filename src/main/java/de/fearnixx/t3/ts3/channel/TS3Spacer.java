@@ -29,7 +29,7 @@ public class TS3Spacer extends TS3Channel implements ISpacer {
     }
 
     @Override
-    public float getNumber() {
+    public Float getNumber() {
         float f = 0f;
         Matcher m = stripFloatPattern.matcher(getName());
         if (m.matches() && m.groupCount() == 1) {
@@ -39,12 +39,12 @@ public class TS3Spacer extends TS3Channel implements ISpacer {
     }
 
     @Override
-    public boolean isCentered() {
+    public Boolean isCentered() {
         return centeredPattern.matcher(getName()).matches();
     }
 
     @Override
-    public boolean isRepeated() {
+    public Boolean isRepeated() {
         return repeatedPattern.matcher(getName()).matches();
     }
 }

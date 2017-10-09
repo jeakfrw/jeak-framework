@@ -28,7 +28,7 @@ public class TS3Client extends QueryMessageObject implements IClient {
     }
 
     @Override
-    public boolean isValid() {
+    public Boolean isValid() {
         synchronized (super.lock) {
             return !invalidated;
         }
@@ -40,12 +40,12 @@ public class TS3Client extends QueryMessageObject implements IClient {
     }
 
     @Override
-    public int getClientID() {
+    public Integer getClientID() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.ID).get());
     }
 
     @Override
-    public int getClientDBID() {
+    public Integer getClientDBID() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.DBID).get());
     }
 
@@ -82,22 +82,22 @@ public class TS3Client extends QueryMessageObject implements IClient {
     }
 
     @Override
-    public int getChannelID() {
+    public Integer getChannelID() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.CHANNEL_ID).get());
     }
 
     @Override
-    public int getChannelGroupID() {
+    public Integer getChannelGroupID() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.CHANNEL_GROUP).get());
     }
 
     @Override
-    public int getChannelGroupSource() {
+    public Integer getChannelGroupSource() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.CHANNEL_GROUP_SOURCE).get());
     }
 
     @Override
-    public boolean isAway() {
+    public Boolean isAway() {
         return getProperty(PropertyKeys.Client.FLAG_AWAY).get().equals("1");
     }
 
@@ -107,52 +107,52 @@ public class TS3Client extends QueryMessageObject implements IClient {
     }
 
     @Override
-    public int getTalkPower() {
+    public Integer getTalkPower() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.TALKPOWER).get());
     }
 
     @Override
-    public boolean isTalking() {
+    public Boolean isTalking() {
         return getProperty(PropertyKeys.Client.FLAG_TALKING).get().equals("1");
     }
 
     @Override
-    public boolean isTalker() {
+    public Boolean isTalker() {
         return getProperty(PropertyKeys.Client.FLAG_TALKER).get().equals("1");
     }
 
     @Override
-    public boolean isPrioTalker() {
+    public Boolean isPrioTalker() {
         return getProperty(PropertyKeys.Client.FLAG_PRIO_TALKER).get().equals("1");
     }
 
     @Override
-    public boolean isCommander() {
+    public Boolean isCommander() {
         return getProperty(PropertyKeys.Client.FLAG_COMMANDER).get().equals("1");
     }
 
     @Override
-    public boolean isRecording() {
+    public Boolean isRecording() {
         return getProperty(PropertyKeys.Client.FLAG_RECORDING).get().equals("1");
     }
 
     @Override
-    public boolean hasMic() {
+    public Boolean hasMic() {
         return getProperty(PropertyKeys.Client.IOIN).get().equals("1");
     }
 
     @Override
-    public boolean hasMicMuted() {
+    public Boolean hasMicMuted() {
         return getProperty(PropertyKeys.Client.IOIN_MUTED).get().equals("1");
     }
 
     @Override
-    public boolean hasOutput() {
+    public Boolean hasOutput() {
         return getProperty(PropertyKeys.Client.IOOUT).get().equals("1");
     }
 
     @Override
-    public boolean hasOutputMuted() {
+    public Boolean hasOutputMuted() {
         return getProperty(PropertyKeys.Client.IOOUT_MUTED).get().equals("1");
     }
 
@@ -168,12 +168,12 @@ public class TS3Client extends QueryMessageObject implements IClient {
     }
 
     @Override
-    public int getIdleTime() {
+    public Integer getIdleTime() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.IDLE_TIME).get());
     }
 
     @Override
-    public long getCreated() {
+    public Long getCreated() {
         return Long.parseLong(getProperty(PropertyKeys.Client.CREATED_TIME).get());
     }
 
@@ -183,7 +183,7 @@ public class TS3Client extends QueryMessageObject implements IClient {
     }
 
     @Override
-    public long getLastJoin() {
+    public Long getLastJoin() {
         return Long.parseLong(getProperty(PropertyKeys.Client.LAST_JOIN_TIME).get());
     }
 

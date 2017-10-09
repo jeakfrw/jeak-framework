@@ -24,17 +24,17 @@ public interface IChannel extends IQueryMessageObject {
     /**
      * @return The channel ID
      */
-    int getID();
+    Integer getID();
 
     /**
      * @return The ID of this channels parent - 0 if none
      */
-    int getParent();
+    Integer getParent();
 
     /**
      * @return The channels position under its parent
      */
-    int getOrder();
+    Integer getOrder();
 
     /**
      * @return The current channel name
@@ -49,12 +49,12 @@ public interface IChannel extends IQueryMessageObject {
     /**
      * @return If this is the default channel
      */
-    boolean isDefault();
+    Boolean isDefault();
 
     /**
      * @return If this channel is password protected
      */
-    boolean hasPassword();
+    Boolean hasPassword();
 
 
     /**
@@ -66,7 +66,7 @@ public interface IChannel extends IQueryMessageObject {
      * - All above using a float instead
      * @return If this channel is a spacer
      */
-    boolean isSpacer();
+    Boolean isSpacer();
 
     /**
      * @implNote This becomes {@link ChannelPersistence#DELETED} once the server received a channellist response without the channel ID. Any plugin should drop the object at that time
@@ -83,39 +83,39 @@ public interface IChannel extends IQueryMessageObject {
     /**
      * @return The talk power required to talk
      */
-    int getTalkPower();
+    Integer getTalkPower();
 
     /**
      * @return The amount of clients in this channel
      */
-    int getClientCount();
+    Integer getClientCount();
 
     /**
      * @implNote The maximum can be below the actual count! TS3 allows admins to ignore this limit
      * @return The maximum number of clients in this channel
      */
-    int getMaxClientCount();
+    Integer getMaxClientCount();
 
     /**
      * @return The total amount of clients below this channel
      */
-    int getClientCountBelow();
+    Integer getClientCountBelow();
 
     /**
      * @implNote The maximum can be below the actual count! TS3 allows admins to ignore this limit
      * @return The maximum number of clients below this channel
      */
-    int getMaxClientCountBelow();
+    Integer getMaxClientCountBelow();
 
     /**
      * @return Integer representation of the channel codec
      */
-    int getCodec();
+    Integer getCodec();
 
     /**
      * @return The currently used codec quality
      */
-    int getCodecQuality();
+    Integer getCodecQuality();
 
     /**
      * @return All sub channels of this channel

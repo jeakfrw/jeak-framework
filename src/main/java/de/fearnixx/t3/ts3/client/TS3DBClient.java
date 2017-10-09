@@ -23,14 +23,14 @@ public class TS3DBClient extends QueryMessageObject implements IDBClient {
     }
 
     @Override
-    public boolean isValid() {
+    public Boolean isValid() {
         synchronized (super.lock) {
             return !invalidated;
         }
     }
 
     @Override
-    public int getDBID() {
+    public Integer getDBID() {
         return Integer.parseInt(getProperty(PropertyKeys.DBClient.DBID).get());
     }
 
@@ -65,7 +65,7 @@ public class TS3DBClient extends QueryMessageObject implements IDBClient {
     }
 
     @Override
-    public long getCreated() {
+    public Long getCreated() {
         return Long.parseLong(getProperty(PropertyKeys.DBClient.CREATED_TIME).get());
     }
 
@@ -75,7 +75,7 @@ public class TS3DBClient extends QueryMessageObject implements IDBClient {
     }
 
     @Override
-    public long getLastJoin() {
+    public Long getLastJoin() {
         return Long.parseLong(getProperty(PropertyKeys.DBClient.LAST_JOIN_TIME).get());
     }
 
@@ -94,27 +94,27 @@ public class TS3DBClient extends QueryMessageObject implements IDBClient {
     }
 
     @Override
-    public int getConnectionCount() {
+    public Integer getConnectionCount() {
         return Integer.parseInt(getProperty(PropertyKeys.DBClient.TOTAL_CONNECTIONS).get());
     }
 
     @Override
-    public long getBytesDownloadedMonth() {
+    public Long getBytesDownloadedMonth() {
         return Long.parseLong(getProperty(PropertyKeys.DBClient.DOWNLOAD_MONTH).get());
     }
 
     @Override
-    public long getBytesDownloadedTotal() {
+    public Long getBytesDownloadedTotal() {
         return Long.parseLong(getProperty(PropertyKeys.DBClient.DOWNLOAD_TOTAL).get());
     }
 
     @Override
-    public long getBytesUploadedMonth() {
+    public Long getBytesUploadedMonth() {
         return Long.parseLong(getProperty(PropertyKeys.DBClient.UPLOAD_MONTH).get());
     }
 
     @Override
-    public long getBytesUploadedTotal() {
+    public Long getBytesUploadedTotal() {
         return Long.parseLong(getProperty(PropertyKeys.DBClient.UPLOAD_TOTAL).get());
     }
 }

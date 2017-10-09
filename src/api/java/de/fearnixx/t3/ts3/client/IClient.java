@@ -12,18 +12,18 @@ import java.util.List;
  */
 public interface IClient extends IQueryMessageObject {
 
-    boolean isValid();
+    Boolean isValid();
 
     /**
      * @return The clients ID
      * @apiNote This is only valid while the client is online. Refer to {@link #getClientDBID()}
      */
-    int getClientID();
+    Integer getClientID();
 
     /**
      * @return The database ID of this client
      */
-    int getClientDBID();
+    Integer getClientDBID();
 
     /**
      * @return The unique client identifier
@@ -55,45 +55,45 @@ public interface IClient extends IQueryMessageObject {
     }
     ClientType getClientType();
 
-    int getChannelID();
+    Integer getChannelID();
 
-    int getChannelGroupID();
+    Integer getChannelGroupID();
 
-    int getChannelGroupSource();
+    Integer getChannelGroupSource();
 
-    boolean isAway();
+    Boolean isAway();
 
     String getAwayMessage();
 
-    int getTalkPower();
+    Integer getTalkPower();
 
-    boolean isTalking();
+    Boolean isTalking();
 
-    boolean isTalker();
+    Boolean isTalker();
 
-    boolean isPrioTalker();
+    Boolean isPrioTalker();
 
-    boolean isCommander();
+    Boolean isCommander();
 
-    boolean isRecording();
+    Boolean isRecording();
 
-    boolean hasMic();
+    Boolean hasMic();
 
-    boolean hasMicMuted();
+    Boolean hasMicMuted();
 
-    boolean hasOutput();
+    Boolean hasOutput();
 
-    boolean hasOutputMuted();
+    Boolean hasOutputMuted();
 
     List<Integer> getGroupIDs();
 
-    int getIdleTime();
+    Integer getIdleTime();
 
-    long getCreated();
+    Long getCreated();
 
     LocalDateTime getCreatedTime();
 
-    long getLastJoin();
+    Long getLastJoin();
 
     LocalDateTime getLastJoinTime();
 }

@@ -22,19 +22,19 @@ public interface ISpacer extends IChannel {
      * @return The extracted spacer number
      * @see IChannel#isSpacer()
      */
-    float getNumber();
+    Float getNumber();
 
     /**
      * Checks if the spacer has the "centered" flag
      * "[cspacer]"
      * @return If the center flag exists
      */
-    boolean isCentered();
+    Boolean isCentered();
 
     /**
      * Checks if the spacer has the "repeat" flag
      * "[*spacer]"
      * @return If the repeat flag exists
      */
-    boolean isRepeated();
+    Boolean isRepeated();
 }

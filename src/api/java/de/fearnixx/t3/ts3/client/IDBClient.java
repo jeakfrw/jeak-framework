@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
  */
 public interface IDBClient extends IQueryMessageObject {
 
-    boolean isValid();
+    Boolean isValid();
 
-    int getDBID();
+    Integer getDBID();
 
     String getUniqueID();
 
@@ -26,23 +26,23 @@ public interface IDBClient extends IQueryMessageObject {
 
     String getAvatarID();
 
-    long getCreated();
+    Long getCreated();
 
     LocalDateTime getCreatedTime();
 
-    long getLastJoin();
+    Long getLastJoin();
 
     LocalDateTime getLastJoinTime();
 
     InetAddress getLastAddress();
 
-    int getConnectionCount();
+    Integer getConnectionCount();
 
-    long getBytesDownloadedMonth();
+    Long getBytesDownloadedMonth();
 
-    long getBytesDownloadedTotal();
+    Long getBytesDownloadedTotal();
 
-    long getBytesUploadedMonth();
+    Long getBytesUploadedMonth();
 
-    long getBytesUploadedTotal();
+    Long getBytesUploadedTotal();
 }

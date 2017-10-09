@@ -39,17 +39,17 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
     }
 
     @Override
-    public int getID() {
+    public Integer getID() {
         return Integer.parseInt(getProperty(Channel.ID).get());
     }
 
     @Override
-    public int getParent() {
+    public Integer getParent() {
         return Integer.parseInt(getProperty(Channel.PARENT).orElse("0"));
     }
 
     @Override
-    public int getOrder() {
+    public Integer getOrder() {
         return Integer.parseInt(getProperty(Channel.ORDER).orElse("0"));
     }
 
@@ -64,12 +64,12 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
     }
 
     @Override
-    public boolean isDefault() {
+    public Boolean isDefault() {
         return Boolean.parseBoolean(getProperty(Channel.FLAG_DEFAULT).orElse("false"));
     }
 
     @Override
-    public boolean hasPassword() {
+    public Boolean hasPassword() {
         return Boolean.valueOf(getProperty(Channel.FLAG_PASSWORD).orElse("false"));
     }
 
@@ -77,7 +77,7 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
      * @implNote If the type changes from channel to spacer or from spacer to channel the object will be abandoned
      */
     @Override
-    public boolean isSpacer() {
+    public Boolean isSpacer() {
         return this instanceof ISpacer;
     }
 
@@ -102,37 +102,37 @@ public class TS3Channel extends QueryMessageObject implements IChannel {
     }
 
     @Override
-    public int getTalkPower() {
+    public Integer getTalkPower() {
         return Integer.parseInt(getProperty(Channel.TALK_POWER).orElse("0"));
     }
 
     @Override
-    public int getClientCount() {
+    public Integer getClientCount() {
         return Integer.parseInt(getProperty(Channel.CLIENT_COUNT).orElse("0"));
     }
 
     @Override
-    public int getMaxClientCount() {
+    public Integer getMaxClientCount() {
         return Integer.parseInt(getProperty(Channel.MAX_CLIENTS).orElse("-1"));
     }
 
     @Override
-    public int getClientCountBelow() {
+    public Integer getClientCountBelow() {
         return Integer.parseInt(getProperty(Channel.CLIENT_COUNT_FAMILY).orElse("0"));
     }
 
     @Override
-    public int getMaxClientCountBelow() {
+    public Integer getMaxClientCountBelow() {
         return Integer.parseInt(getProperty(Channel.MAX_CLIENTS_FAMILY).orElse("0"));
     }
 
     @Override
-    public int getCodec() {
+    public Integer getCodec() {
         return Integer.parseInt(getProperty(Channel.CODEC).orElse("0"));
     }
 
     @Override
-    public int getCodecQuality() {
+    public Integer getCodecQuality() {
         return Integer.parseInt(getProperty(Channel.QUALITY).orElse("0"));
     }
 
