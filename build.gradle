@@ -1,6 +1,6 @@
 group 'de.fearnixx'
 project.ext.artifactId = 't3serverbot'
-version '1.0.3'
+version '1.0.4'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -10,10 +10,10 @@ targetCompatibility = 1.8
 
 repositories {
     mavenLocal()
+    mavenCentral()
     maven {
         url uri('https://maven.fearnixx.de/maven2')
     }
-    mavenCentral()
 }
 
 sourceSets {
@@ -66,11 +66,27 @@ jar {
     dependsOn tasks.apiJar
 }
 
+task zipPublish(type: Zip){
+    from jar
+    from 'src/deployment'
+    into('lib') {
+        from configurations.runtime
+        exclude { dep -> !dep.file.name.endsWith('.jar')}
+    }
+}
+
 build {
     dependsOn publishToMavenLocal
+    dependsOn zipPublish
 }
 
 publishing {
+    repositories {
+        mavenLocal()
+        maven {
+            url uri('build/maven2')
+        }
+    }
     publications {
         main(MavenPublication) {
             groupId project.group

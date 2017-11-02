@@ -2,6 +2,7 @@ package de.fearnixx.t3;
 
 import de.fearnixx.t3.event.EventManager;
 import de.fearnixx.t3.event.state.BotStateEvent;
+import de.fearnixx.t3.event.state.IBotStateEvent;
 import de.fearnixx.t3.reflect.annotation.Inject;
 import de.fearnixx.t3.reflect.plugins.PluginContainer;
 import de.fearnixx.t3.reflect.plugins.persistent.PluginManager;
@@ -93,43 +94,9 @@ public class T3Bot implements Runnable, IT3Bot {
             throw new RuntimeException("Reinitialization of T3Bot instances is not supported! Completely shut down beforehand and/or create a new one.");
         }
 
+        // Bot Pre-Initialization
         setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
         initCalled = true;
-        loader = new JSONConfigLoader();
-        loader.setEncoding(CHAR_ENCODING);
-        config = loader.loadFromFile(confFile);
-
-        if (loader.hasError()) {
-            throw new RuntimeException("Can't read configuration! " + confFile.getPath(), loader.getError());
-        }
-
-        boolean rewrite = false;
-
-        if (!config.getNode("host").isType(String.class)) {
-            config.getNode("host").setValue("localhost");
-            rewrite = true;
-        }
-        if (!config.getNode("port").isType(Integer.class)) {
-            config.getNode("port").setValue(10011);
-            rewrite = true;
-        }
-        if (!config.getNode("user").isType(String.class)) {
-            config.getNode("user").setValue("serveradmin");
-            rewrite = true;
-        }
-        if (!config.getNode("pass").isType(String.class)) {
-            config.getNode("pass").setValue("password");
-            rewrite = true;
-        }
-        if (!config.getNode("instance").isType(Integer.class)) {
-            config.getNode("instance").setValue(1);
-            rewrite = true;
-        }
-
-        if (rewrite) {
-            saveConfig();
-        }
-
         plugins = new HashMap<>();
         eventManager = new EventManager(log.getChild("EM"));
         serviceManager = new ServiceManager();
@@ -147,6 +114,15 @@ public class T3Bot implements Runnable, IT3Bot {
         plugins.forEach((k, v) -> b.append(k).append(", "));
         log.info("Loaded ", plugins.size(), " plugin(s): ", b.toString());
         eventManager.fireEvent(new BotStateEvent.PluginsLoaded(this));
+
+        // Initialize Bot configuration and Plugins
+        BotStateEvent.Initialize event = new BotStateEvent.Initialize(this);
+        initializeConfiguration(event);
+        if (event.isCanceled()) {
+            log.warning("An initialization task has requested the bot to cancel startup. Doing that.");
+            shutdown();
+            return;
+        }
 
         String host = config.getNode("host").getString();
         Integer port = config.getNode("port").getInt();
@@ -299,6 +275,61 @@ public class T3Bot implements Runnable, IT3Bot {
 
     // * * * Configuration * * * //
 
+    /**
+     * Initializes the bots configuration
+     * Makes use of the {@link IBotStateEvent.IInitializeEvent} in order to cancel startup on unsuccessful init.
+     */
+    protected void initializeConfiguration(IBotStateEvent.IInitializeEvent event) {
+        loader = new JSONConfigLoader();
+        loader.setEncoding(CHAR_ENCODING);
+        config = loader.loadFromFile(confFile);
+
+        if (loader.hasError()) {
+            log.severe("Can't read configuration! " + confFile.getPath(), loader.getError());
+            event.cancel();
+            return;
+        }
+
+        boolean rewrite = false;
+        boolean importantIsDefault = false;
+
+        if (!config.getNode("host").isType(String.class)) {
+            config.getNode("host").setValue("localhost");
+            rewrite = true;
+        }
+        if (!config.getNode("port").isType(Integer.class)) {
+            config.getNode("port").setValue(10011);
+            rewrite = true;
+        }
+        if (!config.getNode("user").isType(String.class)) {
+            config.getNode("user").setValue("serveradmin");
+            rewrite = true;
+        }
+        if (!config.getNode("pass").isType(String.class)) {
+            config.getNode("pass").setValue("password");
+            rewrite = true;
+            importantIsDefault = true;
+        }
+        if (!config.getNode("instance").isType(Integer.class)) {
+            config.getNode("instance").setValue(1);
+            rewrite = true;
+            importantIsDefault = true;
+        }
+
+        if (rewrite) {
+            loader.resetError();
+            loader.save(config);
+            if (loader.hasError()) {
+                log.severe("Failed to rewrite configuration. Aborting startup, just in case.", loader.getError());
+                event.cancel();
+            }
+        }
+        if (importantIsDefault) {
+            log.warning("One or more important settings are default values. Please review the configuration at: ", confFile.toURI().toString());
+            event.cancel();
+        }
+    }
+
     public void saveConfig() {
         loader.resetError();
         loader.save(config);
@@ -350,7 +381,9 @@ public class T3Bot implements Runnable, IT3Bot {
     }
 
     @Override
-    public IServiceManager getServiceManager() { return serviceManager; }
+    public IServiceManager getServiceManager() {
+        return serviceManager;
+    }
 
     @Override
     public ITS3Server getServer() {

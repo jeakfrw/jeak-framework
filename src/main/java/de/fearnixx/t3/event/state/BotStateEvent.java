@@ -19,6 +19,23 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
         }
     }
 
+    public static class Initialize extends BotStateEvent implements IInitializeEvent {
+
+        private boolean canceled = false;
+
+        public Initialize(IT3Bot t3bot) {
+            super(t3bot);
+        }
+
+        public void cancel() {
+            canceled = true;
+        }
+
+        public boolean isCanceled() {
+            return canceled;
+        }
+    }
+
     public static class PreConnect extends BotStateEvent implements IPreConnect {
         public PreConnect(IT3Bot t3bot) {
             super(t3bot);
