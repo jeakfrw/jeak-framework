@@ -76,8 +76,15 @@ function stop() {
 }
 
 function start() {
-    # TODO: START-FUNCTION!
-    printf "Start UNIMPLEMENTED!\n"
+    if [ -e t3serverbot_minimal_runscript.sh ]; then
+        ./t3serverbot_minimal_runscript.sh &
+        EC=$?
+        echo "$!" > t3serverbot.pid
+        return ${EC}
+    else
+        printf "\tCannot start: Runsript missing\n"
+        return 1
+    fi
 }
 
 ## ACTUAL EXECUTION ##
@@ -95,6 +102,10 @@ case "$1" in
     start)
         if ! stop ${T3SB_LAST_PID}; then
             printf "\tFailed to stop instance!\n"
+            exit 1
+        fi
+        if [ -z "$(which java)" ]; then
+            printf "\tERROR - It appears java is missing!\n"
             exit 1
         fi
         if ! start; then
