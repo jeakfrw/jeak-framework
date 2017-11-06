@@ -38,6 +38,9 @@ public class PluginRegistry {
 
     private String id;
     private String version;
+    private String buildAgainst;
+    private String breaksBefore;
+    private String breaksAfter;
     private List<String> HARD_depends;
     private List<String> SOFT_depends;
 
@@ -66,6 +69,12 @@ public class PluginRegistry {
             log.warning("Plugin ID: ", this.id, " is using an invalid version: ", tag.version());
             version = null;
         }
+
+        // TODO: Bot version verification implementation
+        buildAgainst = tag.builtAgainst();
+        breaksAfter = tag.breaksAfter();
+        breaksBefore = tag.breaksBefore();
+
         if (tag.depends().length == 0) {
             HARD_depends = Collections.emptyList();
         } else {
@@ -117,7 +126,10 @@ public class PluginRegistry {
         }
 
         log.fine("Plugin class ", pluginClass.toGenericString(), " analysed.");
-        log.finer("ID: ", this.id, " Version: " + this.version, " HDependencies: ", HARD_depends.size(), " SDependencies: ", SOFT_depends.size());
+        log.finer("ID: ", this.id, " Version: " + this.version,
+                " HDependencies: ", HARD_depends.size(),
+                " SDependencies: ", SOFT_depends.size(),
+                " Build-INFO:[", breaksBefore, ',', buildAgainst, ',', breaksAfter, ']');
         return true;
     }
 

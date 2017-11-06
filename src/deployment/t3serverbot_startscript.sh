@@ -77,7 +77,12 @@ function stop() {
 
 function start() {
     if [ -e t3serverbot_minimal_runscript.sh ]; then
-        ./t3serverbot_minimal_runscript.sh &
+        EXECS="$(find *.jar -type f)"
+        if [ 1 -eq "${#EXECS[@]}" ]; then
+            T3SB_EXECUTABLE=${EXECS[0]}
+        fi
+
+        ./t3serverbot_minimal_runscript.sh > startscript.log &
         EC=$?
         echo "$!" > t3serverbot.pid
         return ${EC}

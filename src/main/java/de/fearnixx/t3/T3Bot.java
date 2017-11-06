@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Created by Life4YourGames on 22.05.17.
@@ -43,6 +44,8 @@ public class T3Bot implements Runnable, IT3Bot {
     private volatile boolean initCalled = false;
 
     // * * * FIELDS * * * //
+
+    private Consumer<IT3Bot> onShutdown;
 
     private File baseDir;
     private File logDir;
@@ -280,14 +283,23 @@ public class T3Bot implements Runnable, IT3Bot {
      * Makes use of the {@link IBotStateEvent.IInitializeEvent} in order to cancel startup on unsuccessful init.
      */
     protected void initializeConfiguration(IBotStateEvent.IInitializeEvent event) {
+        // Construct loader but only directly read from the file when it exists
+        // Otherwise cancel startup and create default config
         loader = new JSONConfigLoader();
+        loader.setFile(confFile);
         loader.setEncoding(CHAR_ENCODING);
-        config = loader.loadFromFile(confFile);
+        if (confFile.exists()) {
+            config = loader.load();
 
-        if (loader.hasError()) {
-            log.severe("Can't read configuration! " + confFile.getPath(), loader.getError());
+            if (loader.hasError()) {
+                log.severe("Can't read configuration! " + confFile.getPath(), loader.getError());
+                event.cancel();
+                return;
+            }
+        } else {
+            log.warning("Creating new default configuration! Requesting shutdown after initialization.");
+            config = new ConfigNode();
             event.cancel();
-            return;
         }
 
         boolean rewrite = false;
@@ -404,5 +416,12 @@ public class T3Bot implements Runnable, IT3Bot {
         server.shutdown();
         eventManager.fireEvent(new BotStateEvent.PostShutdown(this));
         eventManager.shutdown();
+
+        if (onShutdown != null)
+            onShutdown.accept(this);
+    }
+
+    protected void onShutdown(Consumer<IT3Bot> onShutdown) {
+        this.onShutdown = onShutdown;
     }
 }

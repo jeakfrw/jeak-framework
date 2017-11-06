@@ -1,6 +1,6 @@
 group 'de.fearnixx'
 project.ext.artifactId = 't3serverbot'
-version '1.0.4'
+version '0.0.4-bleeding'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -69,7 +69,7 @@ jar {
 task zipPublish(type: Zip){
     from jar
     from 'src/deployment'
-    into('lib') {
+    into('libraries') {
         from configurations.runtime
         exclude { dep -> !dep.file.name.endsWith('.jar')}
     }

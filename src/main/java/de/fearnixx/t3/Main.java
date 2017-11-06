@@ -38,6 +38,8 @@ public class Main {
     private PluginManager mgr;
     private CommandLine cmd;
 
+    private final Object lock = new Object();
+
     public Main() {
     }
 
@@ -52,8 +54,8 @@ public class Main {
         }
 
         loader = new JSONConfigLoader();
-        File f = new File("t3.json");
-        config = loader.loadFromFile(f);
+        File mainConfig = new File("t3serverbot.json");
+        config = loader.loadFromFile(mainConfig);
         if (loader.hasError()) {
             r.severe("Cannot open configuration: ", loader.getError().getMessage());
             loader.getError().printStackTrace();
@@ -61,7 +63,7 @@ public class Main {
         }
         Optional<Map<String,ConfigNode>> bots = config.getNode("bots").getHub();
         if (!bots.isPresent()) {
-            System.err.println("No bots configured");
+            logger.getLogger().warning("No bots configured");
             config.getNode("bots", "bot_0").getNode("config").setValue("configs/bot_0");
             new File("bot_0").mkdirs();
             loader.save(config);
@@ -74,14 +76,9 @@ public class Main {
             nodes.forEach((k, node) -> {
                 String confPath = config.getNode("config").optString(k + "/config/bot.json");
                 File botConf = new File(confPath);
-                if (!botConf.exists()) {
-                    botConf.getAbsoluteFile().getParentFile().mkdirs();
-                    try {
-                        botConf.createNewFile();
-                    } catch (IOException e) {
-                        r.severe("Cannot start bot: ", e);
-                        return;
-                    }
+                if (!botConf.exists() && !botConf.getAbsoluteFile().getParentFile().mkdirs()) {
+                    r.severe("Cannot start bot: ");
+                    return;
                 }
                 T3Bot bot = new T3Bot(logger.getLogReceiver().getChild(k));
                 bot.setLogDir(new File("logs"));
@@ -89,6 +86,7 @@ public class Main {
                 bot.setConfDir(new File(bot.getDir(),"config"));
                 bot.setConfig(botConf);
                 bot.setPluginManager(mgr);
+                bot.onShutdown(this::onBotShutdown);
                 t3bots.add(bot);
                 new Thread(bot, k).start();
             });
@@ -96,6 +94,16 @@ public class Main {
 
         cmd = new CommandLine(System.in, System.out, logger.getLogReceiver().getChild("CM"));
         cmd.run();
+    }
+
+    private void onBotShutdown(IT3Bot bot) {
+        if (bot instanceof T3Bot) {
+            synchronized (lock) {
+                t3bots.remove(bot);
+                if (t3bots.isEmpty())
+                    shutdown();
+            }
+        }
     }
 
     public void shutdown() {
