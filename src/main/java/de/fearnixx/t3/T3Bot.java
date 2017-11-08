@@ -142,9 +142,9 @@ public class T3Bot implements Runnable, IT3Bot {
             return;
         }
 
-        ConfigNode netDumpNode = config.getNode("debug", "network", "dump");
+        Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
 
-        if (netDumpNode.optBoolean(false)) {
+        if (doNetDump) {
             File netDumpFile = new File(logDir, "bot_" + instID);
             if (!netDumpFile.isDirectory())
                 netDumpFile.mkdirs();

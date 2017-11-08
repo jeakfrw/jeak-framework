@@ -8,7 +8,7 @@ import de.fearnixx.t3.ts3.keys.TargetType;
 public interface ICommMessage {
 
     TargetType getSourceType();
-    int getSourceID();
+    Integer getSourceID();
     String getSourceNickName();
     String getSourceUID();
 

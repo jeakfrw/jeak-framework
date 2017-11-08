@@ -1,5 +1,6 @@
 package de.fearnixx.t3.event;
 
+import de.fearnixx.t3.Main;
 import de.fearnixx.t3.reflect.listeners.ListenerContainer;
 import de.mlessmann.logging.ILogReceiver;
 
@@ -35,11 +36,8 @@ public class EventManager implements IEventManager {
         listeners = new ArrayList<>();
         terminated = false;
 
-        String poolSize = System.getProperty("bot.eventmgr.poolsize");
-        eventExecutor = Executors.newFixedThreadPool(poolSize == null ? THREAD_POOL_SIZE : Integer.parseInt(poolSize));
-        String termination_delay = System.getProperty("bot.eventmgr.terminatedelay");
-        if (termination_delay != null)
-            AWAIT_TERMINATION_DELAY = Integer.parseInt(termination_delay);
+        eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE));
+        AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
     }
 
     /**

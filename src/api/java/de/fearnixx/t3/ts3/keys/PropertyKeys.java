@@ -4,6 +4,7 @@ package de.fearnixx.t3.ts3.keys;
  * Created by MarkL4YG on 15.06.17.
  * A collection of Strings in order to minimize the amount of hardcoded Strings needed in plugins/implementation
  * Simplifies optimization
+ * Also simplifies adaptation to small query changes
  *
  * At some point these may be replaced with enums for faster processing
  * If possible that'll only require plugins to recompile once without changes
@@ -11,8 +12,12 @@ package de.fearnixx.t3.ts3.keys;
  */
 public class PropertyKeys {
 
+    /**
+     * All available keys used in TextMessage stuff
+     */
     public static class TextMessage {
         public static final String TARGET_TYPE = "targetmode";
+        public static final String TARGET_ID = "target";
         public static final String SOURCE_ID = "invokerid";
         public static final String SOURCE_NICKNAME = "invokername";
         public static final String SOURCE_UID = "invokeruid";

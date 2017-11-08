@@ -108,6 +108,48 @@ public class Main {
 
     public void shutdown() {
         cmd.kill();
-        t3bots.forEach(T3Bot::shutdown);
+        for (int i = t3bots.size() - 1; i >= 0; i--) {
+            t3bots.get(i).shutdown();
+        }
+    }
+
+    /**
+     * Warning "unchecked" suppressed: Checks are performed!
+     *
+     * Char is not supported - use string .-.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T getProperty(String name, T def) {
+        try {
+            String value = System.getProperty(name);
+            if (value != null) {
+                if (def == null || def.getClass().isAssignableFrom(String.class)) {
+                    return (T) value;
+                } else {
+                    Class<?> defClass = def.getClass();
+
+                    if (defClass.isAssignableFrom(Double.class)) {
+                        return (T) Double.valueOf(value);
+                    }
+                    if (defClass.isAssignableFrom(Float.class)) {
+                        return (T) Float.valueOf(value);
+                    }
+                    if (defClass.isAssignableFrom(Long.class)) {
+                        return (T) Long.valueOf(value);
+                    }
+                    if (defClass.isAssignableFrom(Integer.class)) {
+                        return (T) Integer.valueOf(value);
+                    }
+                    if (defClass.isAssignableFrom(Boolean.class)) {
+                        return (T) Boolean.valueOf(value);
+                    }
+                    if (defClass.isAssignableFrom(Enum.class)) {
+                        return (T) Enum.valueOf((Class<Enum>) defClass, value);
+                    }
+                }
+            }
+        } catch (Exception e) {
+        }
+        return def;
     }
 }

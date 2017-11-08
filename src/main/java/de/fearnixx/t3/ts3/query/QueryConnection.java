@@ -7,6 +7,8 @@ import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.QueryNotificationEvent;
 import de.fearnixx.t3.ts3.comm.CommManager;
 import de.fearnixx.t3.ts3.comm.ICommManager;
+import de.fearnixx.t3.ts3.command.CommandManager;
+import de.fearnixx.t3.ts3.command.ICommandManager;
 import de.fearnixx.t3.ts3.keys.NotificationType;
 import de.fearnixx.t3.ts3.keys.PropertyKeys;
 
@@ -37,6 +39,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private ILogReceiver log;
     private IEventManager eventMgr;
     private CommManager commManager;
+    private CommandManager commandManager;
 
     private int reqDelay;
     private boolean terminated;
@@ -63,7 +66,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
         this.reqQueue = new ArrayList<>();
         this.parser = new QueryParser();
         this.eventMgr = eventMgr;
-        this.commManager = new CommManager(log.getChild("CM"), this);
+        this.commManager = new CommManager(log.getChild("CCM"), this);
+        this.commandManager = new CommandManager(log.getChild("!CM"));
         this.onClose = onClose;
     }
 
@@ -102,7 +106,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
         log.info("Connected to query at " + mySock.getInetAddress().toString());
         this.commManager.start();
-        this.eventMgr.registerListener(this.commManager);
+        this.eventMgr.registerListeners(this.commManager, this.commandManager);
     }
 
     @Override
@@ -449,6 +453,9 @@ public class QueryConnection extends Thread implements IQueryConnection {
         return commManager;
     }
 
+    @Override
+    public ICommandManager getCommandManager() { return commandManager; }
+
     private boolean hasSubscribed(NotificationType type) {
         synchronized (reqQueue) {
             return ((notifSubsciptions & type.getMod()) > 0); // Per channel subscriptions will use mod 0
@@ -522,6 +529,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
             if (terminated) return;
             log.warning("Kill requested");
             this.commManager.terminate();
+            this.commandManager.shutdown();
             if (mySock.isConnected()) {
                 try {
                     mySock.close();

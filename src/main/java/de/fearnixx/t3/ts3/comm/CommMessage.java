@@ -38,7 +38,7 @@ public class CommMessage implements ICommMessage {
     }
 
     @Override
-    public int getSourceID() {
+    public Integer getSourceID() {
         return sourceID;
     }
 
