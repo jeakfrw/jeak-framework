@@ -38,43 +38,41 @@ fi
 ## FUNCTIONS ##
 
 function is_alive() {
-    if kill -0 "$1" > /dev/null 2> /dev/null; then
+    if tmux has-session -t "t3serverbot"; then
         return 0
     fi
     return 1
 }
 
 function stop() {
-    if [ ! -z "$1" ]; then
-        printf "\tAttempting to stop instance\n..."
-        if ! is_alive $1; then
-            printf "\t\tInstance died for some reason!\n"
-            return 0
-        else
-            printf "\t\t"
-            # Write "\nstop\n" into the console for a more graceful shutdown
-            printf "\nstop\n" > /proc/$1/fd/0
-            T3SB_STOP_COUNT=0
-            while is_alive $1; do
-                printf "."
-                sleep 1s
-                ((T3SB_STOP_COUNT++))
-                if [ ${T3SB_STOP_COUNT} -gt 20 ]; then
-                    break
-                fi
-            done
-            printf "\n"
-            if is_alive $1; then
-                printf "\t\tInstance still alive... killing\n"
-                kill $1
-                sleep 1s
+    printf "\tAttempting to stop instance\n..."
+    if ! is_alive; then
+        printf "\t\tInstance died for some reason!\n"
+        return 0
+    else
+        printf "\t\t"
+        # Write "\nstop\n" into the console for a more graceful shutdown
+        tmux send -t "t3serverbot" ENTER 'stop' ENTER
+        T3SB_STOP_COUNT=0
+        while is_alive; do
+            printf "."
+            sleep 1s
+            ((T3SB_STOP_COUNT++))
+            if [ ${T3SB_STOP_COUNT} -gt 20 ]; then
+               break
             fi
-            # Is STILL alive? Then we were unsuccessful!
-            if is_alive $1; then
-                return 1
-            fi
-            return 0
+        done
+        printf "\n"
+        if is_alive; then
+            printf "\t\tInstance still alive... killing\n"
+            tmux kill-session -C -t "t3serverbot"
+            sleep 1s
         fi
+        # Is STILL alive? Then we were unsuccessful!
+        if is_alive; then
+            return 1
+        fi
+        return 0
     fi
 }
 
@@ -85,10 +83,8 @@ function start() {
             T3SB_EXECUTABLE=${EXECS[0]}
         fi
 
-        ./t3serverbot_minimal_runscript.sh > startscript.log &
-        EC=$?
-        echo "$!" > t3serverbot.pid
-        return ${EC}
+        tmux new-session -ds "t3serverbot" ./t3serverbot_minimal_runscript.sh
+        return $?
     else
         printf "\tCannot start: runscript missing\n"
         return 1
@@ -99,17 +95,11 @@ function start() {
 
 cd ${T3SB_RUN_DIR}
 
-T3SB_LAST_PID=""
-if [ -e "t3serverbot.pid" ]; then
-    T3SB_LAST_PID="$(cat t3serverbot.pid)"
-fi
-
 printf "T3ServerBot_Startscript...\n"
-printf "\tLast pid: $T3SB_LAST_PID\n"
 
 case "$1" in
     start)
-        if ! stop ${T3SB_LAST_PID}; then
+        if ! stop; then
             printf "\tFailed to stop instance!\n"
             exit 1
         fi
@@ -125,7 +115,7 @@ case "$1" in
         exit 0
     ;;
     stop)
-        if ! stop ${T3SB_LAST_PID}; then
+        if ! stop; then
             printf "\tFailed to stop instance!\n"
             exit 1
         fi
@@ -133,12 +123,20 @@ case "$1" in
         exit 0
     ;;
     status)
-        if is_alive ${T3SB_LAST_PID}; then
+        if is_alive; then
             printf "\tIs running\n"
         else
             printf "\tIs not running\n"
         fi
         exit 0
+    ;;
+    attach)
+        if ! is_alive; then
+            printf "\tNot alive: can't attach\n"
+            exit 1
+        else
+            tmux attach-session -t "t3serverbot"
+        fi
 esac
 
 printf "\tInvalid argument: $1\n"
