@@ -73,7 +73,7 @@ public class TestPluginOne {
 
     public void onAnswer(IQueryEvent.IMessage event) {
         if (event.getMessage().getError().getID() == 0) {
-            log.fine("Text successful");
+            log.fine("TextMessage successful");
         } else {
             log.warning("Poke unsuccessful: ID=", event.getMessage().getError().getID(), "MSG=", event.getMessage().getError().getMessage());
         }

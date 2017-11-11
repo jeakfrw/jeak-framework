@@ -5,6 +5,7 @@ import de.fearnixx.t3.service.db.IDBReader;
 import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.task.ITaskManager;
 import de.fearnixx.t3.event.IEventManager;
+import de.fearnixx.t3.ts3.command.ICommandManager;
 
 import java.io.File;
 
@@ -37,6 +38,12 @@ public interface IT3Bot {
     ITS3Server getServer();
 
     /**
+     * API support for plugins - Allows registering own or retrieving services
+     * @return The service manager
+     */
+    IServiceManager getServiceManager();
+
+    /**
      * Allows plugins to fire events originating from this bot
      * @return The event manager
      */
@@ -49,10 +56,9 @@ public interface IT3Bot {
     ITaskManager getTaskManager();
 
     /**
-     * API support for plugins - Allows registering own or retrieving services
-     * @return The service manager
+     * @return The CommandManager
      */
-    IServiceManager getServiceManager();
+    ICommandManager getCommandManager();
 
     /**
      * A way to access values stored in the TS3DB

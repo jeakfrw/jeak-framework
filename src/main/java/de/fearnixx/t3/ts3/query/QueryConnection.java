@@ -1,14 +1,11 @@
 package de.fearnixx.t3.ts3.query;
 
+import de.fearnixx.t3.Main;
 import de.fearnixx.t3.T3Bot;
 import de.fearnixx.t3.event.IEventManager;
 import de.fearnixx.t3.event.query.IQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.QueryNotificationEvent;
-import de.fearnixx.t3.ts3.comm.CommManager;
-import de.fearnixx.t3.ts3.comm.ICommManager;
-import de.fearnixx.t3.ts3.command.CommandManager;
-import de.fearnixx.t3.ts3.command.ICommandManager;
 import de.fearnixx.t3.ts3.keys.NotificationType;
 import de.fearnixx.t3.ts3.keys.PropertyKeys;
 
@@ -32,14 +29,12 @@ import java.util.function.Consumer;
  */
 public class QueryConnection extends Thread implements IQueryConnection {
 
-    public static final int SOCKET_TIMEOUT_MILLIS = 500;
-    public static final int KEEP_ALIVE_SECS = 240;
-    public static final float REQ_DELAY = 0.25f;
+    public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 500);
+    public static final int KEEP_ALIVE_SECS = Main.getProperty("bot.connection.keepalive", 240);
+    public static final float REQ_DELAY = Main.getProperty("bot.connection.reqdelay", 0.25f);
 
     private ILogReceiver log;
     private IEventManager eventMgr;
-    private CommManager commManager;
-    private CommandManager commandManager;
 
     private int reqDelay;
     private boolean terminated;
@@ -66,8 +61,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
         this.reqQueue = new ArrayList<>();
         this.parser = new QueryParser();
         this.eventMgr = eventMgr;
-        this.commManager = new CommManager(log.getChild("CCM"), this);
-        this.commandManager = new CommandManager(log.getChild("!CM"));
         this.onClose = onClose;
     }
 
@@ -105,8 +98,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
             pos++;
         }
         log.info("Connected to query at " + mySock.getInetAddress().toString());
-        this.commManager.start();
-        this.eventMgr.registerListeners(this.commManager, this.commandManager);
     }
 
     @Override
@@ -231,10 +222,11 @@ public class QueryConnection extends Thread implements IQueryConnection {
             switch (nType) {
                 case CLIENT_ENTER: event = new QueryNotificationEvent.TargetClient.ClientENTER(this, qm); break;
                 case CLIENT_LEAVE: event = new QueryNotificationEvent.TargetClient.ClientLEAVE(this, qm); break;
+                case CLIENT_MOVED: event = new QueryNotificationEvent.ClientMOVED(this, qm); break;
 
-                case TEXT_PRIVATE: event = new QueryNotificationEvent.TextMessage.TextPrivate(this, ((QueryNotification.Text) qm)); break;
-                case TEXT_CHANNEL: event = new QueryNotificationEvent.TextMessage.TextChannel(this, ((QueryNotification.Text) qm)); break;
-                case TEXT_SERVER: event = new QueryNotificationEvent.TextMessage.TextServer(this, ((QueryNotification.Text) qm)); break;
+                case TEXT_PRIVATE: event = new QueryNotificationEvent.TextMessage.TextPrivate(this, ((QueryNotification.TextMessage) qm)); break;
+                case TEXT_CHANNEL: event = new QueryNotificationEvent.TextMessage.TextChannel(this, ((QueryNotification.TextMessage) qm)); break;
+                case TEXT_SERVER: event = new QueryNotificationEvent.TextMessage.TextServer(this, ((QueryNotification.TextMessage) qm)); break;
                 default:
                     log.warning("Unknown notification type: ", ((QueryNotification) qm).getNotificationType().toString());
                     return;
@@ -448,14 +440,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
         return whoami;
     }
 
-    @Override
-    public ICommManager getCommManager() {
-        return commManager;
-    }
-
-    @Override
-    public ICommandManager getCommandManager() { return commandManager; }
-
     private boolean hasSubscribed(NotificationType type) {
         synchronized (reqQueue) {
             return ((notifSubsciptions & type.getMod()) > 0); // Per channel subscriptions will use mod 0
@@ -528,8 +512,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
         synchronized (mySock) {
             if (terminated) return;
             log.warning("Kill requested");
-            this.commManager.terminate();
-            this.commandManager.shutdown();
             if (mySock.isConnected()) {
                 try {
                     mySock.close();

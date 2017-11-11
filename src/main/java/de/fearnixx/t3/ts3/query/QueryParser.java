@@ -1,5 +1,6 @@
 package de.fearnixx.t3.ts3.query;
 
+import de.fearnixx.t3.ts3.chat.ChatMessage;
 import de.fearnixx.t3.ts3.keys.PropertyKeys;
 import de.fearnixx.t3.ts3.keys.TargetType;
 
@@ -50,9 +51,11 @@ public class QueryParser {
             }
             Class<?> notifType = null;
             boolean error = false;
+
             if (capt != null && capt.startsWith("notify")) {
-            /* Message is a notification */
+                /* Message is a notification */
                 String notifyCapt = capt.substring(6);
+
                 if (notifyCapt.endsWith("view")) {
                     /* CLIENT ENTER/LEFT VIEW */
                     if (notifyCapt.startsWith("cliententer")) {
@@ -62,11 +65,21 @@ public class QueryParser {
                         workingMessage = new QueryNotification.ClientLeaveView();
                         notifType = IQueryNotification.IClientLeaveView.class;
                     }
+
                 } else if (notifyCapt.startsWith("textmessage")) {
                     /* TEXTMESSAGE */
-                    workingMessage = new QueryNotification.Text();
-                    notifType = IQueryNotification.IText.class;
+                    workingMessage = new QueryNotification.TextMessage();
+                    workingObject = new ChatMessage();
+                    notifType = IQueryNotification.ITextMessage.class;
+
+                } else if (notifyCapt.startsWith("client")) {
+                    /* Other client event */
+                    if (notifyCapt.endsWith("moved")) {
+                        workingMessage = new QueryNotification.ClientMoved();
+                        notifType = IQueryNotification.IClientMoved.class;
+                    }
                 }
+
                 if (workingMessage == null) {
                     throw new QueryParseException("Failed to determine notification type: " + notifyCapt);
                 }
@@ -139,9 +152,9 @@ public class QueryParser {
                 if (notifType == null)
                     currentMessage = null;
                 else {
-                    if (notifType == IQueryNotification.IText.class) {
+                    if (notifType == IQueryNotification.ITextMessage.class) {
                         int t = Integer.parseInt(workingObject.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get()) - 1;
-                        ((QueryNotification.Text) workingMessage).createTextMessage(TargetType.values()[t]);
+                        ((QueryNotification.TextMessage) workingMessage).createTextMessage(TargetType.values()[t]);
                     }
                 }
                 return Optional.of(workingMessage);

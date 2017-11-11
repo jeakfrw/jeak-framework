@@ -60,7 +60,7 @@ public class PluginRegistry {
             return false;
         }
         id = tag.id();
-        if (!id.matches("^[a-z.]+$")) {
+        if (!id.matches("^[a-z0-9.]+$")) {
             log.severe("Plugin ID: ", this.id, " is invalid!");
             return false;
         }

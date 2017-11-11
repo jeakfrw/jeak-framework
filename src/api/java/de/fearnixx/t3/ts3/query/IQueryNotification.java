@@ -1,6 +1,6 @@
 package de.fearnixx.t3.ts3.query;
 
-import de.fearnixx.t3.ts3.comm.ICommMessage;
+import de.fearnixx.t3.ts3.chat.IChatMessage;
 import de.fearnixx.t3.ts3.keys.NotificationType;
 
 /**
@@ -12,9 +12,11 @@ public interface IQueryNotification extends IQueryMessage {
 
     interface IClientLeaveView {}
 
-    interface IText extends IQueryNotification{
+    interface IClientMoved {}
 
-        ICommMessage getTextMessage();
+    interface ITextMessage extends IQueryNotification {
+
+        IChatMessage getChatMessage();
     }
 
     NotificationType getNotificationType();

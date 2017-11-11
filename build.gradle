@@ -1,6 +1,6 @@
 group 'de.fearnixx'
 project.ext.artifactId = 't3serverbot'
-version '0.0.41-bleeding'
+version '0.0.42-bleeding'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -32,6 +32,12 @@ sourceSets {
             srcDirs = ['src/dev/java']
         }
     }
+
+    template {
+        java {
+            srcDirs = ['src/template/java']
+        }
+    }
 }
 
 dependencies {
@@ -45,6 +51,10 @@ dependencies {
     devCompile group: 'org.reflections', name: 'reflections', version: '0.9.10'
     devCompile sourceSets.api.output
     devCompile sourceSets.main.output
+
+    templateCompile sourceSets.api.output
+    templateCompile group: 'de.mlessmann', name: 'javacommon', version: '2.3.8'
+    templateCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
 }
 
 compileJava {
@@ -56,14 +66,26 @@ compileDevJava {
     dependsOn tasks.compileJava
 }
 
+compileTemplateJava {
+    dependsOn tasks.compileApiJava
+    source = [sourceSets.api.allJava, sourceSets.template.allJava]
+}
+
 task apiJar (type: Jar){
     from sourceSets.api.output
     from sourceSets.api.allSource
     classifier 'api'
 }
 
+task templateJar (type: Jar) {
+    from sourceSets.template.output
+    from sourceSets.template.allSource
+    classifier 'tpl'
+}
+
 jar {
     dependsOn tasks.apiJar
+    dependsOn tasks.templateJar
 }
 
 task zipPublish(type: Zip){
@@ -101,6 +123,13 @@ publishing {
             version project.version
 
             artifact apiJar
+        }
+        template(MavenPublication) {
+            groupId project.group
+            artifactId project.ext.artifactId
+            version project.version
+
+            artifact templateJar
         }
     }
 }

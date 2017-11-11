@@ -44,11 +44,16 @@ public interface IQueryRequest {
             return this;
         }
 
-        public Builder addKey(String key, String value) {
+        /**
+         * Add a parameter to the current chain.
+         * @param key The key
+         * @param value String|Object - on objects {@link #toString()} is invoked
+         */
+        public Builder addKey(String key, Object value) {
             if (currentObj.containsKey(key))
-                currentObj.replace(key, value);
+                currentObj.replace(key, value != null ? value.toString() : null);
             else
-                currentObj.put(key, value);
+                currentObj.put(key, value != null ? value.toString() : null);
             return this;
         }
 

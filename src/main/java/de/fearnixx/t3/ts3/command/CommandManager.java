@@ -36,6 +36,7 @@ public class CommandManager implements ICommandManager {
 
     /**
      * The CommandManager actually uses given functionality and parses TextMessages starting with "!"
+     * (Character is defined at compile-time by a static field)
      *
      * Actual execution is done asynchronously!
      * @param event The event
@@ -43,7 +44,7 @@ public class CommandManager implements ICommandManager {
     @Listener
     public void onTextMessage(IQueryEvent.INotification.ITargetClient.ITextMessage event) {
         if (terminated) return;
-        String msg = event.getTextMessage().getMessage();
+        String msg = event.getChatMessage().getMessage();
         if (msg.startsWith(COMMAND_PREFIX)) {
 
             // Strip the command starter
@@ -61,6 +62,7 @@ public class CommandManager implements ICommandManager {
                     }
                 }
                 executorSvc.execute(() -> {
+                    log.finer("Executing command receiver");
                     receivers.forEach(r -> r.receive(fEvent));
                 });
             }

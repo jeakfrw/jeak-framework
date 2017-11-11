@@ -1,6 +1,7 @@
 package de.fearnixx.t3;
 
 import de.fearnixx.t3.event.EventManager;
+import de.fearnixx.t3.event.IEventManager;
 import de.fearnixx.t3.event.state.BotStateEvent;
 import de.fearnixx.t3.event.state.IBotStateEvent;
 import de.fearnixx.t3.reflect.annotation.Inject;
@@ -15,6 +16,8 @@ import de.fearnixx.t3.task.ITaskManager;
 import de.fearnixx.t3.task.TaskManager;
 import de.fearnixx.t3.ts3.ITS3Server;
 import de.fearnixx.t3.ts3.TS3Server;
+import de.fearnixx.t3.ts3.command.CommandManager;
+import de.fearnixx.t3.ts3.command.ICommandManager;
 import de.fearnixx.t3.ts3.query.QueryConnectException;
 import de.fearnixx.t3.ts3.query.QueryConnection;
 import de.mlessmann.config.ConfigNode;
@@ -62,9 +65,10 @@ public class T3Bot implements Runnable, IT3Bot {
 
     private TS3Server server;
 
+    private ServiceManager serviceManager;
     private EventManager eventManager;
     private TaskManager taskManager;
-    private ServiceManager serviceManager;
+    private CommandManager commandManager;
     private DBReader dbReader;
 
     private final Object lock = new Object();
@@ -104,6 +108,8 @@ public class T3Bot implements Runnable, IT3Bot {
         eventManager = new EventManager(log.getChild("EM"));
         serviceManager = new ServiceManager();
         taskManager = new TaskManager(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        commandManager = new CommandManager(log.getChild("!CM"));
+        eventManager.registerListeners(commandManager);
         server = new TS3Server(eventManager, log.getChild("SVR"));
         dbReader = new DBReader(log.getChild("DBR"), server);
 
@@ -121,6 +127,7 @@ public class T3Bot implements Runnable, IT3Bot {
         // Initialize Bot configuration and Plugins
         BotStateEvent.Initialize event = new BotStateEvent.Initialize(this);
         initializeConfiguration(event);
+        eventManager.fireEvent(event);
         if (event.isCanceled()) {
             log.warning("An initialization task has requested the bot to cancel startup. Doing that.");
             shutdown();
@@ -383,7 +390,12 @@ public class T3Bot implements Runnable, IT3Bot {
     }
 
     @Override
-    public EventManager getEventManager() {
+    public IServiceManager getServiceManager() {
+        return serviceManager;
+    }
+
+    @Override
+    public IEventManager getEventManager() {
         return eventManager;
     }
 
@@ -393,9 +405,7 @@ public class T3Bot implements Runnable, IT3Bot {
     }
 
     @Override
-    public IServiceManager getServiceManager() {
-        return serviceManager;
-    }
+    public ICommandManager getCommandManager() { return commandManager; }
 
     @Override
     public ITS3Server getServer() {
@@ -413,6 +423,7 @@ public class T3Bot implements Runnable, IT3Bot {
         saveConfig();
         taskManager.shutdown();
         dbReader.shutdown();
+        commandManager.shutdown();
         server.shutdown();
         eventManager.fireEvent(new BotStateEvent.PostShutdown(this));
         eventManager.shutdown();

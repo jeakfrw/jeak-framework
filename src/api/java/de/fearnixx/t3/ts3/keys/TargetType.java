@@ -20,7 +20,7 @@ public enum TargetType {
         return query_value;
     }
 
-    public TargetType valueOf(int i) {
+    public static TargetType valueOf(int i) {
         return values()[i-1];
     }
 }

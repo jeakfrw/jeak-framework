@@ -1,9 +1,9 @@
 package de.fearnixx.t3.ts3.query;
 
+import de.fearnixx.t3.ts3.chat.IChatMessage;
 import de.fearnixx.t3.ts3.keys.NotificationType;
 import de.fearnixx.t3.ts3.keys.PropertyKeys;
 import de.fearnixx.t3.ts3.keys.TargetType;
-import de.fearnixx.t3.ts3.comm.CommMessage;
 
 /**
  * Created by MarkL4YG on 30.06.17.
@@ -33,27 +33,24 @@ public class QueryNotification extends QueryMessage implements IQueryNotificatio
         }
     }
 
-    public static class Text extends QueryNotification implements IText {
+    public static class ClientMoved extends QueryNotification implements IClientMoved {
+        public ClientMoved() {
+            super.setType(NotificationType.CLIENT_MOVED);
+        }
+    }
+
+    public static class TextMessage extends QueryNotification implements ITextMessage {
 
         private static final NotificationType[] types =
                 {NotificationType.TEXT_PRIVATE, NotificationType.TEXT_CHANNEL, NotificationType.TEXT_SERVER};
-        private CommMessage textMessage;
 
         protected void createTextMessage(TargetType sourceType) {
             super.setType(types[sourceType.ordinal()]);
-            IQueryMessageObject o = getRawObjects().get(0);
-            textMessage = new CommMessage(
-                    sourceType,
-                    o.getProperty(PropertyKeys.TextMessage.SOURCE_UID).get(),
-                    Integer.parseInt(o.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get()),
-                    o.getProperty(PropertyKeys.TextMessage.SOURCE_NICKNAME).get(),
-                    o.getProperty(PropertyKeys.TextMessage.MESSAGE).get()
-            );
         }
 
         @Override
-        public CommMessage getTextMessage() {
-            return textMessage;
+        public IChatMessage getChatMessage() {
+            return ((IChatMessage) getRawObjects().get(0));
         }
     }
 }

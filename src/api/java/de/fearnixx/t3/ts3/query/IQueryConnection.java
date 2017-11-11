@@ -1,8 +1,6 @@
 package de.fearnixx.t3.ts3.query;
 
 import de.fearnixx.t3.event.query.IQueryEvent;
-import de.fearnixx.t3.ts3.comm.ICommManager;
-import de.fearnixx.t3.ts3.command.ICommandManager;
 import de.fearnixx.t3.ts3.keys.NotificationType;
 
 import java.util.function.Consumer;
@@ -40,16 +38,6 @@ public interface IQueryConnection {
      * @return The last response to the "whoami" command - contains sometimes useful information
      */
     IQueryMessage getWhoAmI();
-
-    /**
-     * @return The CommunicationManager
-     */
-    ICommManager getCommManager();
-
-    /**
-     * @return The CommandManager
-     */
-    ICommandManager getCommandManager();
 
     /**
      * Send a request.

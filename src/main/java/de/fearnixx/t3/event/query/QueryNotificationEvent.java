@@ -1,11 +1,11 @@
 package de.fearnixx.t3.event.query;
 
+import de.fearnixx.t3.ts3.chat.IChatMessage;
 import de.fearnixx.t3.ts3.query.IQueryMessage;
 import de.fearnixx.t3.ts3.client.IClient;
 import de.fearnixx.t3.ts3.client.TS3Client;
 import de.fearnixx.t3.ts3.query.QueryConnection;
 import de.fearnixx.t3.ts3.query.QueryNotification;
-import de.fearnixx.t3.ts3.comm.CommMessage;
 
 /**
  * Created by Life4YourGames on 05.07.17.
@@ -44,38 +44,44 @@ public class QueryNotificationEvent extends QueryEvent.Message implements IQuery
         }
     }
 
+    public static class ClientMOVED extends QueryNotificationEvent implements INotification.IClientMoved {
+        public ClientMOVED(QueryConnection conn, IQueryMessage msg) {
+            super(conn, msg);
+        }
+    }
+
     public static class TextMessage extends QueryNotificationEvent implements IQueryEvent.INotification.ITextMessage {
 
-        private CommMessage textMessage;
+        private IChatMessage chatMessage;
 
-        public TextMessage(QueryConnection conn, QueryNotification.Text textNot) {
-            super(conn, textNot);
-            this.textMessage = textNot.getTextMessage();
+        public TextMessage(QueryConnection conn, QueryNotification.TextMessage textMessageNot) {
+            super(conn, textMessageNot);
+            this.chatMessage = textMessageNot.getChatMessage();
         }
 
         @Override
-        public CommMessage getTextMessage() {
-            return textMessage;
+        public IChatMessage getChatMessage() {
+            return chatMessage;
         }
 
         public static class TextPrivate extends TextMessage implements IQueryEvent.INotification.ITextMessage.ITextPrivate {
 
-            public TextPrivate(QueryConnection conn, QueryNotification.Text textNot) {
-                super(conn, textNot);
+            public TextPrivate(QueryConnection conn, QueryNotification.TextMessage textMessageNot) {
+                super(conn, textMessageNot);
             }
         }
 
         public static class TextChannel extends TextMessage implements IQueryEvent.INotification.ITextMessage.ITextChannel {
 
-            public TextChannel(QueryConnection conn, QueryNotification.Text textNot) {
-                super(conn, textNot);
+            public TextChannel(QueryConnection conn, QueryNotification.TextMessage textMessageNot) {
+                super(conn, textMessageNot);
             }
         }
 
         public static class TextServer extends TextMessage implements IQueryEvent.INotification.ITextMessage.ITextServer {
 
-            public TextServer(QueryConnection conn, QueryNotification.Text textNot) {
-                super(conn, textNot);
+            public TextServer(QueryConnection conn, QueryNotification.TextMessage textMessageNot) {
+                super(conn, textMessageNot);
             }
         }
     }
