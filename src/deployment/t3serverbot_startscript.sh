@@ -13,6 +13,7 @@
 # X-Stop-Before:        ts3server
 # ### END LSB INFORMATION   ###
 
+#!/usr/bin/env bash
 # Which user should we run with?
 # Default: "t3serverbot"
 T3SB_RUN_USER="t3serverbot"
@@ -28,8 +29,6 @@ T3SB_JVM_ARGS=""
 # What arguments shall we provide to the J-Application?
 T3SB_ARGS=""
 
-### YOU MAY NOT WANT TO EDIT BELOW THIS LINE ###
-
 # Do we run as the desired user? If not, sudo re-run the script
 if [ $(whoami) != ${T3SB_RUN_USER} ]; then
     sudo -u ${T3SB_RUN_USER} $0 $@
@@ -39,14 +38,18 @@ fi
 ## FUNCTIONS ##
 
 function is_alive() {
-    return kill -0 $1
+    if kill -0 "$1" > /dev/null 2> /dev/null; then
+        return 0
+    fi
+    return 1
 }
 
 function stop() {
     if [ ! -z "$1" ]; then
         printf "\tAttempting to stop instance\n..."
-        if ! is_alive ${T3SB_LAST_PID}; then
+        if ! is_alive $1; then
             printf "\t\tInstance died for some reason!\n"
+            return 0
         else
             printf "\t\t"
             # Write "\nstop\n" into the console for a more graceful shutdown
@@ -56,7 +59,7 @@ function stop() {
                 printf "."
                 sleep 1s
                 ((T3SB_STOP_COUNT++))
-                if [ ${T3SB_STOP_COUNT} gt 20 ]; then
+                if [ ${T3SB_STOP_COUNT} -gt 20 ]; then
                     break
                 fi
             done
@@ -87,7 +90,7 @@ function start() {
         echo "$!" > t3serverbot.pid
         return ${EC}
     else
-        printf "\tCannot start: Runsript missing\n"
+        printf "\tCannot start: runscript missing\n"
         return 1
     fi
 }
@@ -96,12 +99,13 @@ function start() {
 
 cd ${T3SB_RUN_DIR}
 
-T3SB_LAST_PID="0"
+T3SB_LAST_PID=""
 if [ -e "t3serverbot.pid" ]; then
     T3SB_LAST_PID="$(cat t3serverbot.pid)"
 fi
 
 printf "T3ServerBot_Startscript...\n"
+printf "\tLast pid: $T3SB_LAST_PID\n"
 
 case "$1" in
     start)
@@ -117,6 +121,7 @@ case "$1" in
             printf "\tFailed to start instance!\n"
             exit 1
         fi
+        printf "\tStarted..\n"
         exit 0
     ;;
     stop)
@@ -124,6 +129,7 @@ case "$1" in
             printf "\tFailed to stop instance!\n"
             exit 1
         fi
+        printf "\tStopped..\n"
         exit 0
     ;;
     status)

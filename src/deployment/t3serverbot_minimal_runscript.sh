@@ -3,6 +3,7 @@
 
 # Check if java exists
 if [ -z "$(which java)" ]; then
+    printf "Missing dependencies: Java\n"
     exit 1
 fi
 
@@ -16,7 +17,18 @@ if [ -z "$T3SB_ARGS" ]; then
 fi
 # Optionally passed from the startscript
 if [ -z "$T3SB_EXECUTABLE" ]; then
-    T3SB_EXECUTABLE="t3serverbot.jar"
+    if [ -e "t3serverbot.jar" ]; then
+        T3SB_EXECUTABLE="t3serverbot.jar"
+    else
+        CANDS=($(ls t3serverbot*.jar))
+        if [ 1 -eq "${#CANDS[@]}" ]; then
+            T3SB_EXECUTABLE=${CANDS[1]}
+        fi
+    fi
+fi
+if [ -z "$T3SB_EXECUTABLE" ]; then
+    printf "Cannot find T3SB_EXECUTABLE!\n"
+    exit 1
 fi
 
 # Find libraries and insert them into the start command
