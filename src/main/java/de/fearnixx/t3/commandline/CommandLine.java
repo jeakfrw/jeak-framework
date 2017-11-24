@@ -33,7 +33,7 @@ public class CommandLine implements Runnable {
         byte[] buffer = new byte[1024];
         byte[] cc = new byte[1];
         int buffPos = 0;
-        boolean lf;
+        boolean lf, cr;
 
         terminated = false;
         outer: while (true) {
@@ -45,7 +45,7 @@ public class CommandLine implements Runnable {
                             break outer;
                         }
                     }
-                    Thread.sleep(200);
+                    Thread.sleep(100);
                 } while (in.available() <= 0);
                 if (in.read(cc) == -1) {
                     log.severe("Commandline reached EOS");
@@ -55,13 +55,19 @@ public class CommandLine implements Runnable {
                     }
                 }
 
+
                 lf = cc[0] == '\n';
+                cr = cc[0] == '\r';
+                if (cr) continue; // Ignore carriage-return
 
                 buffer[buffPos++] = cc[0];
                 if (lf || buffPos == buffer.length) {
                     b.append(new String(buffer, 0, buffPos-1, Charset.defaultCharset()));
                     buffPos = 0;
-                    if (lf) processCommand(b.toString());
+                    if (lf) {
+                        processCommand(b.toString());
+                        b = new StringBuilder(128);
+                    }
                 }
                 Thread.sleep(20);
             } catch (InterruptedException e) {
@@ -76,7 +82,7 @@ public class CommandLine implements Runnable {
     private static final Pattern commp = Pattern.compile("[\\w\\d]+");
     private void processCommand(String command) throws IOException {
         if (!commp.matcher(command).matches()) {
-            log.warning("Unknown command!");
+            log.warning("Command not matching: ", command);
             return;
         }
         switch (command) {
@@ -87,12 +93,11 @@ public class CommandLine implements Runnable {
                 Main.getInstance().shutdown();
                 break;
             case "help":
-                out.write("\nCommands: \n\thelp - Display this page" +
-                        "\n\tstop - Shutdown all bots" +
-                        "\n");
+                log.info("\nCommands: \n\thelp - Display this page" +
+                        "\n\tstop - Shutdown all bots");
                 break;
             default:
-                out.write("Unknown command: " + command + '\n');
+                log.warning("Unknown command: " + command + '\n');
                 break;
         }
     }

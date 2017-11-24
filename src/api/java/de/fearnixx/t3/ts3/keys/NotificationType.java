@@ -8,7 +8,7 @@ package de.fearnixx.t3.ts3.keys;
 public enum NotificationType {
     CLIENT_ENTER("server", 1),
     CLIENT_LEAVE("server", 1),
-    CLIENT_MOVED("channel", 0),
+    CLIENT_MOVED("channel", 1),
 
     TEXT_PRIVATE("textprivate", 2),
     TEXT_CHANNEL("textchannel", 4),

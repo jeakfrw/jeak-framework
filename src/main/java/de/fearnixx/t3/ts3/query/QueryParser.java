@@ -115,34 +115,44 @@ public class QueryParser {
             // Begin parsing the response
             for (int pos = 0; pos < len; pos++) {
                 char c = s.charAt(pos);
-                if (c == Chars.CHAINDIV) {
-                    // Rotate object
-                    workingObject = new QueryMessageObject();
-                    workingObjects.add(workingObject);
-                    doKey = true;
-                    keyBuffPos = 0;
-                    valBuffPos = 0;
-                } else if (c == Chars.PROPDIV || c == '\n') {
-                    // Flush current key and value
-                    String key = new String(QueryEncoder.decodeBuffer(keyBuff, keyBuffPos));
-                    String val = new String(QueryEncoder.decodeBuffer(valBuff, valBuffPos));
-                    workingObject.setProperty(key, val);
-                    keyBuffPos = 0;
-                    valBuffPos = 0;
-                    doKey = true;
-                } else if (doKey && c == Chars.PROPVALDIV) {
-                    valBuffPos = 0;
-                    doKey = false;
-                } else if (doKey) {
-                    if (keyBuffPos >= keyBuff.length) {
-                        throw new QueryParseException("Key buffer exceeded!", new BufferOverflowException());
-                    }
-                    keyBuff[keyBuffPos++] = c;
-                } else if (!doKey) {
-                    if (valBuffPos >= valBuff.length) {
-                        throw new QueryParseException("Value buffer exceeded!", new BufferOverflowException());
-                    }
-                    valBuff[valBuffPos++] = c;
+                switch (c) {
+                    case Chars.CHAINDIV:
+                        // Rotate object
+                        QueryMessageObject old = workingObject;
+                        workingObject = new QueryMessageObject();
+                        workingObject.copyFrom(old);
+                        workingObjects.add(workingObject);
+                        doKey = true;
+                        keyBuffPos = 0;
+                        valBuffPos = 0;
+                    case '\n':
+                    case Chars.PROPDIV:
+                        // Flush current key and value
+                        String key = new String(QueryEncoder.decodeBuffer(keyBuff, keyBuffPos));
+                        String val = new String(QueryEncoder.decodeBuffer(valBuff, valBuffPos));
+                        workingObject.setProperty(key, val);
+                        keyBuffPos = 0;
+                        valBuffPos = 0;
+                        doKey = true;
+                        break;
+                    case Chars.PROPVALDIV:
+                        if (doKey) {
+                            valBuffPos = 0;
+                            doKey = false;
+                        }
+                        break;
+                    default:
+                        if (doKey) {
+                            if (keyBuffPos >= keyBuff.length) {
+                                throw new QueryParseException("Key buffer exceeded!", new BufferOverflowException());
+                            }
+                            keyBuff[keyBuffPos++] = c;
+                        } else if (!doKey) {
+                            if (valBuffPos >= valBuff.length) {
+                                throw new QueryParseException("Value buffer exceeded!", new BufferOverflowException());
+                            }
+                            valBuff[valBuffPos++] = c;
+                        }
                 }
             }
             if (notifType != null)

@@ -10,6 +10,7 @@ import de.mlessmann.logging.MarkL4YGLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class Main {
     }
 
     public static void main(String[] args) {
-        getInstance().run();
+        getInstance().run(args);
     }
 
     private MarkL4YGLogger logger = MarkL4YGLogger.get(" ");
@@ -43,7 +44,7 @@ public class Main {
     public Main() {
     }
 
-    public void run() {
+    public void run(String... args) {
         logger.setLevel(Level.FINEST);
         logger.setLogTrace(false);
         logger.disableErrOut();
@@ -51,6 +52,13 @@ public class Main {
         File logDir = new File("logs");
         if (!logDir.isDirectory() && logDir.mkdirs()) {
             // TODO: Add actual file logging
+        }
+        for (int i = 0; i < args.length; i++) {
+            r.info("ARG: ", args[i]);
+        }
+        List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+        for (int i = 0; i < jvmArgs.size(); i++) {
+            r.info("JVM_ARG: ", jvmArgs.get(i));
         }
 
         loader = new JSONConfigLoader();

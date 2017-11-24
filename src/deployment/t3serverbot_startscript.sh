@@ -13,7 +13,6 @@
 # X-Stop-Before:        ts3server
 # ### END LSB INFORMATION   ###
 
-#!/usr/bin/env bash
 # Which user should we run with?
 # Default: "t3serverbot"
 T3SB_RUN_USER="t3serverbot"
@@ -24,10 +23,10 @@ T3SB_RUN_USER="t3serverbot"
 T3SB_RUN_DIR="$(eval echo ~${T3SB_RUN_USER})"
 
 # What arguments shall we provide to the JVM?
-T3SB_JVM_ARGS=""
+export T3SB_JVM_ARGS=""
 
 # What arguments shall we provide to the J-Application?
-T3SB_ARGS=""
+export T3SB_ARGS=""
 
 # Do we run as the desired user? If not, sudo re-run the script
 if [ $(whoami) != ${T3SB_RUN_USER} ]; then

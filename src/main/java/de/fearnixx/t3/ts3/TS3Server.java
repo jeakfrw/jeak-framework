@@ -66,8 +66,7 @@ public class TS3Server implements ITS3Server {
         if (!mainConnection.blockingLogin(instID, user, pass)) {
             throw new QueryConnectException("BlockingLogin failed: See log");
         }
-        mainConnection.subscribeNotification(NotificationType.CLIENT_ENTER);
-        mainConnection.subscribeNotification(NotificationType.CLIENT_LEAVE);
+        mainConnection.subscribeNotification(NotificationType.CLIENT_MOVED, 0);
         mainConnection.subscribeNotification(NotificationType.TEXT_PRIVATE);
         mainConnection.subscribeNotification(NotificationType.TEXT_SERVER, mainConnection.getInstanceID());
 
@@ -184,6 +183,58 @@ public class TS3Server implements ITS3Server {
         public Map<Integer, IChannel> getChannels() {
             synchronized (lock) {
                 return new HashMap<>(channelMap);
+            }
+        }
+
+        @Listener
+        public void onNotify(IQueryEvent.INotification event) {
+
+            if (event instanceof IQueryEvent.INotification.IClientMoved) {
+                // Client has moved - Apply to representation
+                synchronized (lock) {
+                    for (IQueryMessageObject msgObj : event.getMessage().getObjects()) {
+                        Integer clientID = Integer.parseInt(msgObj.getProperty("clid").orElse("-1"));
+                        TS3Client client = clientMap.getOrDefault(clientID, null);
+                        if (client == null)
+                            continue;
+
+                        TS3Channel fromChannel = channelMap.getOrDefault(client.getChannelID(), null);
+                        TS3Channel toChannel = channelMap.getOrDefault(
+                                Integer.parseInt(msgObj.getProperty("ctid").get())
+                                , null);
+                        if (fromChannel == null || toChannel == null || fromChannel == toChannel)
+                            continue;
+
+
+                        // Set new channel
+                        client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannel.getID().toString());
+                        // Set new client count - FROM
+                        fromChannel.setProperty(
+                                PropertyKeys.Channel.CLIENT_COUNT,
+                                Integer.valueOf(fromChannel.getClientCount() - 1).toString());
+                        fromChannel.setProperty(
+                                PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
+                                Integer.valueOf(fromChannel.getClientCount() - 1).toString());
+                        // Set new client count - TO
+                        toChannel.setProperty(
+                                PropertyKeys.Channel.CLIENT_COUNT,
+                                Integer.valueOf(toChannel.getClientCount() + 1).toString());
+                        toChannel.setProperty(
+                                PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
+                                Integer.valueOf(toChannel.getClientCount() + 1).toString());
+                    }
+                }
+            } else if (event instanceof IQueryEvent.INotification.ITargetClient.IClientLeftView) {
+                // Client has left - Apply to representation
+                IQueryEvent.INotification.ITargetClient tcE = ((IQueryEvent.INotification.ITargetClient.IClientLeftView) event);
+                synchronized (lock) {
+                    Integer clientID = tcE.getTarget().getClientID();
+                    TS3Client client = clientMap.getOrDefault(clientID, null);
+                    if (client == null)
+                        return;
+                    client.invalidate();
+                    clientMap.remove(clientID);
+                }
             }
         }
 
