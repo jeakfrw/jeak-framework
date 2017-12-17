@@ -173,11 +173,10 @@ public class QueryConnection extends Thread implements IQueryConnection {
     }
 
     private void processLine(String line) {
-        boolean duplicate = line.hashCode() == lastMessageHash;
         if (netDumpOutput != null) {
             try {
                 String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
-                            + (duplicate ? " <=[dupe]= " : " <== ")
+                            + " <== "
                             + line;
                 if (!ln.endsWith("\n"))
                     ln = ln + "\n";
@@ -192,7 +191,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         boolean errOc = !line.startsWith("error id=0");
         String col;
         String blockCol = null;
-        String arrow = (duplicate ? " <-[dupe]- " : " <-- ");
+        String arrow = " <-- ";
         if (!err)
             col = ANSIColors.Font.CYAN + ANSIColors.Background.BLACK;
         else if (errOc) {
@@ -207,8 +206,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
         } else {
             log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
         }
-        if (duplicate) return;
-        lastMessageHash = line.hashCode();
         Optional<QueryMessage> optMessage;
         try {
             optMessage = parser.parse(line);
@@ -221,6 +218,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
         QueryMessage qm = optMessage.get();
         IQueryEvent event;
         if (qm instanceof QueryNotification) {
+            boolean duplicate = lastMessageHash == line.hashCode();
+            lastMessageHash = line.hashCode();
+            if (duplicate) {
+                log.finer("Dropping duplicated notification!");
+                return;
+            }
             NotificationType nType = ((QueryNotification) qm).getNotificationType();
             if (!hasSubscribed(nType) && nType.getMod() != 0) {
                 log.fine("Skipping notification: ", nType.toString(), " not subscribed");
@@ -325,7 +328,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 synchronized (reqQueue) {
                     currentRequest = reqQueue.get(0);
                     reqQueue.remove(0);
-                    lastMessageHash = 0;
                 }
             } catch (IOException e) {
                 log.warning("Failed to send request: ", e.getClass().getSimpleName(), e);
