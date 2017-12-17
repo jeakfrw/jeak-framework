@@ -54,6 +54,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private Integer instanceID;
     private IQueryMessage whoami;
     private int notifSubsciptions = 0;
+    private int lastMessageHash = 0;
 
     public QueryConnection(IEventManager eventMgr, ILogReceiver log, Consumer<IQueryConnection> onClose) {
         this.log = log;
@@ -172,9 +173,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
     }
 
     private void processLine(String line) {
+        boolean duplicate = line.hashCode() == lastMessageHash;
         if (netDumpOutput != null) {
             try {
-                String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + " <== " + line;
+                String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME)
+                            + (duplicate ? " <=[dupe]= " : " <== ")
+                            + line;
                 if (!ln.endsWith("\n"))
                     ln = ln + "\n";
                 netDumpOutput.write(ln);
@@ -188,6 +192,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         boolean errOc = !line.startsWith("error id=0");
         String col;
         String blockCol = null;
+        String arrow = (duplicate ? " <-[dupe]- " : " <-- ");
         if (!err)
             col = ANSIColors.Font.CYAN + ANSIColors.Background.BLACK;
         else if (errOc) {
@@ -198,10 +203,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
         int len = line.length();
         if (len > 120) {
-            log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line.substring(0, 120), "...", ANSIColors.RESET);
+            log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, 120), "...", ANSIColors.RESET);
         } else {
-            log.finest(col, " <-- ", ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
+            log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
         }
+        if (duplicate) return;
+        lastMessageHash = line.hashCode();
         Optional<QueryMessage> optMessage;
         try {
             optMessage = parser.parse(line);
@@ -318,6 +325,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 synchronized (reqQueue) {
                     currentRequest = reqQueue.get(0);
                     reqQueue.remove(0);
+                    lastMessageHash = 0;
                 }
             } catch (IOException e) {
                 log.warning("Failed to send request: ", e.getClass().getSimpleName(), e);

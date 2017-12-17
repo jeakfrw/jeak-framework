@@ -110,4 +110,11 @@ public class PropertyKeys {
         public static final String FLAG_PERMANENT = "channel_flag_permanent";
         public static final String FLAG_SEMI_PERMANENT = "channel_flag_semi_permanent";
     }
+
+    public static class Permission {
+        public static final String ID = "permid";
+        public static final String VALUE = "permvale";
+        public static final String FLAG_NEGATED = "permnegated";
+        public static final String FLAG_SKIP = "permskip";
+    }
 }
