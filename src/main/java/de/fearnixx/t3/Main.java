@@ -44,11 +44,13 @@ public class Main {
 
     public void run(String... args) {
 
+        logger.getLogger().setLevel(Level.ALL);
+
         LogFormatter formatter = new LogFormatter();
         formatter.setDebug(false);
         ConsoleHandler console = new ConsoleHandler(System.out);
-        console.setLevel(Level.FINEST);
         console.setFormatter(formatter);
+        console.setLevel(Level.ALL);
         logger.addHandler(console);
 
         ILogReceiver log = logger.getLogReceiver();
@@ -59,14 +61,16 @@ public class Main {
             FileHandler logFileHandler = new FileHandler(new File(logDir, "latest.log"), true);
             logFileHandler.setFormatter(formatter);
             try {
-                logger.addHandler(logFileHandler);
+                logFileHandler.setLevel(Level.ALL);
                 logFileHandler.open();
+                logger.addHandler(logFileHandler);
             } catch (IOException e) {
                 log.severe("Failed to open log file!", e);
             }
         } else {
             log.warning("Cannot enable file logging into dir: ", logDir.getAbsoluteFile().getPath());
         }
+
 
         for (int i = 0; i < args.length; i++) {
             log.info("ARG: ", args[i]);
