@@ -5,8 +5,7 @@ import de.fearnixx.t3.reflect.plugins.persistent.PluginManager;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
-import de.mlessmann.logging.ILogReceiver;
-import de.mlessmann.logging.MarkL4YGLogger;
+import de.mlessmann.logging.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,8 +31,7 @@ public class Main {
         getInstance().run(args);
     }
 
-    private MarkL4YGLogger logger = MarkL4YGLogger.get(" ");
-    private ConfigLoader loader;
+    private LogWrapper logger = new LogWrapper("", true);
     private ConfigNode config;
     private List<T3Bot> t3bots = new ArrayList<>();
     private PluginManager mgr;
@@ -45,27 +43,45 @@ public class Main {
     }
 
     public void run(String... args) {
-        logger.setLevel(Level.FINEST);
-        logger.setLogTrace(false);
-        logger.disableErrOut();
-        ILogReceiver r = logger.getLogReceiver();
+
+        LogFormatter formatter = new LogFormatter();
+        formatter.setDebug(false);
+        ConsoleHandler console = new ConsoleHandler(System.out);
+        console.setLevel(Level.FINEST);
+        console.setFormatter(formatter);
+        logger.addHandler(console);
+
+        ILogReceiver log = logger.getLogReceiver();
         File logDir = new File("logs");
-        if (!logDir.isDirectory() && logDir.mkdirs()) {
+
+        if (logDir.isDirectory() || (!logDir.isDirectory() && logDir.mkdirs())) {
             // TODO: Add actual file logging
-        }
-        for (int i = 0; i < args.length; i++) {
-            r.info("ARG: ", args[i]);
-        }
-        List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        for (int i = 0; i < jvmArgs.size(); i++) {
-            r.info("JVM_ARG: ", jvmArgs.get(i));
+            FileHandler logFileHandler = new FileHandler(new File(logDir, "latest.log"), true);
+            logFileHandler.setFormatter(formatter);
+            try {
+                logger.addHandler(logFileHandler);
+                logFileHandler.open();
+            } catch (IOException e) {
+                log.severe("Failed to open log file!", e);
+            }
+        } else {
+            log.warning("Cannot enable file logging into dir: ", logDir.getAbsoluteFile().getPath());
         }
 
-        loader = new JSONConfigLoader();
+        for (int i = 0; i < args.length; i++) {
+            log.info("ARG: ", args[i]);
+        }
+
+        List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+        for (int i = 0; i < jvmArgs.size(); i++) {
+            log.info("JVM_ARG: ", jvmArgs.get(i));
+        }
+
+        ConfigLoader loader = new JSONConfigLoader();
         File mainConfig = new File("t3serverbot.json");
         config = loader.loadFromFile(mainConfig);
         if (loader.hasError()) {
-            r.severe("Cannot open configuration: ", loader.getError().getMessage());
+            log.severe("Cannot open configuration: ", loader.getError().getMessage());
             loader.getError().printStackTrace();
             System.exit(1);
         }
@@ -85,7 +101,7 @@ public class Main {
                 String confPath = config.getNode("config").optString(k + "/config/bot.json");
                 File botConf = new File(confPath);
                 if (!botConf.exists() && !botConf.getAbsoluteFile().getParentFile().mkdirs()) {
-                    r.severe("Cannot start bot: ");
+                    log.severe("Cannot start bot: ");
                     return;
                 }
                 T3Bot bot = new T3Bot(logger.getLogReceiver().getChild(k));
