@@ -17,9 +17,9 @@ public interface IPermProvider {
 
     Optional<IPermission> getPermission(String systemSID);
 
-    Optional<IPermissionEntry> getEffectivePermission(String systemSID, Integer target, PermSourceType type);
+    Optional<IPermissionEntry> getEffectivePermission(String systemSID, Integer target, PermSourceType type, Integer channelID);
 
-    List<IPermissionEntry> getPermissionContext(String systemSID, IDBClient client);
+    List<IPermissionEntry> getEffectivePermissionContext(String systemSID, Integer target, PermSourceType type, Integer channelID);
 
-    Optional<IPermissionEntry> getClientPermission(String systemID, IDBClient client);
+    //Optional<IPermissionEntry> getClientPermission(String systemID, IDBClient client);
 }

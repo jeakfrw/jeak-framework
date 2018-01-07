@@ -113,8 +113,12 @@ public class PropertyKeys {
 
     public static class Permission {
         public static final String ID = "permid";
-        public static final String VALUE = "permvale";
+        public static final String ID_SHORT = "p";
+        public static final String VALUE = "permval";
+        public static final String VALUE_SHORT = "v";
         public static final String FLAG_NEGATED = "permnegated";
+        public static final String FLAG_NEGATED_SHORT = "n";
         public static final String FLAG_SKIP = "permskip";
+        public static final String FLAG_SKIP_SHORT = "s";
     }
 }

@@ -12,4 +12,6 @@ public interface IPermissionEntry {
     Boolean getNegated();
 
     Boolean getSkipFlag();
+
+    Integer getSystemPriority();
 }

@@ -2,6 +2,7 @@ package de.fearnixx.t3.service.perms;
 
 import de.fearnixx.t3.service.perms.permission.IPermission;
 import de.fearnixx.t3.service.perms.permission.IPermissionEntry;
+import de.fearnixx.t3.service.perms.permission.PermSourceType;
 import de.fearnixx.t3.ts3.keys.TargetType;
 
 import java.util.List;
@@ -14,7 +15,11 @@ public interface IPermissionService {
 
     Optional<IPermission> getPermission(String qualifiedSID);
 
-    Optional<IPermissionEntry> getEffectivePermission(String qualifiedSID, Integer target, TargetType type);
+    Optional<IPermissionEntry> getEffectivePermission(String qualifiedSID, Integer target, PermSourceType type, Integer channelID);
 
-    List<IPermissionEntry> getPermissionContext(String qualifiedSID, Integer target, TargetType type);
+    List<IPermissionEntry> getEffectivePermissionContext(String qualifiedSID, Integer target, PermSourceType type, Integer channelID);
+
+    Optional<IPermProvider> getPermissionProvider(String providerID);
+
+    void registerProvider(String providerID, IPermProvider provider);
 }

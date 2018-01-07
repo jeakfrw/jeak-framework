@@ -10,10 +10,12 @@ public class TS3PermissionEntry implements IPermissionEntry {
 
     private IPermission parent;
     private IQueryMessageObject object;
+    private PermSourceType type;
 
-    public TS3PermissionEntry(IPermission parent, IQueryMessageObject object) {
+    public TS3PermissionEntry(IPermission parent, IQueryMessageObject object, PermSourceType type) {
         this.parent = parent;
         this.object = object;
+        this.type = type;
     }
 
     @Override
@@ -25,18 +27,31 @@ public class TS3PermissionEntry implements IPermissionEntry {
     public Integer getValue() {
         return object.getProperty(PropertyKeys.Permission.VALUE)
                      .map(Integer::valueOf)
-                     .orElse(parent.getDefaultValue());
+                     .orElse(object.getProperty(PropertyKeys.Permission.VALUE_SHORT)
+                                   .map(Integer::valueOf)
+                                   .orElse(parent != null ? parent.getDefaultValue() : 0));
     }
 
     @Override
     public Boolean getNegated() {
         return "1".equals(object.getProperty(PropertyKeys.Permission.FLAG_NEGATED)
-                                .orElse("0"));
+                                .orElse(object.getProperty(PropertyKeys.Permission.FLAG_NEGATED_SHORT)
+                                              .orElse("0")));
     }
 
     @Override
     public Boolean getSkipFlag() {
         return "1".equals(object.getProperty(PropertyKeys.Permission.FLAG_SKIP)
-                                .orElse("0"));
+                                .orElse(object.getProperty(PropertyKeys.Permission.FLAG_SKIP_SHORT)
+                                              .orElse("0")));
+    }
+
+    @Override
+    public Integer getSystemPriority() {
+        return type.getPriority();
+    }
+
+    public PermSourceType getType() {
+        return type;
     }
 }

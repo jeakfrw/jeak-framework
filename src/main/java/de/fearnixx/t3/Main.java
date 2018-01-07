@@ -37,21 +37,35 @@ public class Main {
     private PluginManager mgr;
     private CommandLine cmd;
 
+    private Level commonLogLevel = Level.ALL;
+    private Level consoleLogLevel = commonLogLevel;
+    private Level fileLogLevel = commonLogLevel;
+
     private final Object lock = new Object();
+
+    public Level parseLogLevel(String level) {
+        try {
+            return level != null ? Level.parse(level) : commonLogLevel;
+        } catch (IllegalArgumentException ex) {
+            return commonLogLevel;
+        }
+    }
 
     public Main() {
     }
 
     public void run(String... args) {
+        commonLogLevel = parseLogLevel(getProperty("bot.loglevel", null));
+        consoleLogLevel = parseLogLevel(getProperty("bot.loglevel.console", null));
+        fileLogLevel = parseLogLevel(getProperty("bot.loglevel.file", null));
 
         logger.getLogger().setLevel(Level.ALL);
-
         LogFormatter formatter = new LogFormatter();
         formatter.setDebug(false);
-        ConsoleHandler console = new ConsoleHandler(System.out);
-        console.setFormatter(formatter);
-        console.setLevel(Level.ALL);
-        logger.addHandler(console);
+        ConsoleHandler consoleHandler = new ConsoleHandler(System.out);
+        consoleHandler.setFormatter(formatter);
+        consoleHandler.setLevel(consoleLogLevel);
+        logger.addHandler(consoleHandler);
 
         ILogReceiver log = logger.getLogReceiver();
         File logDir = new File("logs");
@@ -61,7 +75,7 @@ public class Main {
             FileHandler logFileHandler = new FileHandler(new File(logDir, "latest.log"), true);
             logFileHandler.setFormatter(formatter);
             try {
-                logFileHandler.setLevel(Level.ALL);
+                logFileHandler.setLevel(fileLogLevel);
                 logFileHandler.open();
                 logger.addHandler(logFileHandler);
             } catch (IOException e) {

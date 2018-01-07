@@ -5,7 +5,7 @@ import de.fearnixx.t3.service.perms.permission.IPermission;
 /**
  * Created by MarkL4YG on 26-Nov-17
  */
-public abstract class TS3Permission implements IPermission{
+public abstract class TS3Permission implements IPermission {
 
     private final String qualifiedID = getProviderID() + ':' + getInternalSID();
 

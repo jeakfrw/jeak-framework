@@ -3,6 +3,7 @@ package de.fearnixx.t3.ts3.query;
 import de.fearnixx.t3.event.query.IQueryEvent;
 import de.fearnixx.t3.ts3.keys.NotificationType;
 
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -56,6 +57,14 @@ public interface IQueryConnection {
      * @param onDone The callback consumer
      */
     void sendRequest(IQueryRequest req, Consumer<IQueryEvent.IMessage> onDone);
+
+    /**
+     * Send a request
+     *
+     * This queues the request and sends it when possible.
+     * The callback will be called when a full answer has been received
+     */
+    Future<IQueryEvent.IMessage> promiseRequest(IQueryRequest request);
 
     /**
      * @see #subscribeNotification(NotificationType, Integer)

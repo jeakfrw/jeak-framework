@@ -5,7 +5,8 @@ package de.fearnixx.t3.service.perms.permission;
  */
 public enum PermSourceType {
 
-    CLIENT(4),
+    CLIENT(5),
+    CHANNEL_CLIENT(4),
     CHANNEL_GROUP(3),
     CHANNEL(2),
     SERVER_GROUP(1),

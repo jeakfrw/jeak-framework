@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -48,6 +49,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private BufferedWriter netDumpOutput;
 
     private final List<RequestContainer> reqQueue;
+    private PromisedRequest currentRequestPromise;
     private RequestContainer currentRequest;
     private QueryParser parser;
 
@@ -367,6 +369,13 @@ public class QueryConnection extends Thread implements IQueryConnection {
     @Override
     public void sendRequest(IQueryRequest request) {
         sendRequest(request, null);
+    }
+
+    @Override
+    public PromisedRequest promiseRequest(IQueryRequest request) {
+        final PromisedRequest promise = new PromisedRequest(request);
+        sendRequest(request, promise::setAnswer);
+        return promise;
     }
 
     @Override
