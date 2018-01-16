@@ -35,7 +35,7 @@ public class TaskManager extends Thread implements ITaskManager {
             throw new IllegalArgumentException("Tried to register an invalid or NULL task! Report this to the plugin dev!");
         }
         long delay = task.getTimeUnit().toSeconds(task.getInterval());
-        if (task.getType() == ITask.TaskType.REPEAT && delay <= 5) {
+        if (task.getType() == ITask.TaskType.REPEAT && delay < 5) {
             throw new IllegalArgumentException("Repeating task MUST have an interval of at least 5 seconds");
         }
         if (task.getName() == null || task.getName().trim().isEmpty()) {
