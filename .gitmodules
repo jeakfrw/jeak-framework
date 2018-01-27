@@ -8,3 +8,6 @@
 [submodule "plugins/t3sb_support"]
 	path = plugins/t3sb_support
 	url = git@gitlab.com:fearnixxgaming/t3sb_support.git
+[submodule "plugins/admintools"]
+	path = plugins/admintools
+	url = git@gitlab.com:fearnixxgaming/admintools.git
