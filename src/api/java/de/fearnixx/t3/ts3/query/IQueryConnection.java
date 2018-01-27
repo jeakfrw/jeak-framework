@@ -56,7 +56,7 @@ public interface IQueryConnection {
      * @param req The request
      * @param onDone The callback consumer
      */
-    void sendRequest(IQueryRequest req, Consumer<IQueryEvent.IMessage> onDone);
+    void sendRequest(IQueryRequest req, Consumer<IQueryEvent.IAnswer> onDone);
 
     /**
      * Send a request
@@ -64,7 +64,7 @@ public interface IQueryConnection {
      * This queues the request and sends it when possible.
      * The callback will be called when a full answer has been received
      */
-    Future<IQueryEvent.IMessage> promiseRequest(IQueryRequest request);
+    Future<IQueryEvent.IAnswer> promiseRequest(IQueryRequest request);
 
     /**
      * @see #subscribeNotification(NotificationType, Integer)

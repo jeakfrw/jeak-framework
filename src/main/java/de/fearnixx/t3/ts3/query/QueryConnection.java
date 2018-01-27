@@ -22,7 +22,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
 /**
@@ -232,9 +231,9 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 return;
             }
             switch (nType) {
-                case CLIENT_ENTER: event = new QueryNotificationEvent.TargetClient.ClientENTER(this, qm); break;
-                case CLIENT_LEAVE: event = new QueryNotificationEvent.TargetClient.ClientLEAVE(this, qm); break;
-                case CLIENT_MOVED: event = new QueryNotificationEvent.ClientMOVED(this, qm); break;
+                case CLIENT_ENTER: event = new QueryNotificationEvent.ClientENTER(this); break;
+                case CLIENT_LEAVE: event = new QueryNotificationEvent.ClientLEAVE(this); break;
+                case CLIENT_MOVED: event = new QueryNotificationEvent.ClientMOVED(this); break;
 
                 case TEXT_PRIVATE: event = new QueryNotificationEvent.TextMessage.TextPrivate(this, ((QueryNotification.TextMessage) qm)); break;
                 case TEXT_CHANNEL: event = new QueryNotificationEvent.TextMessage.TextChannel(this, ((QueryNotification.TextMessage) qm)); break;
@@ -250,10 +249,10 @@ public class QueryConnection extends Thread implements IQueryConnection {
                         "...");
                 return;
             }
-            event = new QueryEvent.Message(this, currentRequest.request, qm);
+            event = new QueryEvent.Answer(this, currentRequest.request);
             try {
                 if (currentRequest.onDone != null)
-                    currentRequest.onDone.accept(((IQueryEvent.IMessage) event));
+                    currentRequest.onDone.accept(((IQueryEvent.IAnswer) event));
             } catch (Exception e) {
                 log.severe("Encountered uncaught exception from callback!", e);
             }
@@ -262,6 +261,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 currentRequest = null;
             }
         }
+        ((QueryEvent) event).setMessage(qm);
         eventMgr.fireEvent(event);
     }
 
@@ -357,7 +357,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     /* Interaction */
 
     @Override
-    public void sendRequest(IQueryRequest request, Consumer<IQueryEvent.IMessage> onDone) {
+    public void sendRequest(IQueryRequest request, Consumer<IQueryEvent.IAnswer> onDone) {
         RequestContainer c = new RequestContainer();
         c.request = request;
         c.onDone = onDone;
@@ -393,7 +393,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 .command("whoami")
                 .build();
         // Wait for and lock receiver to prevent commands from returning too early
-        final Map<Integer, IQueryEvent.IMessage> map = new ConcurrentHashMap<>(4);
+        final Map<Integer, IQueryEvent.IAnswer> map = new ConcurrentHashMap<>(4);
         synchronized (mySock) {
             sendRequest(use, r -> map.put(0, r));
             sendRequest(login, r -> map.put(1, r));
@@ -409,23 +409,23 @@ public class QueryConnection extends Thread implements IQueryConnection {
             log.severe("Login attempt interrupted - Failed");
             return false;
         }
-        IQueryEvent.IMessage rUse = map.get(0);
-        IQueryEvent.IMessage rLogin = map.get(1);
-        IQueryEvent.IMessage rWhoAmI = map.get(2);
-        this.whoami = rWhoAmI.getMessage();
+        IQueryEvent.IAnswer rUse = map.get(0);
+        IQueryEvent.IAnswer rLogin = map.get(1);
+        IQueryEvent.IAnswer rWhoAmI = map.get(2);
+        this.whoami = rWhoAmI;
         boolean success = true;
-        if (rUse.getMessage().getError().getID() != 0) {
+        if (rUse.getError().getID() != 0) {
             success = false;
-            log.warning("Command 'use' failed: ", rUse.getMessage().getError().toString());
+            log.warning("Command 'use' failed: ", rUse.getError().toString());
             instanceID = instID;
         }
-        if (rLogin.getMessage().getError().getID() != 0) {
+        if (rLogin.getError().getID() != 0) {
             success = false;
-            log.warning("Command 'login' failed: ", rLogin.getMessage().getError().toString());
+            log.warning("Command 'login' failed: ", rLogin.getError().toString());
         }
-        if (rWhoAmI.getMessage().getError().getID() != 0) {
+        if (rWhoAmI.getError().getID() != 0) {
             success = false;
-            log.warning("Command 'whoami' failed: ", rWhoAmI.getMessage().getError().toString());
+            log.warning("Command 'whoami' failed: ", rWhoAmI.getError().toString());
         }
         return success;
     }
@@ -443,14 +443,14 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 .addKey(PropertyKeys.Client.NICKNAME, newNick)
                 .build();
         sendRequest(r, msg -> {
-            if (msg.getMessage().getError().getID() == 0)
+            if (msg.getError().getID() == 0)
                 whoami.getObjects().get(0).setProperty(PropertyKeys.Client.NICKNAME, newNick);
         });
     }
 
     public void loadWhoAmI() {
         sendRequest(IQueryRequest.builder().command("whoami").build(), msg -> {
-            whoami = msg.getMessage();
+            whoami = msg;
         });
     }
 
@@ -479,8 +479,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
         if (channelID != null)
             req.addKey("id", channelID.toString());
         this.sendRequest(req.build(), (msg) -> {
-            if (msg.getMessage().getError().getID() != 0) {
-                log.warning("Failed to subscribe to event: ", type.getQueryID(), " :", msg.getMessage().getError().toString());
+            if (msg.getError().getID() != 0) {
+                log.warning("Failed to subscribe to event: ", type.getQueryID(), " :", msg.getError().toString());
                 return;
             } else {
                 log.fine("Subscribed to event: ", type.getQueryID(), " for channel: ", channelID);
@@ -508,8 +508,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
         if (channelID != null)
             req.addKey("id", channelID.toString());
         this.sendRequest(req.build(), (msg) -> {
-            if (msg.getMessage().getError().getID() != 0) {
-                log.warning("Failed to unsubscribe from event: ", type.getQueryID(), " :", msg.getMessage().getError().toString());
+            if (msg.getError().getID() != 0) {
+                log.warning("Failed to unsubscribe from event: ", type.getQueryID(), " :", msg.getError().toString());
                 return;
             } else {
                 log.fine("Unsubscribed from event: ", type.getQueryID(), " for channel: ", channelID);

@@ -10,31 +10,22 @@ import de.fearnixx.t3.ts3.client.IClient;
 /**
  * Created by MarkL4YG on 31.05.17.
  */
-public interface IQueryEvent extends IEvent {
+public interface IQueryEvent extends IEvent, IQueryMessage {
 
     IQueryConnection getConnection();
 
-    interface IMessage extends IQueryEvent {
-        IQueryMessage getMessage();
+    interface IAnswer extends IQueryEvent {
         IQueryRequest getRequest();
     }
 
     interface INotification extends IQueryEvent {
 
-        IQueryMessage getMessage();
-
-        interface ITargetClient extends INotification {
-
-            IClient getTarget();
-
-            interface IClientEnterView extends ITargetClient {
-            }
-
-            interface IClientLeftView extends ITargetClient {
-            }
+        interface IClientEnterView extends INotification {
         }
 
-        // Cannot be .TargetClient! TS3 does NOT send the client information! Use getProperty("clid")
+        interface IClientLeftView extends INotification {
+        }
+
         interface IClientMoved extends INotification {
         }
 
@@ -48,5 +39,9 @@ public interface IQueryEvent extends IEvent {
 
             interface ITextServer extends ITextMessage {}
         }
+
+        interface IChannelCreated extends INotification {}
+
+        interface IChannelDeleted extends INotification {}
     }
 }

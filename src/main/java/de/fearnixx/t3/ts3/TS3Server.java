@@ -192,7 +192,7 @@ public class TS3Server implements ITS3Server {
             if (event instanceof IQueryEvent.INotification.IClientMoved) {
                 // Client has moved - Apply to representation
                 synchronized (lock) {
-                    for (IQueryMessageObject msgObj : event.getMessage().getObjects()) {
+                    for (IQueryMessageObject msgObj : event.getObjects()) {
                         Integer clientID = Integer.parseInt(msgObj.getProperty("clid").orElse("-1"));
                         TS3Client client = clientMap.getOrDefault(clientID, null);
                         if (client == null)
@@ -224,11 +224,10 @@ public class TS3Server implements ITS3Server {
                                 Integer.valueOf(toChannel.getClientCount() + 1).toString());
                     }
                 }
-            } else if (event instanceof IQueryEvent.INotification.ITargetClient.IClientLeftView) {
+            } else if (event instanceof IQueryEvent.INotification.IClientLeftView) {
                 // Client has left - Apply to representation
-                IQueryEvent.INotification.ITargetClient tcE = ((IQueryEvent.INotification.ITargetClient.IClientLeftView) event);
                 synchronized (lock) {
-                    Integer clientID = tcE.getTarget().getClientID();
+                    Integer clientID = Integer.parseInt(event.getObjects().get(0).getProperty("clid").get());
                     TS3Client client = clientMap.getOrDefault(clientID, null);
                     if (client == null)
                         return;
@@ -239,11 +238,11 @@ public class TS3Server implements ITS3Server {
         }
 
         @Listener
-        public void onQueryMessage(IQueryEvent.IMessage event) {
-            if (event.getMessage().getError().getID() != 0)
+        public void onQueryMessage(IQueryEvent.IAnswer event) {
+            if (event.getError().getID() != 0)
                 return;
             if (event.getRequest() == clientListRequest) {
-                List<IQueryMessageObject> objects = event.getMessage().getObjects();
+                List<IQueryMessageObject> objects = event.getObjects();
                 // Just a lock to be used when the new or old mapping is accessed
                 final Object tempLock = new Object();
                 final Map<Integer, TS3Client> newMap = new HashMap<>(objects.size(), 1.1f);
@@ -301,7 +300,7 @@ public class TS3Server implements ITS3Server {
                 eventMgr.fireEvent(new TS3ServerEvent.DataEvent.ClientsUpdated(TS3Server.this));
 
             } else if (event.getRequest() == channelListRequest) {
-                List<IQueryMessageObject> objects = event.getMessage().getObjects();
+                List<IQueryMessageObject> objects = event.getObjects();
                 // Just a lock to be used when the new or old mapping is accessed
                 final Object tempLock = new Object();
                 final Map<Integer, TS3Channel> newMap = new HashMap<>(objects.size(), 1.1f);

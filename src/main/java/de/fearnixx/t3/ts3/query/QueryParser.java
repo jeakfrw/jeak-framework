@@ -53,7 +53,7 @@ public class QueryParser {
             boolean error = false;
 
             if (capt != null && capt.startsWith("notify")) {
-                /* Message is a notification */
+                /* Answer is a notification */
                 String notifyCapt = capt.substring(6);
 
                 if (notifyCapt.endsWith("view")) {

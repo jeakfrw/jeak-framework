@@ -8,10 +8,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by MarkL4YG on 07-Jan-18
  */
-public class PromisedRequest implements Future<IQueryEvent.IMessage> {
+public class PromisedRequest implements Future<IQueryEvent.IAnswer> {
 
     private IQueryRequest request;
-    private IQueryEvent.IMessage answer;
+    private IQueryEvent.IAnswer answer;
 
     public PromisedRequest(IQueryRequest request) {
         this.request = request;
@@ -21,7 +21,7 @@ public class PromisedRequest implements Future<IQueryEvent.IMessage> {
         return request;
     }
 
-    public synchronized IQueryEvent.IMessage getAnswer() {
+    public synchronized IQueryEvent.IAnswer getAnswer() {
         return answer;
     }
 
@@ -41,12 +41,12 @@ public class PromisedRequest implements Future<IQueryEvent.IMessage> {
     }
 
     @Override
-    public IQueryEvent.IMessage get() {
+    public IQueryEvent.IAnswer get() {
         throw new UnsupportedOperationException("Query requests may not be blocking! If you really need to do this use #get(long, TimeUnit)");
     }
 
     @Override
-    public IQueryEvent.IMessage get(long timeout, TimeUnit unit) {
+    public IQueryEvent.IAnswer get(long timeout, TimeUnit unit) {
         if (timeout == 0 || unit == null)
             return getAnswer();
 
@@ -62,7 +62,7 @@ public class PromisedRequest implements Future<IQueryEvent.IMessage> {
         return null;
     }
 
-    protected synchronized void setAnswer(IQueryEvent.IMessage event) {
+    protected synchronized void setAnswer(IQueryEvent.IAnswer event) {
         this.answer = answer;
     }
 }

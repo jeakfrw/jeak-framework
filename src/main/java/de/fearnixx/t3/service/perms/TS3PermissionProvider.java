@@ -10,7 +10,6 @@ import de.fearnixx.t3.service.perms.permission.IPermissionEntry;
 import de.fearnixx.t3.service.perms.permission.PermSourceType;
 import de.fearnixx.t3.service.perms.permission.TS3PermissionEntry;
 import de.fearnixx.t3.ts3.keys.PropertyKeys;
-import de.fearnixx.t3.ts3.keys.TargetType;
 import de.fearnixx.t3.ts3.query.IQueryMessageObject;
 import de.fearnixx.t3.ts3.query.IQueryRequest;
 import de.fearnixx.t3.ts3.query.PromisedRequest;
@@ -106,7 +105,7 @@ public class TS3PermissionProvider implements IPermProvider {
                 return Collections.emptyList();
             }
 
-            for (IQueryMessageObject object : promise.getAnswer().getMessage().getObjects()) {
+            for (IQueryMessageObject object : promise.getAnswer().getObjects()) {
                 Integer groupID = Integer.parseInt(object.getProperty("sgid").get());
                 optEntry = getServerGroupPerm(permNumID, groupID);
                 optEntry.ifPresent(entries::add);
@@ -121,7 +120,7 @@ public class TS3PermissionProvider implements IPermProvider {
                 if (!promise.isDone()) {
                     log.warning("Failed to retrieve channel groups for cldbid: ", target);
                 } else {
-                    Integer cgID = Integer.parseInt(promise.getAnswer().getMessage().getObjects().get(0).getProperty("cgid").get());
+                    Integer cgID = Integer.parseInt(promise.getAnswer().getObjects().get(0).getProperty("cgid").get());
                     optEntry = getChannelGroupPerm(permNumID, cgID);
                     optEntry.ifPresent(entries::add);
                 }
@@ -160,7 +159,7 @@ public class TS3PermissionProvider implements IPermProvider {
         synchronized (lock) {
             Integer systemID = permIDCache.getOrDefault(systemSID, null);
             if (systemID == null) {
-                IQueryEvent.IMessage resp = promiseRequest(
+                IQueryEvent.IAnswer resp = promiseRequest(
                     IQueryRequest.builder()
                                  .command("permidgetbyname")
                                  .addKey("permsid", systemSID)
@@ -170,12 +169,12 @@ public class TS3PermissionProvider implements IPermProvider {
                     log.warning("Failed to retrieve numerical ID for perm: ", systemSID, " - Timed out");
                     return -1;
                 }
-                if (resp.getMessage().getError().getID() != 0)
+                if (resp.getError().getID() != 0)
                     throw new RuntimeException("Failed to lookup Permission " + systemSID,
                         new IllegalStateException("Response code is not OK: "
-                                                  + resp.getMessage().getError().getID() + " - "
-                                                  + resp.getMessage().getError().getMessage()));
-                Integer id = Integer.parseInt(resp.getMessage().getObjects().get(0).getProperty("permid").get());
+                                                  + resp.getError().getID() + " - "
+                                                  + resp.getError().getMessage()));
+                Integer id = Integer.parseInt(resp.getObjects().get(0).getProperty("permid").get());
                 permIDCache.put(systemSID, id);
                 return id;
             }
@@ -258,9 +257,9 @@ public class TS3PermissionProvider implements IPermProvider {
         return promise;
     }
 
-    protected Optional<IPermissionEntry> filterPermEntryFromList(IQueryEvent.IMessage event, Integer permID, PermSourceType type) {
+    protected Optional<IPermissionEntry> filterPermEntryFromList(IQueryEvent.IAnswer event, Integer permID, PermSourceType type) {
 
-        for (IQueryMessageObject object : event.getMessage().getObjects()) {
+        for (IQueryMessageObject object : event.getObjects()) {
 
             if (permID.toString().equals(object.getProperty(PropertyKeys.Permission.ID).get())
                 || permID.toString().equals(object.getProperty(PropertyKeys.Permission.ID_SHORT).get())) {

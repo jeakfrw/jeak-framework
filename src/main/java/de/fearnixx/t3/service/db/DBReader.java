@@ -38,7 +38,7 @@ public class DBReader implements IDBReader {
                 .command("clientdbinfo")
                 .addKey("cldbid", Integer.valueOf(cldbid).toString())
                 .build();
-        final IQueryEvent.IMessage[] qE = new IQueryEvent.IMessage[]{null};
+        final IQueryEvent.IAnswer[] qE = new IQueryEvent.IAnswer[]{null};
         server.getConnection().sendRequest(req, e -> {
             synchronized (lock) {
                 qE[0] = e;
@@ -55,7 +55,7 @@ public class DBReader implements IDBReader {
             log.warning("Interrupted");
             return Optional.empty();
         }
-        IQueryMessage msg = qE[0].getMessage();
+        IQueryMessage msg = qE[0];
         IQueryMessageObject.IError e = msg.getError();
         List<IQueryMessageObject> objects = msg.getObjects();
         if (e.getID() != 0) {

@@ -15,5 +15,5 @@ public interface ICommandReceiver {
      *
      * @param message The message which shall be interpreted as a command
      */
-    void receive(IQueryEvent.INotification.ITargetClient.ITextMessage message);
+    void receive(IQueryEvent.INotification.ITextMessage message);
 }

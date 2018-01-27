@@ -10,43 +10,27 @@ import de.fearnixx.t3.ts3.query.QueryNotification;
 /**
  * Created by Life4YourGames on 05.07.17.
  */
-public class QueryNotificationEvent extends QueryEvent.Message implements IQueryEvent.INotification {
+public class QueryNotificationEvent extends QueryEvent implements IQueryEvent.INotification {
 
-    public QueryNotificationEvent(QueryConnection conn, IQueryMessage msg) {
-        super(conn, null, msg);
+    public QueryNotificationEvent(QueryConnection conn) {
+        super(conn);
     }
 
-    public static class TargetClient extends QueryNotificationEvent implements IQueryEvent.INotification.ITargetClient {
-
-        private TS3Client client;
-
-        public TargetClient(QueryConnection conn, IQueryMessage msg) {
-            super(conn, msg);
-            this.client = new TS3Client();
-            client.copyFrom(msg.getObjects().get(0));
+    public static class ClientENTER extends QueryNotificationEvent implements INotification.IClientEnterView {
+        public ClientENTER(QueryConnection conn) {
+            super(conn);
         }
+    }
 
-        @Override
-        public IClient getTarget() {
-            return client;
-        }
-
-        public static class ClientENTER extends TargetClient implements INotification.ITargetClient.IClientEnterView {
-            public ClientENTER(QueryConnection conn, IQueryMessage msg) {
-                super(conn, msg);
+    public static class ClientLEAVE extends QueryNotificationEvent implements INotification.IClientLeftView {
+        public ClientLEAVE(QueryConnection conn) {
+                super(conn);
             }
-        }
-
-        public static class ClientLEAVE extends TargetClient implements INotification.ITargetClient.IClientLeftView {
-            public ClientLEAVE(QueryConnection conn, IQueryMessage msg) {
-                super(conn, msg);
-            }
-        }
     }
 
     public static class ClientMOVED extends QueryNotificationEvent implements INotification.IClientMoved {
-        public ClientMOVED(QueryConnection conn, IQueryMessage msg) {
-            super(conn, msg);
+        public ClientMOVED(QueryConnection conn) {
+            super(conn);
         }
     }
 
@@ -55,7 +39,8 @@ public class QueryNotificationEvent extends QueryEvent.Message implements IQuery
         private IChatMessage chatMessage;
 
         public TextMessage(QueryConnection conn, QueryNotification.TextMessage textMessageNot) {
-            super(conn, textMessageNot);
+            super(conn);
+            this.setMessage(textMessageNot);
             this.chatMessage = textMessageNot.getChatMessage();
         }
 
@@ -83,6 +68,13 @@ public class QueryNotificationEvent extends QueryEvent.Message implements IQuery
             public TextServer(QueryConnection conn, QueryNotification.TextMessage textMessageNot) {
                 super(conn, textMessageNot);
             }
+        }
+    }
+
+    public static class ChannelCreated extends QueryNotificationEvent implements IQueryEvent.INotification.IChannelCreated {
+
+        public ChannelCreated(QueryConnection conn) {
+            super(conn);
         }
     }
 }

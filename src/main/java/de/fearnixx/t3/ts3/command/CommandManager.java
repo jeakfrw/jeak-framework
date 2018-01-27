@@ -42,7 +42,7 @@ public class CommandManager implements ICommandManager {
      * @param event The event
      */
     @Listener
-    public void onTextMessage(IQueryEvent.INotification.ITargetClient.ITextMessage event) {
+    public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
         if (terminated) return;
         String msg = event.getChatMessage().getMessage();
         if (msg.startsWith(COMMAND_PREFIX)) {
@@ -53,7 +53,7 @@ public class CommandManager implements ICommandManager {
             synchronized (lock) {
                 Iterator<Map.Entry<String, ICommandReceiver>> it = commands.entrySet().iterator();
                 final List<ICommandReceiver> receivers = new ArrayList<>();
-                final IQueryEvent.INotification.ITargetClient.ITextMessage fEvent = event;
+                final IQueryEvent.INotification.ITextMessage fEvent = event;
                 while (it.hasNext()) {
                     Map.Entry<String, ICommandReceiver> entry = it.next();
 

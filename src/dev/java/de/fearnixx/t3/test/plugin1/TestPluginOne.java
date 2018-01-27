@@ -71,7 +71,7 @@ public class TestPluginOne {
         }
     }
 
-    public void onAnswer(IQueryEvent.IMessage event) {
+    public void onAnswer(IQueryEvent.IAnswer event) {
         if (event.getMessage().getError().getID() == 0) {
             log.fine("TextMessage successful");
         } else {

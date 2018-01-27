@@ -9,7 +9,7 @@ import java.util.function.Consumer;
  */
 public class RequestContainer {
 
-    public Consumer<IQueryEvent.IMessage> onDone;
+    public Consumer<IQueryEvent.IAnswer> onDone;
     public IQueryRequest request;
 
 }
