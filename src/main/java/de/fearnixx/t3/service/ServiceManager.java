@@ -9,7 +9,6 @@ import java.util.Optional;
  */
 public class ServiceManager implements IServiceManager {
 
-    private final Object lock = new Object();
     private final Map<Class<?>, Object> services;
 
     public ServiceManager() {

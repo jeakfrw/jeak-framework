@@ -1,6 +1,6 @@
 group 'de.fearnixx'
 project.ext.artifactId = 't3serverbot'
-version '0.0.57-bleeding'
+version '0.1.0-bleeding'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -10,65 +10,40 @@ targetCompatibility = 1.8
 
 repositories {
     mavenLocal()
-    mavenCentral()
     maven {
         url uri('https://maven.fearnixx.de/maven2')
     }
+    mavenCentral()
 }
 
 sourceSets {
-    main {
-        java {
-            srcDirs = ['src/main/java']
-        }
-    }
     api {
         java {
-            srcDirs = ['src/api/java']
+            srcDir 'src/api/java'
         }
-    }
-    dev {
-        java {
-            srcDirs = ['src/dev/java']
+        resources {
+            srcDir 'src/api/resources'
         }
     }
 
-    template {
+    main {
         java {
-            srcDirs = ['src/template/java']
+            srcDirs = ['src/api/java', 'src/main/java']
+        }
+        resources {
+            srcDirs = ['src/api/resources', 'src/main/resources']
         }
     }
 }
 
 dependencies {
+
+    apiCompile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
+    apiCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
+
     compile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
     compile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    compile sourceSets.api.output
-
-    devCompile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
-    devCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
-    devCompile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    devCompile sourceSets.api.output
-    devCompile sourceSets.main.output
-
-    templateCompile sourceSets.api.output
-    templateCompile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
-    templateCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.2'
-}
-
-compileJava {
-    dependsOn tasks.compileApiJava
-    source = [sourceSets.api.allJava, sourceSets.main.allJava]
-}
-
-compileDevJava {
-    dependsOn tasks.compileJava
-}
-
-compileTemplateJava {
-    dependsOn tasks.compileApiJava
-    source = [sourceSets.api.allJava, sourceSets.template.allJava]
 }
 
 task apiJar (type: Jar){
@@ -77,20 +52,13 @@ task apiJar (type: Jar){
     classifier 'api'
 }
 
-task templateJar (type: Jar) {
-    from sourceSets.template.output
-    from sourceSets.template.allSource
-    classifier 'tpl'
-}
-
 jar {
     dependsOn tasks.apiJar
-    dependsOn tasks.templateJar
 }
 
 task zipPublish(type: Zip){
     from jar
-    from 'src/deployment'
+    from 'src/deploy'
     into('libraries') {
         from configurations.runtime
         exclude { dep -> !dep.file.name.endsWith('.jar')}
@@ -124,16 +92,9 @@ publishing {
 
             artifact apiJar
         }
-        template(MavenPublication) {
-            groupId project.group
-            artifactId project.ext.artifactId
-            version project.version
-
-            artifact templateJar
-        }
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.2.1'
+wrapper {
+    gradleVersion '4.2.1'
 }

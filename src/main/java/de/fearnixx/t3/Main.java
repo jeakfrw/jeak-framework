@@ -1,7 +1,7 @@
 package de.fearnixx.t3;
 
 import de.fearnixx.t3.commandline.CommandLine;
-import de.fearnixx.t3.reflect.plugins.persistent.PluginManager;
+import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
@@ -138,7 +138,7 @@ public class Main {
         cmd.run();
     }
 
-    private void onBotShutdown(IT3Bot bot) {
+    private void onBotShutdown(IBot bot) {
         if (bot instanceof T3Bot) {
             synchronized (lock) {
                 t3bots.remove(bot);

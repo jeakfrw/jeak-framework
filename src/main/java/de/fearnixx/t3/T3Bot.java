@@ -1,25 +1,24 @@
 package de.fearnixx.t3;
 
-import de.fearnixx.t3.event.EventManager;
-import de.fearnixx.t3.event.IEventManager;
-import de.fearnixx.t3.event.state.BotStateEvent;
-import de.fearnixx.t3.event.state.IBotStateEvent;
-import de.fearnixx.t3.reflect.annotation.Inject;
-import de.fearnixx.t3.reflect.plugins.PluginContainer;
-import de.fearnixx.t3.reflect.plugins.persistent.PluginManager;
-import de.fearnixx.t3.reflect.plugins.persistent.PluginRegistry;
+import de.fearnixx.t3.command.CommandService;
+import de.fearnixx.t3.event.bot.BotStateEvent;
+import de.fearnixx.t3.event.bot.IBotStateEvent;
+import de.fearnixx.t3.event.event.EventService;
+import de.fearnixx.t3.plugin.PluginContainer;
+import de.fearnixx.t3.plugin.persistent.PluginManager;
+import de.fearnixx.t3.plugin.persistent.PluginRegistry;
+import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.IServiceManager;
 import de.fearnixx.t3.service.ServiceManager;
-import de.fearnixx.t3.service.db.DBReader;
-import de.fearnixx.t3.service.db.IDBReader;
-import de.fearnixx.t3.task.ITaskManager;
-import de.fearnixx.t3.task.TaskManager;
-import de.fearnixx.t3.ts3.ITS3Server;
-import de.fearnixx.t3.ts3.TS3Server;
-import de.fearnixx.t3.ts3.command.CommandManager;
-import de.fearnixx.t3.ts3.command.ICommandManager;
-import de.fearnixx.t3.ts3.query.QueryConnectException;
-import de.fearnixx.t3.ts3.query.QueryConnection;
+import de.fearnixx.t3.service.command.ICommandService;
+import de.fearnixx.t3.service.event.IEventService;
+import de.fearnixx.t3.service.task.ITaskService;
+import de.fearnixx.t3.task.TaskService;
+import de.fearnixx.t3.teamspeak.IServer;
+import de.fearnixx.t3.teamspeak.Server;
+import de.fearnixx.t3.teamspeak.cache.DataCache;
+import de.fearnixx.t3.teamspeak.query.QueryConnectException;
+import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
@@ -36,7 +35,7 @@ import java.util.function.Consumer;
 /**
  * Created by Life4YourGames on 22.05.17.
  */
-public class T3Bot implements Runnable, IT3Bot {
+public class T3Bot implements Runnable,IBot {
 
     // * * * STATICS  * * * //
     public static final Charset CHAR_ENCODING = Charset.forName("UTF-8");
@@ -48,7 +47,7 @@ public class T3Bot implements Runnable, IT3Bot {
 
     // * * * FIELDS * * * //
 
-    private Consumer<IT3Bot> onShutdown;
+    private Consumer<IBot> onShutdown;
 
     private File baseDir;
     private File logDir;
@@ -63,13 +62,13 @@ public class T3Bot implements Runnable, IT3Bot {
     private PluginManager pMgr;
     private Map<String, PluginContainer> plugins;
 
-    private TS3Server server;
+    private Server server;
+    private DataCache dataCache;
 
     private ServiceManager serviceManager;
-    private EventManager eventManager;
-    private TaskManager taskManager;
-    private CommandManager commandManager;
-    private DBReader dbReader;
+    private EventService eventService;
+    private TaskService taskManager;
+    private CommandService commandService;
 
     private final Object lock = new Object();
 
@@ -105,13 +104,12 @@ public class T3Bot implements Runnable, IT3Bot {
         setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
         initCalled = true;
         plugins = new HashMap<>();
-        eventManager = new EventManager(log.getChild("EM"));
+        eventService = new EventService(log.getChild("EM"));
         serviceManager = new ServiceManager();
-        taskManager = new TaskManager(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
-        commandManager = new CommandManager(log.getChild("!CM"));
-        eventManager.registerListeners(commandManager);
-        server = new TS3Server(eventManager, log.getChild("SVR"));
-        dbReader = new DBReader(log.getChild("DBR"), server);
+        taskManager = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        commandService = new CommandService(log.getChild("!CM"));
+        eventService.registerListeners(commandService);
+        server = new Server(eventService, log.getChild("SVR"));
 
         taskManager.start();
 
@@ -122,12 +120,12 @@ public class T3Bot implements Runnable, IT3Bot {
         StringBuilder b = new StringBuilder();
         plugins.forEach((k, v) -> b.append(k).append(", "));
         log.info("Loaded ", plugins.size(), " plugin(s): ", b.toString());
-        eventManager.fireEvent(new BotStateEvent.PluginsLoaded(this));
+        eventService.fireEvent(new BotStateEvent.PluginsLoaded().setBot(this));
 
         // Initialize Bot configuration and Plugins
-        BotStateEvent.Initialize event = new BotStateEvent.Initialize(this);
+        BotStateEvent.Initialize event = ((BotStateEvent.Initialize) new BotStateEvent.Initialize().setBot(this));
         initializeConfiguration(event);
-        eventManager.fireEvent(event);
+        eventService.fireEvent(event);
         if (event.isCanceled()) {
             log.warning("An initialization task has requested the bot to cancel startup. Doing that.");
             shutdown();
@@ -139,7 +137,7 @@ public class T3Bot implements Runnable, IT3Bot {
         String user = config.getNode("user").getString();
         String pass = config.getNode("pass").getString();
         Integer instID = config.getNode("instance").getInt();
-        eventManager.fireEvent(new BotStateEvent.PreConnect(this));
+        eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
 
         try {
             server.connect(host, port, user, pass, instID);
@@ -160,9 +158,10 @@ public class T3Bot implements Runnable, IT3Bot {
         }
 
         server.getConnection().setNickName(config.getNode("nick").optString(null));
-        server.scheduleTasks(taskManager);
+        dataCache = new DataCache(log.getChild("DC"), server.getConnection());
+        dataCache.scheduleTasks(taskManager);
         log.info("Connected");
-        eventManager.fireEvent(new BotStateEvent.PostConnect(this));
+        eventService.fireEvent(new BotStateEvent.PostConnect().setBot(this));
     }
 
     private boolean loadPlugin(Map<String, PluginRegistry> reg, String id, PluginRegistry pr) {
@@ -258,7 +257,7 @@ public class T3Bot implements Runnable, IT3Bot {
 
             // Bot
             log.finer("Injecting bot");
-            for (Field f : c.getInjectionsFor(IT3Bot.class)) {
+            for (Field f : c.getInjectionsFor(IBot.class)) {
                 log.finest("Injecting field ", f.getName());
                 Inject i = f.getAnnotation(Inject.class);
                 a = f.isAccessible();
@@ -277,7 +276,7 @@ public class T3Bot implements Runnable, IT3Bot {
             return false;
         }
 
-        eventManager.addContainer(c.getListener());
+        eventService.addContainer(c.getListener());
         c.setState(PluginContainer.State.DONE);
         log.fine("Initialized plugin ", id);
         return true;
@@ -374,65 +373,52 @@ public class T3Bot implements Runnable, IT3Bot {
 
     // * * * MISC * * * //
 
-    @Override
     public File getDir() {
         return baseDir;
     }
 
-    @Override
     public File getConfDir() {
         return confDir;
     }
 
-    @Override
     public File getLogDir() {
         return logDir;
     }
 
-    @Override
     public IServiceManager getServiceManager() {
         return serviceManager;
     }
 
-    @Override
-    public IEventManager getEventManager() {
-        return eventManager;
+    public IEventService getEventService() {
+        return eventService;
     }
 
-    @Override
-    public ITaskManager getTaskManager() {
+    public ITaskService getTaskManager() {
         return taskManager;
     }
 
-    @Override
-    public ICommandManager getCommandManager() { return commandManager; }
+    public ICommandService getCommandService() { return commandService; }
 
-    @Override
-    public ITS3Server getServer() {
+    public IServer getServer() {
         return server;
-    }
-
-    public IDBReader getDBReader() {
-        return dbReader;
     }
 
     // * * * RUNTIME * * * //
 
     public void shutdown() {
-        eventManager.fireEvent(new BotStateEvent.PreShutdown(this));
+        eventService.fireEvent(new BotStateEvent.PreShutdown().setBot(this));
         saveConfig();
         taskManager.shutdown();
-        dbReader.shutdown();
-        commandManager.shutdown();
+        commandService.shutdown();
         server.shutdown();
-        eventManager.fireEvent(new BotStateEvent.PostShutdown(this));
-        eventManager.shutdown();
+        eventService.fireEvent(new BotStateEvent.PostShutdown().setBot(this));
+        eventService.shutdown();
 
         if (onShutdown != null)
             onShutdown.accept(this);
     }
 
-    protected void onShutdown(Consumer<IT3Bot> onShutdown) {
+    protected void onShutdown(Consumer<IBot> onShutdown) {
         this.onShutdown = onShutdown;
     }
 }
