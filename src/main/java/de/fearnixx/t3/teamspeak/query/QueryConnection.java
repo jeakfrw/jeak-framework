@@ -219,7 +219,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         QueryEvent.Message event = optMessage.get();
 
         if (event instanceof QueryEvent.Message.Answer) {
-            if (currentRequest.onDone != null && currentRequest.onDone != null) {
+            if (currentRequest != null && currentRequest.onDone != null) {
                 currentRequest.onDone.accept(((QueryEvent.Message.Answer) event));
             }
             synchronized (reqQueue) {
