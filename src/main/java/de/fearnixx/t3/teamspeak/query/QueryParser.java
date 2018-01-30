@@ -58,7 +58,7 @@ public class QueryParser {
             Message workingMessage;
             if (error) {
                 // This message is an error message
-                Message.ErrorMessage errorMessage = new Message.ErrorMessage();
+                Message.ErrorMessage errorMessage = new Message.ErrorMessage(currentRequest.request);
                 if (currentFirst != null) {
                     workingFirst = currentFirst;
                     workingMessage = currentFirst;
@@ -158,5 +158,9 @@ public class QueryParser {
         } catch (Throwable t) {
             throw new QueryParseException("Generic error", t);
         }
+    }
+
+    public void setCurrentRequest(RequestContainer container) {
+        this.currentRequest = container;
     }
 }

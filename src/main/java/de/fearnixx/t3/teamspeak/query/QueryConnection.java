@@ -217,6 +217,16 @@ public class QueryConnection extends Thread implements IQueryConnection {
         if (!optMessage.isPresent())
             return;
         QueryEvent.Message event = optMessage.get();
+
+        if (event instanceof QueryEvent.Message.Answer) {
+            if (currentRequest.onDone != null && currentRequest.onDone != null) {
+                currentRequest.onDone.accept(((QueryEvent.Message.Answer) event));
+            }
+            synchronized (reqQueue) {
+                parser.setCurrentRequest(null);
+                currentRequest = null;
+            }
+        }
     }
 
     private void nextRequest() {
@@ -283,6 +293,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 reqDelay = Math.round(REQ_DELAY * SOCKET_TIMEOUT_MILLIS);
                 synchronized (reqQueue) {
                     currentRequest = reqQueue.get(0);
+                    parser.setCurrentRequest(currentRequest);
                     reqQueue.remove(0);
                 }
             } catch (IOException e) {

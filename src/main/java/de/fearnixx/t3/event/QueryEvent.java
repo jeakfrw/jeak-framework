@@ -72,30 +72,6 @@ public class QueryEvent extends DataHolder {
             return error;
         }
 
-        public static class ErrorMessage extends Message {
-
-            public static ErrorMessage OK() {
-                ErrorMessage m = new ErrorMessage();
-                m.setProperty("command", "error");
-                m.setProperty("id", "0");
-                m.setProperty("msg", null);
-                return m;
-            }
-
-            public Integer getCode() {
-                return Integer.parseInt(getProperty("id").orElse("0"));
-            }
-
-            public String getMessage() {
-                return getProperty("msg").orElse(null);
-            }
-
-            @Override
-            public ErrorMessage getError() {
-                return this;
-            }
-        }
-
         public static class Answer extends Message {
 
             private IQueryRequest request;
@@ -124,6 +100,34 @@ public class QueryEvent extends DataHolder {
             public void setCaption(String caption) {
                 this.caption = caption;
             }
+        }
+    }
+
+    public static class ErrorMessage extends Message.Answer {
+
+        public static ErrorMessage OK() {
+            ErrorMessage m = new ErrorMessage(null);
+            m.setProperty("command", "error");
+            m.setProperty("id", "0");
+            m.setProperty("msg", null);
+            return m;
+        }
+
+        public ErrorMessage(IQueryRequest request) {
+            super(request);
+        }
+
+        public Integer getCode() {
+            return Integer.parseInt(getProperty("id").orElse("0"));
+        }
+
+        public String getMessage() {
+            return getProperty("msg").orElse(null);
+        }
+
+        @Override
+        public ErrorMessage getError() {
+            return this;
         }
     }
 }
