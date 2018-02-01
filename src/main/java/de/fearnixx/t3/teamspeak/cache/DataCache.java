@@ -109,8 +109,7 @@ public class DataCache {
             processTargetClient(((QueryEvent.TargetClient) event));
 
         } else if (event instanceof QueryEvent.Notification.TargetChannel) {
-
-            processTargetChannel()
+            processTargetChannel(((QueryEvent.TargetChannel) event));
         }
     }
 
