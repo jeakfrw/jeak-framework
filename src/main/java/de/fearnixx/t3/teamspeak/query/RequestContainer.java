@@ -1,6 +1,6 @@
 package de.fearnixx.t3.teamspeak.query;
 
-import de.fearnixx.t3.event.QueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent;
 
 import java.util.function.Consumer;
 
@@ -9,6 +9,6 @@ import java.util.function.Consumer;
  */
 public class RequestContainer {
 
-    public Consumer<QueryEvent.Message.Answer> onDone;
+    public Consumer<RawQueryEvent.Message.Answer> onDone;
     public IQueryRequest request;
 }

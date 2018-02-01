@@ -1,6 +1,6 @@
 package de.fearnixx.t3.plugin;
 
-import de.fearnixx.t3.event.event.EventListener;
+import de.fearnixx.t3.event.EventListener;
 import de.fearnixx.t3.plugin.persistent.PluginRegistry;
 
 import java.lang.reflect.Field;

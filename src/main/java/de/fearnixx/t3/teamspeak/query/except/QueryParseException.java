@@ -1,9 +1,9 @@
-package de.fearnixx.t3.teamspeak.query;
+package de.fearnixx.t3.teamspeak.query.except;
 
 /**
  * Created by MarkL4YG on 31.05.17.
  */
-public class QueryParseException extends Exception {
+public class QueryParseException extends QueryException {
 
     public QueryParseException(String msg) {
         super(msg);

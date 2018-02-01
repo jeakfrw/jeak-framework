@@ -1,4 +1,4 @@
-package de.fearnixx.t3.event.event;
+package de.fearnixx.t3.event;
 
 import de.fearnixx.t3.event.IEvent;
 import de.mlessmann.logging.ILogReceiver;

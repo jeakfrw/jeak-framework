@@ -1,6 +1,6 @@
 package de.fearnixx.t3.teamspeak.data;
 
-import de.fearnixx.t3.event.QueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ import java.util.List;
  * Created by MarkL4YG on 20.06.17.
  */
 @SuppressWarnings("ConstantConditions")
-public class TS3Client extends QueryEvent.Message implements IClient {
+public class TS3Client extends RawQueryEvent.Message implements IClient {
 
     boolean invalidated = false;
 

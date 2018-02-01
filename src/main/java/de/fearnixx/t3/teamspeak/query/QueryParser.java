@@ -1,11 +1,11 @@
 package de.fearnixx.t3.teamspeak.query;
 
-import de.fearnixx.t3.event.QueryEvent;
-import de.fearnixx.t3.event.QueryEvent.Message;
+import de.fearnixx.t3.event.query.RawQueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent.Message;
+import de.fearnixx.t3.teamspeak.query.except.QueryParseException;
 
 import javax.annotation.Nullable;
 import java.nio.BufferOverflowException;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -32,7 +32,7 @@ public class QueryParser {
      * Instance of the currently parsed answer
      *  -> Messages are multi-lined ended by the "error"-response
      */
-    private QueryEvent.Message currentFirst;
+    private RawQueryEvent.Message currentFirst;
 
     /**
      * Parse a query response
@@ -40,7 +40,7 @@ public class QueryParser {
      * @return The message if finished - Notifications are one-liners thus don't interrupt receiving other messages
      */
     @Nullable
-    public Optional<QueryEvent.Message> parse(String s) throws QueryParseException {
+    public Optional<RawQueryEvent.Message> parse(String s) throws QueryParseException {
         try {
             // Determine message type (check for notification)
             int firstSpace = s.indexOf(Chars.PROPDIV);

@@ -153,7 +153,7 @@ public class DataCache {
 
 
     @Listener
-    public void onQueryMessage(QueryEvent.Message.Answer event) {
+    public void onQueryMessage(RawQueryEvent.Message.Answer event) {
         if (event.getError().getCode() != 0)
             return;
         if (event.getRequest() == clientListRequest) {

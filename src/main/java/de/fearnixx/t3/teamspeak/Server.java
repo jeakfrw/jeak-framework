@@ -1,22 +1,12 @@
 package de.fearnixx.t3.teamspeak;
 
-import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.service.event.IEventService;
-import de.fearnixx.t3.service.task.ITask;
-import de.fearnixx.t3.task.TaskService;
-import de.fearnixx.t3.teamspeak.data.IChannel;
-import de.fearnixx.t3.teamspeak.data.IClient;
-import de.fearnixx.t3.teamspeak.data.TS3Channel;
-import de.fearnixx.t3.teamspeak.data.TS3Client;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
-import de.fearnixx.t3.teamspeak.query.IQueryRequest;
-import de.fearnixx.t3.teamspeak.query.QueryConnectException;
+import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 28-Jan-18

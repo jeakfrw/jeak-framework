@@ -1,7 +1,5 @@
 package de.fearnixx.t3.teamspeak.data;
 
-import de.fearnixx.t3.event.QueryEvent;
-
 import java.util.*;
 
 /**

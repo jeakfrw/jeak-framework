@@ -1,6 +1,6 @@
 package de.fearnixx.t3.teamspeak.query;
 
-import de.fearnixx.t3.event.QueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -8,10 +8,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by MarkL4YG on 07-Jan-18
  */
-public class PromisedRequest implements Future<QueryEvent.Message.Answer> {
+public class PromisedRequest implements Future<RawQueryEvent.Message.Answer> {
 
     private IQueryRequest request;
-    private QueryEvent.Message.Answer answer;
+    private RawQueryEvent.Message.Answer answer;
 
     public PromisedRequest(IQueryRequest request) {
         this.request = request;
@@ -21,7 +21,7 @@ public class PromisedRequest implements Future<QueryEvent.Message.Answer> {
         return request;
     }
 
-    public synchronized QueryEvent.Message.Answer getAnswer() {
+    public synchronized RawQueryEvent.Message.Answer getAnswer() {
         return answer;
     }
 
@@ -41,12 +41,12 @@ public class PromisedRequest implements Future<QueryEvent.Message.Answer> {
     }
 
     @Override
-    public QueryEvent.Message.Answer get() {
+    public RawQueryEvent.Message.Answer get() {
         throw new UnsupportedOperationException("Query requests may not be blocking! If you really need to do this use #get(long, TimeUnit)");
     }
 
     @Override
-    public QueryEvent.Message.Answer get(long timeout, TimeUnit unit) {
+    public RawQueryEvent.Message.Answer get(long timeout, TimeUnit unit) {
         if (timeout == 0 || unit == null)
             return getAnswer();
 
@@ -62,7 +62,7 @@ public class PromisedRequest implements Future<QueryEvent.Message.Answer> {
         return null;
     }
 
-    protected synchronized void setAnswer(QueryEvent.Message.Answer event) {
+    protected synchronized void setAnswer(RawQueryEvent.Message.Answer event) {
         this.answer = answer;
     }
 }

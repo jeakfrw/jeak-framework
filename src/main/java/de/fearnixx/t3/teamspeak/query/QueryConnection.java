@@ -2,14 +2,13 @@ package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.T3Bot;
-import de.fearnixx.t3.event.QueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent;
 
-import de.fearnixx.t3.event.event.EventService;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.DataHolder;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
-import de.mlessmann.common.annotations.Nullable;
+import de.fearnixx.t3.teamspeak.query.except.QueryParseException;
 import de.mlessmann.logging.ANSIColors;
 import de.mlessmann.logging.ILogReceiver;
 
@@ -207,7 +206,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         } else {
             log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
         }
-        Optional<QueryEvent.Message> optMessage;
+        Optional<RawQueryEvent.Message> optMessage;
         try {
             optMessage = parser.parse(line);
         } catch (QueryParseException e) {
@@ -216,11 +215,11 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
         if (!optMessage.isPresent())
             return;
-        QueryEvent.Message event = optMessage.get();
+        RawQueryEvent.Message event = optMessage.get();
 
-        if (event instanceof QueryEvent.Message.Answer) {
+        if (event instanceof RawQueryEvent.Message.Answer) {
             if (currentRequest != null && currentRequest.onDone != null) {
-                currentRequest.onDone.accept(((QueryEvent.Message.Answer) event));
+                currentRequest.onDone.accept(((RawQueryEvent.Message.Answer) event));
             }
             synchronized (reqQueue) {
                 parser.setCurrentRequest(null);
@@ -322,7 +321,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     /* Interaction */
 
     @Override
-    public void sendRequest(IQueryRequest request, Consumer<QueryEvent.Message.Answer> onDone) {
+    public void sendRequest(IQueryRequest request, Consumer<RawQueryEvent.Message.Answer> onDone) {
         RequestContainer c = new RequestContainer();
         c.request = request;
         c.onDone = onDone;
@@ -358,7 +357,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                                             .command("whoami")
                                             .build();
         // Wait for and lock receiver to prevent commands from returning too early
-        final Map<Integer, QueryEvent.Message.Answer> map = new ConcurrentHashMap<>(4);
+        final Map<Integer, RawQueryEvent.Message.Answer> map = new ConcurrentHashMap<>(4);
         synchronized (mySock) {
             sendRequest(use, r -> map.put(0, r));
             sendRequest(login, r -> map.put(1, r));
@@ -374,9 +373,9 @@ public class QueryConnection extends Thread implements IQueryConnection {
             log.severe("Login attempt interrupted - Failed");
             return false;
         }
-        QueryEvent.Message.Answer rUse = map.get(0);
-        QueryEvent.Message.Answer rLogin = map.get(1);
-        QueryEvent.Message.Answer rWhoAmI = map.get(2);
+        RawQueryEvent.Message.Answer rUse = map.get(0);
+        RawQueryEvent.Message.Answer rLogin = map.get(1);
+        RawQueryEvent.Message.Answer rWhoAmI = map.get(2);
         this.whoami = rWhoAmI;
         boolean success = true;
         if (rUse.getError().getCode() != 0) {

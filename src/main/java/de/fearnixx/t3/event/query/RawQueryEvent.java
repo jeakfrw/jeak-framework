@@ -1,5 +1,6 @@
-package de.fearnixx.t3.event;
+package de.fearnixx.t3.event.query;
 
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.teamspeak.data.DataHolder;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
@@ -9,7 +10,7 @@ import java.util.*;
 /**
  * Created by MarkL4YG on 28-Jan-18
  */
-public class QueryEvent extends DataHolder {
+public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
 
     public QueryConnection connection;
 
@@ -21,7 +22,7 @@ public class QueryEvent extends DataHolder {
         return connection;
     }
 
-    public static abstract class Message extends QueryEvent {
+    public static abstract class Message extends RawQueryEvent {
 
         private String command;
         protected ErrorMessage error;
@@ -29,7 +30,7 @@ public class QueryEvent extends DataHolder {
         protected Message previous;
         protected Message next;
 
-        public void setPrevious(QueryEvent.Message last) {
+        public void setPrevious(RawQueryEvent.Message last) {
             this.previous = last;
         }
 

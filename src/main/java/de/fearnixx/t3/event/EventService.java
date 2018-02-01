@@ -1,7 +1,6 @@
-package de.fearnixx.t3.event.event;
+package de.fearnixx.t3.event;
 
 import de.fearnixx.t3.Main;
-import de.fearnixx.t3.event.IEvent;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
 import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.reflect.SystemListener;
