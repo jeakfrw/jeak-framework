@@ -1,11 +1,12 @@
 package de.fearnixx.t3.teamspeak.cache;
 
+import de.fearnixx.t3.event.EventAbortException;
+import de.fearnixx.t3.event.IQueryEvent;
+import de.fearnixx.t3.event.query.QueryEvent;
+import de.fearnixx.t3.reflect.SystemListener;
 import de.fearnixx.t3.service.task.ITask;
 import de.fearnixx.t3.task.TaskService;
-import de.fearnixx.t3.teamspeak.data.IChannel;
-import de.fearnixx.t3.teamspeak.data.IClient;
-import de.fearnixx.t3.teamspeak.data.TS3Channel;
-import de.fearnixx.t3.teamspeak.data.TS3Client;
+import de.fearnixx.t3.teamspeak.data.*;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
@@ -13,6 +14,8 @@ import de.mlessmann.logging.ILogReceiver;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,8 +34,8 @@ public class DataCache {
     public DataCache(ILogReceiver logger, IQueryConnection connection) {
         this.logger = logger;
         this.connection = connection;
-        clientCache = new HashMap<>(50);
-        channelCache = new HashMap<>(60);
+        clientCache = new ConcurrentHashMap<>(50);
+        channelCache = new ConcurrentHashMap<>(60);
     }
 
     // == CLIENTLIST = //
@@ -97,6 +100,62 @@ public class DataCache {
         synchronized (lock) {
             return new HashMap<>(channelCache);
         }
+    }
+
+    @SystemListener
+    public void onQueryNotification(IQueryEvent.INotification event) {
+
+        if (event instanceof QueryEvent.Notification.TargetClient) {
+            processTargetClient(((QueryEvent.TargetClient) event));
+
+        } else if (event instanceof QueryEvent.Notification.TargetChannel) {
+
+            processTargetChannel()
+        }
+    }
+
+    private void processTargetClient(QueryEvent.Notification.TargetClient event) {
+
+        if (event instanceof QueryEvent.Notification.TargetClient.ClientEnter) {
+            TS3Client client = new TS3Client();
+            client.copyFrom(event);
+            clientCache.put(client.getClientID(), client);
+        }
+
+        Optional<String> optClientID = event.getProperty("clid");
+        if (optClientID.isPresent()) {
+            Integer clientID = Integer.valueOf(optClientID.get());
+            TS3Client client = clientCache.getOrDefault(clientID, null);
+
+            if (client != null) {
+                event.setClient(client);
+                return;
+            }
+        }
+        throw new EventAbortException("Target/Client injection failed! Event aborted!");
+    }
+
+    private void processTargetChannel(QueryEvent.Notification.TargetChannel event) {
+
+        if (event instanceof QueryEvent.Notification.TargetChannel.ChannelCreate) {
+            String optName = event.getProperty("channel_name").get();
+            boolean isSpacer = TS3Spacer.spacerPattern.matcher(optName).matches();
+            TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
+            channel.copyFrom(event);
+            channelCache.put(channel.getID(), channel);
+        }
+
+        Optional<String> optChannelID = event.getProperty("cid");
+        if (optChannelID.isPresent()) {
+            Integer channelID = Integer.valueOf(optChannelID.get());
+            TS3Channel client = channelCache.getOrDefault(channelID, null);
+
+            if (client != null) {
+                event.setChannel(client);
+                return;
+            }
+        }
+        throw new EventAbortException("Target/Channel injection failed! Event aborted!");
     }
 
     /*

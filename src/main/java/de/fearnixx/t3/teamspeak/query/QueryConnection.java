@@ -2,6 +2,7 @@ package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.T3Bot;
+import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 
 import de.fearnixx.t3.service.event.IEventService;
@@ -33,7 +34,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public static final float REQ_DELAY = Main.getProperty("bot.connection.reqdelay", 0.25f);
 
     private ILogReceiver log;
-    private IEventService eventMgr;
+    private IEventService eventService;
+    private QueryNotifier notifier;
 
     private int reqDelay;
     private boolean terminated;
@@ -53,16 +55,16 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
     private Integer instanceID;
     private DataHolder whoami;
-    private int notifSubsciptions = 0;
     private int lastMessageHash = 0;
 
-    public QueryConnection(IEventService eventMgr, ILogReceiver log, Consumer<IQueryConnection> onClose) {
+    public QueryConnection(EventService eventService, ILogReceiver log, Consumer<IQueryConnection> onClose) {
         this.log = log;
         this.mySock = new Socket();
         this.reqQueue = new ArrayList<>();
         this.parser = new QueryParser();
-        this.eventMgr = eventMgr;
+        this.eventService = eventService;
         this.onClose = onClose;
+        this.notifier = new QueryNotifier(eventService);
     }
 
     public void setHost(String host, int port) {
@@ -215,8 +217,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
         if (!optMessage.isPresent())
             return;
-        RawQueryEvent.Message event = optMessage.get();
 
+        RawQueryEvent.Message event = optMessage.get();
+        notifier.processEvent(event);
+
+        // Send this to the listener after.
+        // This is to ensure system listeners have been executed
         if (event instanceof RawQueryEvent.Message.Answer) {
             if (currentRequest != null && currentRequest.onDone != null) {
                 currentRequest.onDone.accept(((RawQueryEvent.Message.Answer) event));

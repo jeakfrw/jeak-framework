@@ -82,6 +82,10 @@ public class EventService implements IEventService {
                 } catch (InterruptedException e) {
                     log.warning("Interrupted event: ", event.getClass().getSimpleName(), " ! Processed ", i + 1, " out of ", listeners.size(), e);
                     return;
+                } catch (EventAbortException abort) {
+                    // Event aborted!
+                    log.severe("An event has been aborted!", abort);
+                    return;
                 } catch (Throwable e) {
                     // Skip the invocation exception for readability
                     if (e.getCause() != null) e = e.getCause();

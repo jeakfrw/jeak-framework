@@ -2,6 +2,8 @@ package de.fearnixx.t3.event.query;
 
 import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.teamspeak.data.DataHolder;
+import de.fearnixx.t3.teamspeak.data.IChannel;
+import de.fearnixx.t3.teamspeak.data.IClient;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
@@ -69,7 +71,18 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         }
     }
 
-    public static abstract class TargetClient extends Notification {
+    public static abstract class TargetClient extends Notification implements INotification.ITargetClient {
+
+        private IClient client;
+
+        public void setClient(IClient client) {
+            this.client = client;
+        }
+
+        @Override
+        public IClient getTarget() {
+            return client;
+        }
     }
 
     public static class ClientLeave extends TargetClient {
@@ -84,7 +97,18 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
     public static class ClientTextMessage extends TargetClient {
     }
 
-    public static abstract class TargetChannel extends Notification {
+    public static abstract class TargetChannel extends Notification implements INotification.ITargetChannel {
+
+        private IChannel channel;
+
+        public void setChannel(IChannel channel) {
+            this.channel = channel;
+        }
+
+        @Override
+        public IChannel getTarget() {
+            return channel;
+        }
     }
 
     public static class ChannelEdit extends TargetChannel {

@@ -1,5 +1,7 @@
 package de.fearnixx.t3.event;
 
+import de.fearnixx.t3.teamspeak.data.IChannel;
+import de.fearnixx.t3.teamspeak.data.IClient;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
@@ -21,5 +23,27 @@ public interface IQueryEvent extends IEvent {
     }
 
     interface INotification extends IQueryEvent, IDataHolder{
+
+        interface ITargetClient extends INotification {
+
+            IClient getTarget();
+        }
+
+        interface ITargetChannel extends INotification {
+
+            IChannel getTarget();
+        }
+
+        interface ITargetServer extends INotification {
+        }
+
+        interface ClientTextMessage extends ITargetClient {
+        }
+
+        interface ChannelTextMessage extends ITargetChannel {
+        }
+
+        interface ServerTextMessage extends ITargetServer {
+        }
     }
 }
