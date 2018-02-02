@@ -1,13 +1,14 @@
 package de.fearnixx.t3;
 
 import de.fearnixx.t3.command.CommandService;
+import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.event.bot.BotStateEvent;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
-import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.plugin.PluginContainer;
 import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.fearnixx.t3.plugin.persistent.PluginRegistry;
-import de.fearnixx.t3.reflect.Inject;
+import de.fearnixx.t3.reflect.IInjectionService;
+import de.fearnixx.t3.reflect.InjectionManager;
 import de.fearnixx.t3.service.IServiceManager;
 import de.fearnixx.t3.service.ServiceManager;
 import de.fearnixx.t3.service.command.ICommandService;
@@ -17,15 +18,14 @@ import de.fearnixx.t3.task.TaskService;
 import de.fearnixx.t3.teamspeak.IServer;
 import de.fearnixx.t3.teamspeak.Server;
 import de.fearnixx.t3.teamspeak.cache.DataCache;
-import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
+import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.nio.charset.Charset;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -60,6 +60,7 @@ public class T3Bot implements Runnable,IBot {
     private ConfigNode config;
 
     private PluginManager pMgr;
+    private InjectionManager injectionManager;
     private Map<String, PluginContainer> plugins;
 
     private Server server;
@@ -67,7 +68,7 @@ public class T3Bot implements Runnable,IBot {
 
     private ServiceManager serviceManager;
     private EventService eventService;
-    private TaskService taskManager;
+    private TaskService taskService;
     private CommandService commandService;
 
     private final Object lock = new Object();
@@ -104,14 +105,32 @@ public class T3Bot implements Runnable,IBot {
         setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
         initCalled = true;
         plugins = new HashMap<>();
-        eventService = new EventService(log.getChild("EM"));
+
+        // Create services and register them
+        log.fine("Constructing services");
         serviceManager = new ServiceManager();
-        taskManager = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        eventService = new EventService(log.getChild("EM"));
+        taskService = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService(log.getChild("!CM"));
+        injectionManager = new InjectionManager(log, serviceManager);
+        injectionManager.setBaseDir(getDir());
+
+        serviceManager.registerService(IBot.class, this);
+        serviceManager.registerService(IServiceManager.class, serviceManager);
+        serviceManager.registerService(IEventService.class, eventService);
+        serviceManager.registerService(ITaskService.class, taskService);
+        serviceManager.registerService(ICommandService.class, commandService);
+        serviceManager.registerService(IInjectionService.class, injectionManager);
+
+        injectionManager.injectInto(serviceManager);
+        injectionManager.injectInto(eventService);
+        injectionManager.injectInto(taskService);
+        injectionManager.injectInto(commandService);
+
         eventService.registerListeners(commandService);
         server = new Server(eventService, log.getChild("SVR"));
 
-        taskManager.start();
+        taskService.start();
 
         pMgr.load(true);
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
@@ -158,8 +177,8 @@ public class T3Bot implements Runnable,IBot {
         }
 
         server.getConnection().setNickName(config.getNode("nick").optString(null));
-        dataCache = new DataCache(log.getChild("DC"), server.getConnection());
-        dataCache.scheduleTasks(taskManager);
+        dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
+        dataCache.scheduleTasks(taskService);
         log.info("Connected");
         eventService.fireEvent(new BotStateEvent.PostConnect().setBot(this));
     }
@@ -202,80 +221,7 @@ public class T3Bot implements Runnable,IBot {
             return false;
         }
 
-        final Object p = c.getPlugin();
-
-        try {
-            boolean a;
-            // Logging
-            log.finer("Injecting logReceivers");
-
-            for (Field f : c.getInjectionsFor(ILogReceiver.class)) {
-                log.finest("Injecting field ", f.getName());
-                Inject i = f.getAnnotation(Inject.class);
-                a = f.isAccessible();
-                f.setAccessible(true);
-                if (i.id().isEmpty()) {
-                    f.set(p, this.log.getChild(id));
-                } else {
-                    f.set(p, this.log.getChild(i.id()));
-                }
-                f.setAccessible(a);
-            }
-
-            // Configuration
-            log.finer("Injecting configs");
-            boolean confInjected = false;
-
-            for (Field f : c.getInjectionsFor(ConfigLoader.class)) {
-                log.finest("Injecting field ", f.getName());
-                Inject i = f.getAnnotation(Inject.class);
-                a = f.isAccessible();
-                f.setAccessible(true);
-
-                if (i.id().isEmpty()) {
-                    if (confInjected) {
-                        throw new IllegalStateException("Configuration has already been injected! Use custom IDs for multiple configs!");
-                    } else {
-                        File cf = new File(getDir(), "config/" + id + ".json");
-                        ConfigLoader cl = new JSONConfigLoader();
-                        cl.setEncoding(CHAR_ENCODING);
-                        cl.setFile(cf);
-                        f.set(p, cl);
-                        confInjected = true;
-                    }
-                } else {
-                    File cf = new File(getDir(), "config/" + id + "/" + i.id() + ".json");
-                    cf.getAbsoluteFile().getParentFile().mkdirs();
-                    ConfigLoader cl = new JSONConfigLoader();
-                    cl.setEncoding(CHAR_ENCODING);
-                    cl.setFile(cf);
-                    f.set(p, cl);
-                    confInjected = true;
-                }
-                f.setAccessible(a);
-            }
-
-            // Bot
-            log.finer("Injecting bot");
-            for (Field f : c.getInjectionsFor(IBot.class)) {
-                log.finest("Injecting field ", f.getName());
-                Inject i = f.getAnnotation(Inject.class);
-                a = f.isAccessible();
-                f.setAccessible(true);
-                if (i.id().isEmpty()) {
-                    f.set(p, this);
-                } else {
-                    f.set(p, this);
-                }
-                f.setAccessible(a);
-            }
-
-        } catch (Exception e) {
-            log.severe("Failed to run injections for: ", id, e);
-            c.setState(PluginContainer.State.FAILED);
-            return false;
-        }
-
+        injectionManager.injectInto(c.getPlugin(), id);
         eventService.addContainer(c.getListener());
         c.setState(PluginContainer.State.DONE);
         log.fine("Initialized plugin ", id);
@@ -393,8 +339,8 @@ public class T3Bot implements Runnable,IBot {
         return eventService;
     }
 
-    public ITaskService getTaskManager() {
-        return taskManager;
+    public ITaskService getTaskService() {
+        return taskService;
     }
 
     public ICommandService getCommandService() { return commandService; }
@@ -408,8 +354,9 @@ public class T3Bot implements Runnable,IBot {
     public void shutdown() {
         eventService.fireEvent(new BotStateEvent.PreShutdown().setBot(this));
         saveConfig();
-        taskManager.shutdown();
+        taskService.shutdown();
         commandService.shutdown();
+        dataCache.reset();
         server.shutdown();
         eventService.fireEvent(new BotStateEvent.PostShutdown().setBot(this));
         eventService.shutdown();

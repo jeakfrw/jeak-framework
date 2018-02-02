@@ -219,10 +219,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
             return;
 
         RawQueryEvent.Message event = optMessage.get();
-        notifier.processEvent(event);
-
-        // Send this to the listener after.
-        // This is to ensure system listeners have been executed
         if (event instanceof RawQueryEvent.Message.Answer) {
             if (currentRequest != null && currentRequest.onDone != null) {
                 currentRequest.onDone.accept(((RawQueryEvent.Message.Answer) event));
@@ -232,6 +228,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 currentRequest = null;
             }
         }
+        notifier.processEvent(event);
     }
 
     private void nextRequest() {

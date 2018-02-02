@@ -37,13 +37,22 @@ public interface IQueryEvent extends IEvent {
         interface ITargetServer extends INotification {
         }
 
-        interface ClientTextMessage extends ITargetClient {
+        interface IClientEnter extends ITargetClient {
         }
 
-        interface ChannelTextMessage extends ITargetChannel {
+        interface IClientLeave extends ITargetClient {
         }
 
-        interface ServerTextMessage extends ITargetServer {
+        interface IClientMoved extends ITargetClient {
+        }
+
+        interface IClientTextMessage extends ITargetClient {
+        }
+
+        interface IChannelTextMessage extends ITargetChannel {
+        }
+
+        interface IServerTextMessage extends ITargetServer {
         }
     }
 }

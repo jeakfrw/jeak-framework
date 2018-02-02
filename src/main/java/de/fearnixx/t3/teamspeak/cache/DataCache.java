@@ -3,9 +3,13 @@ package de.fearnixx.t3.teamspeak.cache;
 import de.fearnixx.t3.event.EventAbortException;
 import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent;
+import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.reflect.SystemListener;
+import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.service.task.ITask;
 import de.fearnixx.t3.task.TaskService;
+import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.*;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
@@ -13,6 +17,7 @@ import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,13 +32,15 @@ public class DataCache {
     private ILogReceiver logger;
 
     private IQueryConnection connection;
+    private IEventService eventService;
 
     private Map<Integer, TS3Client> clientCache;
     private Map<Integer, TS3Channel> channelCache;
 
-    public DataCache(ILogReceiver logger, IQueryConnection connection) {
+    public DataCache(ILogReceiver logger, IQueryConnection connection, IEventService eventService) {
         this.logger = logger;
         this.connection = connection;
+        this.eventService = eventService;
         clientCache = new ConcurrentHashMap<>(50);
         channelCache = new ConcurrentHashMap<>(60);
     }
@@ -53,9 +60,7 @@ public class DataCache {
     private final ITask clientListTask = ITask.builder()
                                               .name("t3server.clientRefresh")
                                               .interval(60L, TimeUnit.SECONDS)
-                                              .runnable(() -> {
-                                                  connection.sendRequest(clientListRequest);
-                                              })
+                                              .runnable(() -> connection.sendRequest(clientListRequest, this::onQueryMessage))
                                               .build();
 
     // == CHANNELLIST == //
@@ -70,9 +75,7 @@ public class DataCache {
     private final ITask channelListTask = ITask.builder()
                                                .name("t3server.channelrefresh")
                                                .interval(3L, TimeUnit.MINUTES)
-                                               .runnable(() -> {
-                                                   connection.sendRequest(channelListRequest);
-                                               })
+                                               .runnable(() -> connection.sendRequest(channelListRequest, this::onQueryMessage))
                                                .build();
 
     public void scheduleTasks(TaskService tm) {
@@ -81,7 +84,7 @@ public class DataCache {
     }
 
 
-    private void reset() {
+    public void reset() {
         synchronized (lock) {
             clientCache.forEach((clid, c) -> c.invalidate());
             clientCache.clear();
@@ -157,49 +160,46 @@ public class DataCache {
         throw new EventAbortException("Target/Channel injection failed! Event aborted!");
     }
 
-    /*
+
     @Listener
     public void onNotify(IQueryEvent.INotification event) {
 
-        if (event instanceof IQueryEvent.INotification.IClientMoved) {
+        if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation
             synchronized (lock) {
-                for (IQueryMessageObject msgObj : event.getObjects()) {
-                    Integer clientID = Integer.parseInt(msgObj.getProperty("clid").orElse("-1"));
-                    TS3Client client = clientCache.getOrDefault(clientID, null);
-                    if (client == null)
-                        continue;
+                IClient iClient = ((IQueryEvent.INotification.IClientMoved) event).getTarget();
+                Integer clientID = iClient.getClientID();
+                TS3Client client = clientCache.getOrDefault(clientID, null);
+                if (client == null)
+                    return;
 
-                    TS3Channel fromChannel = channelCache.getOrDefault(client.getChannelID(), null);
-                    TS3Channel toChannel = channelCache.getOrDefault(
-                    Integer.parseInt(msgObj.getProperty("ctid").get())
-                    , null);
-                    if (fromChannel == null || toChannel == null || fromChannel == toChannel)
-                        continue;
+                TS3Channel fromChannel = channelCache.getOrDefault(client.getChannelID(), null);
+                TS3Channel toChannel = channelCache.getOrDefault(Integer.parseInt(event.getProperty("ctid").get()), null);
+                if (fromChannel == null || toChannel == null || fromChannel == toChannel)
+                    return;
 
-
-                    // Set new channel
-                    client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannel.getID().toString());
-                    // Set new client count - FROM
-                    fromChannel.setProperty(
-                    PropertyKeys.Channel.CLIENT_COUNT,
-                    Integer.valueOf(fromChannel.getClientCount() - 1).toString());
-                    fromChannel.setProperty(
-                    PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
-                    Integer.valueOf(fromChannel.getClientCount() - 1).toString());
-                    // Set new client count - TO
-                    toChannel.setProperty(
-                    PropertyKeys.Channel.CLIENT_COUNT,
-                    Integer.valueOf(toChannel.getClientCount() + 1).toString());
-                    toChannel.setProperty(
-                    PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
-                    Integer.valueOf(toChannel.getClientCount() + 1).toString());
-                }
+                // Set new channel
+                client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannel.getID().toString());
+                // Set new client count - FROM
+                fromChannel.setProperty(
+                PropertyKeys.Channel.CLIENT_COUNT,
+                Integer.valueOf(fromChannel.getClientCount() - 1).toString());
+                fromChannel.setProperty(
+                PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
+                Integer.valueOf(fromChannel.getClientCount() - 1).toString());
+                // Set new client count - TO
+                toChannel.setProperty(
+                PropertyKeys.Channel.CLIENT_COUNT,
+                Integer.valueOf(toChannel.getClientCount() + 1).toString());
+                toChannel.setProperty(
+                PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
+                Integer.valueOf(toChannel.getClientCount() + 1).toString());
             }
-        } else if (event instanceof IQueryEvent.INotification.IClientLeftView) {
+
+        } else if (event instanceof IQueryEvent.INotification.IClientLeave) {
             // Client has left - Apply to representation
             synchronized (lock) {
-                Integer clientID = Integer.parseInt(event.getObjects().get(0).getProperty("clid").get());
+                Integer clientID = Integer.parseInt(event.getProperty("clid").get());
                 TS3Client client = clientCache.getOrDefault(clientID, null);
                 if (client == null)
                     return;
@@ -210,21 +210,20 @@ public class DataCache {
     }
 
 
-    @Listener
     public void onQueryMessage(RawQueryEvent.Message.Answer event) {
         if (event.getError().getCode() != 0)
             return;
         if (event.getRequest() == clientListRequest) {
-            List<IQueryMessageObject> objects = event.getObjects();
+            List<RawQueryEvent.Message> objects = event.toList();
             // Just a lock to be used when the new or old mapping is accessed
             final Object tempLock = new Object();
             final Map<Integer, TS3Client> newMap = new HashMap<>(objects.size(), 1.1f);
             synchronized (lock) {
-                objects.parallelStream().forEach(o -> {
+                objects.parallelStream().forEach(message -> {
                     try {
-                        Integer cid = Integer.parseInt(o.getProperty(PropertyKeys.Client.ID).orElse("-1"));
+                        Integer cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
                         if (cid == -1) {
-                            log.warning("Skipping a client due to invalid ID");
+                            logger.warning("Skipping a client due to invalid ID");
                             return;
                         }
                         TS3Client c;
@@ -234,16 +233,16 @@ public class DataCache {
                         if (c == null) {
                             // Client is new - New reference
                             c = new TS3Client();
-                            c.copyFrom(o);
+                            c.copyFrom(message);
                         } else {
                             // Client not new - Update values
-                            c.copyFrom(o);
+                            c.copyFrom(message);
                         }
                         synchronized (tempLock) {
                             newMap.put(cid, c);
                         }
                     } catch (Exception e) {
-                        log.warning("Failed to parse a client", e);
+                        logger.warning("Failed to parse a client", e);
                     }
                 });
                 TS3Client o;
@@ -269,20 +268,23 @@ public class DataCache {
                 newMap.clear();
             }
 
-            log.finer("Clientlist updated");
-            eventService.fireEvent(new TS3ServerEvent.DataEvent.ClientsUpdated(TS3Server.this));
+            logger.finer("Clientlist updated");
+            QueryEvent refresh = new QueryEvent.DataEvent.RefreshClients();
+            refresh.setConnection(event.getConnection());
+            eventService.fireEvent(refresh);
 
         } else if (event.getRequest() == channelListRequest) {
-            List<IQueryMessageObject> objects = event.getObjects();
+
+            List<RawQueryEvent.Message> messages = event.toList();
             // Just a lock to be used when the new or old mapping is accessed
             final Object tempLock = new Object();
-            final Map<Integer, TS3Channel> newMap = new HashMap<>(objects.size(), 1.1f);
+            final Map<Integer, TS3Channel> newMap = new HashMap<>(messages.size(), 1.1f);
             synchronized (lock) {
-                objects.parallelStream().forEach(o -> {
+                messages.parallelStream().forEach(o -> {
                     try {
                         Integer cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
                         if (cid == -1) {
-                            log.warning("Skipping a channel due to invalid channel ID");
+                            logger.warning("Skipping a channel due to invalid channel ID");
                             return;
                         }
                         TS3Channel c;
@@ -296,7 +298,7 @@ public class DataCache {
                         } else {
                             String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
                             if (nName == null) {
-                                log.warning("Skipping a channel due to missing name");
+                                logger.warning("Skipping a channel due to missing name");
                                 return;
                             }
                             boolean wasSpacer = c.isSpacer();
@@ -317,7 +319,7 @@ public class DataCache {
                             newMap.put(cid, c);
                         }
                     } catch (Exception e) {
-                        log.warning("Failed to parse a channel", e);
+                        logger.warning("Failed to parse a channel", e);
                     }
                 });
                 TS3Channel o;
@@ -353,7 +355,7 @@ public class DataCache {
                     if (pid == 0) return;
                     TS3Channel parent = channelCache.getOrDefault(pid, null);
                     if (parent == null) {
-                        log.warning("Channel", cid, "has nonexistent parent", c.getParent());
+                        logger.warning("Channel", cid, "has nonexistent parent", c.getParent());
                         return;
                     }
                     parent.addSubChannel(c);
@@ -361,9 +363,10 @@ public class DataCache {
             }
             newMap.clear();
 
-            log.finer("Channellist updated");
-            eventService.fireEvent(new TS3ServerEvent.DataEvent.ChannelsUpdated(TS3Server.this));
+            logger.finer("Channellist updated");
+            QueryEvent refresh = new QueryEvent.DataEvent.RefreshChannels();
+            refresh.setConnection(event.getConnection());
+            eventService.fireEvent(refresh);
         }
     }
-    */
 }

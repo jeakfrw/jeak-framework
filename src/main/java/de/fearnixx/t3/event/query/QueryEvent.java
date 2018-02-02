@@ -27,6 +27,17 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         this.connection = connection;
     }
 
+    public static abstract class DataEvent extends QueryEvent {
+
+        public static class RefreshClients extends DataEvent {
+
+        }
+
+        public static class RefreshChannels extends DataEvent {
+
+        }
+    }
+
     public static class Answer extends QueryEvent implements IQueryEvent.IAnswer {
 
         private IQueryRequest request;
