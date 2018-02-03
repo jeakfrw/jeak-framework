@@ -10,4 +10,4 @@
 	url = git@gitlab.com:fearnixxgaming/t3sb_support.git
 [submodule "plugins/admintools"]
 	path = plugins/admintools
-	url = git@gitlab.com:fearnixxgaming/admintools.git
+	url = git@gitlab.com:fearnixxgaming/t3sb_admintools
