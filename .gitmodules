@@ -1,13 +1,12 @@
-[submodule "plugins/channelmgmt"]
-	path = plugins/channelmgmt
-	url = git@gitlab.com:fearnixxgaming/t3sb_channelmgmt.git
-	branch = bleeding
-[submodule "plugins/t3sb_afkmove"]
-	path = plugins/t3sb_afkmove
-	url = git@gitlab.com:fearnixxgaming/t3sb_afkmove
-[submodule "plugins/t3sb_support"]
-	path = plugins/t3sb_support
-	url = git@gitlab.com:fearnixxgaming/t3sb_support.git
 [submodule "plugins/admintools"]
 	path = plugins/admintools
 	url = git@gitlab.com:fearnixxgaming/t3sb_admintools
+[submodule "plugins/support"]
+	path = plugins/support
+	url = git@gitlab.com:fearnixxgaming/t3sb_support
+[submodule "plugins/afkmove"]
+	path = plugins/afkmove
+	url = git@gitlab.com:fearnixxgaming/t3sb_afkmove
+[submodule "plugins/channelmgmt"]
+	path = plugins/schannelmgmt
+	url = git@gitlab.com:fearnixxgaming/t3sb_channelmgmt
