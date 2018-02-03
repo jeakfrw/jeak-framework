@@ -160,7 +160,6 @@ public class DataCache {
         throw new EventAbortException("Target/Channel injection failed! Event aborted!");
     }
 
-
     @Listener
     public void onNotify(IQueryEvent.INotification event) {
 
@@ -223,7 +222,7 @@ public class DataCache {
                     try {
                         Integer cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
                         if (cid == -1) {
-                            logger.warning("Skipping a client due to invalid ID");
+                            logger.warning("Skipping a client due to invalid ID: ", message.getProperty(PropertyKeys.Client.ID).orElse("null"));
                             return;
                         }
                         TS3Client c;

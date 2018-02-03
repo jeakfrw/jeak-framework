@@ -28,7 +28,7 @@ public class EventListener {
     }
 
     public EventListener(ILogReceiver log, Class<? extends Annotation> annotation, Object o) {
-        log.finer("Analyzing object of class: ", o.getClass().toGenericString());
+        log.finer("Analyzing object of class: ", o.getClass().toGenericString(), " for annotation ", annotation.toString());
         this.victim = o;
         listeners = new ArrayList<>();
 
@@ -52,7 +52,7 @@ public class EventListener {
     }
 
     public boolean hasAny() {
-        return !mappedListeners.isEmpty();
+        return !listeners.isEmpty();
     }
 
     public Object getVictim() {

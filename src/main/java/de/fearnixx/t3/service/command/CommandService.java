@@ -1,9 +1,7 @@
-package de.fearnixx.t3.command;
+package de.fearnixx.t3.service.command;
 
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.reflect.Listener;
-import de.fearnixx.t3.service.command.ICommandService;
-import de.fearnixx.t3.service.command.ICommandReceiver;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.util.*;

@@ -1,6 +1,5 @@
 package de.fearnixx.t3;
 
-import de.fearnixx.t3.command.CommandService;
 import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.event.bot.BotStateEvent;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
@@ -11,6 +10,7 @@ import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.InjectionManager;
 import de.fearnixx.t3.service.IServiceManager;
 import de.fearnixx.t3.service.ServiceManager;
+import de.fearnixx.t3.service.command.CommandService;
 import de.fearnixx.t3.service.command.ICommandService;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.service.task.ITaskService;
@@ -114,6 +114,7 @@ public class T3Bot implements Runnable,IBot {
         commandService = new CommandService(log.getChild("!CM"));
         injectionManager = new InjectionManager(log, serviceManager);
         injectionManager.setBaseDir(getDir());
+        server = new Server(eventService, log.getChild("SVR"));
 
         serviceManager.registerService(IBot.class, this);
         serviceManager.registerService(IServiceManager.class, serviceManager);
@@ -121,14 +122,13 @@ public class T3Bot implements Runnable,IBot {
         serviceManager.registerService(ITaskService.class, taskService);
         serviceManager.registerService(ICommandService.class, commandService);
         serviceManager.registerService(IInjectionService.class, injectionManager);
+        serviceManager.registerService(IServer.class, server);
 
         injectionManager.injectInto(serviceManager);
         injectionManager.injectInto(eventService);
         injectionManager.injectInto(taskService);
         injectionManager.injectInto(commandService);
-
-        eventService.registerListeners(commandService);
-        server = new Server(eventService, log.getChild("SVR"));
+        injectionManager.injectInto(server);
 
         taskService.start();
 
@@ -179,6 +179,10 @@ public class T3Bot implements Runnable,IBot {
         server.getConnection().setNickName(config.getNode("nick").optString(null));
         dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
         dataCache.scheduleTasks(taskService);
+
+        eventService.registerListeners(commandService);
+        eventService.registerListener(dataCache);
+
         log.info("Connected");
         eventService.fireEvent(new BotStateEvent.PostConnect().setBot(this));
     }

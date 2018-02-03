@@ -79,10 +79,11 @@ public class QueryParser {
                 workingFirst = message;
                 workingMessage = message;
             } else {
-                if (currentFirst == null)
+                if (currentFirst == null) {
                     currentFirst = new Message.Answer(currentRequest.request);
+                }
                 workingFirst = currentFirst;
-                workingMessage = new Message.Answer(currentRequest.request);
+                workingMessage = workingFirst;
             }
 
             // Reference to last message in the current chain
