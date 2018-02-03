@@ -1,5 +1,7 @@
 package de.fearnixx.t3.service.command;
 
+import de.fearnixx.t3.event.IQueryEvent;
+
 public interface ICommandReceiver {
 
     /**
@@ -11,7 +13,7 @@ public interface ICommandReceiver {
      * Commands must start with "!" in order to be received.
      * CommandReceivers only receive the commands they are registered for.
      *
-     * @param message The message which shall be interpreted as a command
+     * @param event The message which shall be interpreted as a command
      */
-    void receive();
+    void receive(IQueryEvent.INotification.ITextMessage event);
 }

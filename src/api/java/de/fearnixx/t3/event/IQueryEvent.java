@@ -46,13 +46,16 @@ public interface IQueryEvent extends IEvent {
         interface IClientMoved extends ITargetClient {
         }
 
-        interface IClientTextMessage extends ITargetClient {
+        interface ITextMessage extends INotification {
         }
 
-        interface IChannelTextMessage extends ITargetChannel {
+        interface IClientTextMessage extends ITextMessage,ITargetClient {
         }
 
-        interface IServerTextMessage extends ITargetServer {
+        interface IChannelTextMessage extends ITextMessage,ITargetChannel{
+        }
+
+        interface IServerTextMessage extends ITextMessage,ITargetServer {
         }
     }
 }

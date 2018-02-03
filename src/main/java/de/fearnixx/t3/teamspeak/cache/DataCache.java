@@ -17,17 +17,14 @@ import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.mlessmann.logging.ILogReceiver;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 28-Jan-18
  */
-public class DataCache {
+public class DataCache implements IDataCache {
 
     private final Object lock = new Object();
     private ILogReceiver logger;
@@ -94,15 +91,27 @@ public class DataCache {
         }
     }
 
-    public Map<Integer, IClient> getClients() {
+    public Map<Integer, IClient> getClientMap() {
         synchronized (lock) {
             return new HashMap<>(clientCache);
         }
     }
 
-    public Map<Integer, IChannel> getChannels() {
+    public Map<Integer, IChannel> getChannelMap() {
         synchronized (lock) {
             return new HashMap<>(channelCache);
+        }
+    }
+
+    public List<IClient> getClients() {
+        synchronized (lock) {
+            return new ArrayList<>(clientCache.values());
+        }
+    }
+
+    public List<IChannel> getChannels() {
+        synchronized (lock) {
+            return new ArrayList<>(channelCache.values());
         }
     }
 

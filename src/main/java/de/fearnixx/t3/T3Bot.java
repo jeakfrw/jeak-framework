@@ -18,6 +18,7 @@ import de.fearnixx.t3.task.TaskService;
 import de.fearnixx.t3.teamspeak.IServer;
 import de.fearnixx.t3.teamspeak.Server;
 import de.fearnixx.t3.teamspeak.cache.DataCache;
+import de.fearnixx.t3.teamspeak.cache.IDataCache;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
 import de.mlessmann.config.ConfigNode;
@@ -354,6 +355,11 @@ public class T3Bot implements Runnable,IBot {
 
     public IServer getServer() {
         return server;
+    }
+
+    @Override
+    public IDataCache getDataCache() {
+        return dataCache;
     }
 
     // * * * RUNTIME * * * //

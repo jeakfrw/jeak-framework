@@ -10,6 +10,7 @@ import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.DataHolder;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
+import de.fearnixx.t3.teamspeak.query.except.QueryException;
 import de.fearnixx.t3.teamspeak.query.except.QueryParseException;
 import de.mlessmann.logging.ANSIColors;
 import de.mlessmann.logging.ILogReceiver;
@@ -229,7 +230,11 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 currentRequest = null;
             }
         }
-        notifier.processEvent(event);
+        try {
+            notifier.processEvent(event);
+        } catch (QueryException e) {
+            log.severe("Got an exception while processing a message!", e);
+        }
     }
 
     private void nextRequest() {

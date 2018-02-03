@@ -3,6 +3,7 @@ package de.fearnixx.t3.teamspeak.query;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.event.EventService;
+import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.except.QueryException;
 
@@ -52,6 +53,14 @@ public class QueryNotifier {
                 case "channeldelete":
                     notification = new QueryEvent.ChannelDelete();
                     break;
+                case "textmessage":
+                    Integer mode = Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
+                    switch (mode) {
+                        case 1: notification = new QueryEvent.ClientTextMessage();
+                        case 2: notification = new QueryEvent.ChannelTextMessage();
+                        case 3: notification = new QueryEvent.ServerTextMessage();
+                        default: throw new QueryException("Unknown message targetMode: " + mode);
+                    }
                 default:
                     throw new QueryException("Unknown event: " + caption);
             }

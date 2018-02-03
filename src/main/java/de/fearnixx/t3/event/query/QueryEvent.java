@@ -105,7 +105,7 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
     public static class ClientMove extends TargetClient {
     }
 
-    public static class ClientTextMessage extends TargetClient {
+    public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {
     }
 
     public static abstract class TargetChannel extends Notification implements INotification.ITargetChannel {
@@ -131,12 +131,12 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
     public static class ChannelCreate extends TargetChannel {
     }
 
-    public static class ChannelTextMessage extends TargetChannel {
+    public static class ChannelTextMessage extends TargetChannel implements IQueryEvent.INotification.IChannelTextMessage {
     }
 
     public static abstract class TargetServer extends Notification {
     }
 
-    public static class ServerTextMessage extends TargetServer {
+    public static class ServerTextMessage extends TargetServer implements IQueryEvent.INotification.IServerTextMessage {
     }
 }
