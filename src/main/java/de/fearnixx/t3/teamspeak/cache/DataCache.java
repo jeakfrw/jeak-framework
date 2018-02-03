@@ -2,6 +2,7 @@ package de.fearnixx.t3.teamspeak.cache;
 
 import de.fearnixx.t3.event.EventAbortException;
 import de.fearnixx.t3.event.IQueryEvent;
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.reflect.Listener;
@@ -209,11 +210,11 @@ public class DataCache {
     }
 
 
-    public void onQueryMessage(RawQueryEvent.Message.Answer event) {
+    public void onQueryMessage(IRawQueryEvent.IMessage.IAnswer event) {
         if (event.getError().getCode() != 0)
             return;
         if (event.getRequest() == clientListRequest) {
-            List<RawQueryEvent.Message> objects = event.toList();
+            List<IRawQueryEvent.IMessage> objects = event.toList();
             // Just a lock to be used when the new or old mapping is accessed
             final Object tempLock = new Object();
             final Map<Integer, TS3Client> newMap = new HashMap<>(objects.size(), 1.1f);
@@ -269,12 +270,12 @@ public class DataCache {
 
             logger.finer("Clientlist updated");
             QueryEvent refresh = new QueryEvent.DataEvent.RefreshClients();
-            refresh.setConnection(event.getConnection());
+            refresh.setConnection(((QueryConnection) event.getConnection()));
             eventService.fireEvent(refresh);
 
         } else if (event.getRequest() == channelListRequest) {
 
-            List<RawQueryEvent.Message> messages = event.toList();
+            List<IRawQueryEvent.IMessage> messages = event.toList();
             // Just a lock to be used when the new or old mapping is accessed
             final Object tempLock = new Object();
             final Map<Integer, TS3Channel> newMap = new HashMap<>(messages.size(), 1.1f);
@@ -364,7 +365,7 @@ public class DataCache {
 
             logger.finer("Channellist updated");
             QueryEvent refresh = new QueryEvent.DataEvent.RefreshChannels();
-            refresh.setConnection(event.getConnection());
+            refresh.setConnection(((QueryConnection) event.getConnection()));
             eventService.fireEvent(refresh);
         }
     }

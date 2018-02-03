@@ -3,6 +3,7 @@ package de.fearnixx.t3.teamspeak.query;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.T3Bot;
 import de.fearnixx.t3.event.EventService;
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 
 import de.fearnixx.t3.service.event.IEventService;
@@ -54,7 +55,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private QueryParser parser;
 
     private Integer instanceID;
-    private DataHolder whoami;
+    private IDataHolder whoami;
     private int lastMessageHash = 0;
 
     public QueryConnection(EventService eventService, ILogReceiver log, Consumer<IQueryConnection> onClose) {
@@ -324,7 +325,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     /* Interaction */
 
     @Override
-    public void sendRequest(IQueryRequest request, Consumer<RawQueryEvent.Message.Answer> onDone) {
+    public void sendRequest(IQueryRequest request, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone) {
         RequestContainer c = new RequestContainer();
         c.request = request;
         c.onDone = onDone;
@@ -360,7 +361,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                                             .command("whoami")
                                             .build();
         // Wait for and lock receiver to prevent commands from returning too early
-        final Map<Integer, RawQueryEvent.Message.Answer> map = new ConcurrentHashMap<>(4);
+        final Map<Integer, IRawQueryEvent.IMessage.IAnswer> map = new ConcurrentHashMap<>(4);
         synchronized (mySock) {
             sendRequest(use, r -> map.put(0, r));
             sendRequest(login, r -> map.put(1, r));
@@ -376,9 +377,9 @@ public class QueryConnection extends Thread implements IQueryConnection {
             log.severe("Login attempt interrupted - Failed");
             return false;
         }
-        RawQueryEvent.Message.Answer rUse = map.get(0);
-        RawQueryEvent.Message.Answer rLogin = map.get(1);
-        RawQueryEvent.Message.Answer rWhoAmI = map.get(2);
+        IRawQueryEvent.IMessage.IAnswer rUse = map.get(0);
+        IRawQueryEvent.IMessage.IAnswer rLogin = map.get(1);
+        IRawQueryEvent.IMessage.IAnswer rWhoAmI = map.get(2);
         this.whoami = rWhoAmI;
         boolean success = true;
         if (rUse.getError().getCode() != 0) {

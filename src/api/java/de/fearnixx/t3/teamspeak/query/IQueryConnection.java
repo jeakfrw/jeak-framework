@@ -1,6 +1,6 @@
 package de.fearnixx.t3.teamspeak.query;
 
-import de.fearnixx.t3.event.query.RawQueryEvent;
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 
 import java.util.concurrent.Future;
@@ -56,7 +56,7 @@ public interface IQueryConnection {
      * @param req The request
      * @param onDone The callback consumer
      */
-    void sendRequest(IQueryRequest req, Consumer<RawQueryEvent.Message.Answer> onDone);
+    void sendRequest(IQueryRequest req, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone);
 
     /**
      * Send a request
@@ -64,5 +64,5 @@ public interface IQueryConnection {
      * This queues the request and sends it when possible.
      * The callback will be called when a full answer has been received
      */
-    Future<RawQueryEvent.Message.Answer> promiseRequest(IQueryRequest request);
+    Future<IRawQueryEvent.IMessage.IAnswer> promiseRequest(IQueryRequest request);
 }

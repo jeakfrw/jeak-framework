@@ -22,7 +22,7 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
         return connection;
     }
 
-    public static abstract class Message extends RawQueryEvent {
+    public static abstract class Message extends RawQueryEvent implements IRawQueryEvent.IMessage {
 
         private String command;
         protected ErrorMessage error;
@@ -54,8 +54,8 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
             return next != this ? next : null;
         }
 
-        public List<Message> toList() {
-            List<Message> msgs = new ArrayList<>();
+        public List<IMessage> toList() {
+            List<IMessage> msgs = new ArrayList<>();
             Message msg = this;
             do {
                 msgs.add(msg);
@@ -69,11 +69,11 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
                 getNext().setError(message);
         }
 
-        public ErrorMessage getError() {
+        public IErrorMessage getError() {
             return error;
         }
 
-        public static class Answer extends Message {
+        public static class Answer extends Message implements IRawQueryEvent.IMessage.IAnswer {
 
             private IQueryRequest request;
 
@@ -86,7 +86,7 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
             }
         }
 
-        public static class Notification extends Message {
+        public static class Notification extends Message implements IRawQueryEvent.IMessage.INotification {
 
             private String caption;
 
@@ -104,7 +104,7 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
         }
     }
 
-    public static class ErrorMessage extends Message.Answer {
+    public static class ErrorMessage extends Message.Answer implements IRawQueryEvent.IMessage.IErrorMessage {
 
         public static ErrorMessage OK() {
             ErrorMessage m = new ErrorMessage(null);
