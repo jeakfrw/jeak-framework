@@ -27,14 +27,12 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         this.connection = connection;
     }
 
-    public static abstract class DataEvent extends QueryEvent {
+    public static abstract class DataEvent extends QueryEvent implements IDataEvent {
 
-        public static class RefreshClients extends DataEvent {
-
+        public static class RefreshClients extends DataEvent implements IRefreshClients {
         }
 
-        public static class RefreshChannels extends DataEvent {
-
+        public static class RefreshChannels extends DataEvent implements IRefreshChannels {
         }
     }
 
@@ -96,13 +94,13 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         }
     }
 
-    public static class ClientLeave extends TargetClient {
+    public static class ClientLeave extends TargetClient implements IQueryEvent.INotification.IClientLeave {
     }
 
-    public static class ClientEnter extends TargetClient {
+    public static class ClientEnter extends TargetClient implements IQueryEvent.INotification.IClientEnter {
     }
 
-    public static class ClientMove extends TargetClient {
+    public static class ClientMoved extends TargetClient implements IQueryEvent.INotification.IClientMoved {
     }
 
     public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {

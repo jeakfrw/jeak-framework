@@ -127,14 +127,17 @@ public class DataCache implements IDataCache {
     }
 
     private void processTargetClient(QueryEvent.Notification.TargetClient event) {
-
         if (event instanceof QueryEvent.Notification.TargetClient.ClientEnter) {
             TS3Client client = new TS3Client();
             client.copyFrom(event);
             clientCache.put(client.getClientID(), client);
         }
 
-        Optional<String> optClientID = event.getProperty(PropertyKeys.Client.ID);
+        String targetPropertyName = PropertyKeys.Client.ID;
+        if (event instanceof IQueryEvent.INotification.ITextMessage)
+            targetPropertyName = PropertyKeys.TextMessage.TARGET_ID;
+
+        Optional<String> optClientID = event.getProperty(targetPropertyName);
         if (optClientID.isPresent()) {
             Integer clientID = Integer.valueOf(optClientID.get());
             TS3Client client = clientCache.getOrDefault(clientID, null);
@@ -148,7 +151,6 @@ public class DataCache implements IDataCache {
     }
 
     private void processTargetChannel(QueryEvent.Notification.TargetChannel event) {
-
         if (event instanceof QueryEvent.Notification.TargetChannel.ChannelCreate) {
             String optName = event.getProperty("channel_name").get();
             boolean isSpacer = TS3Spacer.spacerPattern.matcher(optName).matches();
@@ -172,7 +174,6 @@ public class DataCache implements IDataCache {
 
     @Listener
     public void onNotify(IQueryEvent.INotification event) {
-
         if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation
             synchronized (lock) {
@@ -228,7 +229,7 @@ public class DataCache implements IDataCache {
             final Object tempLock = new Object();
             final Map<Integer, TS3Client> newMap = new HashMap<>(objects.size(), 1.1f);
             synchronized (lock) {
-                objects.parallelStream().forEach(message -> {
+                objects.stream().forEach(message -> {
                     try {
                         Integer cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
                         if (cid == -1) {

@@ -11,4 +11,6 @@ public interface IBot {
     IServer getServer();
 
     IDataCache getDataCache();
+
+    void shutdown();
 }

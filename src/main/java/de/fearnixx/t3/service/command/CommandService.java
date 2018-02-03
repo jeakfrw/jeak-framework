@@ -1,7 +1,9 @@
 package de.fearnixx.t3.service.command;
 
 import de.fearnixx.t3.Main;
+import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.reflect.Listener;
+import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.util.*;
@@ -41,9 +43,9 @@ public class CommandService implements ICommandService {
      * @param event The event
      */
     @Listener
-    public void onTextMessage() {
+    public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
         if (terminated) return;
-        String msg = "";//event.getChatMessage().getMessage();
+        String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse("");//event.getChatMessage().getMessage();
         if (msg.startsWith(COMMAND_PREFIX)) {
 
             // Strip the command starter
@@ -62,7 +64,7 @@ public class CommandService implements ICommandService {
                 }
                 executorSvc.execute(() -> {
                     log.finer("Executing command receiver");
-                    //receivers.forEach(r -> r.receive());
+                    receivers.forEach(r -> r.receive(event));
                 });
             }
         }

@@ -15,6 +15,15 @@ public interface IQueryEvent extends IEvent {
 
     IQueryConnection getConnection();
 
+    interface IDataEvent extends IQueryEvent {
+
+        interface IRefreshClients extends IDataEvent {
+        }
+
+        interface IRefreshChannels extends IDataEvent {
+        }
+    }
+
     interface IAnswer extends IQueryEvent {
 
         IQueryRequest getRequest();

@@ -46,7 +46,7 @@ public class CommandLine implements Runnable {
                         }
                     }
                     Thread.sleep(100);
-                } while (in.available() <= 0);
+                } while (in.available() <= 0 && !terminated);
                 if (in.read(cc) == -1) {
                     log.severe("Commandline reached EOS");
                     synchronized (lock) {

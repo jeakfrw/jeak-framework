@@ -232,6 +232,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
             return;
 
         RawQueryEvent.Message event = optMessage.get();
+        event.setConnection(this);
         if (event instanceof RawQueryEvent.Message.Answer) {
             if (currentRequest != null && currentRequest.onDone != null) {
                 currentRequest.onDone.accept(((RawQueryEvent.Message.Answer) event));

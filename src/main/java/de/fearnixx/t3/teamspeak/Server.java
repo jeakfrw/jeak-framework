@@ -72,7 +72,9 @@ public class Server implements IServer {
     }
 
     public void shutdown() {
-        mainConnection.kill();
+        if (host != null) {
+            mainConnection.kill();
+        }
     }
 
     /* * * MISC * * */

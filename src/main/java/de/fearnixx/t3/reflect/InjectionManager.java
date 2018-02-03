@@ -109,14 +109,16 @@ public class InjectionManager implements IInjectionService {
             value = ((ILogReceiver) value).getChild(id);
 
         } else if (clazz.isAssignableFrom(ConfigLoader.class)) {
-            id = genID(id);
+            //id = genID(id);
+            if (id == null)
+                throw new IllegalArgumentException("Config not allowed without ID");
             File jsonFile;
             if (prependID == null || prependID.trim().isEmpty()) {
                 jsonFile = new File(baseDir, "config/" + id + ".json");
             } else {
                 File subDir = new File(baseDir, "config/" + prependID);
                 subDir.mkdirs();
-                jsonFile = new File(subDir, id);
+                jsonFile = new File(subDir, id + ".json");
             }
             value = new JSONConfigLoader();
             ((JSONConfigLoader) value).setEncoding(CHAR_ENCODING);

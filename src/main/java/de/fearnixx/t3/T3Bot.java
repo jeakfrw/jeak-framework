@@ -116,6 +116,7 @@ public class T3Bot implements Runnable,IBot {
         injectionManager = new InjectionManager(log, serviceManager);
         injectionManager.setBaseDir(getDir());
         server = new Server(eventService, log.getChild("SVR"));
+        dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
 
         serviceManager.registerService(IBot.class, this);
         serviceManager.registerService(IServiceManager.class, serviceManager);
@@ -124,6 +125,7 @@ public class T3Bot implements Runnable,IBot {
         serviceManager.registerService(ICommandService.class, commandService);
         serviceManager.registerService(IInjectionService.class, injectionManager);
         serviceManager.registerService(IServer.class, server);
+        serviceManager.registerService(IDataCache.class, dataCache);
 
         injectionManager.injectInto(serviceManager);
         injectionManager.injectInto(eventService);
@@ -178,7 +180,6 @@ public class T3Bot implements Runnable,IBot {
         }
 
         server.getConnection().setNickName(config.getNode("nick").optString(null));
-        dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
         dataCache.scheduleTasks(taskService);
 
         eventService.registerListeners(commandService);

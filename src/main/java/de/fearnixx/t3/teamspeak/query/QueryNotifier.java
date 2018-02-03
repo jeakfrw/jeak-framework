@@ -2,7 +2,6 @@ package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
-import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
@@ -13,7 +12,6 @@ import de.mlessmann.logging.ILogReceiver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by MarkL4YG on 28-Jan-18
@@ -39,11 +37,7 @@ public class QueryNotifier {
             QueryEvent.Notification notification;
             String caption = rawNotification.getCaption().toLowerCase();
 
-            if (hashCode.equals(lastHash)) {
-                logger.finer("Dropping duplicate ", caption);
-                return;
-            }
-            lastHash = hashCode;
+            boolean checkHash = true;
 
             switch (caption) {
                 case "cliententerview":
@@ -53,7 +47,7 @@ public class QueryNotifier {
                     notification = new QueryEvent.ClientLeave();
                     break;
                 case "clientmoved":
-                    notification = new QueryEvent.ClientMove();
+                    notification = new QueryEvent.ClientMoved();
                     break;
                 case "channelcreate":
                     notification = new QueryEvent.ChannelCreate();
@@ -65,6 +59,7 @@ public class QueryNotifier {
                     notification = new QueryEvent.ChannelDelete();
                     break;
                 case "textmessage":
+                    checkHash = false;
                     Integer mode = Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
                     switch (mode) {
                         case 1: notification = new QueryEvent.ClientTextMessage(); break;
@@ -76,6 +71,12 @@ public class QueryNotifier {
                 default:
                     throw new QueryException("Unknown event: " + caption);
             }
+
+            if (checkHash && hashCode.equals(lastHash)) {
+                logger.finer("Dropping duplicate ", caption);
+                return;
+            }
+            lastHash = hashCode;
 
             notification.setConnection(event.getConnection());
             notification.setCaption(caption);
