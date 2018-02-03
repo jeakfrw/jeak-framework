@@ -49,7 +49,7 @@ public class QueryNotifier {
                 case "cliententerview":
                     notification = new QueryEvent.ClientEnter();
                     break;
-                case "clientleaveview":
+                case "clientleftview":
                     notification = new QueryEvent.ClientLeave();
                     break;
                 case "clientmoved":
@@ -85,7 +85,7 @@ public class QueryNotifier {
             // (Note for future: This may not work asynchronously)
             RawQueryEvent.Message msg = ((RawQueryEvent.Message) event);
             do {
-                notification.copyFrom(msg);
+                notification.merge(msg);
                 eventService.fireEvent(notification);
             } while ((msg = msg.getNext()) != null);
 

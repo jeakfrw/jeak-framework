@@ -52,6 +52,7 @@ public class QueryParser {
                 s = s.substring(firstSpace + 1);
             }
             boolean error = "error".equals(capt);
+            boolean notify = capt != null && capt.startsWith("notify");
 
             // Setup variables accordingly
             Message workingFirst;
@@ -72,10 +73,11 @@ public class QueryParser {
                 } while ((workingMessage = workingMessage.getNext()) != null);
                 workingMessage = errorMessage;
 
-            } else if (capt != null && capt.startsWith("notify")){
+            } else if (notify){
                 // This message is a notification
                 Message.Notification message = new Message.Notification();
-                message.setCaption(capt.substring(6));
+                capt = capt.substring(6);
+                message.setCaption(capt);
                 workingFirst = message;
                 workingMessage = message;
             } else {
@@ -104,19 +106,30 @@ public class QueryParser {
                 char c = s.charAt(pos);
                 switch (c) {
                     case Chars.CHAINDIV:
+                        // Flush current key and value
+                        if (!doKey) {
+                            String key = new String(QueryEncoder.decodeBuffer(keyBuff, keyBuffPos));
+                            String val = new String(QueryEncoder.decodeBuffer(valBuff, valBuffPos));
+                            workingMessage.setProperty(key, val);
+                        }
                         // Rotate object
                         // Append to chain from above
                         // Step down in the chain
                         // Append to chain from below
                         workingLast.setNext(workingMessage);
                         workingLast = workingMessage;
-                        workingMessage = new Message.Answer(currentRequest.request);
+                        if (notify) {
+                            workingMessage = new Message.Notification();
+                            ((Message.Notification) workingMessage).setCaption(capt);
+                        } else
+                            workingMessage = new Message.Answer(currentRequest.request);
                         workingMessage.copyFrom(workingLast);
                         workingMessage.setPrevious(workingLast);
 
                         doKey = true;
                         keyBuffPos = 0;
                         valBuffPos = 0;
+                        break;
                     case '\n':
                     case Chars.PROPDIV:
                         // Flush current key and value

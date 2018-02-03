@@ -134,7 +134,7 @@ public class DataCache implements IDataCache {
             clientCache.put(client.getClientID(), client);
         }
 
-        Optional<String> optClientID = event.getProperty("clid");
+        Optional<String> optClientID = event.getProperty(PropertyKeys.Client.ID);
         if (optClientID.isPresent()) {
             Integer clientID = Integer.valueOf(optClientID.get());
             TS3Client client = clientCache.getOrDefault(clientID, null);
@@ -144,7 +144,7 @@ public class DataCache implements IDataCache {
                 return;
             }
         }
-        throw new EventAbortException("Target/Client injection failed! Event aborted!");
+        throw new EventAbortException("Target/Client injection failed! Event aborted! " + optClientID.orElse("null"));
     }
 
     private void processTargetChannel(QueryEvent.Notification.TargetChannel event) {
