@@ -89,6 +89,7 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
         public static class Notification extends Message implements IRawQueryEvent.IMessage.INotification {
 
             private String caption;
+            private Integer hash;
 
             public Notification() {
                 setError(ErrorMessage.OK());
@@ -100,6 +101,14 @@ public class RawQueryEvent extends DataHolder implements IRawQueryEvent {
 
             public void setCaption(String caption) {
                 this.caption = caption;
+            }
+
+            public void setHash(Integer hash) {
+                this.hash = hash;
+            }
+
+            public Integer getHash() {
+                return hash;
             }
         }
     }

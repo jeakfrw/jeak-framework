@@ -3,9 +3,12 @@ package de.fearnixx.t3.teamspeak.query;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.event.EventService;
+import de.fearnixx.t3.reflect.Inject;
+import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.except.QueryException;
+import de.mlessmann.logging.ILogReceiver;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,13 +20,15 @@ import java.util.Map;
  */
 public class QueryNotifier {
 
-    private EventService eventService;
+    @Inject(id = "QN")
+    public ILogReceiver logger;
 
-    public QueryNotifier(EventService eventService) {
-        this.eventService = eventService;
-    }
+    @Inject
+    public IEventService eventService;
 
-    public void processEvent(RawQueryEvent event) throws QueryException {
+    private Integer lastHash;
+
+    public void processEvent(RawQueryEvent event, Integer hashCode) throws QueryException {
 
         // Fire the RAW event. (Will allow manipulation)
         // This WILL also fire for unknown events ;)
@@ -32,16 +37,22 @@ public class QueryNotifier {
         if (event instanceof RawQueryEvent.Message.Notification) {
             RawQueryEvent.Message.Notification rawNotification = ((RawQueryEvent.Message.Notification) event);
             QueryEvent.Notification notification;
-            String caption = rawNotification.getCaption();
+            String caption = rawNotification.getCaption().toLowerCase();
+
+            if (hashCode.equals(lastHash)) {
+                logger.finer("Dropping duplicate ", caption);
+                return;
+            }
+            lastHash = hashCode;
 
             switch (caption) {
-                case "cliententer":
+                case "cliententerview":
                     notification = new QueryEvent.ClientEnter();
                     break;
-                case "clientleave":
+                case "clientleaveview":
                     notification = new QueryEvent.ClientLeave();
                     break;
-                case "clientmove":
+                case "clientmoved":
                     notification = new QueryEvent.ClientMove();
                     break;
                 case "channelcreate":
@@ -56,11 +67,12 @@ public class QueryNotifier {
                 case "textmessage":
                     Integer mode = Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
                     switch (mode) {
-                        case 1: notification = new QueryEvent.ClientTextMessage();
-                        case 2: notification = new QueryEvent.ChannelTextMessage();
-                        case 3: notification = new QueryEvent.ServerTextMessage();
+                        case 1: notification = new QueryEvent.ClientTextMessage(); break;
+                        case 2: notification = new QueryEvent.ChannelTextMessage(); break;
+                        case 3: notification = new QueryEvent.ServerTextMessage(); break;
                         default: throw new QueryException("Unknown message targetMode: " + mode);
                     }
+                    break;
                 default:
                     throw new QueryException("Unknown event: " + caption);
             }

@@ -3,9 +3,12 @@ package de.fearnixx.t3.teamspeak.query;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.T3Bot;
 import de.fearnixx.t3.event.EventService;
+import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 
+import de.fearnixx.t3.reflect.IInjectionService;
+import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.DataHolder;
@@ -35,8 +38,15 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public static final int KEEP_ALIVE_SECS = Main.getProperty("bot.connection.keepalive", 240);
     public static final float REQ_DELAY = Main.getProperty("bot.connection.reqdelay", 0.25f);
 
-    private ILogReceiver log;
-    private IEventService eventService;
+    @Inject(id = "CONN")
+    public ILogReceiver log;
+
+    @Inject
+    public IEventService eventService;
+
+    @Inject
+    public IInjectionService injectionService;
+
     private QueryNotifier notifier;
 
     private int reqDelay;
@@ -59,14 +69,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private IDataHolder whoami;
     private int lastMessageHash = 0;
 
-    public QueryConnection(EventService eventService, ILogReceiver log, Consumer<IQueryConnection> onClose) {
-        this.log = log;
+    public QueryConnection(Consumer<IQueryConnection> onClose) {
         this.mySock = new Socket();
         this.reqQueue = new ArrayList<>();
         this.parser = new QueryParser();
-        this.eventService = eventService;
         this.onClose = onClose;
-        this.notifier = new QueryNotifier(eventService);
+        this.notifier = new QueryNotifier();
     }
 
     public void setHost(String host, int port) {
@@ -80,6 +88,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
         if (sIn != null) {
             throw new IllegalStateException("Cannot reopen connections");
         }
+        injectionService.injectInto(notifier, "CONN");
+
         mySock.connect(addr, 8000);
         mySock.setSoTimeout(SOCKET_TIMEOUT_MILLIS);
         sIn = mySock.getInputStream();
@@ -211,6 +221,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
             log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
         }
         Optional<RawQueryEvent.Message> optMessage;
+        Integer hashCode = line.hashCode();
         try {
             optMessage = parser.parse(line);
         } catch (QueryParseException e) {
@@ -231,7 +242,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
             }
         }
         try {
-            notifier.processEvent(event);
+            notifier.processEvent(event, hashCode);
         } catch (QueryException e) {
             log.severe("Got an exception while processing a message!", e);
         }
@@ -365,12 +376,38 @@ public class QueryConnection extends Thread implements IQueryConnection {
         IQueryRequest whoami = IQueryRequest.builder()
                                             .command("whoami")
                                             .build();
+        IQueryRequest subscribe_server = IQueryRequest.builder()
+                                                    .command("servernotifyregister")
+                                                    .addKey("event", "server")
+                                                    .build();
+        IQueryRequest subscribe_channels = IQueryRequest.builder()
+                                                        .command("servernotifyregister")
+                                                        .addKey("event", "channel")
+                                                        .addKey("id", "0")
+                                                        .build();
+        IQueryRequest subscribe_textserver = IQueryRequest.builder()
+                                                          .command("servernotifyregister")
+                                                          .addKey("event", "textserver")
+                                                          .build();
+        IQueryRequest subscribe_textchannel = IQueryRequest.builder()
+                                                           .command("servernotifyregister")
+                                                           .addKey("event", "textchannel")
+                                                           .build();
+        IQueryRequest subscribe_textprivate = IQueryRequest.builder()
+                                                           .command("servernotifyregister")
+                                                           .addKey("event", "textprivate")
+                                                           .build();
         // Wait for and lock receiver to prevent commands from returning too early
         final Map<Integer, IRawQueryEvent.IMessage.IAnswer> map = new ConcurrentHashMap<>(4);
         synchronized (mySock) {
             sendRequest(use, r -> map.put(0, r));
             sendRequest(login, r -> map.put(1, r));
             sendRequest(whoami, r -> map.put(2, r));
+            sendRequest(subscribe_server);
+            sendRequest(subscribe_channels);
+            sendRequest(subscribe_textserver);
+            sendRequest(subscribe_textchannel);
+            sendRequest(subscribe_textprivate);
         }
         try {
             while (map.getOrDefault(0, null) == null
