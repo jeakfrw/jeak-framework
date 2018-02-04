@@ -1,6 +1,7 @@
 package de.fearnixx.t3.reflect;
 
 import de.fearnixx.t3.IBot;
+import de.fearnixx.t3.Main;
 import de.fearnixx.t3.service.IServiceManager;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
@@ -20,9 +21,13 @@ import static de.fearnixx.t3.T3Bot.CHAR_ENCODING;
  */
 public class InjectionManager implements IInjectionService {
 
+    public static final Boolean UNIT_FULLY_QUALIFIED = Main.getProperty("bot.inject.fqunit", Boolean.FALSE);
+
     private ILogReceiver logger;
     private ILogReceiver loggerUnbiased;
     private IServiceManager serviceManager;
+
+    private String unitName;
 
     private File baseDir;
 
@@ -32,21 +37,20 @@ public class InjectionManager implements IInjectionService {
         this.serviceManager = serviceManager;
     }
 
-    public File getBaseDir() {
-        return baseDir;
-    }
-
     public void setBaseDir(File baseDir) {
         this.baseDir = baseDir;
     }
 
+    public void setUnitName(String unitName) {
+        this.unitName = unitName;
+    }
+
+    @Override
     public void injectInto(Object victim) {
         injectInto(victim, null);
     }
 
-    public void injectInto(Object victim, String prependID) {
-
-            boolean a;
+    public void injectInto(Object victim, String unitName) {
             // Logging
             logger.finer("Running injections on object of class: ", victim.getClass());
 
@@ -63,7 +67,7 @@ public class InjectionManager implements IInjectionService {
 
                 // Injection value
                 Class<?> type = field.getType();
-                Optional<?> optTarget = provideWith(type, prependID, id);
+                Optional<?> optTarget = provideWith(type, id, unitName);
 
                 // Log message is provided by #provide
                 if (!optTarget.isPresent())
@@ -94,35 +98,42 @@ public class InjectionManager implements IInjectionService {
         return Optional.empty();
     }
 
-    public <T> Optional<T> provideWith(Class<T> clazz, String prependID, String id) {
+    public <T> Optional<T> provideWith(Class<T> clazz, String id, String altUnitName) {
         Optional<T> result = serviceManager.provide(clazz);
         if (result.isPresent())
             return result;
 
         Object value = null;
+        String unitName = this.unitName != null ? this.unitName : altUnitName;
+        if (!UNIT_FULLY_QUALIFIED) {
+            if (unitName != null && unitName.contains("."))
+                unitName = unitName.substring(unitName.lastIndexOf('.') + 1, unitName.length());
+        }
 
         if (clazz.isAssignableFrom(ILogReceiver.class)) {
             id = genID(id);
             value = loggerUnbiased;
-            if (prependID != null)
-                value = ((ILogReceiver) value).getChild(prependID);
+            if (unitName != null)
+                value = ((ILogReceiver) value).getChild(unitName);
             value = ((ILogReceiver) value).getChild(id);
 
         } else if (clazz.isAssignableFrom(ConfigLoader.class)) {
-            //id = genID(id);
-            if (id == null)
-                throw new IllegalArgumentException("Config not allowed without ID");
             File jsonFile;
-            if (prependID == null || prependID.trim().isEmpty()) {
-                jsonFile = new File(baseDir, "config/" + id + ".json");
+            if (id == null || id.trim().isEmpty()) {
+                jsonFile = new File(baseDir, "config/" + unitName + ".json");
             } else {
-                File subDir = new File(baseDir, "config/" + prependID);
+                File subDir = new File(baseDir, "config/" + unitName);
                 subDir.mkdirs();
                 jsonFile = new File(subDir, id + ".json");
             }
             value = new JSONConfigLoader();
             ((JSONConfigLoader) value).setEncoding(CHAR_ENCODING);
             ((JSONConfigLoader) value).setFile(jsonFile);
+
+        } else if (clazz.isAssignableFrom(IInjectionService.class)) {
+            value = new InjectionManager(loggerUnbiased, serviceManager);
+            ((InjectionManager) value).setBaseDir(baseDir);
+            ((InjectionManager) value).setUnitName(id != null ? id : unitName);
 
         }
         return Optional.ofNullable(clazz.cast(value));
