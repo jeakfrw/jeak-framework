@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class PromisedRequest implements IQueryPromise {
 
     private IQueryRequest request;
-    private RawQueryEvent.Message.Answer answer;
+    private IRawQueryEvent.IMessage.IAnswer answer;
 
     public PromisedRequest(IQueryRequest request) {
         this.request = request;
@@ -64,6 +64,6 @@ public class PromisedRequest implements IQueryPromise {
     }
 
     protected synchronized void setAnswer(IRawQueryEvent.IMessage.IAnswer event) {
-        this.answer = answer;
+        this.answer = event;
     }
 }

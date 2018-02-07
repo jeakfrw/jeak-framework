@@ -13,6 +13,10 @@ import de.fearnixx.t3.service.ServiceManager;
 import de.fearnixx.t3.service.command.CommandService;
 import de.fearnixx.t3.service.command.ICommandService;
 import de.fearnixx.t3.service.event.IEventService;
+import de.fearnixx.t3.service.permission.base.IPermissionService;
+import de.fearnixx.t3.service.permission.base.PermissionService;
+import de.fearnixx.t3.service.permission.teamspeak.ITS3PermissionProvider;
+import de.fearnixx.t3.service.permission.teamspeak.TS3PermissionProvider;
 import de.fearnixx.t3.service.task.ITaskService;
 import de.fearnixx.t3.task.TaskService;
 import de.fearnixx.t3.teamspeak.IServer;
@@ -72,6 +76,9 @@ public class T3Bot implements Runnable,IBot {
     private TaskService taskService;
     private CommandService commandService;
 
+    private PermissionService permissionService;
+    private TS3PermissionProvider ts3permissionProvider;
+
     private final Object lock = new Object();
 
     // * * * CONSTRUCTION * * * //
@@ -117,6 +124,8 @@ public class T3Bot implements Runnable,IBot {
         injectionManager.setBaseDir(getDir());
         server = new Server(eventService, log.getChild("SVR"));
         dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
+        permissionService = new PermissionService();
+        ts3permissionProvider = new TS3PermissionProvider();
 
         serviceManager.registerService(IBot.class, this);
         serviceManager.registerService(IServiceManager.class, serviceManager);
@@ -126,12 +135,16 @@ public class T3Bot implements Runnable,IBot {
         serviceManager.registerService(IInjectionService.class, injectionManager);
         serviceManager.registerService(IServer.class, server);
         serviceManager.registerService(IDataCache.class, dataCache);
+        serviceManager.registerService(IPermissionService.class, permissionService);
+        serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
 
         injectionManager.injectInto(serviceManager);
         injectionManager.injectInto(eventService);
         injectionManager.injectInto(taskService);
         injectionManager.injectInto(commandService);
         injectionManager.injectInto(server);
+        injectionManager.injectInto(permissionService);
+        injectionManager.injectInto(ts3permissionProvider);
 
         taskService.start();
 
@@ -354,6 +367,7 @@ public class T3Bot implements Runnable,IBot {
 
     public ICommandService getCommandService() { return commandService; }
 
+    @Override
     public IServer getServer() {
         return server;
     }
@@ -362,6 +376,16 @@ public class T3Bot implements Runnable,IBot {
     public IDataCache getDataCache() {
         return dataCache;
     }
+
+
+    public IPermissionService getPermissionService() {
+        return permissionService;
+    }
+
+    public ITS3PermissionProvider getTs3permissionProvider() {
+        return ts3permissionProvider;
+    }
+
 
     // * * * RUNTIME * * * //
 

@@ -1,27 +1,32 @@
 package de.fearnixx.t3.service.permission.teamspeak;
 
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.IRawQueryEvent.IMessage;
 import de.fearnixx.t3.reflect.Inject;
+import de.fearnixx.t3.service.permission.base.IPermission;
 import de.fearnixx.t3.teamspeak.IServer;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.cache.IDataCache;
 import de.fearnixx.t3.teamspeak.data.IClient;
 import de.fearnixx.t3.teamspeak.query.IQueryPromise;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
-import de.fearnixx.t3.teamspeak.query.PromisedRequest;
 import de.fearnixx.t3.teamspeak.query.except.QueryException;
+import de.fearnixx.t3.service.permission.teamspeak.ITS3Permission.PriorityType;
 
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 04-Feb-18
+ *
+ * Helpful documentation if you want to understand TS3 perms a little better:
+ * * http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Permissions%20Guide.txt
  */
-public class TS3PermissionService implements ITS3PermissionService {
+public class TS3PermissionProvider implements ITS3PermissionProvider {
 
     public static final Integer CACHE_TIMEOUT_SECONDS = 60;
+    public static final Integer EMPTY_RESULT_ID = 1281;
 
     @Inject
     public IDataCache dataCache;
@@ -29,6 +34,7 @@ public class TS3PermissionService implements ITS3PermissionService {
     @Inject
     public IServer server;
 
+    private Map<String, Integer> permIDCache = new HashMap<>();
     private Map<Integer, TS3PermCache> clientPerms = new HashMap<>();
     private Map<Integer, TS3PermCache> channelPerms = new HashMap<>();
     private Map<Integer, TS3PermCache> channelGroupPerms = new HashMap<>();
@@ -37,23 +43,64 @@ public class TS3PermissionService implements ITS3PermissionService {
 
     @Override
     public Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID) {
-        List<ITS3Permission> activeKontext = getActiveContext(clientID, permSID);
+        List<ITS3Permission> activeContext = getActiveContext(clientID, permSID);
 
+        if (activeContext.isEmpty())
+            return Optional.empty();
+
+        boolean skipFlag = false;
+        boolean negateFlag = false;
+        ITS3Permission effective = null;
+        Integer maxValue = 0;
+        Integer maxWeight = 0;
+
+        // We need to go through twice so all permissions are taken into account
+        // Even when a later permission changes a flag.
+        for (ITS3Permission perm : activeContext) {
+            PriorityType type = perm.getPriorityType();
+
+            if (perm.getNegate()) {
+                negateFlag = true;
+            }
+
+            if (perm.getSkip() && (type == PriorityType.SERVER_GROUP || type == PriorityType.CLIENT)) {
+                skipFlag = true;
+            }
+        }
+
+        for (ITS3Permission perm : activeContext) {
+            PriorityType type = perm.getPriorityType();
+            Integer value = perm.getValue();
+
+            if (skipFlag && (type == PriorityType.CHANNEL || type == PriorityType.CHANNEL_GROUP)) {
+                continue;
+            }
+
+            if ((maxValue >= value || negateFlag)
+                && maxWeight < type.getWeight()) {
+                effective = perm;
+                maxValue = value;
+                maxWeight = type.getWeight();
+            }
+        }
+
+        return Optional.ofNullable(effective);
     }
 
     public List<ITS3Permission> getActiveContext(Integer clientID, String permSID) {
         final List<ITS3Permission> result = new ArrayList<>();
-
         IClient client = dataCache.getClientMap().get(clientID);
-        client.getGroupIDs().forEach(gid -> result.add(getServerGroupPermission(gid, permSID)));
 
-        result.add(getClientPermission(client.getClientDBID(), permSID));
-        result.add(getChannelGroupPermission(client.getChannelGroupID(), permSID));
-        result.add(getChannelClientPermission(client.getChannelID(), clientID, permSID));
-        result.add(getChannelPermission(client.getChannelID(), permSID));
+        client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
+        getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);
+        getChannelGroupPermission(client.getChannelGroupID(), permSID).ifPresent(result::add);
+        getChannelClientPermission(client.getChannelID(), clientID, permSID).ifPresent(result::add);
+        getChannelPermission(client.getChannelID(), permSID).ifPresent(result::add);
+
+        return result;
     }
 
-    public ITS3Permission getClientPermission(Integer clientDBID, String permSID) {
+    public Optional<ITS3Permission> getClientPermission(Integer clientDBID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = clientPerms.getOrDefault(clientDBID, null);
         if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
@@ -67,8 +114,8 @@ public class TS3PermissionService implements ITS3PermissionService {
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
                                              .command("clientpermlist")
-                                             .addKey(PropertyKeys.Client.DBID, clientDBID)
-                                             .addOption("permsid")
+                                             .addKey("cldbid", clientDBID)
+                                             .addOption("-permsid")
                                              .build();
             IQueryPromise promise = server.getConnection().promiseRequest(req);
             try {
@@ -85,7 +132,7 @@ public class TS3PermissionService implements ITS3PermissionService {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CLIENT);
     }
 
-    public ITS3Permission getServerGroupPermission(Integer serverGroupID, String permSID) {
+    public Optional<ITS3Permission> getServerGroupPermission(Integer serverGroupID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = serverGroupPerms.getOrDefault(serverGroupID, null);
         if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
@@ -100,7 +147,7 @@ public class TS3PermissionService implements ITS3PermissionService {
             IQueryRequest req = IQueryRequest.builder()
                                              .command("servergrouppermlist")
                                              .addKey("sgid", serverGroupID)
-                                             .addOption("permsid")
+                                             .addOption("-permsid")
                                              .build();
             IQueryPromise promise = server.getConnection().promiseRequest(req);
             try {
@@ -117,7 +164,7 @@ public class TS3PermissionService implements ITS3PermissionService {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.SERVER_GROUP);
     }
 
-    public ITS3Permission getChannelGroupPermission(Integer channelGroupID, String permSID) {
+    public Optional<ITS3Permission> getChannelGroupPermission(Integer channelGroupID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = channelGroupPerms.getOrDefault(channelGroupID, null);
         if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
@@ -132,7 +179,7 @@ public class TS3PermissionService implements ITS3PermissionService {
             IQueryRequest req = IQueryRequest.builder()
                                              .command("channelgrouppermlist")
                                              .addKey("cgid", channelGroupID)
-                                             .addOption("permsid")
+                                             .addOption("-permsid")
                                              .build();
             IQueryPromise promise = server.getConnection().promiseRequest(req);
             try {
@@ -149,7 +196,7 @@ public class TS3PermissionService implements ITS3PermissionService {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_GROUP);
     }
 
-    public ITS3Permission getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
+    public Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
         IMessage.IAnswer answer = null;
         Map<Integer, TS3PermCache> channelClientMap = channelClientPerms.getOrDefault(channelID, null);
         TS3PermCache cache = null;
@@ -168,8 +215,8 @@ public class TS3PermissionService implements ITS3PermissionService {
             IQueryRequest req = IQueryRequest.builder()
                                              .command("channelclientpermlist")
                                              .addKey(PropertyKeys.Channel.ID, channelID)
-                                             .addKey(PropertyKeys.Client.DBID, clientDBID)
-                                             .addOption("permsid")
+                                             .addKey("cldbid", clientDBID)
+                                             .addOption("-permsid")
                                              .build();
             IQueryPromise promise = server.getConnection().promiseRequest(req);
             try {
@@ -190,7 +237,7 @@ public class TS3PermissionService implements ITS3PermissionService {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_CLIENT);
     }
 
-    public ITS3Permission getChannelPermission(Integer channelID, String permSID) {
+    public Optional<ITS3Permission> getChannelPermission(Integer channelID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = channelPerms.getOrDefault(channelID, null);
         if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
@@ -204,8 +251,8 @@ public class TS3PermissionService implements ITS3PermissionService {
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
                                              .command("channelpermlist")
-                                             .addKey("cgid", channelID)
-                                             .addOption("permsid")
+                                             .addKey("cid", channelID)
+                                             .addOption("-permsid")
                                              .build();
             IQueryPromise promise = server.getConnection().promiseRequest(req);
             try {
@@ -222,7 +269,11 @@ public class TS3PermissionService implements ITS3PermissionService {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL);
     }
 
-    protected ITS3Permission permFromList(String permSID, IMessage.IAnswer answer, ITS3Permission.PriorityType type) {
+    protected Optional<ITS3Permission> permFromList(String permSID, IMessage.IAnswer answer, ITS3Permission.PriorityType type) {
+
+        if (answer != null && answer.getError().getCode().equals(EMPTY_RESULT_ID)) {
+            return Optional.empty();
+        }
 
         while (answer != null) {
             if (permSID.equals(answer.getProperty("permsid").orElse(null)))
@@ -230,11 +281,36 @@ public class TS3PermissionService implements ITS3PermissionService {
             answer = ((IMessage.IAnswer) answer.getNext());
         }
 
-        if (answer == null)
-            throw new QueryException("PermSID " + permSID + " not found in response!");
+        if (answer != null) {
+            TS3Permission perm = new TS3Permission(type, permSID);
+            perm.copyFrom(answer);
+            return Optional.of(perm);
+        }
+        return Optional.empty();
+    }
 
-        TS3Permission perm = new TS3Permission(type, permSID);
-        perm.copyFrom(answer);
-        return perm;
+    protected Optional<Integer> retrievePermIntID(String permSID) {
+        Integer intID = permIDCache.getOrDefault(permSID, -1);
+        if (intID == -1) {
+            IQueryRequest request = IQueryRequest.builder()
+                                                 .command("permidgetbyname")
+                                                 .addKey("permsid", permSID)
+                                                 .build();
+            IQueryPromise promise = server.getConnection().promiseRequest(request);
+            try {
+                IRawQueryEvent.IMessage.IAnswer answer = promise.get(3, TimeUnit.SECONDS);
+                intID = Integer.parseInt(answer.getProperty("permid").get());
+                if (intID >= 0)
+                    permIDCache.put(permSID, intID);
+            } catch (Exception e) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(intID);
+    }
+
+    @Override
+    public IPermission getPermission(String permSID, String clientUID) {
+        throw new UnsupportedOperationException("The TS3PermissionProvider has to be treated differently!");
     }
 }

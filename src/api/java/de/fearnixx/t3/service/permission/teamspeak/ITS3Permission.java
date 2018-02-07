@@ -15,10 +15,20 @@ public interface ITS3Permission extends IPermission {
 
     enum PriorityType {
 
-        CHANNEL_CLIENT,
-        CLIENT,
-        CHANNEL_GROUP,
-        CHANNEL,
-        SERVER_GROUP
+        SERVER_GROUP(1),
+        CLIENT(2),
+        CHANNEL(3),
+        CHANNEL_GROUP(4),
+        CHANNEL_CLIENT(5);
+
+        private Integer weight;
+
+        PriorityType(Integer weight) {
+            this.weight = weight;
+        }
+
+        public Integer getWeight() {
+            return weight;
+        }
     }
 }

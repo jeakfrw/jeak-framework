@@ -61,7 +61,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private BufferedWriter netDumpOutput;
 
     private final List<RequestContainer> reqQueue;
-    private PromisedRequest currentRequestPromise;
     private RequestContainer currentRequest;
     private QueryParser parser;
 
