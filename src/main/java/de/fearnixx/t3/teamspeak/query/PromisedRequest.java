@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by MarkL4YG on 07-Jan-18
  */
-public class PromisedRequest implements Future<IRawQueryEvent.IMessage.IAnswer> {
+public class PromisedRequest implements IQueryPromise {
 
     private IQueryRequest request;
     private RawQueryEvent.Message.Answer answer;

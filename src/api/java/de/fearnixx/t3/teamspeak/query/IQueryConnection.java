@@ -64,5 +64,5 @@ public interface IQueryConnection {
      * This queues the request and sends it when possible.
      * The callback will be called when a full answer has been received
      */
-    Future<IRawQueryEvent.IMessage.IAnswer> promiseRequest(IQueryRequest request);
+    IQueryPromise promiseRequest(IQueryRequest request);
 }
