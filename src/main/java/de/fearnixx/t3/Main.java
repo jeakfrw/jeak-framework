@@ -106,8 +106,9 @@ public class Main {
         Optional<Map<String,ConfigNode>> bots = config.getNode("bots").getHub();
         if (!bots.isPresent()) {
             logger.getLogger().warning("No bots configured");
-            config.getNode("bots", "bot_0").getNode("config").setValue("configs/bot_0");
-            new File("bot_0").mkdirs();
+            config.getNode("bots", "main").getNode("config").setValue("main/config/bot.json");
+            config.getNode("bots", "main").getNode("base-dir").setValue("main");
+            new File("main").mkdirs();
             loader.save(config);
             System.exit(1);
         } else {
@@ -116,7 +117,7 @@ public class Main {
 
             Map<String, ConfigNode> nodes = bots.get();
             nodes.forEach((k, node) -> {
-                String confPath = config.getNode("config").optString(k + "/config/bot.json");
+                String confPath = node.getNode("config").optString(k + "/config/bot.json");
                 File botConf = new File(confPath);
                 if (!botConf.exists() && !botConf.getAbsoluteFile().getParentFile().mkdirs()) {
                     log.severe("Cannot start bot: ");
@@ -124,9 +125,10 @@ public class Main {
                 }
                 T3Bot bot = new T3Bot(logger.getLogReceiver().getChild(k));
                 bot.setLogDir(new File("logs"));
-                bot.setBaseDir(new File(k));
-                bot.setConfDir(new File(bot.getDir(),"config"));
+                bot.setBaseDir(new File(node.getNode("base-dir").optString(k)));
+                bot.setConfDir(new File(bot.getBaseDirectory(),"config"));
                 bot.setConfig(botConf);
+                bot.setBotInstanceID(k);
                 bot.setPluginManager(mgr);
                 bot.onShutdown(this::onBotShutdown);
                 t3bots.add(bot);

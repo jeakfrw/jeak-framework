@@ -58,6 +58,7 @@ public class T3Bot implements Runnable,IBot {
     private File logDir;
     private File confDir;
     private File confFile;
+    private String botInstID;
 
     private ILogReceiver log;
     private ConfigLoader loader;
@@ -99,6 +100,10 @@ public class T3Bot implements Runnable,IBot {
         this.pMgr = pMgr;
     }
 
+    public void setBotInstanceID(String instanceID) {
+        this.botInstID = instanceID;
+    }
+
     // * * * [Runnable] * * * //
 
     @Override
@@ -121,7 +126,7 @@ public class T3Bot implements Runnable,IBot {
         taskService = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService(log.getChild("!CM"));
         injectionManager = new InjectionManager(log, serviceManager);
-        injectionManager.setBaseDir(getDir());
+        injectionManager.setBaseDir(getBaseDirectory());
         server = new Server(eventService, log.getChild("SVR"));
         dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
         permissionService = new PermissionService();
@@ -171,11 +176,11 @@ public class T3Bot implements Runnable,IBot {
         Integer port = config.getNode("port").getInt();
         String user = config.getNode("user").getString();
         String pass = config.getNode("pass").getString();
-        Integer instID = config.getNode("instance").getInt();
+        Integer ts3InstID = config.getNode("instance").getInt();
         eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
 
         try {
-            server.connect(host, port, user, pass, instID);
+            server.connect(host, port, user, pass, ts3InstID);
         } catch (QueryConnectException e) {
             log.severe("Failed to start bot: TS3INIT failed", e);
             shutdown();
@@ -185,7 +190,7 @@ public class T3Bot implements Runnable,IBot {
         Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
 
         if (doNetDump) {
-            File netDumpFile = new File(logDir, "bot_" + instID);
+            File netDumpFile = new File(logDir, "bot_" + botInstID);
             if (!netDumpFile.isDirectory())
                 netDumpFile.mkdirs();
             netDumpFile = new File(netDumpFile, "net_dump.main.log");
@@ -277,30 +282,12 @@ public class T3Bot implements Runnable,IBot {
         }
 
         boolean rewrite = false;
-        boolean importantIsDefault = false;
 
-        if (!config.getNode("host").isType(String.class)) {
-            config.getNode("host").setValue("localhost");
-            rewrite = true;
-        }
-        if (!config.getNode("port").isType(Integer.class)) {
-            config.getNode("port").setValue(10011);
-            rewrite = true;
-        }
-        if (!config.getNode("user").isType(String.class)) {
-            config.getNode("user").setValue("serveradmin");
-            rewrite = true;
-        }
-        if (!config.getNode("pass").isType(String.class)) {
-            config.getNode("pass").setValue("password");
-            rewrite = true;
-            importantIsDefault = true;
-        }
-        if (!config.getNode("instance").isType(Integer.class)) {
-            config.getNode("instance").setValue(1);
-            rewrite = true;
-            importantIsDefault = true;
-        }
+        rewrite = config.getNode("host").defaultValue("localhost");
+        rewrite = rewrite | config.getNode("port").defaultValue(10011);
+        rewrite = rewrite | config.getNode("user").defaultValue("serveradmin");
+        rewrite = rewrite | config.getNode("pass").defaultValue("password");
+        rewrite = rewrite | config.getNode("instance").defaultValue(1);
 
         if (rewrite) {
             loader.resetError();
@@ -309,9 +296,7 @@ public class T3Bot implements Runnable,IBot {
                 log.severe("Failed to rewrite configuration. Aborting startup, just in case.", loader.getError());
                 event.cancel();
             }
-        }
-        if (importantIsDefault) {
-            log.warning("One or more important settings are default values. Please review the configuration at: ", confFile.toURI().toString());
+            log.warning("One or more settings have been set to default values. Please review the configuration at: ", confFile.toURI().toString());
             event.cancel();
         }
     }
@@ -341,7 +326,8 @@ public class T3Bot implements Runnable,IBot {
 
     // * * * MISC * * * //
 
-    public File getDir() {
+    @Override
+    public File getBaseDirectory() {
         return baseDir;
     }
 

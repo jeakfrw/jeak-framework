@@ -76,8 +76,8 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
                 continue;
             }
 
-            if ((maxValue >= value || negateFlag)
-                && maxWeight < type.getWeight()) {
+            if ((value >= maxValue|| negateFlag)
+                && type.getWeight() > maxWeight) {
                 effective = perm;
                 maxValue = value;
                 maxWeight = type.getWeight();
@@ -94,7 +94,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
         getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);
         getChannelGroupPermission(client.getChannelGroupID(), permSID).ifPresent(result::add);
-        getChannelClientPermission(client.getChannelID(), clientID, permSID).ifPresent(result::add);
+        getChannelClientPermission(client.getChannelID(), client.getClientDBID(), permSID).ifPresent(result::add);
         getChannelPermission(client.getChannelID(), permSID).ifPresent(result::add);
 
         return result;
@@ -310,7 +310,13 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
     }
 
     @Override
-    public IPermission getPermission(String permSID, String clientUID) {
-        throw new UnsupportedOperationException("The TS3PermissionProvider has to be treated differently!");
+    public Optional<IPermission> getPermission(String permSID, String clientUID) {
+        Optional<IClient> optClient = dataCache.getClients()
+                                               .stream()
+                                               .filter(c -> c.getClientUniqueID().equals(clientUID))
+                                               .findFirst();
+        final IPermission[] perm = new IPermission[]{null};
+        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
+        return Optional.ofNullable(perm[0]);
     }
 }
