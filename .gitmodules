@@ -1,12 +1,12 @@
 [submodule "plugins/admintools"]
 	path = plugins/admintools
-	url = git@gitlab.com:fearnixxgaming/t3sb_admintools
+	url = git@gitlab.com:fearnixxgaming/t3sb_admintools.git
 [submodule "plugins/support"]
 	path = plugins/support
-	url = git@gitlab.com:fearnixxgaming/t3sb_support
+	url = git@gitlab.com:fearnixxgaming/t3sb_support.git
 [submodule "plugins/afkmove"]
 	path = plugins/afkmove
-	url = git@gitlab.com:fearnixxgaming/t3sb_afkmove
+	url = git@gitlab.com:fearnixxgaming/t3sb_afkmove.git
 [submodule "plugins/channelmgmt"]
-	path = plugins/schannelmgmt
-	url = git@gitlab.com:fearnixxgaming/t3sb_channelmgmt
+	path = plugins/channelmgmt
+	url = git@gitlab.com:fearnixxgaming/t3sb_channelmgmt.git
