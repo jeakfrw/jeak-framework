@@ -1,5 +1,6 @@
 package de.fearnixx.t3;
 
+import de.fearnixx.t3.database.DatabaseService;
 import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.event.bot.BotStateEvent;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
@@ -76,9 +77,9 @@ public class T3Bot implements Runnable,IBot {
     private EventService eventService;
     private TaskService taskService;
     private CommandService commandService;
-
     private PermissionService permissionService;
     private TS3PermissionProvider ts3permissionProvider;
+    private DatabaseService databaseService;
 
     private final Object lock = new Object();
 
@@ -131,6 +132,7 @@ public class T3Bot implements Runnable,IBot {
         dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
         permissionService = new PermissionService();
         ts3permissionProvider = new TS3PermissionProvider();
+        databaseService = new DatabaseService(new File(confDir, "databases"));
 
         serviceManager.registerService(IBot.class, this);
         serviceManager.registerService(IServiceManager.class, serviceManager);
@@ -142,6 +144,7 @@ public class T3Bot implements Runnable,IBot {
         serviceManager.registerService(IDataCache.class, dataCache);
         serviceManager.registerService(IPermissionService.class, permissionService);
         serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
+        serviceManager.registerService(DatabaseService.class, databaseService);
 
         injectionManager.injectInto(serviceManager);
         injectionManager.injectInto(eventService);
@@ -150,7 +153,9 @@ public class T3Bot implements Runnable,IBot {
         injectionManager.injectInto(server);
         injectionManager.injectInto(permissionService);
         injectionManager.injectInto(ts3permissionProvider);
+        injectionManager.injectInto(databaseService);
 
+        databaseService.onLoad();
         taskService.start();
 
         pMgr.load(true);
@@ -190,7 +195,7 @@ public class T3Bot implements Runnable,IBot {
         Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
 
         if (doNetDump) {
-            File netDumpFile = new File(logDir, "bot_" + botInstID);
+            File netDumpFile = new File(logDir, botInstID);
             if (!netDumpFile.isDirectory())
                 netDumpFile.mkdirs();
             netDumpFile = new File(netDumpFile, "net_dump.main.log");

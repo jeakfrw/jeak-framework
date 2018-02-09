@@ -2,11 +2,13 @@ package de.fearnixx.t3.reflect;
 
 import de.fearnixx.t3.IBot;
 import de.fearnixx.t3.Main;
+import de.fearnixx.t3.database.DatabaseService;
 import de.fearnixx.t3.service.IServiceManager;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
 import de.mlessmann.logging.ILogReceiver;
 
+import javax.persistence.EntityManager;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -135,6 +137,16 @@ public class InjectionManager implements IInjectionService {
             ((InjectionManager) value).setBaseDir(baseDir);
             ((InjectionManager) value).setUnitName(id != null ? id : unitName);
 
+        } else if (clazz.isAssignableFrom(EntityManager.class)) {
+            if (id == null)
+                throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
+
+            DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
+            Optional<EntityManager> manager = service.getEntityManager(id);
+            if (!manager.isPresent()) {
+                throw new IllegalStateException("Failed to find persistence unit: " + id);
+            }
+            value = manager.get();
         }
         return Optional.ofNullable(clazz.cast(value));
     }
