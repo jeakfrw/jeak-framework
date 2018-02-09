@@ -1,5 +1,7 @@
 package de.fearnixx.t3.task;
 
+import de.fearnixx.t3.service.task.ITask;
+
 import java.util.concurrent.TimeUnit;
 
 /**
