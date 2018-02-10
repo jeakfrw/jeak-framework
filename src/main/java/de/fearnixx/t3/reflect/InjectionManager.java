@@ -113,11 +113,11 @@ public class InjectionManager implements IInjectionService {
         }
 
         if (clazz.isAssignableFrom(ILogReceiver.class)) {
-            id = genID(id);
             value = loggerUnbiased;
             if (unitName != null)
                 value = ((ILogReceiver) value).getChild(unitName);
-            value = ((ILogReceiver) value).getChild(id);
+            if (id != null)
+                value = ((ILogReceiver) value).getChild(id);
 
         } else if (clazz.isAssignableFrom(ConfigLoader.class)) {
             File jsonFile;
