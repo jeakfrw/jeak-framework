@@ -68,7 +68,7 @@ public class DataCache implements IDataCache {
                                                                   .addOption("-flags")
                                                                   .addOption("-voice")
                                                                   .addOption("-limits")
-                                                                  .addOption("-icons")
+                                                                  .addOption("-icon")
                                                                   .build();
     private final ITask channelListTask = ITask.builder()
                                                .name("t3server.channelrefresh")
