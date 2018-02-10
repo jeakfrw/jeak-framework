@@ -48,11 +48,11 @@ public class InjectionManager implements IInjectionService {
     }
 
     @Override
-    public void injectInto(Object victim) {
-        injectInto(victim, null);
+    public <T> T injectInto(T victim) {
+        return injectInto(victim, null);
     }
 
-    public void injectInto(Object victim, String unitName) {
+    public <T> T injectInto(T victim, String unitName) {
             // Logging
             logger.finer("Running injections on object of class: ", victim.getClass());
 
@@ -89,6 +89,7 @@ public class InjectionManager implements IInjectionService {
                 // Reset access state
                 field.setAccessible(accessState);
             }
+            return victim;
     }
 
     public <T> Optional<T> provide(Class<T> clazz) {

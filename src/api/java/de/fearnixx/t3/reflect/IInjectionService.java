@@ -5,7 +5,7 @@ package de.fearnixx.t3.reflect;
  */
 public interface IInjectionService {
 
-    void injectInto(Object victim);
+    <T> T injectInto(T victim);
 
-    void injectInto(Object victim, String unitName);
+    <T> T injectInto(T victim, String unitName);
 }
