@@ -135,7 +135,7 @@ public class DataCache implements IDataCache {
 
         String targetPropertyName = PropertyKeys.Client.ID;
         if (event instanceof IQueryEvent.INotification.ITextMessage)
-            targetPropertyName = PropertyKeys.TextMessage.TARGET_ID;
+            targetPropertyName = PropertyKeys.TextMessage.SOURCE_ID;
 
         Optional<String> optClientID = event.getProperty(targetPropertyName);
         if (optClientID.isPresent()) {
