@@ -1,5 +1,6 @@
 package de.fearnixx.t3.event;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
 import de.fearnixx.t3.reflect.Listener;
@@ -11,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,6 +36,8 @@ public class EventService implements IEventService {
     private final List<EventListener> systemContainers;
     private final List<EventListener> listeners;
     private final List<EventListener> systemListeners;
+
+    private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
     private final ExecutorService eventExecutor;
 
     private boolean terminated;
@@ -46,7 +50,7 @@ public class EventService implements IEventService {
         listeners = new ArrayList<>();
         terminated = false;
 
-        eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE));
+        eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
         AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
     }
 

@@ -76,8 +76,9 @@ public class DatabaseService {
     }
 
     @Listener
-    public void onShutdown(IBotStateEvent.IPreShutdown event) {
-
+    public void onShutdown(IBotStateEvent.IPostShutdown event) {
+        persistenceUnits.forEach((k, u) -> u.close());
+        persistenceUnits.clear();
     }
 
     public Optional<EntityManager> getEntityManager(String unitName) {

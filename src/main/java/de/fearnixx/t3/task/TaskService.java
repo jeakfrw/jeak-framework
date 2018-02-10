@@ -1,5 +1,7 @@
 package de.fearnixx.t3.task;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import de.fearnixx.t3.Main;
 import de.fearnixx.t3.service.task.ITask;
 import de.fearnixx.t3.service.task.ITaskService;
 import de.mlessmann.logging.ILogReceiver;
@@ -8,20 +10,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by MarkL4YG on 11.06.17.
  */
 public class TaskService extends Thread implements ITaskService {
 
+    public static final Integer THREAD_POOL_SIZE = 10;
+    public static Integer AWAIT_TERMINATION_DELAY = 5000;
+
     private ILogReceiver log;
 
     private final Map<ITask, Long> tasks;
     private boolean terminated = false;
 
+    private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("task-scheduler-%d").build();
+    private ExecutorService taskExecutor;
+
     public TaskService(ILogReceiver log, int capacity) {
         this.log = log;
         tasks = new HashMap<>(capacity, 0.8f);
+        taskExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.taskmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
+        AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
     }
 
     @Override
@@ -73,8 +86,8 @@ public class TaskService extends Thread implements ITaskService {
             tasks.remove(task);
         }
         log.finer("Running task ", task.getName());
-        Runnable r = task.getRunnable();
-        Thread t = new Thread(() -> {
+        final Runnable r = task.getRunnable();
+        taskExecutor.execute(() -> {
             try {
                 r.run();
             } catch (Throwable e) {
@@ -84,7 +97,6 @@ public class TaskService extends Thread implements ITaskService {
                 scheduleTask(task);
             }
         });
-        t.start();
     }
 
     @Override
@@ -122,5 +134,6 @@ public class TaskService extends Thread implements ITaskService {
             tasks.clear();
             terminated = true;
         }
+        taskExecutor.shutdownNow();
     }
 }

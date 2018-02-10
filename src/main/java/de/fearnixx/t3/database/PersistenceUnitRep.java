@@ -4,6 +4,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
 import org.hibernate.boot.MetadataBuilder;
 import org.hibernate.boot.MetadataSources;
+import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.service.ServiceRegistry;
 
 import javax.persistence.EntityManager;
@@ -16,7 +17,6 @@ import java.util.Set;
  * Created by MarkL4YG on 09-Feb-18
  */
 public class PersistenceUnitRep {
-
     private ServiceRegistry registry;
     private MetadataSources metaSources;
     private MetadataBuilder metaBuilder;
@@ -45,6 +45,8 @@ public class PersistenceUnitRep {
 
     public void close() {
         managerList.forEach(EntityManager::close);
+        sessionFactory.close();
         managerList.clear();
+        StandardServiceRegistryBuilder.destroy(registry);
     }
 }
