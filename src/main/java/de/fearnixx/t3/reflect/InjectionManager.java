@@ -144,7 +144,8 @@ public class InjectionManager implements IInjectionService {
             DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
             Optional<EntityManager> manager = service.getEntityManager(id);
             if (!manager.isPresent()) {
-                throw new IllegalStateException("Failed to find persistence unit: " + id);
+                logger.warning("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + id));
+                return Optional.empty();
             }
             value = manager.get();
         }
