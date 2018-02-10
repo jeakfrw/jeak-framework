@@ -52,7 +52,7 @@ public class QueryNotifier {
                 case "channelcreated":
                     notification = new QueryEvent.ChannelCreate();
                     break;
-                case "channeledit":
+                case "channeledited":
                     notification = new QueryEvent.ChannelEdit();
                     break;
                 case "channeldeleted":
