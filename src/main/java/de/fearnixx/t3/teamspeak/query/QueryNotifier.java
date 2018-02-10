@@ -49,13 +49,13 @@ public class QueryNotifier {
                 case "clientmoved":
                     notification = new QueryEvent.ClientMoved();
                     break;
-                case "channelcreate":
+                case "channelcreated":
                     notification = new QueryEvent.ChannelCreate();
                     break;
                 case "channeledit":
                     notification = new QueryEvent.ChannelEdit();
                     break;
-                case "channeldelete":
+                case "channeldeleted":
                     notification = new QueryEvent.ChannelDelete();
                     break;
                 case "textmessage":
