@@ -13,7 +13,7 @@ public interface ICommandReceiver {
      * Commands must start with "!" in order to be received.
      * CommandReceivers only receive the commands they are registered for.
      *
-     * @param event The message which shall be interpreted as a command
+     * @param ctx The context of the executed command
      */
-    void receive(IQueryEvent.INotification.ITextMessage event);
+    void receive(ICommandContext ctx) throws CommandException;
 }

@@ -125,7 +125,7 @@ public class T3Bot implements Runnable,IBot {
         serviceManager = new ServiceManager();
         eventService = new EventService(log.getChild("EM"));
         taskService = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
-        commandService = new CommandService(log.getChild("!CM"));
+        commandService = new CommandService();
         injectionManager = new InjectionManager(log, serviceManager);
         injectionManager.setBaseDir(getBaseDirectory());
         server = new Server(eventService, log.getChild("SVR"));

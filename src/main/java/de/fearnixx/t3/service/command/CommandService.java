@@ -2,8 +2,12 @@ package de.fearnixx.t3.service.command;
 
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.event.IQueryEvent;
+import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
+import de.fearnixx.t3.teamspeak.IServer;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
+import de.fearnixx.t3.teamspeak.TargetType;
+import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.util.*;
@@ -20,19 +24,24 @@ public class CommandService implements ICommandService {
     public static final Integer THREAD_POOL_SIZE = 5;
     public static Integer AWAIT_TERMINATION_DELAY = 5000;
 
-    private ILogReceiver log;
+    @Inject(id = "CMMSVC")
+    public ILogReceiver log;
+
+    @Inject
+    public IServer server;
 
     private Map<String, ICommandReceiver> commands;
+    private CommandParser parser;
     private boolean terminated = false;
     private final Object lock = new Object();
 
     private ExecutorService executorSvc;
 
-    public CommandService(ILogReceiver log) {
-        this.log = log;
+    public CommandService() {
         commands = new HashMap<>();
         executorSvc = Executors.newFixedThreadPool(Main.getProperty("bot.commandmgr.poolsize", THREAD_POOL_SIZE));
         AWAIT_TERMINATION_DELAY = Main.getProperty("bot.commandmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
+        parser = new CommandParser();
     }
 
     /**
@@ -45,29 +54,81 @@ public class CommandService implements ICommandService {
     @Listener
     public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
         if (terminated) return;
-        String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse("");//event.getChatMessage().getMessage();
-        if (msg.startsWith(COMMAND_PREFIX)) {
+        String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse(null);//event.getChatMessage().getMessage();
+        if (msg != null) {
+            try {
+                Optional<CommandContext> optContext = parser.parseLine(msg + '\n');
 
-            // Strip the command starter
-            msg = msg.substring(COMMAND_PREFIX.length());
+                if (optContext.isPresent()) {
+                    String command = optContext.get().getCommand();
 
-            synchronized (lock) {
-                Iterator<Map.Entry<String, ICommandReceiver>> it = commands.entrySet().iterator();
-                final List<ICommandReceiver> receivers = new ArrayList<>();
-                //final IQueryEvent.INotification.ITextMessage fEvent = event;
-                while (it.hasNext()) {
-                    Map.Entry<String, ICommandReceiver> entry = it.next();
+                    synchronized (lock) {
+                        Iterator<Map.Entry<String, ICommandReceiver>> it = commands.entrySet().iterator();
+                        final List<ICommandReceiver> receivers = new ArrayList<>();
+                        while (it.hasNext()) {
+                            Map.Entry<String, ICommandReceiver> entry = it.next();
 
-                    if (msg.startsWith(entry.getKey())) {
-                        receivers.add(entry.getValue());
+                            if (command.equals(entry.getKey())) {
+                                receivers.add(entry.getValue());
+                            }
+                        }
+                        final CommandContext ctx = optContext.get();
+                        ctx.setRawEvent(event);
+                        ctx.setTargetType(TargetType.fromQueryNum(Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get())));
+                        executorSvc.execute(() -> {
+                            ICommandReceiver last = null;
+                            try {
+                                log.finer("Executing command receiver");
+                                for (int i = receivers.size() - 1; i >= 0; i--) {
+                                    last = receivers.get(i);
+                                    last.receive(ctx);
+                                }
+                            } catch (CommandException ex) {
+                                handleExceptionOn(ctx.getRawEvent(), ex, last);
+                            } catch (Throwable thrown) {
+                                log.severe("Uncaught exception while executing command!", thrown);
+                            }
+                        });
                     }
                 }
-                executorSvc.execute(() -> {
-                    log.finer("Executing command receiver");
-                    receivers.forEach(r -> r.receive(event));
-                });
+
+            } catch (CommandException ex) {
+                handleExceptionOn(event, ex, null);
             }
         }
+    }
+
+    private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage, CommandException exception, ICommandReceiver receiver) {
+        log.warning("Error executing command", (exception instanceof CommandParameterException ? null : exception));
+        Integer targetType = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
+        Integer targetID = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
+
+        String message = null;
+        if (exception instanceof CommandParameterException) {
+            CommandParameterException cpe = ((CommandParameterException) exception);
+            message = "Rejected parameter!"
+                      + "\nParameter name: " + cpe.getParamName()
+                      + "\nPassed value: " + cpe.getPassedValue()
+                      + "\nMessage: " + cpe.getMessage();
+            if (cpe.getCause() != null)
+                message += "\nCaused by: " + cpe.getCause().getClass().getSimpleName() + ": " + cpe.getCause().getMessage();
+            if (receiver != null)
+                message += "\nRejected by: " + receiver.getClass().getName();
+        } else {
+            message = "There was an error processing your command!\n" + exception.getClass().getSimpleName() + ": " + exception.getMessage();
+        }
+        if (message.length() > 1024) {
+            log.info("Cropped error feedback!");
+            log.fine(message);
+            message = message.substring(0, 1022) + "...";
+        }
+
+        IQueryRequest.Builder request = IQueryRequest.builder()
+                                                     .command("sendtextmessage")
+                                                     .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
+                                                     .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
+                                                     .addKey(PropertyKeys.TextMessage.MESSAGE, message);
+        server.getConnection().sendRequest(request.build());
     }
 
     @Override

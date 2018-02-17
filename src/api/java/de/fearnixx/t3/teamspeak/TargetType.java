@@ -23,4 +23,12 @@ public enum TargetType {
     public static TargetType valueOf(int i) {
         return values()[i-1];
     }
+
+    public static TargetType fromQueryNum(Integer qNum) throws IllegalArgumentException {
+        for (TargetType tt : values()) {
+            if (tt.getQueryNum().equals(qNum))
+                return tt;
+        }
+        throw new IllegalArgumentException("Unknown query number: " + qNum);
+    }
 }
