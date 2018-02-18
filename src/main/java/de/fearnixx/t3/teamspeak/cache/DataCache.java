@@ -4,7 +4,6 @@ import de.fearnixx.t3.event.EventAbortException;
 import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
-import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.reflect.SystemListener;
 import de.fearnixx.t3.service.event.IEventService;
@@ -22,7 +21,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Created by MarkL4YG on 28-Jan-18
+ * @author MarkL4YG
+ *
+ * Deployed work-arounds:
+ * * enterview uses "ctid" instead of "cid"
  */
 public class DataCache implements IDataCache {
 
@@ -130,6 +132,7 @@ public class DataCache implements IDataCache {
         if (event instanceof QueryEvent.Notification.TargetClient.ClientEnter) {
             TS3Client client = new TS3Client();
             client.copyFrom(event);
+            client.setProperty("cid", client.getProperty("ctid").orElse(null));
             clientCache.put(client.getClientID(), client);
         }
 
@@ -279,7 +282,7 @@ public class DataCache implements IDataCache {
             }
 
             logger.finer("Clientlist updated");
-            QueryEvent refresh = new QueryEvent.DataEvent.RefreshClients();
+            QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
             refresh.setConnection(((QueryConnection) event.getConnection()));
             eventService.fireEvent(refresh);
 
@@ -374,7 +377,7 @@ public class DataCache implements IDataCache {
             newMap.clear();
 
             logger.finer("Channellist updated");
-            QueryEvent refresh = new QueryEvent.DataEvent.RefreshChannels();
+            QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
             refresh.setConnection(((QueryConnection) event.getConnection()));
             eventService.fireEvent(refresh);
         }

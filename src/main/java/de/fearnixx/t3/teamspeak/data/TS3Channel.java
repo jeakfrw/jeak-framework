@@ -10,7 +10,7 @@ import java.util.List;
  * Created by MarkL4YG on 15.06.17.
  */
 @SuppressWarnings("ConstantConditions")
-public class TS3Channel extends DataHolder implements IChannel {
+public class TS3Channel extends BasicDataHolder implements IChannel {
 
     boolean invalidated = false;
     private List<IChannel> children;

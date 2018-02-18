@@ -2,8 +2,6 @@ package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.T3Bot;
-import de.fearnixx.t3.event.EventService;
-import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 
@@ -11,7 +9,6 @@ import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
-import de.fearnixx.t3.teamspeak.data.DataHolder;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.except.QueryException;
 import de.fearnixx.t3.teamspeak.query.except.QueryParseException;

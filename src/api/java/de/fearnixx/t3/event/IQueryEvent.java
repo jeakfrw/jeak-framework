@@ -66,5 +66,14 @@ public interface IQueryEvent extends IEvent {
 
         interface IServerTextMessage extends ITextMessage,ITargetServer {
         }
+
+        interface IChannelCreated extends ITargetChannel {
+        }
+
+        interface IChannelDeleted extends ITargetChannel {
+        }
+
+        interface IChannelEdited extends ITargetChannel {
+        }
     }
 }

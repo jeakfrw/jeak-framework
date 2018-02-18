@@ -1,7 +1,7 @@
 package de.fearnixx.t3.event.query;
 
 import de.fearnixx.t3.event.IQueryEvent;
-import de.fearnixx.t3.teamspeak.data.DataHolder;
+import de.fearnixx.t3.teamspeak.data.BasicDataHolder;
 import de.fearnixx.t3.teamspeak.data.IChannel;
 import de.fearnixx.t3.teamspeak.data.IClient;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * Created by MarkL4YG on 01-Feb-18
  */
-public abstract class QueryEvent extends DataHolder implements IQueryEvent {
+public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent {
 
     private QueryConnection connection;
 
@@ -27,12 +27,12 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         this.connection = connection;
     }
 
-    public static abstract class DataEvent extends QueryEvent implements IDataEvent {
+    public static abstract class BasicDataEvent extends QueryEvent implements IDataEvent {
 
-        public static class RefreshClients extends DataEvent implements IRefreshClients {
+        public static class RefreshClients extends BasicDataEvent implements IRefreshClients {
         }
 
-        public static class RefreshChannels extends DataEvent implements IRefreshChannels {
+        public static class RefreshChannels extends BasicDataEvent implements IRefreshChannels {
         }
     }
 
@@ -73,7 +73,7 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         }
 
         /**
-         * Tells the notification to read its DataHolder.
+         * Tells the notification to read its BasicDataHolder.
          */
         public void readFrom() {
 
@@ -120,13 +120,13 @@ public abstract class QueryEvent extends DataHolder implements IQueryEvent {
         }
     }
 
-    public static class ChannelEdit extends TargetChannel {
+    public static class ChannelEdit extends TargetChannel implements INotification.IChannelEdited {
     }
 
-    public static class ChannelDelete extends TargetChannel {
+    public static class ChannelDelete extends TargetChannel implements INotification.IChannelDeleted {
     }
 
-    public static class ChannelCreate extends TargetChannel {
+    public static class ChannelCreate extends TargetChannel implements INotification.IChannelCreated {
     }
 
     public static class ChannelTextMessage extends TargetChannel implements IQueryEvent.INotification.IChannelTextMessage {

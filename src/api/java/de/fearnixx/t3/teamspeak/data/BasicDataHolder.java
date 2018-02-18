@@ -5,15 +5,15 @@ import java.util.*;
 /**
  * Created by MarkL4YG on 29-Jan-18
  */
-public class DataHolder implements IDataHolder {
+public class BasicDataHolder implements IDataHolder {
 
     private Map<String, String> values;
 
-    public DataHolder(Map<String, String> values) {
+    public BasicDataHolder(Map<String, String> values) {
         this.values = values;
     }
 
-    public DataHolder() {
+    public BasicDataHolder() {
         values = new HashMap<>();
     }
 

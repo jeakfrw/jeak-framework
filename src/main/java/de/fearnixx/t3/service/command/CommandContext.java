@@ -2,7 +2,7 @@ package de.fearnixx.t3.service.command;
 
 import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.teamspeak.TargetType;
-import de.fearnixx.t3.teamspeak.data.DataHolder;
+import de.fearnixx.t3.teamspeak.data.BasicDataHolder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by MarkL4YG on 15-Feb-18
  */
-public class CommandContext extends DataHolder implements ICommandContext {
+public class CommandContext extends BasicDataHolder implements ICommandContext {
 
     private TargetType type;
     private String command;
