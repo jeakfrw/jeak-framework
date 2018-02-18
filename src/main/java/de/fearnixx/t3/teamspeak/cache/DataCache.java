@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Deployed work-arounds:
  * * enterview uses "ctid" instead of "cid"
+ * * TS3 query sending invalid icon IDs. More info: https://twitter.com/MarkL4YG/status/965174407701385216
  */
 public class DataCache implements IDataCache {
 
@@ -293,7 +294,7 @@ public class DataCache implements IDataCache {
             final Object tempLock = new Object();
             final Map<Integer, TS3Channel> newMap = new HashMap<>(messages.size(), 1.1f);
             synchronized (lock) {
-                messages.parallelStream().forEach(o -> {
+                messages.stream().forEach(o -> {
                     try {
                         Integer cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
                         if (cid == -1) {
@@ -326,6 +327,14 @@ public class DataCache implements IDataCache {
                             } else {
                                 // Channel not new - Update values
                                 c.copyFrom(o);
+                            }
+                        }
+                        // Dirtiest work-around I've ever committed...
+                        if (c.getProperty("channel_icon_id").isPresent()) {
+                            Integer idFromTS = Integer.valueOf(c.getProperty("channel_icon_id").get());
+                            if (idFromTS < 0) {
+                                Long realID = Integer.toUnsignedLong(idFromTS);
+                                c.setProperty("channel_icon_id", realID.toString());
                             }
                         }
                         synchronized (tempLock) {
