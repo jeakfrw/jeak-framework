@@ -294,7 +294,7 @@ public class DataCache implements IDataCache {
             final Object tempLock = new Object();
             final Map<Integer, TS3Channel> newMap = new HashMap<>(messages.size(), 1.1f);
             synchronized (lock) {
-                messages.stream().forEach(o -> {
+                messages.parallelStream().forEach(o -> {
                     try {
                         Integer cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
                         if (cid == -1) {
