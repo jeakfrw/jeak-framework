@@ -1,11 +1,11 @@
 package de.fearnixx.t3.service.permission.base;
 
-import de.fearnixx.t3.teamspeak.data.DataHolder;
+import de.fearnixx.t3.teamspeak.data.BasicDataHolder;
 
 /**
  * Created by MarkL4YG on 07-Feb-18
  */
-public class Permission extends DataHolder implements IPermission {
+public class Permission extends BasicDataHolder implements IPermission {
 
     private String systemID;
     private String permSID;

@@ -12,6 +12,7 @@ import de.fearnixx.t3.teamspeak.query.IQueryPromise;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.query.except.QueryException;
 import de.fearnixx.t3.service.permission.teamspeak.ITS3Permission.PriorityType;
+import de.mlessmann.logging.ILogReceiver;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -25,8 +26,11 @@ import java.util.concurrent.TimeUnit;
  */
 public class TS3PermissionProvider implements ITS3PermissionProvider {
 
-    public static final Integer CACHE_TIMEOUT_SECONDS = 60;
+    public static final Integer CACHE_TIMEOUT_SECONDS = 90;
     public static final Integer EMPTY_RESULT_ID = 1281;
+
+    @Inject(id = "ts3perm")
+    public ILogReceiver logger;
 
     @Inject
     public IDataCache dataCache;
@@ -40,6 +44,44 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
     private Map<Integer, TS3PermCache> channelGroupPerms = new HashMap<>();
     private Map<Integer, TS3PermCache> serverGroupPerms = new HashMap<>();
     private Map<Integer, Map<Integer, TS3PermCache>> channelClientPerms = new HashMap<>();
+
+    @Override
+    public void clearCache(PriorityType type, Integer optClientOrGroupID, Integer optChannelID) {
+
+        switch (type) {
+            case CLIENT:
+                if (optClientOrGroupID == null)
+                    throw new IllegalArgumentException("ClientID missing");
+                clientPerms.remove(optClientOrGroupID);
+                break;
+            case CHANNEL:
+                if (optChannelID == null)
+                    throw new IllegalArgumentException("ChannelID missing");
+                channelPerms.remove(optChannelID);
+                break;
+            case SERVER_GROUP:
+                if (optClientOrGroupID == null)
+                    throw new IllegalArgumentException("Server group ID missing");
+                serverGroupPerms.remove(optClientOrGroupID);
+                break;
+            case CHANNEL_GROUP:
+                if (optClientOrGroupID == null)
+                    throw new IllegalArgumentException("Channel group ID missing");
+                channelGroupPerms.remove(optClientOrGroupID);
+                break;
+            case CHANNEL_CLIENT:
+                if (optClientOrGroupID == null)
+                    throw new IllegalArgumentException("Client ID missing");
+                if (optChannelID == null)
+                    throw new IllegalArgumentException("Channel ID missing");
+                Map<Integer, TS3PermCache> clients = channelClientPerms.getOrDefault(optChannelID, null);
+                if (clients != null)
+                    clients.remove(optClientOrGroupID);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown PriorityType!");
+        }
+    }
 
     @Override
     public Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID) {
@@ -100,6 +142,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         return result;
     }
 
+    @Override
     public Optional<ITS3Permission> getClientPermission(Integer clientDBID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = clientPerms.getOrDefault(clientDBID, null);
@@ -132,6 +175,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CLIENT);
     }
 
+    @Override
     public Optional<ITS3Permission> getServerGroupPermission(Integer serverGroupID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = serverGroupPerms.getOrDefault(serverGroupID, null);
@@ -164,6 +208,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.SERVER_GROUP);
     }
 
+    @Override
     public Optional<ITS3Permission> getChannelGroupPermission(Integer channelGroupID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = channelGroupPerms.getOrDefault(channelGroupID, null);
@@ -196,6 +241,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_GROUP);
     }
 
+    @Override
     public Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
         IMessage.IAnswer answer = null;
         Map<Integer, TS3PermCache> channelClientMap = channelClientPerms.getOrDefault(channelID, null);
@@ -237,6 +283,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_CLIENT);
     }
 
+    @Override
     public Optional<ITS3Permission> getChannelPermission(Integer channelID, String permSID) {
         IMessage.IAnswer answer = null;
         TS3PermCache cache = channelPerms.getOrDefault(channelID, null);
@@ -286,6 +333,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
             perm.copyFrom(answer);
             return Optional.of(perm);
         }
+        logger.fine("Permission ", permSID, " not found in list");
         return Optional.empty();
     }
 
