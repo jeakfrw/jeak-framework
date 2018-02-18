@@ -330,6 +330,7 @@ public class DataCache implements IDataCache {
                             }
                         }
                         // Dirtiest work-around I've ever committed...
+                        // TeamSpeak appears to read their integers wrongly and sends back an invalid ID.
                         if (c.getProperty("channel_icon_id").isPresent()) {
                             Integer idFromTS = Integer.valueOf(c.getProperty("channel_icon_id").get());
                             if (idFromTS < 0) {
