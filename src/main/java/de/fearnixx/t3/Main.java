@@ -120,7 +120,7 @@ public class Main {
                 String confPath = node.getNode("config").optString(k + "/config/bot.json");
                 File botConf = new File(confPath);
                 if (!botConf.exists() && !botConf.getAbsoluteFile().getParentFile().mkdirs()) {
-                    log.severe("Cannot start bot: ");
+                    log.severe("Cannot start bot: " + k);
                     return;
                 }
                 T3Bot bot = new T3Bot(logger.getLogReceiver().getChild(k));

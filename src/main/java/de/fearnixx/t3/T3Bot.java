@@ -116,7 +116,7 @@ public class T3Bot implements Runnable,IBot {
         }
 
         // Bot Pre-Initialization
-        setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
+        // setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
         initCalled = true;
         plugins = new HashMap<>();
 

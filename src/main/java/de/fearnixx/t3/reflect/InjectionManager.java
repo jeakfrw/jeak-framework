@@ -153,6 +153,9 @@ public class InjectionManager implements IInjectionService {
         }
 
         File baseDir = new File(this.baseDir, "config");
+        if (unitName != null)
+            baseDir = new File(baseDir, unitName);
+
         if (!annotation.category().isEmpty())
             baseDir = new File(baseDir, annotation.category());
 

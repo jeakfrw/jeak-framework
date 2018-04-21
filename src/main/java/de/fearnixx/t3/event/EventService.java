@@ -98,8 +98,11 @@ public class EventService implements IEventService {
             }
         };
 
-        // The PostShutdown event shall not be called asynchronously
-        if (event instanceof IBotStateEvent.IPostShutdown) {
+        // The following events shall not be called asynchronously:
+        // * Initialize
+        // * PostShutdown
+        if (event instanceof IBotStateEvent.IPostShutdown
+            || event instanceof IBotStateEvent.IInitializeEvent) {
             runnable.run();
         } else {
             // Execute using ThreadPoolExecutor

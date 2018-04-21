@@ -72,21 +72,37 @@ public class CommandService implements ICommandService {
                                 receivers.add(entry.getValue());
                             }
                         }
+
+                        // Unknown command
+                        if (receivers.isEmpty()) {
+                            Integer targetID = Integer.valueOf(event.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
+                            IQueryRequest.Builder request = IQueryRequest.builder()
+                                                                         .command("sendtextmessage")
+                                                                         .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
+                                                                         .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
+                                                                         .addKey(PropertyKeys.TextMessage.MESSAGE, "Unknown command!");
+                            server.getConnection().sendRequest(request.build());
+                            return;
+                        }
+
+                        // Execute receivers
                         final CommandContext ctx = optContext.get();
                         ctx.setRawEvent(event);
                         ctx.setTargetType(TargetType.fromQueryNum(Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get())));
                         executorSvc.execute(() -> {
                             ICommandReceiver last = null;
-                            try {
-                                log.finer("Executing command receiver");
-                                for (int i = receivers.size() - 1; i >= 0; i--) {
-                                    last = receivers.get(i);
+                            log.finer("Executing command receiver");
+                            for (int i = receivers.size() - 1; i >= 0; i--) {
+                                last = receivers.get(i);
+                                try {
                                     last.receive(ctx);
+                                }  catch (CommandException ex) {
+                                    handleExceptionOn(ctx.getRawEvent(), ex, last);
+
+                                }  catch (Throwable thrown) {
+                                    log.severe("Uncaught exception while executing command!", thrown);
+                                    handleExceptionOn(ctx.getRawEvent(), thrown, last);
                                 }
-                            } catch (CommandException ex) {
-                                handleExceptionOn(ctx.getRawEvent(), ex, last);
-                            } catch (Throwable thrown) {
-                                log.severe("Uncaught exception while executing command!", thrown);
                             }
                         });
                     }
@@ -98,7 +114,7 @@ public class CommandService implements ICommandService {
         }
     }
 
-    private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage, CommandException exception, ICommandReceiver receiver) {
+    private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage, Throwable exception, ICommandReceiver receiver) {
         log.warning("Error executing command", (exception instanceof CommandParameterException ? null : exception));
         Integer targetType = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
         Integer targetID = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
