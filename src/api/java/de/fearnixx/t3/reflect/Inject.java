@@ -6,10 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by MarkL4YG on 01.06.17.
+ * Designates a field to be targeted by injections.
+ * Value is determined by the field type.
+ *
+ * Special cases:
+ * * {@link Config} for clarity
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Inject {
-    String id() default "";
 }

@@ -25,7 +25,7 @@ public class DatabaseService {
     private static final Object CLASS_LOCK =  new Object();
     private static Set<Class<?>> ENTITIES;
 
-    @Inject(id = "DBSVC")
+    @Inject
     public ILogReceiver logger;
 
     private File dbDir;

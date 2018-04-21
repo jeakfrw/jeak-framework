@@ -29,7 +29,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
     public static final Integer CACHE_TIMEOUT_SECONDS = 90;
     public static final Integer EMPTY_RESULT_ID = 1281;
 
-    @Inject(id = "ts3perm")
+    @Inject
     public ILogReceiver logger;
 
     @Inject

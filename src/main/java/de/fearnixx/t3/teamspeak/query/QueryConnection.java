@@ -35,7 +35,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public static final int KEEP_ALIVE_SECS = Main.getProperty("bot.connection.keepalive", 240);
     public static final float REQ_DELAY = Main.getProperty("bot.connection.reqdelay", 0.25f);
 
-    @Inject(id = "CONN")
+    @Inject
     public ILogReceiver log;
 
     @Inject

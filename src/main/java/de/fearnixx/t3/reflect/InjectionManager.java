@@ -1,6 +1,5 @@
 package de.fearnixx.t3.reflect;
 
-import de.fearnixx.t3.IBot;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.database.DatabaseService;
 import de.fearnixx.t3.service.IServiceManager;
@@ -11,10 +10,8 @@ import de.mlessmann.logging.ILogReceiver;
 import javax.persistence.EntityManager;
 import java.io.File;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Path;
 import java.util.Optional;
-import java.util.UUID;
 
 import static de.fearnixx.t3.T3Bot.CHAR_ENCODING;
 
@@ -64,12 +61,24 @@ public class InjectionManager implements IInjectionService {
                 if (inject == null)
                     continue;
 
-                // Extract info
-                String id = inject.id();
+                // Maybe a config field
+                Config config = field.getAnnotation(Config.class);
 
-                // Injection value
+                // Maybe a datasource field
+                DataSource dataSource = field.getAnnotation(DataSource.class);
+
+                // Field information
                 Class<?> type = field.getType();
-                Optional<?> optTarget = provideWith(type, id, unitName);
+                String fieldName = field.getName();
+
+                // Evaluate value
+                Optional<?> optTarget;
+                if (config != null)
+                    optTarget = provideConfigWith(clazz, type, unitName, fieldName, config);
+                else if (dataSource != null)
+                    optTarget = provideDataSourceWith(clazz, type, unitName, fieldName, dataSource);
+                else
+                    optTarget = provideWith(clazz, type, unitName, fieldName);
 
                 // Log message is provided by #provide
                 if (!optTarget.isPresent())
@@ -101,7 +110,7 @@ public class InjectionManager implements IInjectionService {
         return Optional.empty();
     }
 
-    public <T> Optional<T> provideWith(Class<T> clazz, String id, String altUnitName) {
+    public <T> Optional<T> provideWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName) {
         Optional<T> result = serviceManager.provide(clazz);
         if (result.isPresent())
             return result;
@@ -117,47 +126,79 @@ public class InjectionManager implements IInjectionService {
             value = loggerUnbiased;
             if (unitName != null)
                 value = ((ILogReceiver) value).getChild(unitName);
-            if (id != null)
-                value = ((ILogReceiver) value).getChild(id);
-
-        } else if (clazz.isAssignableFrom(ConfigLoader.class)) {
-            File jsonFile;
-            if (id == null || id.trim().isEmpty()) {
-                jsonFile = new File(baseDir, "config/" + unitName + ".json");
-            } else {
-                File subDir = new File(baseDir, "config/" + unitName);
-                subDir.mkdirs();
-                jsonFile = new File(subDir, id + ".json");
-            }
-            value = new JSONConfigLoader();
-            ((JSONConfigLoader) value).setEncoding(CHAR_ENCODING);
-            ((JSONConfigLoader) value).setFile(jsonFile);
+            else
+                value = ((ILogReceiver) value).getChild(victimClazz.getSimpleName());
 
         } else if (clazz.isAssignableFrom(IInjectionService.class)) {
             value = new InjectionManager(loggerUnbiased, serviceManager);
             ((InjectionManager) value).setBaseDir(baseDir);
-            ((InjectionManager) value).setUnitName(id != null ? id : unitName);
+            ((InjectionManager) value).setUnitName(unitName);
 
-        } else if (clazz.isAssignableFrom(EntityManager.class)) {
-            if (id == null)
-                throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
-
-            DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
-            Optional<EntityManager> manager = service.getEntityManager(id);
-            if (!manager.isPresent()) {
-                logger.warning("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + id));
-                return Optional.empty();
-            }
-            value = manager.get();
         }
         return Optional.ofNullable(clazz.cast(value));
     }
 
-    private String genID(String id) {
-        if (id != null && !id.trim().isEmpty()) {
-            return id;
-        } else {
-            return UUID.randomUUID().toString();
+    public <T> Optional<T> provideConfigWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName, Config annotation) {
+        Object value = null;
+        String unitName = this.unitName != null ? this.unitName : altUnitName;
+
+        String fileName = annotation.id();
+        if (fileName.isEmpty())
+            fileName = unitName;
+
+        if (fileName == null) {
+            fileName = victimClazz.getName() + '.' + fieldName;
+            fileName = fileName.replaceAll("(?i)loader", "");
+            fileName = fileName.replaceAll("(?i)config", "");
         }
+
+        File baseDir = new File(this.baseDir, "config");
+        if (!annotation.category().isEmpty())
+            baseDir = new File(baseDir, annotation.category());
+
+        if (!baseDir.isDirectory() && !baseDir.mkdirs())
+            throw new RuntimeException("Failed to create target directory: " + baseDir.getPath());
+
+        File configFile = new File(baseDir, fileName + ".json");
+
+        if (clazz.isAssignableFrom(ConfigLoader.class)) {
+            value = new JSONConfigLoader();
+            ((JSONConfigLoader) value).setEncoding(CHAR_ENCODING);
+            ((JSONConfigLoader) value).setFile(configFile);
+
+        } else if (clazz.isAssignableFrom(File.class)) {
+            value = configFile;
+
+        } else if (clazz.isAssignableFrom(Path.class)) {
+            value = configFile.toPath();
+
+        }
+
+        return Optional.ofNullable(clazz.cast(value));
+    }
+
+    public <T> Optional<T> provideDataSourceWith(Class<?> victimClass, Class<T> clazz, String altUnitName, String fieldName, DataSource annotation) {
+        if (annotation.value().isEmpty()) {
+            throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
+        }
+
+        DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
+        Optional<EntityManager> manager = service.getEntityManager(annotation.value());
+        Object value = null;
+
+        if (clazz.isAssignableFrom(EntityManager.class)) {
+
+            if (!manager.isPresent()) {
+                logger.warning("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + annotation.value()));
+                return Optional.empty();
+            }
+            value = manager.get();
+
+        } else if (clazz.isAssignableFrom(Boolean.class)) {
+            value = manager.isPresent();
+
+        }
+
+        return Optional.ofNullable(clazz.cast(value));
     }
 }

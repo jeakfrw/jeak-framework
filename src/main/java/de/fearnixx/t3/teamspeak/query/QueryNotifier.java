@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class QueryNotifier {
 
-    @Inject(id = "QN")
+    @Inject
     public ILogReceiver logger;
 
     @Inject

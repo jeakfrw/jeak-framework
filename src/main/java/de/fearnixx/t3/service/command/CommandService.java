@@ -24,7 +24,7 @@ public class CommandService implements ICommandService {
     public static final Integer THREAD_POOL_SIZE = 5;
     public static Integer AWAIT_TERMINATION_DELAY = 5000;
 
-    @Inject(id = "CMMSVC")
+    @Inject
     public ILogReceiver log;
 
     @Inject

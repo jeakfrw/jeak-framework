@@ -4,7 +4,6 @@ import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
-import de.fearnixx.t3.teamspeak.cache.DataCache;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
@@ -17,7 +16,7 @@ import java.io.IOException;
  */
 public class Server implements IServer {
 
-    @Inject(id = "svr")
+    @Inject
     public ILogReceiver log;
 
     @Inject
@@ -44,7 +43,7 @@ public class Server implements IServer {
         if (this.host!=null) {
             throw new RuntimeException("Can only connect a server once!");
         }
-        injectService.injectInto(mainConnection, "svr");
+        injectService.injectInto(mainConnection);
 
         this.instID = instID;
         this.user = user;
