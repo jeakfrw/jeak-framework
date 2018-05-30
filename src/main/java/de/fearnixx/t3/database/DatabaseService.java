@@ -64,8 +64,8 @@ public class DatabaseService {
                 logger.fine("Constructing persistence unit: ", name);
 
                 StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+                applyDefaults(registryBuilder);
                 registryBuilder.loadProperties(prop);
-                registryBuilder.applySetting("hibernate.format_sql", "true");
                 //jndi
                 //registryBuilder.applySetting("hibernate.session_factory_name", name);
                 //registryBuilder.configure();
@@ -73,6 +73,13 @@ public class DatabaseService {
                 persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
             }
         }
+    }
+
+    private void applyDefaults(StandardServiceRegistryBuilder registryBuilder) {
+        registryBuilder.applySetting("hibernate.format_sql", "true");
+        registryBuilder.applySetting("hibernate.connection.driver_class", "com.mysql.jdbc.Driver");
+        registryBuilder.applySetting("hibernate.connection.pool_size", "1");
+        registryBuilder.applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
     }
 
     @Listener
