@@ -10,7 +10,8 @@ import java.lang.annotation.Target;
  * Value is determined by the field type.
  *
  * Special cases:
- * * {@link Config} for clarity
+ * * {@link Config}
+ * * {@link DataSource}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

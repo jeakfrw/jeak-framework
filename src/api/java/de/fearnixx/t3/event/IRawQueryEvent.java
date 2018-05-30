@@ -7,12 +7,23 @@ import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import java.util.List;
 
 /**
- * Created by MarkL4YG on 01-Feb-18
+ * Interface for less abstract query message access.
+ * Try using {@link IQueryEvent} as much as possible.
  */
 public interface IRawQueryEvent extends IEvent, IDataHolder {
 
+    /**
+     * The connection this event originated from.
+     */
     IQueryConnection getConnection();
 
+    /**
+     * Main message interface.
+     * Provides access to both previous and next message if present until the next "error" report.
+     * Also provides access to the error report.
+     *
+     * Notifications will always use errorid=0.
+     */
     interface IMessage extends IRawQueryEvent {
 
         boolean hasNext();

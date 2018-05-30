@@ -1,7 +1,8 @@
 package de.fearnixx.t3.service.command;
 
 /**
- * Created by MarkL4YG on 17-Feb-18
+ * Generic exception to be thrown by {@link ICommandReceiver}s
+ *   to indicate an issue that has to be reported to the user.
  */
 public class CommandException extends Exception {
 

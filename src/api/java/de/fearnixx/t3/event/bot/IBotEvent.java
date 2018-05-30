@@ -8,5 +8,8 @@ import de.fearnixx.t3.event.IEvent;
  */
 public interface IBotEvent extends IEvent {
 
+    /**
+     * Returns the bot from which the event originated
+     */
     IBot getBot();
 }

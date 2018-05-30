@@ -9,28 +9,54 @@ import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import java.util.List;
 
 /**
- * Created by MarkL4YG on 01-Feb-18
+ * Base interface for all events fired by an {@link IQueryConnection} instance.
  */
 public interface IQueryEvent extends IEvent {
 
+    /**
+     * The connection this event originated from.
+     */
     IQueryConnection getConnection();
 
+    /**
+     * Event interface indicating that processed cached data has been updated.
+     */
     interface IDataEvent extends IQueryEvent {
 
+        /**
+         * Event indicating that the client cache has been updated.
+         * By default this happens around once every 60 seconds.
+         */
         interface IRefreshClients extends IDataEvent {
         }
 
+        /**
+         * Event indicating that the channel cache has been updated.
+         * By default this happens around once every 3 Minutes.
+         */
         interface IRefreshChannels extends IDataEvent {
         }
     }
 
+    /**
+     * Event interface indicating that a request has received an answer.
+     */
     interface IAnswer extends IQueryEvent {
 
+        /**
+         * The request that has requested/received the response
+         */
         IQueryRequest getRequest();
 
+        /**
+         * The KV chain that has been received.
+         */
         List<IDataHolder> getChain();
     }
 
+    /**
+     * Event interface indicating that TS3 fired an event notification.
+     */
     interface INotification extends IQueryEvent, IDataHolder {
 
         /**
@@ -39,11 +65,21 @@ public interface IQueryEvent extends IEvent {
          */
         String getCaption();
 
+        /**
+         * Event that targeted a specific client.
+         * The target is injected using a SystemListener.
+         * In case the injection fails this event will not be fired to preserve consistency.
+         */
         interface ITargetClient extends INotification {
 
             IClient getTarget();
         }
 
+        /**
+         * Event that targeted a specific channel.
+         * The target is injected using a SystemListener.
+         * In case the injection fails this event will not be fired to preserve consistency.
+         */
         interface ITargetChannel extends INotification {
 
             IChannel getTarget();

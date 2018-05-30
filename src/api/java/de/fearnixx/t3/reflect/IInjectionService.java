@@ -1,7 +1,7 @@
 package de.fearnixx.t3.reflect;
 
 /**
- * Created by MarkL4YG on 02-Feb-18
+ * Injection service to run injections on own instances.
  */
 public interface IInjectionService {
 

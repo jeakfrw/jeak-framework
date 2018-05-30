@@ -3,7 +3,9 @@ package de.fearnixx.t3.service.permission.teamspeak;
 import de.fearnixx.t3.service.permission.base.IPermission;
 
 /**
- * Created by MarkL4YG on 04-Feb-18
+ * Representation of permission entries of TS3
+ *
+ * @author MarkL4YG
  */
 public interface ITS3Permission extends IPermission {
 

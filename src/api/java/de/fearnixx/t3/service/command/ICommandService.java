@@ -3,7 +3,7 @@ package de.fearnixx.t3.service.command;
 /**
  * Manages commands received by other clients over the query connection
  *
- * Created by Life4YourGames on 12.07.17.
+ * @author MarkL4YG
  */
 public interface ICommandService {
 

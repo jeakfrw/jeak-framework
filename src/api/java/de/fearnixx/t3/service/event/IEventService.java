@@ -3,7 +3,7 @@ package de.fearnixx.t3.service.event;
 import de.fearnixx.t3.event.IEvent;
 
 /**
- * Created by MarkL4YG on 09.06.17.
+ * Accessor for plugins to fire custom events so other plugins/classes may listen to it.
  */
 public interface IEventService {
 

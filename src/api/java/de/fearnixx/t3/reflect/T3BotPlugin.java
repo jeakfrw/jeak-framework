@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Created by Life4YourGames on 22.05.17.
+ * Designates a class to be loaded as a plugin by the framework.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

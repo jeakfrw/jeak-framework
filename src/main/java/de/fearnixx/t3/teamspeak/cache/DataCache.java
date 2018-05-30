@@ -96,25 +96,25 @@ public class DataCache implements IDataCache {
 
     public Map<Integer, IClient> getClientMap() {
         synchronized (lock) {
-            return new HashMap<>(clientCache);
+            return Collections.unmodifiableMap(clientCache);
         }
     }
 
     public Map<Integer, IChannel> getChannelMap() {
         synchronized (lock) {
-            return new HashMap<>(channelCache);
+            return Collections.unmodifiableMap(channelCache);
         }
     }
 
     public List<IClient> getClients() {
         synchronized (lock) {
-            return new ArrayList<>(clientCache.values());
+            return Collections.unmodifiableList(Collections);
         }
     }
 
     public List<IChannel> getChannels() {
         synchronized (lock) {
-            return new ArrayList<>(channelCache.values());
+            return Collections.unmodifiableList(channelCache.values());
         }
     }
 

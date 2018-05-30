@@ -4,7 +4,8 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by MarkL4YG on 29-Jan-18
+ * Generic data holder.
+ * Basically a wrapper around a map with some convenience methods.
  */
 public interface IDataHolder {
 

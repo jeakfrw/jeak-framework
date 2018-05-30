@@ -3,7 +3,7 @@ package de.fearnixx.t3.teamspeak.data;
 import java.util.*;
 
 /**
- * Created by MarkL4YG on 29-Jan-18
+ * Basic implementation of the {@link IDataHolder} interface.
  */
 public class BasicDataHolder implements IDataHolder {
 

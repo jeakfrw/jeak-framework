@@ -1,7 +1,9 @@
 package de.fearnixx.t3.event.bot;
 
 /**
- * Created by MarkL4YG on 09.06.17.
+ * Event classes representing run state changes.
+ *
+ * @author MarkL4YG
  */
 public interface IBotStateEvent extends IBotEvent {
 
