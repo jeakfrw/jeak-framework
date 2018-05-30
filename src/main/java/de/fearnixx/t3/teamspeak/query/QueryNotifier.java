@@ -4,6 +4,7 @@ import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
+import de.fearnixx.t3.teamspeak.EventCaptions;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.except.QueryException;
@@ -40,25 +41,25 @@ public class QueryNotifier {
             boolean checkHash = true;
 
             switch (caption) {
-                case "cliententerview":
+                case EventCaptions.CLIENT_ENTER:
                     notification = new QueryEvent.ClientEnter();
                     break;
-                case "clientleftview":
+                case EventCaptions.CLIENT_LEFT:
                     notification = new QueryEvent.ClientLeave();
                     break;
-                case "clientmoved":
+                case EventCaptions.CLIENT_MOVED:
                     notification = new QueryEvent.ClientMoved();
                     break;
-                case "channelcreated":
+                case EventCaptions.CHANNEL_CREATED:
                     notification = new QueryEvent.ChannelCreate();
                     break;
-                case "channeledited":
+                case EventCaptions.CHANNEL_EDITED:
                     notification = new QueryEvent.ChannelEdit();
                     break;
-                case "channeldeleted":
+                case EventCaptions.CHANNEL_DELETED:
                     notification = new QueryEvent.ChannelDelete();
                     break;
-                case "textmessage":
+                case EventCaptions.TEXT_MESSAGE:
                     checkHash = false;
                     Integer mode = Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
                     switch (mode) {

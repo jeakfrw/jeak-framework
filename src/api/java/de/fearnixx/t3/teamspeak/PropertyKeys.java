@@ -10,7 +10,7 @@ package de.fearnixx.t3.teamspeak;
  * If possible that'll only require plugins to recompile once without changes
  * or change from PropertyKeys to PropertyEnums
  */
-public class PropertyKeys {
+public abstract class PropertyKeys {
 
     /**
      * All available keys used in TextMessage stuff
