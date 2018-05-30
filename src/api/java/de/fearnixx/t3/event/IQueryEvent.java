@@ -31,7 +31,13 @@ public interface IQueryEvent extends IEvent {
         List<IDataHolder> getChain();
     }
 
-    interface INotification extends IQueryEvent, IDataHolder{
+    interface INotification extends IQueryEvent, IDataHolder {
+
+        /**
+         * Caption of the event provided by TeamSpeak.
+         * The "notify" prefix is stripped from the caption therefore this is really just the identifier.
+         */
+        String getCaption();
 
         interface ITargetClient extends INotification {
 
