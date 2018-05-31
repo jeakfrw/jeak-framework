@@ -108,13 +108,13 @@ public class DataCache implements IDataCache {
 
     public List<IClient> getClients() {
         synchronized (lock) {
-            return Collections.unmodifiableList(Collections);
+            return Collections.unmodifiableList(new ArrayList<>(clientCache.values()));
         }
     }
 
     public List<IChannel> getChannels() {
         synchronized (lock) {
-            return Collections.unmodifiableList(channelCache.values());
+            return Collections.unmodifiableList(new ArrayList<>(channelCache.values()));
         }
     }
 
