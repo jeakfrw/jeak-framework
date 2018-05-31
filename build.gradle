@@ -39,11 +39,11 @@ sourceSets {
 dependencies {
 
     apiCompile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
-    apiCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.4'
+    apiCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
     apiCompile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.13.Final'
 
     compile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
-    compile group: 'de.mlessmann', name: 'configurate', version: '1.0.4'
+    compile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
     compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.13.Final'
     compile files('libraries/mysql-connector-bin.jar')
