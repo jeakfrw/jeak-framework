@@ -1,0 +1,27 @@
+build_job:
+  image: gradle:4.7.0-jdk8-alpine
+
+  stage: build
+
+  script:
+  - gradle build
+
+  only:
+  - bleeding
+
+deploy_job:
+  image: alpine
+
+  before_script:
+  – apk update
+  – apk add openssh sshpass lftp
+
+  stage: deploy
+
+  script:
+  – ls -al
+  – echo "pwd" | sshpass -p $SFTP_PASS sftp -o StrictHostKeyChecking=no $SFTP_USER@$SFTP_HOST
+  – lftp -e "mirror -R ./build/libs /" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST
+
+  only:
+  – bleeding
