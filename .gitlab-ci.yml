@@ -3,11 +3,14 @@ build_job:
 
   stage: build
 
+  variables:
+    REPO_ROOT: build/maven2/de/fearnixx/t3serverbot
+
   script:
-  - mkdir -p build/maven2/
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml -O build/maven2/maven-metadata.xml
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.md5 -O build/maven2/maven-metadata.xml.md5
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.sha1 -O build/maven2/maven-metadata.xml.sha1
+  - mkdir -p $REPO_ROOT
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml -O $REPO_ROOT/maven-metadata.xml
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.md5 -O $REPO_ROOT/maven-metadata.xml.md5
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.sha1 -O $REPO_ROOT/maven-metadata.xml.sha1
   - gradle build publish
 
   artifacts:
