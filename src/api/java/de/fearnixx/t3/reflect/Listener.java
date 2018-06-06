@@ -21,14 +21,14 @@ public @interface Listener {
 
     abstract class Orders {
 
-        public static final Short LATEST = Short.MAX_VALUE;
-        public static final Short LATE = Short.MAX_VALUE / 2;
-        public static final Short LATER = Short.MAX_VALUE / 4;
+        public static final short LATEST = Short.MAX_VALUE;
+        public static final short LATE = Short.MAX_VALUE / 2;
+        public static final short LATER = Short.MAX_VALUE / 4;
 
-        public static final Short NORMAL = (short) 0;
+        public static final short NORMAL = (short) 0;
 
-        public static final Short EARLIER = Short.MIN_VALUE / 4;
-        public static final Short EARLY = Short.MIN_VALUE / 2;
-        public static final Short SYSTEM = Short.MIN_VALUE;
+        public static final short EARLIER = Short.MIN_VALUE / 4;
+        public static final short EARLY = Short.MIN_VALUE / 2;
+        public static final short SYSTEM = Short.MIN_VALUE;
     }
 }
