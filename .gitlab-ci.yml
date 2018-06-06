@@ -1,9 +1,16 @@
 build_job:
   image: "gradle:4.7.0-jdk8-alpine"
 
+  before_script:
+  - apk update
+  - apk add wget
+
   stage: build
 
   script:
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.md5
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.sha1
   - gradle build publish
 
   artifacts:
@@ -26,8 +33,8 @@ deploy_job:
   script:
   - ls -al
   - echo "pwd" | sshpass -p $SFTP_PASS sftp -P $SFTP_PORT -o StrictHostKeyChecking=no $SFTP_USER@$SFTP_HOST
-  - lftp -e "mirror -R ./build/distributions/ /t3serverbot/dist/" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
-  - lftp -e "mirror -R ./build/maven2/ /" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
+  - lftp -e "mirror -R ./build/distributions/ htdocs/t3serverbot/dist/" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
+  - lftp -e "mirror -R ./build/maven2/ htdocs/" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
 
   only:
   - bleeding
