@@ -19,7 +19,7 @@ deploy_job:
 
   before_script:
   - apk update
-  - apk add openssh sshpass lftp
+  - apk add openssh-server sshpass lftp
 
   stage: deploy
 
@@ -28,6 +28,7 @@ deploy_job:
   - echo "pwd" | sshpass -p $SFTP_PASS sftp -P $SFTP_PORT -o StrictHostKeyChecking=no $SFTP_USER@$SFTP_HOST
   - lftp -e "mirror -R ./build/distributions/ /t3serverbot/dist/" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
   - lftp -e "mirror -R ./build/maven2/ /" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
+  - quit
 
   only:
   - bleeding
