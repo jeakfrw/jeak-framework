@@ -6,6 +6,11 @@ build_job:
   script:
   - gradle build
 
+  artifacts:
+    paths:
+    - ./build/distributions/
+    - ./build/maven2/
+
   only:
   - bleeding
 
@@ -21,7 +26,7 @@ deploy_job:
   script:
   - ls -al
   - echo "pwd" | sshpass -p $SFTP_PASS sftp -P $SFTP_PORT -o StrictHostKeyChecking=no $SFTP_USER@$SFTP_HOST
-  - lftp -e "mirror -R ./build/libs /" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
+  - lftp -e "mirror -R ./build/maven2/ /" -u $SFTP_USER,$SFTP_PASS sftp://$SFTP_HOST:$SFTP_PORT
 
   only:
   - bleeding
