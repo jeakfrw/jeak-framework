@@ -19,7 +19,7 @@ deploy_job:
 
   before_script:
   - apk update
-  - apk add openssh-server sshpass lftp
+  - apk add openssh-client sshpass lftp
 
   stage: deploy
 
