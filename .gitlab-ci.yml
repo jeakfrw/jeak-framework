@@ -1,16 +1,13 @@
 build_job:
   image: "gradle:4.7.0-jdk8-alpine"
 
-  before_script:
-  - apk update
-  - apk add wget
-
   stage: build
 
   script:
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.md5
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.sha1
+  - mkdir -p build/maven2/
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml -O build/maven2/maven-metadata.xml
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.md5 -O build/maven2/maven-metadata.xml.md5
+  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.sha1 -O build/maven2/maven-metadata.xml.sha1
   - gradle build publish
 
   artifacts:
