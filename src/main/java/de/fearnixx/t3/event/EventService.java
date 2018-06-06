@@ -4,11 +4,14 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
 import de.fearnixx.t3.reflect.Listener;
-import de.fearnixx.t3.reflect.SystemListener;
 import de.fearnixx.t3.service.event.IEventService;
 import de.mlessmann.logging.ILogReceiver;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,10 +35,7 @@ public class EventService implements IEventService {
 
     private ILogReceiver log;
     private final Object LOCK = new Object();
-    private final List<EventListener> containers;
-    private final List<EventListener> systemContainers;
-    private final List<EventListener> listeners;
-    private final List<EventListener> systemListeners;
+    private final List<EventListenerContainer> containers;
 
     private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
     private final ExecutorService eventExecutor;
@@ -44,10 +44,7 @@ public class EventService implements IEventService {
 
     public EventService(ILogReceiver log) {
         this.log = log;
-        systemContainers = new ArrayList<>();
-        systemListeners = new ArrayList<>();
-        containers = new ArrayList<>();
-        listeners = new ArrayList<>();
+        containers = new LinkedList<>();
         terminated = false;
 
         eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
@@ -61,18 +58,20 @@ public class EventService implements IEventService {
     @Override
     public void fireEvent(IEvent event) {
         // Run on a temporary copy so adding new listeners during an event doesn't cause a dead-lock!
-        final List<EventListener> listeners2 = new ArrayList<>();
+        final List<EventListenerContainer> listeners2 = new LinkedList<>();
         synchronized (LOCK) {
             if (terminated) return;
-            listeners2.addAll(systemContainers);
-            listeners2.addAll(systemListeners);
-            listeners2.addAll(containers);
-            listeners2.addAll(listeners);
+            for (EventListenerContainer container : containers)
+                if (container.accepts(event.getClass()))
+                    listeners2.add(container);
         }
+
+        // Sort by event order
+        listeners2.sort(Comparator.comparingInt(EventListenerContainer::getOrder));
         sendEvent(event, listeners2);
     }
 
-    protected void sendEvent(IEvent event, List<EventListener> listeners) {
+    protected void sendEvent(IEvent event, List<EventListenerContainer> listeners) {
         log.finest("Sending event: ", event.getClass().getSimpleName(), " to ", listeners.size(), " listeners");
 
         Runnable runnable = () -> {
@@ -82,14 +81,17 @@ public class EventService implements IEventService {
                     // Check if we got interrupted during processing
                     if (Thread.currentThread().isInterrupted())
                         throw new InterruptedException("Interrupted during event execution");
-                    listeners.get(i).fireEvent(event);
+                    listeners.get(i).accept(event);
+
                 } catch (InterruptedException e) {
                     log.warning("Interrupted event: ", event.getClass().getSimpleName(), " ! Processed ", i + 1, " out of ", listeners.size(), e);
                     return;
+
                 } catch (EventAbortException abort) {
                     // Event aborted!
                     log.severe("An event has been aborted!", abort);
                     return;
+
                 } catch (Throwable e) {
                     // Skip the invocation exception for readability
                     if (e.getCause() != null) e = e.getCause();
@@ -111,20 +113,11 @@ public class EventService implements IEventService {
     }
 
     /**
-     * Adds a new {@link EventListener} to the event listeners
+     * Adds a new {@link EventListenerContainer} to the event listeners
      */
-    public void addContainer(EventListener c) {
+    public void addContainer(EventListenerContainer container) {
         synchronized (LOCK) {
-            containers.add(c);
-        }
-    }
-
-    /**
-     * Adds a new {@link EventListener} to the event listeners
-     */
-    public void addSystemContainer(EventListener c) {
-        synchronized (LOCK) {
-            containers.add(c);
+            containers.add(container);
         }
     }
 
@@ -141,16 +134,18 @@ public class EventService implements IEventService {
      * @see IEventService#registerListener(Object)
      */
     @Override
-    public void registerListener(Object o) {
+    public void registerListener(Object victim) {
+        if (victim == null)
+            throw new IllegalArgumentException("Listener victim may not be null!");
+
         synchronized (LOCK) {
-            if (listeners.stream().anyMatch(c -> c.getVictim() == o)
-                || systemListeners.stream().anyMatch(c -> c.getVictim() == o)) return;
-            EventListener listener = new EventListener(log, Listener.class, o);
-            if (listener.hasAny())
-                listeners.add(listener);
-            listener = new EventListener(log, SystemListener.class, o);
-            if (listener.hasAny())
-                systemListeners.add(listener);
+            for (Method method : victim.getClass().getMethods()) {
+                Listener anno = method.getAnnotation(Listener.class);
+                if (anno == null)
+                    continue;
+
+                containers.add(new EventListenerContainer(victim, method));
+            }
         }
     }
 

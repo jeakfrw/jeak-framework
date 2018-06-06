@@ -5,7 +5,6 @@ import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.reflect.Listener;
-import de.fearnixx.t3.reflect.SystemListener;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.service.task.ITask;
 import de.fearnixx.t3.task.TaskService;
@@ -118,7 +117,6 @@ public class DataCache implements IDataCache {
         }
     }
 
-    @SystemListener
     public void onQueryNotification(IQueryEvent.INotification event) {
 
         if (event instanceof QueryEvent.Notification.TargetClient) {
@@ -176,7 +174,7 @@ public class DataCache implements IDataCache {
         throw new EventAbortException("Target/Channel injection failed! Event aborted!");
     }
 
-    @Listener
+    @Listener(order = Listener.Orders.SYSTEM)
     public void onNotify(IQueryEvent.INotification event) {
         if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation

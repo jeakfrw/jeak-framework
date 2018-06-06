@@ -4,7 +4,6 @@ import de.fearnixx.t3.event.IEvent;
 import de.fearnixx.t3.plugin.PluginContainer;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
-import de.fearnixx.t3.reflect.SystemListener;
 import de.fearnixx.t3.reflect.T3BotPlugin;
 import de.mlessmann.common.Common;
 import de.mlessmann.logging.ILogReceiver;
@@ -47,7 +46,6 @@ public class PluginRegistry {
     private List<String> SOFT_depends;
 
     private List<Method> listeners;
-    private List<Method> systemListeners;
     private Map<Class<?>, List<Field>> injections;
 
     private PluginRegistry(Class<?> pluginClass) {
@@ -92,13 +90,11 @@ public class PluginRegistry {
 
         log.finer("Pre-processing listeners");
         listeners = new ArrayList<>();
-        systemListeners = new ArrayList<>();
 
         Method[] methods = pluginClass.getDeclaredMethods();
         for (Method method : methods) {
             Annotation anno = method.getAnnotation(Listener.class);
-            Annotation anno2 = method.getAnnotation(SystemListener.class);
-            if (anno == null && anno2 == null) continue;
+            if (anno == null) continue;
             if (method.getParameterCount() != 1) {
                 log.finest("Wrong parameter count for method: ", method.getName());
                 continue;
@@ -111,10 +107,8 @@ public class PluginRegistry {
                 log.finest("Wrong parameterType for method: ", method.getName());
                 continue;
             }
-            if (anno != null)
-                listeners.add(method);
-            else
-                systemListeners.add(method);
+
+            listeners.add(method);
         }
 
         log.finer("Pre-processing injections");
@@ -160,10 +154,6 @@ public class PluginRegistry {
 
     public List<Method> getListeners() {
         return listeners;
-    }
-
-    public List<Method> getSystemListeners() {
-        return systemListeners;
     }
 
     public Map<Class<?>, List<Field>> getInjections() {

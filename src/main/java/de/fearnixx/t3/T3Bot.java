@@ -251,10 +251,7 @@ public class T3Bot implements Runnable,IBot {
         }
 
         injectionManager.injectInto(c.getPlugin(), id);
-        if (c.getListener().hasAny())
-            eventService.addContainer(c.getListener());
-        if (c.getSystemListener().hasAny())
-            eventService.addContainer(c.getSystemListener());
+        eventService.registerListener(c.getPlugin());
         c.setState(PluginContainer.State.DONE);
         log.fine("Initialized plugin ", id);
         return true;
