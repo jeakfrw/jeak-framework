@@ -10,10 +10,7 @@ import de.mlessmann.logging.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.logging.Level;
 
 /**
@@ -154,6 +151,21 @@ public class Main {
         cmd.kill();
         for (int i = t3bots.size() - 1; i >= 0; i--) {
             t3bots.get(i).shutdown();
+        }
+        try {
+            Thread.sleep(1200);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        List<Thread> runningThreads = new LinkedList<>();
+        runningThreads.addAll(Thread.getAllStackTraces().keySet());
+
+        logger.getLogReceiver().info(runningThreads.size(), " threads running upon shutdown.");
+        for (Thread thread : runningThreads) {
+            StackTraceElement[] trace = thread.getStackTrace();
+            logger.getLogReceiver().finer("Running thread on shutdown: [", thread.getState().toString(), "] ",
+                    thread.getId(), '/', thread.getName(), " @ (",
+                    trace[0].getClassName(), ':', trace[0].getLineNumber(), ')');
         }
     }
 
