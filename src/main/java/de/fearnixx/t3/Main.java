@@ -163,9 +163,11 @@ public class Main {
         logger.getLogReceiver().info(runningThreads.size(), " threads running upon shutdown.");
         for (Thread thread : runningThreads) {
             StackTraceElement[] trace = thread.getStackTrace();
+            String position = "No position available";
+            if (trace.length > 0)
+                position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
             logger.getLogReceiver().finer("Running thread on shutdown: [", thread.getState().toString(), "] ",
-                    thread.getId(), '/', thread.getName(), " @ (",
-                    trace[0].getClassName(), ':', trace[0].getLineNumber(), ')');
+                    thread.getId(), '/', thread.getName(), " @ ", position);
         }
     }
 
