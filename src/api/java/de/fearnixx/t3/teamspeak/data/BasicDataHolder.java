@@ -22,6 +22,11 @@ public class BasicDataHolder implements IDataHolder {
     }
 
     @Override
+    public boolean hasProperty(String key) {
+        return values.getOrDefault(key, null) != null;
+    }
+
+    @Override
     public Optional<String> getProperty(String key) {
         return Optional.ofNullable(values.getOrDefault(key, null));
     }
