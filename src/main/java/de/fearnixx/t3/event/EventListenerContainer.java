@@ -4,6 +4,7 @@ import de.fearnixx.t3.reflect.Listener;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 /**
  * @author MarkL4YG
@@ -27,9 +28,11 @@ public class EventListenerContainer {
             throw new IllegalArgumentException("Cannot register listener " + victim.getClass() + "#"
                                                 + method.getName() + ": Wrong parameter type!");
 
+        //noinspection unchecked - Assignable check is done above
         listensTo = (Class<IEvent>) paramTypes[0];
         this.method = method;
         this.annotation = method.getAnnotation(Listener.class);
+        this.victim = victim;
     }
 
     public Short getOrder() {
@@ -51,8 +54,8 @@ public class EventListenerContainer {
         } catch (EventAbortException e) {
             throw e;
 
-        } catch (Throwable e) {
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + method.toGenericString());
+        } catch (Exception e) {
+            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + method.toGenericString(), e);
         }
     }
 }

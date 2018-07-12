@@ -117,6 +117,7 @@ public class DataCache implements IDataCache {
         }
     }
 
+    @Listener(order = Listener.Orders.SYSTEM)
     public void onQueryNotification(IQueryEvent.INotification event) {
 
         if (event instanceof QueryEvent.Notification.TargetClient) {
@@ -174,7 +175,7 @@ public class DataCache implements IDataCache {
         throw new EventAbortException("Target/Channel injection failed! Event aborted!");
     }
 
-    @Listener(order = Listener.Orders.SYSTEM)
+    @Listener(order = Listener.Orders.EARLIER)
     public void onNotify(IQueryEvent.INotification event) {
         if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation
@@ -194,18 +195,18 @@ public class DataCache implements IDataCache {
                 client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannel.getID().toString());
                 // Set new client count - FROM
                 fromChannel.setProperty(
-                PropertyKeys.Channel.CLIENT_COUNT,
-                Integer.valueOf(fromChannel.getClientCount() - 1).toString());
+                        PropertyKeys.Channel.CLIENT_COUNT,
+                        Integer.toString(fromChannel.getClientCount() - 1));
                 fromChannel.setProperty(
-                PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
-                Integer.valueOf(fromChannel.getClientCount() - 1).toString());
+                        PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
+                        Integer.toString(fromChannel.getClientCount() - 1));
                 // Set new client count - TO
                 toChannel.setProperty(
-                PropertyKeys.Channel.CLIENT_COUNT,
-                Integer.valueOf(toChannel.getClientCount() + 1).toString());
+                        PropertyKeys.Channel.CLIENT_COUNT,
+                        Integer.toString(toChannel.getClientCount() + 1));
                 toChannel.setProperty(
-                PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
-                Integer.valueOf(toChannel.getClientCount() + 1).toString());
+                        PropertyKeys.Channel.CLIENT_COUNT_FAMILY,
+                        Integer.toString(toChannel.getClientCount() + 1));
             }
 
         } else if (event instanceof IQueryEvent.INotification.IClientLeave) {
@@ -221,7 +222,7 @@ public class DataCache implements IDataCache {
         }
     }
 
-
+    @Listener(order = Listener.Orders.SYSTEM)
     public void onQueryMessage(IRawQueryEvent.IMessage.IAnswer event) {
         if (event.getError().getCode() != 0)
             return;

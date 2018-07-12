@@ -3,16 +3,14 @@ package de.fearnixx.t3.event;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
+import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.service.event.IEventService;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -57,6 +55,8 @@ public class EventService implements IEventService {
      */
     @Override
     public void fireEvent(IEvent event) {
+        Objects.requireNonNull(event, "Event may not be null!");
+
         // Run on a temporary copy so adding new listeners during an event doesn't cause a dead-lock!
         final List<EventListenerContainer> listeners2 = new LinkedList<>();
         synchronized (LOCK) {
@@ -85,6 +85,7 @@ public class EventService implements IEventService {
 
                 } catch (InterruptedException e) {
                     log.warning("Interrupted event: ", event.getClass().getSimpleName(), " ! Processed ", i + 1, " out of ", listeners.size(), e);
+                    Thread.currentThread().interrupt();
                     return;
 
                 } catch (EventAbortException abort) {
@@ -92,10 +93,10 @@ public class EventService implements IEventService {
                     log.severe("An event has been aborted!", abort);
                     return;
 
-                } catch (Throwable e) {
+                } catch (Exception e) {
                     // Skip the invocation exception for readability
-                    if (e.getCause() != null) e = e.getCause();
-                    log.severe("Failed to pass event ", event.getClass().getSimpleName(), " to ", listeners.get(i).getVictim().getClass().toGenericString(), e);
+                    Throwable cause = e.getCause() != null ? e.getCause() : e;
+                    log.severe("Failed to pass event ", event.getClass().getSimpleName(), " to ", listeners.get(i).getVictim().getClass().toGenericString(), cause);
                 }
             }
         };
@@ -135,8 +136,7 @@ public class EventService implements IEventService {
      */
     @Override
     public void registerListener(Object victim) {
-        if (victim == null)
-            throw new IllegalArgumentException("Listener victim may not be null!");
+        Objects.requireNonNull(victim, "Listener victim may not be null!");
 
         synchronized (LOCK) {
             for (Method method : victim.getClass().getMethods()) {
@@ -162,6 +162,7 @@ public class EventService implements IEventService {
                 terminated_successfully = eventExecutor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 log.severe("Got interrupted while awaiting thread termination!", e);
+                Thread.currentThread().interrupt();
             }
             if (!terminated_successfully) {
                 log.warning("Some events did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
