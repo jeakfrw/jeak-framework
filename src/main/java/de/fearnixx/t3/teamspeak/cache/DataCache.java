@@ -21,7 +21,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author MarkL4YG
- *
  * Deployed work-arounds:
  * * enterview uses "ctid" instead of "cid"
  * * TS3 query sending invalid icon IDs. More info: https://twitter.com/MarkL4YG/status/965174407701385216
@@ -47,36 +46,36 @@ public class DataCache implements IDataCache {
 
     // == CLIENTLIST = //
     private final IQueryRequest clientListRequest = IQueryRequest.builder()
-                                                                 .command("clientlist")
-                                                                 .addOption("-uid")
-                                                                 .addOption("-away")
-                                                                 .addOption("-voice")
-                                                                 .addOption("-times")
-                                                                 .addOption("-groups")
-                                                                 .addOption("-info")
-                                                                 .addOption("-icon")
-                                                                 .addOption("-country")
-                                                                 .build();
+            .command("clientlist")
+            .addOption("-uid")
+            .addOption("-away")
+            .addOption("-voice")
+            .addOption("-times")
+            .addOption("-groups")
+            .addOption("-info")
+            .addOption("-icon")
+            .addOption("-country")
+            .build();
     private final ITask clientListTask = ITask.builder()
-                                              .name("t3server.clientRefresh")
-                                              .interval(60L, TimeUnit.SECONDS)
-                                              .runnable(() -> connection.sendRequest(clientListRequest, this::onQueryMessage))
-                                              .build();
+            .name("t3server.clientRefresh")
+            .interval(60L, TimeUnit.SECONDS)
+            .runnable(() -> connection.sendRequest(clientListRequest, this::onQueryMessage))
+            .build();
 
     // == CHANNELLIST == //
     private final IQueryRequest channelListRequest = IQueryRequest.builder()
-                                                                  .command("channellist")
-                                                                  .addOption("-topic")
-                                                                  .addOption("-flags")
-                                                                  .addOption("-voice")
-                                                                  .addOption("-limits")
-                                                                  .addOption("-icon")
-                                                                  .build();
+            .command("channellist")
+            .addOption("-topic")
+            .addOption("-flags")
+            .addOption("-voice")
+            .addOption("-limits")
+            .addOption("-icon")
+            .build();
     private final ITask channelListTask = ITask.builder()
-                                               .name("t3server.channelrefresh")
-                                               .interval(3L, TimeUnit.MINUTES)
-                                               .runnable(() -> connection.sendRequest(channelListRequest, this::onQueryMessage))
-                                               .build();
+            .name("t3server.channelrefresh")
+            .interval(3L, TimeUnit.MINUTES)
+            .runnable(() -> connection.sendRequest(channelListRequest, this::onQueryMessage))
+            .build();
 
     public void scheduleTasks(TaskService tm) {
         tm.runTask(clientListTask);
@@ -175,7 +174,11 @@ public class DataCache implements IDataCache {
         throw new EventAbortException("Target/Channel injection failed! Event aborted!");
     }
 
-    @Listener(order = Listener.Orders.EARLIER)
+    /**
+     * Generic listeners to update caches.
+     * This HAVE TO run after normal event processing!
+     */
+    @Listener(order = Listener.Orders.LATEST)
     public void onNotify(IQueryEvent.INotification event) {
         if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation
