@@ -59,7 +59,7 @@ public class QueryParser {
             Message workingMessage;
             if (error) {
                 // This message is an error message
-                Message.ErrorMessage errorMessage = new Message.ErrorMessage(currentRequest.request);
+                Message.ErrorMessage errorMessage = new Message.ErrorMessage(currentRequest.getRequest());
                 if (currentFirst != null) {
                     workingFirst = currentFirst;
                     workingMessage = currentFirst;
@@ -82,7 +82,7 @@ public class QueryParser {
                 workingMessage = message;
             } else {
                 if (currentFirst == null) {
-                    currentFirst = new Message.Answer(currentRequest.request);
+                    currentFirst = new Message.Answer(currentRequest.getRequest());
                 }
                 workingFirst = currentFirst;
                 workingMessage = workingFirst;
@@ -122,7 +122,7 @@ public class QueryParser {
                             workingMessage = new Message.Notification();
                             ((Message.Notification) workingMessage).setCaption(capt);
                         } else
-                            workingMessage = new Message.Answer(currentRequest.request);
+                            workingMessage = new Message.Answer(currentRequest.getRequest());
                         workingMessage.copyFrom(workingLast);
                         workingMessage.setPrevious(workingLast);
 
