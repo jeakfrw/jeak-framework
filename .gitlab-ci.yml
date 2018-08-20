@@ -8,9 +8,9 @@ build_job:
 
   script:
   - mkdir -p $REPO_ROOT
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml -O $REPO_ROOT/maven-metadata.xml
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.md5 -O $REPO_ROOT/maven-metadata.xml.md5
-  - wget maven.fearnixx.de/de/fearnixx/t3serverbot/maven-metadata.xml.sha1 -O $REPO_ROOT/maven-metadata.xml.sha1
+  - wget maven.fearnixx.de:4040/de/fearnixx/t3serverbot/maven-metadata.xml -O $REPO_ROOT/maven-metadata.xml
+  - wget maven.fearnixx.de:4040/de/fearnixx/t3serverbot/maven-metadata.xml.md5 -O $REPO_ROOT/maven-metadata.xml.md5
+  - wget maven.fearnixx.de:4040/de/fearnixx/t3serverbot/maven-metadata.xml.sha1 -O $REPO_ROOT/maven-metadata.xml.sha1
   - gradle build publish
 
   artifacts:
