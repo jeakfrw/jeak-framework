@@ -1,4 +1,4 @@
-package de.fearnixx.t3.teamspeak.query.except;
+package de.fearnixx.t3.teamspeak.except;
 
 /**
  * Created by MarkL4YG on 01-Feb-18

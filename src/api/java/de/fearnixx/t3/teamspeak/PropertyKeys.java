@@ -95,6 +95,7 @@ public abstract class PropertyKeys {
 
         public static final String TALK_POWER = "channel_needed_talk_power";
         public static final String TOPIC = "channel_topic";
+        public static final String ICON_ID = "channel_icon_id";
 
         public static final String CLIENT_COUNT = "total_clients";
         public static final String MAX_CLIENTS = "channel_maxclients";

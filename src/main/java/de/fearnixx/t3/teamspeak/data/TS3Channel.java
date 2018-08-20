@@ -1,6 +1,7 @@
 package de.fearnixx.t3.teamspeak.data;
 
 import de.fearnixx.t3.teamspeak.PropertyKeys.Channel;
+import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,7 +13,7 @@ import java.util.List;
 @SuppressWarnings("ConstantConditions")
 public class TS3Channel extends BasicDataHolder implements IChannel {
 
-    boolean invalidated = false;
+    private boolean invalidated = false;
     private List<IChannel> children;
 
     public TS3Channel(){
@@ -81,7 +82,7 @@ public class TS3Channel extends BasicDataHolder implements IChannel {
             return ChannelPersistence.PERMANENT;
         if ("1".equals(semi))
             return ChannelPersistence.SEMI_PERMANENT;
-        throw new RuntimeException("A channel has reached invalid persistence! Maybe a plugin is editing channels wrongly.");
+        throw new ConsistencyViolationException("A channel has reached invalid persistence! Maybe a plugin is editing channels wrongly.");
 
     }
 

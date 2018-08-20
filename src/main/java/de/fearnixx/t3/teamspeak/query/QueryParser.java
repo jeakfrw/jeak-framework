@@ -2,7 +2,7 @@ package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent.Message;
-import de.fearnixx.t3.teamspeak.query.except.QueryParseException;
+import de.fearnixx.t3.teamspeak.except.QueryParseException;
 
 import javax.annotation.Nullable;
 import java.nio.BufferOverflowException;

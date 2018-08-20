@@ -155,17 +155,19 @@ public class Main {
         try {
             Thread.sleep(1200);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.getLogReceiver().warning("Shutdown sleep interrupted!", e);
         }
-        List<Thread> runningThreads = new LinkedList<>();
-        runningThreads.addAll(Thread.getAllStackTraces().keySet());
 
+        List<Thread> runningThreads = new LinkedList<>(Thread.getAllStackTraces().keySet());
         logger.getLogReceiver().info(runningThreads.size(), " threads running upon shutdown.");
+
         for (Thread thread : runningThreads) {
             StackTraceElement[] trace = thread.getStackTrace();
             String position = "No position available";
+
             if (trace.length > 0)
                 position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
+
             logger.getLogReceiver().finer("Running thread on shutdown: [", thread.getState().toString(), "] ",
                     thread.getId(), '/', thread.getName(), " @ ", position);
         }

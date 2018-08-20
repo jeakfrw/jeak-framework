@@ -10,7 +10,7 @@ import de.fearnixx.t3.teamspeak.cache.IDataCache;
 import de.fearnixx.t3.teamspeak.data.IClient;
 import de.fearnixx.t3.teamspeak.query.IQueryPromise;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
-import de.fearnixx.t3.teamspeak.query.except.QueryException;
+import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.service.permission.teamspeak.ITS3Permission.PriorityType;
 import de.mlessmann.logging.ILogReceiver;
 

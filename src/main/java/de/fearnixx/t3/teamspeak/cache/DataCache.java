@@ -229,169 +229,226 @@ public class DataCache implements IDataCache {
     public void onQueryMessage(IRawQueryEvent.IMessage.IAnswer event) {
         if (event.getError().getCode() != 0)
             return;
+
         if (event.getRequest() == clientListRequest) {
-            List<IRawQueryEvent.IMessage> objects = event.toList();
-            // Just a lock to be used when the new or old mapping is accessed
-            final Object tempLock = new Object();
-            final Map<Integer, TS3Client> newMap = new HashMap<>(objects.size(), 1.1f);
-            synchronized (lock) {
-                objects.stream().forEach(message -> {
+            refreshClients(event);
+
+        } else if (event.getRequest() == channelListRequest) {
+            refreshChannels(event);
+        }
+    }
+
+    /**
+     * Refreshes the internal client cache based off a `clientlist` answer event.
+     * All methods and listeners assume that all options were set during the request.
+     */
+    private void refreshClients(IRawQueryEvent.IMessage.IAnswer event) {
+        List<IRawQueryEvent.IMessage> objects = event.toList();
+        synchronized (lock) {
+            final Map<Integer, TS3Client> clientMapping = generateClientMapping(objects);
+
+            TS3Client oldClientRep;
+            Integer oID;
+            TS3Client freshClient;
+
+            Integer[] cIDs = clientCache.keySet().toArray(new Integer[0]);
+            for (int i = clientCache.size() - 1; i >= 0; i--) {
+                oID = cIDs[i];
+                oldClientRep = clientCache.get(oID);
+                freshClient = clientMapping.getOrDefault(oID, null);
+
+                if (freshClient == null) {
+                    // Client removed - invalidate & remove
+                    oldClientRep.invalidate();
+                    channelCache.remove(oID);
+
+                } else {
+                    clientMapping.remove(oID);
+                }
+            }
+
+            // All others are new - Add them
+            clientMapping.forEach(clientCache::put);
+            clientMapping.clear();
+        }
+
+        logger.finer("Clientlist updated");
+        QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
+        refresh.setConnection(((QueryConnection) event.getConnection()));
+        eventService.fireEvent(refresh);
+    }
+
+    /**
+     * Creates a Map of all available clients from a `clientlist` answer event.
+     * Helper method for {@link #refreshClients(IRawQueryEvent.IMessage.IAnswer)}.
+     *
+     * Handles update existing and creating clients
+     */
+    private Map<Integer, TS3Client> generateClientMapping(List<IRawQueryEvent.IMessage> messageObjects) {
+        final Map<Integer, TS3Client> mapping = new ConcurrentHashMap<>(messageObjects.size(), 1.1f);
+        messageObjects
+                .stream()
+                .parallel()
+                .forEach(message -> {
                     try {
-                        Integer cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
+                        int cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
+
                         if (cid == -1) {
-                            logger.warning("Skipping a client due to invalid ID: ", message.getProperty(PropertyKeys.Client.ID).orElse("null"));
+                            logger.warning("Skipping a client due to invalid ID: ",
+                                    message.getProperty(PropertyKeys.Client.ID)
+                                            .orElse("null"));
                             return;
                         }
-                        TS3Client c;
-                        synchronized (tempLock) {
-                            c = clientCache.getOrDefault(cid, null);
-                        }
-                        if (c == null) {
+
+                        TS3Client client = clientCache.getOrDefault(cid, null);
+
+                        if (client == null) {
                             // Client is new - New reference
-                            c = new TS3Client();
-                            c.copyFrom(message);
+                            client = new TS3Client();
+                            client.copyFrom(message);
+
                         } else {
                             // Client not new - Update values
-                            c.copyFrom(message);
+                            client.copyFrom(message);
                         }
-                        synchronized (tempLock) {
-                            newMap.put(cid, c);
-                        }
+
+                        mapping.put(cid, client);
                     } catch (Exception e) {
                         logger.warning("Failed to parse a client", e);
                     }
                 });
-                TS3Client o;
-                Integer oID;
-                TS3Client n;
-                Integer[] cIDs = clientCache.keySet().toArray(new Integer[clientCache.keySet().size()]);
-                for (int i = clientCache.size() - 1; i >= 0; i--) {
-                    oID = cIDs[i];
-                    o = clientCache.get(oID);
-                    n = newMap.getOrDefault(oID, null);
-                    if (n == null) {
-                        // Client removed - invalidate & remove
-                        o.invalidate();
-                        channelCache.remove(oID);
-                        continue;
-                    } else {
-                        newMap.remove(oID);
-                        continue;
-                    }
+        return mapping;
+    }
+
+    /**
+     * Refreshes the internal client cache based off a `channellist` answer event.
+     * All methods and listeners assume that all options were set during the request.
+     */
+    private void refreshChannels(IRawQueryEvent.IMessage.IAnswer event) {
+        List<IRawQueryEvent.IMessage> messages = event.toList();
+        synchronized (lock) {
+            final Map<Integer, TS3Channel> newMap = generateChannelMapping(messages);
+            TS3Channel o;
+            Integer oID;
+            TS3Channel n;
+            Integer[] cIDs = channelCache.keySet().toArray(new Integer[0]);
+            for (int i = channelCache.size() - 1; i >= 0; i--) {
+                oID = cIDs[i];
+                o = channelCache.get(oID);
+                o.clearChildren();
+                n = newMap.getOrDefault(oID, null);
+                if (n == null) {
+                    // Channel removed - invalidate & remove
+                    o.invalidate();
+                    channelCache.remove(oID);
+
+                } else if (n == o) {
+                    // Channel unchanged - continue
+                    newMap.remove(oID);
+
+                } else {
+                    // Channel reference updated - invalidate & change
+                    o.invalidate();
+                    channelCache.put(oID, n);
+                    newMap.remove(oID);
                 }
-                // All others are new - Add them
-                newMap.forEach(clientCache::put);
-                newMap.clear();
             }
 
-            logger.finer("Clientlist updated");
-            QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
-            refresh.setConnection(((QueryConnection) event.getConnection()));
-            eventService.fireEvent(refresh);
-
-        } else if (event.getRequest() == channelListRequest) {
-
-            List<IRawQueryEvent.IMessage> messages = event.toList();
-            // Just a lock to be used when the new or old mapping is accessed
-            final Object tempLock = new Object();
-            final Map<Integer, TS3Channel> newMap = new HashMap<>(messages.size(), 1.1f);
-            synchronized (lock) {
-                messages.parallelStream().forEach(o -> {
-                    try {
-                        Integer cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
-                        if (cid == -1) {
-                            logger.warning("Skipping a channel due to invalid channel ID");
-                            return;
-                        }
-                        TS3Channel c;
-                        synchronized (tempLock) {
-                            c = channelCache.getOrDefault(cid, null);
-                        }
-                        if (c == null) {
-                            // Channel is new - New reference
-                            c = new TS3Channel();
-                            c.copyFrom(o);
-                        } else {
-                            String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
-                            if (nName == null) {
-                                logger.warning("Skipping a channel due to missing name");
-                                return;
-                            }
-                            boolean wasSpacer = c.isSpacer();
-                            boolean isSpacer = TS3Spacer.spacerPattern.matcher(nName).matches();
-                            if (isSpacer != wasSpacer) {
-                                // Spacer state changed - Update reference
-                                if (isSpacer)
-                                    c = new TS3Spacer();
-                                else
-                                    c = new TS3Channel();
-                                c.copyFrom(o);
-                            } else {
-                                // Channel not new - Update values
-                                c.copyFrom(o);
-                            }
-                        }
-                        // Dirtiest work-around I've ever committed...
-                        // TeamSpeak appears to read their integers wrongly and sends back an invalid ID.
-                        if (c.getProperty("channel_icon_id").isPresent()) {
-                            Integer idFromTS = Integer.valueOf(c.getProperty("channel_icon_id").get());
-                            if (idFromTS < 0) {
-                                Long realID = Integer.toUnsignedLong(idFromTS);
-                                c.setProperty("channel_icon_id", realID.toString());
-                            }
-                        }
-                        synchronized (tempLock) {
-                            newMap.put(cid, c);
-                        }
-                    } catch (Exception e) {
-                        logger.warning("Failed to parse a channel", e);
-                    }
-                });
-                TS3Channel o;
-                Integer oID;
-                TS3Channel n;
-                Integer[] cIDs = channelCache.keySet().toArray(new Integer[channelCache.keySet().size()]);
-                for (int i = channelCache.size() - 1; i >= 0; i--) {
-                    oID = cIDs[i];
-                    o = channelCache.get(oID);
-                    o.clearChildren();
-                    n = newMap.getOrDefault(oID, null);
-                    if (n == null) {
-                        // Channel removed - invalidate & remove
-                        o.invalidate();
-                        channelCache.remove(oID);
-                        continue;
-                    } else if (n == o) {
-                        // Channel unchanged - continue
-                        newMap.remove(oID);
-                        continue;
-                    } else {
-                        // Channel reference updated - invalidate & change
-                        o.invalidate();
-                        channelCache.put(oID, n);
-                        newMap.remove(oID);
-                        continue;
-                    }
+            // All others are new - Add them
+            newMap.forEach(channelCache::put);
+            channelCache.forEach((cid, c) -> {
+                int pid = c.getParent();
+                if (pid == 0) return;
+                TS3Channel parent = channelCache.getOrDefault(pid, null);
+                if (parent == null) {
+                    logger.warning("Channel", cid, "has nonexistent parent", c.getParent());
+                    return;
                 }
-                // All others are new - Add them
-                newMap.forEach(channelCache::put);
-                channelCache.forEach((cid, c) -> {
-                    int pid = c.getParent();
-                    if (pid == 0) return;
-                    TS3Channel parent = channelCache.getOrDefault(pid, null);
-                    if (parent == null) {
-                        logger.warning("Channel", cid, "has nonexistent parent", c.getParent());
+                parent.addSubChannel(c);
+            });
+        }
+
+        logger.finer("Channellist updated");
+        QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
+        refresh.setConnection(((QueryConnection) event.getConnection()));
+        eventService.fireEvent(refresh);
+    }
+
+    /**
+     * Creates a Map of all available clients from a `channellist` answer event.
+     * Helper method for {@link #refreshChannels(IRawQueryEvent.IMessage.IAnswer)}.
+     *
+     * Handles update existing and creating channels.
+     */
+    private Map<Integer, TS3Channel> generateChannelMapping(List<IRawQueryEvent.IMessage> messageObjects) {
+        final Map<Integer, TS3Channel> channelMap = new ConcurrentHashMap<>(messageObjects.size(), 1.1f);
+        messageObjects
+                .stream()
+                .parallel()
+                .forEach(o -> {
+            try {
+                int cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
+                if (cid == -1) {
+                    logger.warning("Skipping a channel due to invalid channel ID");
+                    return;
+                }
+
+                TS3Channel channel = channelCache.getOrDefault(cid, null);
+
+                if (channel == null) {
+                    // Channel is new - New reference
+                    channel = new TS3Channel();
+                    channel.copyFrom(o);
+
+                } else {
+                    String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
+
+                    if (nName == null) {
+                        logger.warning("Skipping a channel due to missing name");
                         return;
                     }
-                    parent.addSubChannel(c);
-                });
-            }
-            newMap.clear();
 
-            logger.finer("Channellist updated");
-            QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
-            refresh.setConnection(((QueryConnection) event.getConnection()));
-            eventService.fireEvent(refresh);
+                    boolean wasSpacer = channel.isSpacer();
+                    boolean isSpacer = TS3Spacer.spacerPattern.matcher(nName).matches();
+
+                    if (isSpacer != wasSpacer) {
+                        // Spacer state changed - Update reference
+                        channel = isSpacer ? new TS3Spacer() : new TS3Channel();
+                        channel.copyFrom(o);
+
+                    } else {
+                        // Channel not new - Update values
+                        channel.copyFrom(o);
+                    }
+                }
+
+                fixChannelIconId(channel);
+                channelMap.put(cid, channel);
+            } catch (Exception e) {
+                logger.warning("Failed to parse a channel", e);
+            }
+        });
+        return channelMap;
+    }
+
+    /**
+     * Dirtiest work-around I've ever committed...
+     * TeamSpeak appears to read their integers wrongly and sends back an invalid ID.
+     *
+     * If the channel icon id is negative it has erroneously been read as signed integer.
+     */
+    private void fixChannelIconId(TS3Channel channel) {
+        Optional<String> optIconId = channel.getProperty("channel_icon_id");
+        if (optIconId.isPresent()) {
+            Integer idFromTS = Integer.valueOf(optIconId.get());
+
+            if (idFromTS < 0) {
+                long realID = Integer.toUnsignedLong(idFromTS);
+                channel.setProperty(
+                        PropertyKeys.Channel.ICON_ID,
+                        Long.toString(realID)
+                );
+            }
         }
     }
 }

@@ -15,7 +15,7 @@ import java.util.List;
 @SuppressWarnings("ConstantConditions")
 public class TS3Client extends RawQueryEvent.Message implements IClient {
 
-    boolean invalidated = false;
+    private boolean invalidated = false;
 
     public TS3Client(){
         super();

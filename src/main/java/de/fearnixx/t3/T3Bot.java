@@ -25,7 +25,7 @@ import de.fearnixx.t3.teamspeak.Server;
 import de.fearnixx.t3.teamspeak.cache.DataCache;
 import de.fearnixx.t3.teamspeak.cache.IDataCache;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
-import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
+import de.fearnixx.t3.teamspeak.except.QueryConnectException;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;

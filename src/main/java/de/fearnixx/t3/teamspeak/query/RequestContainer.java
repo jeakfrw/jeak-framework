@@ -10,6 +10,19 @@ import java.util.function.Consumer;
  */
 public class RequestContainer {
 
-    public Consumer<IRawQueryEvent.IMessage.IAnswer> onDone;
-    public IQueryRequest request;
+    public RequestContainer(Consumer<IRawQueryEvent.IMessage.IAnswer> onDone, IQueryRequest request) {
+        this.onDone = onDone;
+        this.request = request;
+    }
+
+    private Consumer<IRawQueryEvent.IMessage.IAnswer> onDone;
+    private IQueryRequest request;
+
+    public Consumer<IRawQueryEvent.IMessage.IAnswer> getOnDone() {
+        return onDone;
+    }
+
+    public IQueryRequest getRequest() {
+        return request;
+    }
 }
