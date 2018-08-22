@@ -51,11 +51,12 @@ public class PromisedRequest implements IQueryPromise {
         if (timeout == 0 || unit == null)
             return getAnswer();
 
-        long cTimeout = unit.toSeconds(timeout) * 4;
+        long cTimeout = unit.toMillis(timeout) * 4;
         while (!isDone() && cTimeout > 0) {
             Thread.sleep(250);
             cTimeout -= 250;
         }
+
         return getAnswer();
     }
 

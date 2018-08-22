@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class DataCache implements IDataCache {
 
-    private final Object lock = new Object();
+    private final Object LOCK = new Object();
     private ILogReceiver logger;
 
     private IQueryConnection connection;
@@ -84,7 +84,7 @@ public class DataCache implements IDataCache {
 
 
     public void reset() {
-        synchronized (lock) {
+        synchronized (LOCK) {
             clientCache.forEach((clid, c) -> c.invalidate());
             clientCache.clear();
             channelCache.forEach((cid, c) -> c.invalidate());
@@ -93,25 +93,25 @@ public class DataCache implements IDataCache {
     }
 
     public Map<Integer, IClient> getClientMap() {
-        synchronized (lock) {
+        synchronized (LOCK) {
             return Collections.unmodifiableMap(clientCache);
         }
     }
 
     public Map<Integer, IChannel> getChannelMap() {
-        synchronized (lock) {
+        synchronized (LOCK) {
             return Collections.unmodifiableMap(channelCache);
         }
     }
 
     public List<IClient> getClients() {
-        synchronized (lock) {
+        synchronized (LOCK) {
             return Collections.unmodifiableList(new ArrayList<>(clientCache.values()));
         }
     }
 
     public List<IChannel> getChannels() {
-        synchronized (lock) {
+        synchronized (LOCK) {
             return Collections.unmodifiableList(new ArrayList<>(channelCache.values()));
         }
     }
@@ -182,20 +182,28 @@ public class DataCache implements IDataCache {
     public void onNotify(IQueryEvent.INotification event) {
         if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation
-            synchronized (lock) {
-                IClient iClient = ((IQueryEvent.INotification.IClientMoved) event).getTarget();
-                Integer clientID = iClient.getClientID();
+            synchronized (LOCK) {
+                Integer clientID = Integer.valueOf(event.getProperty("clid").orElse("-1"));
                 TS3Client client = clientCache.getOrDefault(clientID, null);
-                if (client == null)
+                if (client == null) {
+                    logger.warning("Insufficient information for clientMoved update: Client not yet cached.");
                     return;
+                }
 
                 TS3Channel fromChannel = channelCache.getOrDefault(client.getChannelID(), null);
+                Integer fromChannelId = fromChannel != null ? fromChannel.getID() : -1;
                 TS3Channel toChannel = channelCache.getOrDefault(Integer.parseInt(event.getProperty("ctid").get()), null);
-                if (fromChannel == null || toChannel == null || fromChannel == toChannel)
+                Integer toChannelId = toChannel != null ? toChannel.getID() : -1;
+                if (fromChannel == null || toChannel == null) {
+                    logger.warning("Insufficient information for clientMoved update: ", fromChannelId, "->", toChannelId);
                     return;
+                }
+
+                logger.fine("Updating cached client ", clientID, " \"", PropertyKeys.Client.CHANNEL_ID, "\" ",
+                        fromChannelId, "->", toChannelId);
 
                 // Set new channel
-                client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannel.getID().toString());
+                client.setProperty(PropertyKeys.Client.CHANNEL_ID, fromChannelId.toString());
                 // Set new client count - FROM
                 fromChannel.setProperty(
                         PropertyKeys.Channel.CLIENT_COUNT,
@@ -214,7 +222,7 @@ public class DataCache implements IDataCache {
 
         } else if (event instanceof IQueryEvent.INotification.IClientLeave) {
             // Client has left - Apply to representation
-            synchronized (lock) {
+            synchronized (LOCK) {
                 Integer clientID = Integer.parseInt(event.getProperty("clid").get());
                 TS3Client client = clientCache.getOrDefault(clientID, null);
                 if (client == null)
@@ -244,7 +252,7 @@ public class DataCache implements IDataCache {
      */
     private void refreshClients(IRawQueryEvent.IMessage.IAnswer event) {
         List<IRawQueryEvent.IMessage> objects = event.toList();
-        synchronized (lock) {
+        synchronized (LOCK) {
             final Map<Integer, TS3Client> clientMapping = generateClientMapping(objects);
 
             TS3Client oldClientRep;
@@ -326,7 +334,7 @@ public class DataCache implements IDataCache {
      */
     private void refreshChannels(IRawQueryEvent.IMessage.IAnswer event) {
         List<IRawQueryEvent.IMessage> messages = event.toList();
-        synchronized (lock) {
+        synchronized (LOCK) {
             final Map<Integer, TS3Channel> newMap = generateChannelMapping(messages);
             TS3Channel o;
             Integer oID;

@@ -365,7 +365,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                                            .addOption(pass)
                                            .build();
         IQueryRequest whoami = IQueryRequest.builder()
-                                            .command("whoamiResponse")
+                                            .command("whoami")
                                             .build();
         IQueryRequest subscribe_server = IQueryRequest.builder()
                                                     .command("servernotifyregister")
