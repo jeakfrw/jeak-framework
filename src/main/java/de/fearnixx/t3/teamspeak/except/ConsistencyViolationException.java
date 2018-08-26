@@ -1,6 +1,9 @@
 package de.fearnixx.t3.teamspeak.except;
 
+@SuppressWarnings("squid:S1165")
 public class ConsistencyViolationException extends RuntimeException {
+
+    private transient Object sourceObject = null;
 
     public ConsistencyViolationException() {
     }
@@ -19,5 +22,14 @@ public class ConsistencyViolationException extends RuntimeException {
 
     public ConsistencyViolationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    public ConsistencyViolationException setSourceObject(Object sourceObject) {
+        this.sourceObject = sourceObject;
+        return this;
+    }
+
+    public Object getSourceObject() {
+        return sourceObject;
     }
 }

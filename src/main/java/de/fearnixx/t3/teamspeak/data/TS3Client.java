@@ -2,12 +2,14 @@ package de.fearnixx.t3.teamspeak.data;
 
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
+import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by MarkL4YG on 20.06.17.
@@ -32,32 +34,48 @@ public class TS3Client extends RawQueryEvent.Message implements IClient {
 
     @Override
     public String getClientUniqueID() {
-        return getProperty(PropertyKeys.Client.UID).get();
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.UID);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing unique ID")
+                    .setSourceObject(this);
+        return optProperty.get();
     }
 
     @Override
     public Integer getClientID() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.ID).get());
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.ID);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing ID")
+                    .setSourceObject(this);
+        return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public Integer getClientDBID() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.DBID).get());
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.DBID);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing database ID")
+                    .setSourceObject(this);
+        return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public String getNickName() {
-        return getProperty(PropertyKeys.Client.NICKNAME).get();
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.NICKNAME);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing nickname")
+                    .setSourceObject(this);
+        return optProperty.get();
     }
 
     @Override
     public String getIconID() {
-        return getProperty(PropertyKeys.Client.ICON_ID).get();
+        return getProperty(PropertyKeys.Client.ICON_ID).orElse("0");
     }
 
     @Override
     public PlatformType getPlatform() {
-        switch (getProperty(PropertyKeys.Client.PLATFORM).get().toLowerCase()) {
+        switch (getProperty(PropertyKeys.Client.PLATFORM).orElse("unknown").toLowerCase()) {
             case "windows": return PlatformType.WINDOWS;
             case "android": return PlatformType.ANDROID;
             case "linux": return PlatformType.LINUX;
@@ -69,92 +87,109 @@ public class TS3Client extends RawQueryEvent.Message implements IClient {
 
     @Override
     public String getVersion() {
-        return getProperty(PropertyKeys.Client.VERSION).get();
+        return getProperty(PropertyKeys.Client.VERSION).orElse("unknown");
     }
 
     @Override
     public ClientType getClientType() {
-        return ClientType.values()[Integer.parseInt(getProperty(PropertyKeys.Client.TYPE).get())];
+        return ClientType.values()[Integer.parseInt(getProperty(PropertyKeys.Client.TYPE).orElse("0"))];
     }
 
     @Override
     public Integer getChannelID() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.CHANNEL_ID).get());
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_ID);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing channel ID")
+                    .setSourceObject(this);
+        return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public Integer getChannelGroupID() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.CHANNEL_GROUP).get());
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_GROUP);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing channel group ID")
+                    .setSourceObject(this);
+        return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public Integer getChannelGroupSource() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.CHANNEL_GROUP_SOURCE).get());
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_GROUP_SOURCE);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client has no channel group source!")
+                    .setSourceObject(this);
+        return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public Boolean isAway() {
-        return getProperty(PropertyKeys.Client.FLAG_AWAY).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.FLAG_AWAY).orElse(null));
     }
 
     @Override
     public String getAwayMessage() {
-        return getProperty(PropertyKeys.Client.AWAY_MESSAGE).get();
+        return getProperty(PropertyKeys.Client.AWAY_MESSAGE).orElse("");
     }
 
     @Override
     public Integer getTalkPower() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.TALKPOWER).get());
+        return Integer.parseInt(getProperty(PropertyKeys.Client.TALKPOWER).orElse("0"));
     }
 
     @Override
     public Boolean isTalking() {
-        return getProperty(PropertyKeys.Client.FLAG_TALKING).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.FLAG_TALKING).orElse(null));
     }
 
     @Override
     public Boolean isTalker() {
-        return getProperty(PropertyKeys.Client.FLAG_TALKER).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.FLAG_TALKER).orElse(null));
     }
 
     @Override
     public Boolean isPrioTalker() {
-        return getProperty(PropertyKeys.Client.FLAG_PRIO_TALKER).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.FLAG_PRIO_TALKER).orElse(null));
     }
 
     @Override
     public Boolean isCommander() {
-        return getProperty(PropertyKeys.Client.FLAG_COMMANDER).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.FLAG_COMMANDER).orElse(null));
     }
 
     @Override
     public Boolean isRecording() {
-        return getProperty(PropertyKeys.Client.FLAG_RECORDING).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.FLAG_RECORDING).orElse(null));
     }
 
     @Override
     public Boolean hasMic() {
-        return getProperty(PropertyKeys.Client.IOIN).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.IOIN).orElse(null));
     }
 
     @Override
     public Boolean hasMicMuted() {
-        return getProperty(PropertyKeys.Client.IOIN_MUTED).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.IOIN_MUTED).orElse(null));
     }
 
     @Override
     public Boolean hasOutput() {
-        return getProperty(PropertyKeys.Client.IOOUT).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.IOOUT).orElse(null));
     }
 
     @Override
     public Boolean hasOutputMuted() {
-        return getProperty(PropertyKeys.Client.IOOUT_MUTED).get().equals("1");
+        return "1".equals(getProperty(PropertyKeys.Client.IOOUT_MUTED).orElse(null));
     }
 
     @Override
     public List<Integer> getGroupIDs() {
-        String s = getProperty(PropertyKeys.Client.GROUPS).get();
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.GROUPS);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client has no server groups")
+                    .setSourceObject(this);
+
+        String s = optProperty.get();
         String[] sIDs = s.split(",");
         Integer[] ids = new Integer[sIDs.length];
         for (int i = 0; i < sIDs.length; i++) {
@@ -165,12 +200,16 @@ public class TS3Client extends RawQueryEvent.Message implements IClient {
 
     @Override
     public Integer getIdleTime() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.IDLE_TIME).get());
+        return Integer.parseInt(getProperty(PropertyKeys.Client.IDLE_TIME).orElse("0"));
     }
 
     @Override
     public Long getCreated() {
-        return Long.parseLong(getProperty(PropertyKeys.Client.CREATED_TIME).get());
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.CREATED_TIME);
+        if (!optProperty.isPresent())
+            throw new ConsistencyViolationException("Client is missing creation timestamp")
+                    .setSourceObject(this);
+        return Long.parseLong(optProperty.get());
     }
 
     @Override
@@ -180,7 +219,7 @@ public class TS3Client extends RawQueryEvent.Message implements IClient {
 
     @Override
     public Long getLastJoin() {
-        return Long.parseLong(getProperty(PropertyKeys.Client.LAST_JOIN_TIME).get());
+        return Long.parseLong(getProperty(PropertyKeys.Client.LAST_JOIN_TIME).orElse("0"));
     }
 
     @Override
