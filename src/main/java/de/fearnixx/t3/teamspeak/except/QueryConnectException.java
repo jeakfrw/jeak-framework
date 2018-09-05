@@ -1,4 +1,4 @@
-package de.fearnixx.t3.teamspeak.query.except;
+package de.fearnixx.t3.teamspeak.except;
 
 import java.io.IOException;
 

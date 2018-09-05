@@ -9,6 +9,8 @@ import java.util.Optional;
  */
 public interface IDataHolder {
 
+    boolean hasProperty(String key);
+
     Optional<String> getProperty(String key);
 
     void setProperty(String key, String value);

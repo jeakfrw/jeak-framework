@@ -47,20 +47,17 @@ public class PromisedRequest implements IQueryPromise {
     }
 
     @Override
-    public IRawQueryEvent.IMessage.IAnswer get(long timeout, TimeUnit unit) {
+    public IRawQueryEvent.IMessage.IAnswer get(long timeout, TimeUnit unit) throws InterruptedException {
         if (timeout == 0 || unit == null)
             return getAnswer();
 
-        try {
-            long cTimeout = unit.toSeconds(timeout) * 4;
-            while (!isDone() && cTimeout > 0) {
-                Thread.sleep(250);
-            }
-            return getAnswer();
-        } catch (InterruptedException e) {
+        long cTimeout = unit.toMillis(timeout) * 4;
+        while (!isDone() && cTimeout > 0) {
+            Thread.sleep(250);
+            cTimeout -= 250;
         }
 
-        return null;
+        return getAnswer();
     }
 
     protected synchronized void setAnswer(IRawQueryEvent.IMessage.IAnswer event) {

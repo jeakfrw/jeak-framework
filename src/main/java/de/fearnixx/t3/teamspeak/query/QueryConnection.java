@@ -7,11 +7,10 @@ import de.fearnixx.t3.event.query.RawQueryEvent;
 
 import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
-import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
-import de.fearnixx.t3.teamspeak.query.except.QueryException;
-import de.fearnixx.t3.teamspeak.query.except.QueryParseException;
+import de.fearnixx.t3.teamspeak.except.QueryException;
+import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.mlessmann.logging.ANSIColors;
 import de.mlessmann.logging.ILogReceiver;
 
@@ -39,9 +38,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public ILogReceiver log;
 
     @Inject
-    public IEventService eventService;
-
-    @Inject
     public IInjectionService injectionService;
 
     private QueryNotifier notifier;
@@ -62,8 +58,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private QueryParser parser;
 
     private Integer instanceID;
-    private IDataHolder whoami;
-    private int lastMessageHash = 0;
+    private IDataHolder whoamiResponse;
 
     public QueryConnection(Consumer<IQueryConnection> onClose) {
         this.mySock = new Socket();
@@ -230,8 +225,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
         RawQueryEvent.Message event = optMessage.get();
         event.setConnection(this);
         if (event instanceof RawQueryEvent.Message.Answer) {
-            if (currentRequest != null && currentRequest.onDone != null) {
-                currentRequest.onDone.accept(((RawQueryEvent.Message.Answer) event));
+            if (currentRequest != null && currentRequest.getOnDone() != null) {
+                currentRequest.getOnDone().accept(((RawQueryEvent.Message.Answer) event));
             }
             synchronized (reqQueue) {
                 parser.setCurrentRequest(null);
@@ -251,7 +246,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 return;
         }
         log.finer("Sending next request");
-        IQueryRequest r = reqQueue.get(0).request;
+        IQueryRequest r = reqQueue.get(0).getRequest();
         if (r.getCommand() == null || !r.getCommand().matches("^[a-z0-9_]+$")) {
             Throwable e = new IllegalArgumentException("Invalid request command used!").fillInStackTrace();
             log.warning("Encountered exception while preparing request", e);
@@ -321,14 +316,16 @@ public class QueryConnection extends Thread implements IQueryConnection {
     /* DEBUG */
 
     public void setNetworkDump(File file) {
-        if (file.isDirectory()) {
-            log.warning("Network dump path is a directory: ", file.toString());
-            return;
-        }
         try {
-            if (!file.isFile() || !file.exists())
-                file.createNewFile();
+            if (file.isDirectory())
+                throw new IOException("Blocked by directory! ");
+
+            if ((!file.isFile() || !file.exists())
+                    && !file.createNewFile())
+                throw new IOException("Failed to create file.");
+
             netDumpOutput = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
+
         } catch (IOException e) {
             log.warning("Unable to open dump path for writing: ", file.toString(), e);
             netDumpOutput = null;
@@ -339,11 +336,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
     @Override
     public void sendRequest(IQueryRequest request, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone) {
-        RequestContainer c = new RequestContainer();
-        c.request = request;
-        c.onDone = onDone;
         synchronized (reqQueue) {
-            reqQueue.add(c);
+            reqQueue.add(new RequestContainer(onDone, request));
         }
     }
 
@@ -419,7 +413,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
         IRawQueryEvent.IMessage.IAnswer rUse = map.get(0);
         IRawQueryEvent.IMessage.IAnswer rLogin = map.get(1);
         IRawQueryEvent.IMessage.IAnswer rWhoAmI = map.get(2);
-        this.whoami = rWhoAmI;
+        this.whoamiResponse = rWhoAmI;
         boolean success = true;
         if (rUse.getError().getCode() != 0) {
             success = false;
@@ -451,19 +445,19 @@ public class QueryConnection extends Thread implements IQueryConnection {
                                        .build();
         sendRequest(r, msg -> {
             if (msg.getError().getCode() == 0)
-                whoami.setProperty(PropertyKeys.Client.NICKNAME, newNick);
+                whoamiResponse.setProperty(PropertyKeys.Client.NICKNAME, newNick);
         });
     }
 
     public void loadWhoAmI() {
         sendRequest(IQueryRequest.builder().command("whoami").build(), msg -> {
-            whoami = msg;
+            whoamiResponse = msg;
         });
     }
 
     @Override
     public IDataHolder getWhoAmI() {
-        return whoami;
+        return whoamiResponse;
     }
 
     /* RUNTIME CONTROL */

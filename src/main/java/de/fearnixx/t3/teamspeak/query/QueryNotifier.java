@@ -7,7 +7,7 @@ import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.EventCaptions;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
-import de.fearnixx.t3.teamspeak.query.except.QueryException;
+import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.util.ArrayList;

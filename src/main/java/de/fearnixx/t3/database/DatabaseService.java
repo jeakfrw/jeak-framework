@@ -3,13 +3,9 @@ package de.fearnixx.t3.database;
 import de.fearnixx.t3.event.bot.IBotStateEvent;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
-import de.mlessmann.config.ConfigNode;
-import de.mlessmann.config.api.ConfigLoader;
 import de.mlessmann.logging.ILogReceiver;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.service.ServiceRegistry;
 import org.reflections.Reflections;
-import org.reflections.util.ConfigurationBuilder;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;

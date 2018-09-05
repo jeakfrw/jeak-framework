@@ -5,7 +5,7 @@ import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
-import de.fearnixx.t3.teamspeak.query.except.QueryConnectException;
+import de.fearnixx.t3.teamspeak.except.QueryConnectException;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.mlessmann.logging.ILogReceiver;
 
