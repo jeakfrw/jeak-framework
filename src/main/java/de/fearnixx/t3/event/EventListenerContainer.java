@@ -1,6 +1,7 @@
 package de.fearnixx.t3.event;
 
 import de.fearnixx.t3.reflect.Listener;
+import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -49,9 +50,18 @@ public class EventListenerContainer {
 
     public void accept(IEvent event) {
         try {
-            method.invoke(victim, event);
 
-        } catch (EventAbortException e) {
+            try {
+                method.invoke(victim, event);
+            } catch (InvocationTargetException e) {
+                if (e.getCause() instanceof Exception) {
+                    throw ((Exception) e.getCause());
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
+
+        } catch (EventAbortException|ConsistencyViolationException e) {
             throw e;
 
         } catch (Exception e) {

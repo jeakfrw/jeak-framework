@@ -1,5 +1,6 @@
 package de.fearnixx.t3.teamspeak.query;
 
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent.Message;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
@@ -39,8 +40,7 @@ public class QueryParser {
      * @param s The next line to parse
      * @return The message if finished - Notifications are one-liners thus don't interrupt receiving other messages
      */
-    @Nullable
-    public Optional<RawQueryEvent.Message> parse(String s) throws QueryParseException {
+    public Optional<RawQueryEvent.Message> parse(String s) {
         try {
             // Determine message type (check for notification)
             int firstSpace = s.indexOf(Chars.PROPDIV);
@@ -85,7 +85,7 @@ public class QueryParser {
                     currentFirst = new Message.Answer(currentRequest.getRequest());
                 }
                 workingFirst = currentFirst;
-                workingMessage = workingFirst;
+                workingMessage = currentFirst;
             }
 
             // Reference to last message in the current chain
@@ -105,32 +105,36 @@ public class QueryParser {
             for (int pos = 0; pos < len; pos++) {
                 char c = s.charAt(pos);
                 switch (c) {
+                    case '\n':
                     case Chars.CHAINDIV:
                         // Flush current key and value
                         if (!doKey) {
                             String key = new String(QueryEncoder.decodeBuffer(keyBuff, keyBuffPos));
                             String val = new String(QueryEncoder.decodeBuffer(valBuff, valBuffPos));
                             workingMessage.setProperty(key, val);
+                            doKey = true;
+                            keyBuffPos = 0;
+                            valBuffPos = 0;
                         }
-                        // Rotate object
-                        // Append to chain from above
-                        // Step down in the chain
-                        // Append to chain from below
-                        workingLast.setNext(workingMessage);
-                        workingLast = workingMessage;
-                        if (notify) {
-                            workingMessage = new Message.Notification();
-                            ((Message.Notification) workingMessage).setCaption(capt);
-                        } else
-                            workingMessage = new Message.Answer(currentRequest.getRequest());
-                        workingMessage.copyFrom(workingLast);
-                        workingMessage.setPrevious(workingLast);
 
-                        doKey = true;
-                        keyBuffPos = 0;
-                        valBuffPos = 0;
+                        if (!error) {
+                            // Connect current message to chain
+                            workingLast.setNext(workingMessage);
+                            workingMessage.setPrevious(workingLast);
+
+                            // Move to the new end of the chain
+                            workingLast = workingMessage;
+
+                            // Create the new current message
+                            if (notify) {
+                                workingMessage = new Message.Notification();
+                                ((Message.Notification) workingMessage).setCaption(capt);
+                            } else {
+                                workingMessage = new Message.Answer(currentRequest.getRequest());
+                            }
+                            workingMessage.copyFrom(workingLast);
+                        }
                         break;
-                    case '\n':
                     case Chars.PROPDIV:
                         // Flush current key and value
                         String key = new String(QueryEncoder.decodeBuffer(keyBuff, keyBuffPos));
@@ -169,8 +173,8 @@ public class QueryParser {
                 return Optional.of(workingFirst);
             }
             return Optional.empty();
-        } catch (Throwable t) {
-            throw new QueryParseException("Generic error", t);
+        } catch (Exception t) {
+            throw new QueryParseException("An exception was encountered during parsing.", t);
         }
     }
 

@@ -57,9 +57,10 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
         public List<IMessage> toList() {
             List<IMessage> msgs = new ArrayList<>();
             Message msg = this;
-            do {
+            while (msg != null) {
                 msgs.add(msg);
-            } while ((msg = msg.getNext()) != null);
+                msg = msg.getNext();
+            }
             return msgs;
         }
 

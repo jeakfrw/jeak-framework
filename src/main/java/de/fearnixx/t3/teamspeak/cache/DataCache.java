@@ -59,7 +59,7 @@ public class DataCache implements IDataCache {
     private final ITask clientListTask = ITask.builder()
             .name("t3server.clientRefresh")
             .interval(60L, TimeUnit.SECONDS)
-            .runnable(() -> connection.sendRequest(clientListRequest, this::onQueryMessage))
+            .runnable(() -> connection.sendRequest(clientListRequest, this::onListAnswer))
             .build();
 
     // == CHANNELLIST == //
@@ -74,7 +74,7 @@ public class DataCache implements IDataCache {
     private final ITask channelListTask = ITask.builder()
             .name("t3server.channelrefresh")
             .interval(3L, TimeUnit.MINUTES)
-            .runnable(() -> connection.sendRequest(channelListRequest, this::onQueryMessage))
+            .runnable(() -> connection.sendRequest(channelListRequest, this::onListAnswer))
             .build();
 
     public void scheduleTasks(TaskService tm) {
@@ -233,8 +233,7 @@ public class DataCache implements IDataCache {
         }
     }
 
-    @Listener(order = Listener.Orders.SYSTEM)
-    public void onQueryMessage(IRawQueryEvent.IMessage.IAnswer event) {
+    private void onListAnswer(IRawQueryEvent.IMessage.IAnswer event) {
         if (event.getError().getCode() != 0)
             return;
 
