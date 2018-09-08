@@ -29,7 +29,7 @@ public class PersistenceUnitRep {
         this.registry = registry;
         this.metaSources = new MetadataSources(registry);
         for (Class<?> aClass : classes) {
-            metaSources.addAnnotatedClass(aClass);
+            metaSources.addAnnotatedClassName(aClass.getName());
         }
         this.metaBuilder = metaSources.getMetadataBuilder();
         this.metaData = metaBuilder.build();

@@ -5,6 +5,8 @@ import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
 import de.mlessmann.logging.ILogReceiver;
+import org.hibernate.boot.registry.BootstrapServiceRegistry;
+import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.reflections.Reflections;
 
@@ -32,6 +34,8 @@ public class DatabaseService {
 
     private File dbDir;
 
+    private ClassLoader entityClassLoader;
+    private BootstrapServiceRegistry baseRegistry;
     private Map<String, PersistenceUnitRep> persistenceUnits;
 
     public DatabaseService(File dbDir) {
@@ -59,13 +63,18 @@ public class DatabaseService {
 
         if (!properties.isEmpty()) {
             logger.info("At least one persistence unit has been found.");
+            this.entityClassLoader = pluginManager.getPluginClassLoader();
             checkClasses();
+
+            BootstrapServiceRegistryBuilder baseRegistryBuilder = new BootstrapServiceRegistryBuilder();
+            baseRegistryBuilder.applyClassLoader(entityClassLoader);
+            this.baseRegistry = baseRegistryBuilder.build();
 
             for (File prop : properties) {
                 String name = prop.getName().substring(0, prop.getName().length() - 11);
                 logger.fine("Constructing persistence unit: ", name);
 
-                StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
+                StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
                 applyDefaults(registryBuilder);
                 registryBuilder.loadProperties(prop);
 
@@ -100,9 +109,7 @@ public class DatabaseService {
             if (ENTITIES.isEmpty()) {
                 logger.fine("Searching Entities.");
 
-                Reflections reflect = pluginManager.getReflectionsWithUrls(
-                        pluginManager.getPluginUrls().toArray(new URL[0])
-                );
+                Reflections reflect = pluginManager.getPluginScanner(entityClassLoader);
                 Set<Class<?>> types = reflect.getTypesAnnotatedWith(Entity.class);
                 types.forEach(entityType -> {
                     logger.fine("Found: " + entityType.getName());

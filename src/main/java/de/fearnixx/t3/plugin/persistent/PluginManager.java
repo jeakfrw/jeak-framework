@@ -42,6 +42,7 @@ public class PluginManager {
     private List<File> sources;
     private List<URL> urlList;
     private boolean includeCP;
+    private ClassLoader pluginClassLoader;
     private Map<String, PluginRegistry> registryMap;
 
     // * * * CONSTRUCTION * * * //
@@ -67,11 +68,10 @@ public class PluginManager {
             return;
         }
         PluginRegistry.setLog(log.getChild("REG"));
-
         scanPluginSources();
-        URL[] urls = urlList.toArray(new URL[0]);
+
         List<Class<?>> candidates = new ArrayList<>();
-        Reflections reflect = getReflectionsWithUrls(urls);
+        Reflections reflect = getPluginScanner(getPluginClassLoader());
 
         candidates.addAll(reflect.getTypesAnnotatedWith(T3BotPlugin.class, true));
         log.info(candidates.size(), " candidates found");
@@ -87,11 +87,21 @@ public class PluginManager {
         });
     }
 
-    public Reflections getReflectionsWithUrls(URL[] urls) {
-        URLClassLoader loader = new URLClassLoader(urls);
+    public ClassLoader getPluginClassLoader() {
+        if (pluginClassLoader == null) {
+            if (includeCP) {
+                pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]), PluginManager.class.getClassLoader());
+            } else {
+                pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]));
+            }
+        }
+        return pluginClassLoader;
+    }
+
+    public Reflections getPluginScanner(ClassLoader classLoader) {
         ConfigurationBuilder builder = new ConfigurationBuilder()
-                .addUrls(urls)
-                .addClassLoader(loader)
+                .addUrls(urlList)
+                .addClassLoader(classLoader)
                 .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
 
         if (includeCP) {
