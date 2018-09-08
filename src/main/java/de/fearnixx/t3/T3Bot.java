@@ -134,6 +134,7 @@ public class T3Bot implements Runnable,IBot {
         ts3permissionProvider = new TS3PermissionProvider();
         databaseService = new DatabaseService(new File(confDir, "databases"));
 
+        serviceManager.registerService(PluginManager.class, pMgr);
         serviceManager.registerService(IBot.class, this);
         serviceManager.registerService(IServiceManager.class, serviceManager);
         serviceManager.registerService(IEventService.class, eventService);

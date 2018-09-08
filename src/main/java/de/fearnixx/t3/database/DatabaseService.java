@@ -1,6 +1,7 @@
 package de.fearnixx.t3.database;
 
 import de.fearnixx.t3.event.bot.IBotStateEvent;
+import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
 import de.mlessmann.logging.ILogReceiver;
@@ -10,8 +11,10 @@ import org.reflections.Reflections;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import java.io.File;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by MarkL4YG on 09-Feb-18
@@ -19,10 +22,13 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DatabaseService {
 
     private static final Object CLASS_LOCK =  new Object();
-    private static Set<Class<?>> ENTITIES;
+    private static final List<Class<?>> ENTITIES = new CopyOnWriteArrayList<>();
 
     @Inject
     public ILogReceiver logger;
+
+    @Inject
+    public PluginManager pluginManager;
 
     private File dbDir;
 
@@ -62,9 +68,6 @@ public class DatabaseService {
                 StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder();
                 applyDefaults(registryBuilder);
                 registryBuilder.loadProperties(prop);
-                //jndi
-                //registryBuilder.applySetting("hibernate.session_factory_name", name);
-                //registryBuilder.configure();
 
                 persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
             }
@@ -94,18 +97,18 @@ public class DatabaseService {
 
     private void checkClasses() {
         synchronized (CLASS_LOCK) {
-            if (ENTITIES == null) {
+            if (ENTITIES.isEmpty()) {
                 logger.fine("Searching Entities.");
 
-                Reflections reflect = new Reflections();
-                ENTITIES = reflect.getTypesAnnotatedWith(Entity.class);
+                Reflections reflect = pluginManager.getReflectionsWithUrls(pluginManager.getPluginUrls().toArray(new URL[0]));
+                ENTITIES.addAll(reflect.getTypesAnnotatedWith(Entity.class));
             }
         }
     }
 
     private Set<Class<?>> getClasses() {
         synchronized (CLASS_LOCK) {
-            return ENTITIES;
+            return new HashSet<>(ENTITIES);
         }
     }
 }

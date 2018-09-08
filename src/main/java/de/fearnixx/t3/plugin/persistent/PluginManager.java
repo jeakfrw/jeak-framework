@@ -54,44 +54,25 @@ public class PluginManager {
             sources.add(dir);
     }
 
+    public List<File> getSources() {
+        return sources;
+    }
+
     public void load(boolean includeCP) {
         if (registryMap.size() > 0) {
             return;
         }
         PluginRegistry.setLog(log.getChild("REG"));
 
-        List<URL> urlList = new ArrayList<>();
-        sources.forEach(f -> {
-            try {
-                if (f.isFile() && f.getName().endsWith(".jar"))
-                    urlList.add(f.toURI().toURL());
-                else if (f.isDirectory()) {
-                    File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
-                    if (files != null) {
-                        for (File f2 : files) {
-                            urlList.add(f2.toURI().toURL());
-                        }
-                    }
-                } else {
-                    log.warning("Skipping plugin source,", f.getAbsolutePath());
-                }
-            } catch (MalformedURLException e) {
-                log.warning(e);
-            }
-        });
+        List<URL> urlList = getPluginUrls();
         URL[] urls = urlList.toArray(new URL[urlList.size()]);
         List<Class<?>> candidates = new ArrayList<>();
         if (urls.length == 0) {
             log.warning("No sources defined!");
         } else {
-            URLClassLoader loader = new URLClassLoader(urls);
-            ConfigurationBuilder builder = new ConfigurationBuilder()
-                    .addUrls(urls)
-                    .addClassLoader(loader)
-                    .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
-            Reflections reflect = new Reflections(builder);
+            Reflections reflect = getReflectionsWithUrls(urls);
 
-        /* WORK-AROUND for #getTypesAnnotatedWith(T3BotPlugin.class) returning an empty set */
+            /* WORK-AROUND for #getTypesAnnotatedWith(T3BotPlugin.class) returning an empty set */
             candidates.addAll(reflect.getTypesAnnotatedWith(T3BotPlugin.class, true));
             /*Set<String> classNames = reflect.getAllTypes();
             classNames.parallelStream().forEach(n -> {
@@ -125,6 +106,38 @@ public class PluginManager {
                 registryMap.put(r.get().getID(), r.get());
             }
         });
+    }
+
+    public Reflections getReflectionsWithUrls(URL[] urls) {
+        URLClassLoader loader = new URLClassLoader(urls);
+        ConfigurationBuilder builder = new ConfigurationBuilder()
+                .addUrls(urls)
+                .addClassLoader(loader)
+                .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
+        return new Reflections(builder);
+    }
+
+    public List<URL> getPluginUrls() {
+        List<URL> urlList = new ArrayList<>();
+        sources.forEach(f -> {
+            try {
+                if (f.isFile() && f.getName().endsWith(".jar"))
+                    urlList.add(f.toURI().toURL());
+                else if (f.isDirectory()) {
+                    File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
+                    if (files != null) {
+                        for (File f2 : files) {
+                            urlList.add(f2.toURI().toURL());
+                        }
+                    }
+                } else {
+                    log.warning("Skipping plugin source,", f.getAbsolutePath());
+                }
+            } catch (MalformedURLException e) {
+                log.warning(e);
+            }
+        });
+        return urlList;
     }
 
     public Map<String, PluginRegistry> getAllPlugins() {

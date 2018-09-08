@@ -1,6 +1,7 @@
 package de.fearnixx.t3;
 
 import de.fearnixx.t3.commandline.CommandLine;
+import de.fearnixx.t3.database.DatabaseService;
 import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
@@ -110,7 +111,8 @@ public class Main {
             System.exit(1);
         } else {
             mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));
-            mgr.addSource(new File("plugins"));
+            File pluginSource = new File("plugins");
+            mgr.addSource(pluginSource);
 
             Map<String, ConfigNode> nodes = bots.get();
             nodes.forEach((k, node) -> {
