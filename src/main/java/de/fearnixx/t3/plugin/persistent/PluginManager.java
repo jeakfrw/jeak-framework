@@ -6,6 +6,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.scanners.TypeElementsScanner;
+import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 
 import java.io.File;
@@ -39,6 +40,8 @@ public class PluginManager {
 
     private ILogReceiver log;
     private List<File> sources;
+    private List<URL> urlList;
+    private boolean includeCP;
     private Map<String, PluginRegistry> registryMap;
 
     // * * * CONSTRUCTION * * * //
@@ -47,6 +50,7 @@ public class PluginManager {
         this.log = log;
         registryMap = new HashMap<>();
         sources = new ArrayList<>();
+        urlList = new ArrayList<>();
     }
 
     public void addSource(File dir) {
@@ -58,44 +62,19 @@ public class PluginManager {
         return sources;
     }
 
-    public void load(boolean includeCP) {
+    public void load() {
         if (registryMap.size() > 0) {
             return;
         }
         PluginRegistry.setLog(log.getChild("REG"));
 
-        List<URL> urlList = getPluginUrls();
-        URL[] urls = urlList.toArray(new URL[urlList.size()]);
+        scanPluginSources();
+        URL[] urls = urlList.toArray(new URL[0]);
         List<Class<?>> candidates = new ArrayList<>();
-        if (urls.length == 0) {
-            log.warning("No sources defined!");
-        } else {
-            Reflections reflect = getReflectionsWithUrls(urls);
+        Reflections reflect = getReflectionsWithUrls(urls);
 
-            /* WORK-AROUND for #getTypesAnnotatedWith(T3BotPlugin.class) returning an empty set */
-            candidates.addAll(reflect.getTypesAnnotatedWith(T3BotPlugin.class, true));
-            /*Set<String> classNames = reflect.getAllTypes();
-            classNames.parallelStream().forEach(n -> {
-                try {
-                    Class<?> c = loader.loadClass(n);
-                    if (c.getAnnotation(T3BotPlugin.class) != null) {
-                        log.finest("Adding plugin class: ", n);
-                        candidates.add(c);
-                    } else {
-                        log.finer("Ignoring class: ", n, " Plugin annotation missing");
-                    }
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException("ClassNotFound on result of #getAllTypes! Something has been completely broken!");
-                }
-            });*/
-        }
-        if (includeCP) {
-            log.info("Including classpath");
-            Reflections r = new Reflections();
-            candidates.addAll(r.getTypesAnnotatedWith(T3BotPlugin.class));
-        }
-
-        log.info(candidates.size(), "candidates found");
+        candidates.addAll(reflect.getTypesAnnotatedWith(T3BotPlugin.class, true));
+        log.info(candidates.size(), " candidates found");
         candidates.forEach(c -> {
             Optional<PluginRegistry> r = PluginRegistry.getFor(c);
             if (r.isPresent()) {
@@ -114,36 +93,45 @@ public class PluginManager {
                 .addUrls(urls)
                 .addClassLoader(loader)
                 .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
+
+        if (includeCP) {
+            log.info("Including classpath");
+            builder.addUrls(ClasspathHelper.forClassLoader());
+        }
         return new Reflections(builder);
     }
 
     public List<URL> getPluginUrls() {
-        List<URL> urlList = new ArrayList<>();
-        sources.forEach(f -> {
-            try {
-                if (f.isFile() && f.getName().endsWith(".jar"))
-                    urlList.add(f.toURI().toURL());
-                else if (f.isDirectory()) {
-                    File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
-                    if (files != null) {
-                        for (File f2 : files) {
-                            urlList.add(f2.toURI().toURL());
-                        }
-                    }
-                } else {
-                    log.warning("Skipping plugin source,", f.getAbsolutePath());
-                }
-            } catch (MalformedURLException e) {
-                log.warning(e);
-            }
-        });
         return urlList;
     }
 
+    private void scanPluginSources() {
+        if (sources.isEmpty()) {
+            log.warning("No sources defined!");
+        } else {
+            sources.forEach(f -> {
+                try {
+                    if (f.isFile() && f.getName().endsWith(".jar"))
+                        urlList.add(f.toURI().toURL());
+                    else if (f.isDirectory()) {
+                        File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
+                        if (files != null) {
+                            for (File f2 : files) {
+                                urlList.add(f2.toURI().toURL());
+                            }
+                        }
+                    } else {
+                        log.warning("Skipping plugin source,", f.getAbsolutePath());
+                    }
+                } catch (MalformedURLException e) {
+                    log.warning(e);
+                }
+            });
+        }
+    }
+
     public Map<String, PluginRegistry> getAllPlugins() {
-        Map<String, PluginRegistry> nMap = new HashMap<>();
-        nMap.putAll(registryMap);
-        return nMap;
+        return Collections.unmodifiableMap(registryMap);
     }
 
     public Optional<PluginRegistry> getPluginById(String id) {
@@ -152,5 +140,13 @@ public class PluginManager {
 
     public int estimateCount() {
         return registryMap.size();
+    }
+
+    public boolean isIncludeCP() {
+        return includeCP;
+    }
+
+    public void setIncludeCP(boolean includeCP) {
+        this.includeCP = includeCP;
     }
 }

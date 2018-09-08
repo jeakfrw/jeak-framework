@@ -156,10 +156,12 @@ public class T3Bot implements Runnable,IBot {
         injectionManager.injectInto(ts3permissionProvider);
         injectionManager.injectInto(databaseService);
 
-        databaseService.onLoad();
         taskService.start();
 
-        pMgr.load(true);
+        pMgr.setIncludeCP(true);
+        pMgr.load();
+        databaseService.onLoad();
+
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
         // Load all plugins - This is where dependencies are being enforced
         regMap.forEach((n, pr) -> loadPlugin(regMap, n, pr));
@@ -245,7 +247,7 @@ public class T3Bot implements Runnable,IBot {
 
         try {
             c.construct();
-        } catch (Throwable e) {
+        } catch (Exception e) {
             log.severe("Failed to construct plugin: ", id, e);
             c.setState(PluginContainer.State.FAILED);
             return false;

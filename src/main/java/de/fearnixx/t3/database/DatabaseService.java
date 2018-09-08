@@ -81,7 +81,7 @@ public class DatabaseService {
         registryBuilder.applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
     }
 
-    @Listener
+    @Listener(order = Listener.Orders.LATEST)
     public void onShutdown(IBotStateEvent.IPostShutdown event) {
         persistenceUnits.forEach((k, u) -> u.close());
         persistenceUnits.clear();
@@ -100,8 +100,14 @@ public class DatabaseService {
             if (ENTITIES.isEmpty()) {
                 logger.fine("Searching Entities.");
 
-                Reflections reflect = pluginManager.getReflectionsWithUrls(pluginManager.getPluginUrls().toArray(new URL[0]));
-                ENTITIES.addAll(reflect.getTypesAnnotatedWith(Entity.class));
+                Reflections reflect = pluginManager.getReflectionsWithUrls(
+                        pluginManager.getPluginUrls().toArray(new URL[0])
+                );
+                Set<Class<?>> types = reflect.getTypesAnnotatedWith(Entity.class);
+                types.forEach(entityType -> {
+                    logger.fine("Found: " + entityType.getName());
+                    ENTITIES.add(entityType);
+                });
             }
         }
     }
