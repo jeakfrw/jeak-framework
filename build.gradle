@@ -1,6 +1,6 @@
 group 'de.fearnixx'
 project.ext.artifactId = 't3serverbot'
-version '0.1.8-bleeding'
+version '0.1.9-bleeding'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
