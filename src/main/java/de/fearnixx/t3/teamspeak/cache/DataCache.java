@@ -292,10 +292,10 @@ public class DataCache implements IDataCache {
      * Handles update existing and creating clients
      */
     private Map<Integer, TS3Client> generateClientMapping(List<IRawQueryEvent.IMessage> messageObjects) {
-        final Map<Integer, TS3Client> mapping = new ConcurrentHashMap<>(messageObjects.size(), 1.1f);
+        final Map<Integer, TS3Client> mapping = new HashMap<>(messageObjects.size(), 1.1f);
         messageObjects
                 .stream()
-                .parallel()
+//                .parallel()
                 .forEach(message -> {
                     try {
                         int cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));

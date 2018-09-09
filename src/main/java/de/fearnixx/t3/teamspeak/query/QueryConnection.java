@@ -11,6 +11,7 @@ import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
+import de.fearnixx.t3.teamspeak.query.parser.QueryParser;
 import de.mlessmann.logging.ANSIColors;
 import de.mlessmann.logging.ILogReceiver;
 
@@ -300,13 +301,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 String msg = reqB.append('\n').toString();
                 log.finest(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, msg.substring(0, msg.length()-1));
                 sOut.write(msg.getBytes());
-                sOut.flush();
                 reqDelay = Math.round(REQ_DELAY * SOCKET_TIMEOUT_MILLIS);
                 synchronized (reqQueue) {
-                    currentRequest = reqQueue.get(0);
-                    parser.setCurrentRequest(currentRequest);
-                    reqQueue.remove(0);
+                    currentRequest = reqQueue.remove(0);
                 }
+                parser.setCurrentRequest(currentRequest);
+                sOut.flush();
             } catch (IOException e) {
                 log.warning("Failed to send request: ", e.getClass().getSimpleName(), e);
             }
