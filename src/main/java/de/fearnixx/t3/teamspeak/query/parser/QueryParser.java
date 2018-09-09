@@ -108,10 +108,8 @@ public class QueryParser {
                 case '\n':
                 case Chars.CHAINDIV:
                     // Flush current key and value
-                    if (!doKey) {
-                        parseContext.flushProperty();
-                        doKey = true;
-                    }
+                    parseContext.flushProperty();
+                    doKey = true;
 
                     if (!parseInfo.isError) {
                         Message next;
@@ -134,14 +132,14 @@ public class QueryParser {
                     if (doKey)
                         doKey = false;
                     else
-                        parseContext.addToVBalBuffer(c);
+                        parseContext.addToValBuffer(c);
                     break;
 
                 default:
                     if (doKey)
                         parseContext.addToKeyBuffer(c);
                     else
-                        parseContext.addToVBalBuffer(c);
+                        parseContext.addToValBuffer(c);
             }
         }
     }

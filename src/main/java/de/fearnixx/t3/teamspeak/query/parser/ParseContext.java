@@ -39,7 +39,7 @@ public class ParseContext {
         return new String(QueryEncoder.decodeBuffer(keyBuffer, keyBuffPos));
     }
 
-    public void addToVBalBuffer(char character) {
+    public void addToValBuffer(char character) {
         if (valBuffPos >= valBuffer.length) {
             throw new QueryParseException("Value buffer exceeded!", new BufferOverflowException());
         }
