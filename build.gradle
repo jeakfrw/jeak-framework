@@ -45,7 +45,8 @@ dependencies {
     compile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
     compile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.13.Final'
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.3.6.Final'
+    compile group: 'org.hibernate', name: 'hibernate-c3p0', version: '5.3.6.Final'
     compile files('libraries/mysql-connector-bin.jar')
 }
 
