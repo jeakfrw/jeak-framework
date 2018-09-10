@@ -12,7 +12,7 @@ import org.reflections.Reflections;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
-import java.io.File;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +25,12 @@ public class DatabaseService {
 
     private static final Object CLASS_LOCK =  new Object();
     private static final List<Class<?>> ENTITIES = new CopyOnWriteArrayList<>();
+
+    private static final String PROPERTIES_DEFAULT_CONTENT =
+            "#Uncomment and fill out the following properties to enable the data source.\n"
+            + "!hibernate.connection.url=\"jdbc:mysql://myhost:myport/mydatabase\"\n"
+            + "!hibernate.connection.username=\"myuser\"\n"
+            + "!hibernate.connection.password=\"mypass\"\n";
 
     @Inject
     public ILogReceiver logger;
@@ -59,10 +65,9 @@ public class DatabaseService {
     }
 
     public void onLoad() {
-        List<File> properties = getPropertyFiles();
+        List<File> dataSourceFiles = getPropertyFiles();
 
-        if (!properties.isEmpty()) {
-            logger.info("At least one persistence unit has been found.");
+        if (!dataSourceFiles.isEmpty()) {
             this.entityClassLoader = pluginManager.getPluginClassLoader();
             checkClasses();
 
@@ -70,15 +75,30 @@ public class DatabaseService {
             baseRegistryBuilder.applyClassLoader(entityClassLoader);
             this.baseRegistry = baseRegistryBuilder.build();
 
-            for (File prop : properties) {
-                String name = prop.getName().substring(0, prop.getName().length() - 11);
-                logger.fine("Constructing persistence unit: ", name);
+            for (File dataSourceFile : dataSourceFiles) {
+                String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 11);
+                logger.fine("Trying to construct persistence unit: " + name);
 
-                StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
-                applyDefaults(registryBuilder);
-                registryBuilder.loadProperties(prop);
+                try {
+                    Properties dataSourceProps = new Properties();
+                    dataSourceProps.load(new FileInputStream(dataSourceFile));
+                    boolean valid = dataSourceProps.containsKey("hibernate.connection.url")
+                            && dataSourceProps.containsKey("hibernate.connection.username")
+                            && dataSourceProps.containsKey("hibernate.connection.password");
 
-                persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
+                    if (valid) {
+                        logger.info("Constructing persistence unit: ", name);
+
+                        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
+                        applyDefaults(registryBuilder);
+                        dataSourceProps.forEach((k, v) -> registryBuilder.applySetting((String) k, v));
+                        persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
+                    } else {
+                        logger.warning("Cannot construct persistence unit: " + name + "! Make sure to set url, username and password.");
+                    }
+                } catch (IOException e) {
+
+                }
             }
         }
     }
@@ -88,20 +108,11 @@ public class DatabaseService {
         registryBuilder.applySetting("hibernate.connection.driver_class", "com.mysql.jdbc.Driver");
         registryBuilder.applySetting("hibernate.connection.pool_size", "1");
         registryBuilder.applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-    }
-
-    @Listener(order = Listener.Orders.LATEST)
-    public void onShutdown(IBotStateEvent.IPostShutdown event) {
-        persistenceUnits.forEach((k, u) -> u.close());
-        persistenceUnits.clear();
-    }
-
-    public Optional<EntityManager> getEntityManager(String unitName) {
-        PersistenceUnitRep rep = persistenceUnits.getOrDefault(unitName, null);
-        if (rep != null) {
-            return Optional.of(rep.getEntityManager());
-        }
-        return Optional.empty();
+        registryBuilder.applySetting("hibernate.c3p0.min_size", "1");
+        registryBuilder.applySetting("hibernate.c3p0.max_size", "20");
+        registryBuilder.applySetting("hibernate.c3p0.timeout", "300");
+        registryBuilder.applySetting("hibernate.c3p0.max_statements", 50);
+        registryBuilder.applySetting("hibernate.c3p0.idle_test_period", 3000);
     }
 
     private void checkClasses() {
@@ -123,5 +134,30 @@ public class DatabaseService {
         synchronized (CLASS_LOCK) {
             return new HashSet<>(ENTITIES);
         }
+    }
+
+    @Listener(order = Listener.Orders.LATEST)
+    public void onShutdown(IBotStateEvent.IPostShutdown event) {
+        persistenceUnits.forEach((k, u) -> u.close());
+        persistenceUnits.clear();
+    }
+
+    public Optional<EntityManager> getEntityManager(String unitName) {
+        PersistenceUnitRep rep = persistenceUnits.getOrDefault(unitName, null);
+        if (rep != null) {
+            return Optional.of(rep.getEntityManager());
+        }
+
+        File dataSourceFile = new File(dbDir, unitName + ".properties");
+        if (!dataSourceFile.exists()) {
+            try (FileWriter out = new FileWriter(dataSourceFile)) {
+                out.write(PROPERTIES_DEFAULT_CONTENT);
+                out.flush();
+                logger.info("DataSource \"" + unitName + "\" requested but not available. Created template file for you.");
+            } catch (IOException e) {
+                logger.info("Cannot pre-create the datasource file. You will have to create it yourself.", e);
+            }
+        }
+        return Optional.empty();
     }
 }
