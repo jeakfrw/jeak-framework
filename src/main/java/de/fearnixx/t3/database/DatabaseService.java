@@ -25,6 +25,7 @@ public class DatabaseService {
 
     private static final Object CLASS_LOCK =  new Object();
     private static final List<Class<?>> ENTITIES = new CopyOnWriteArrayList<>();
+    private static final String HIBERNATE_BUILTIN_POOLSIZE = "hibernate.connection.pool_size";
 
     private static final String PROPERTIES_DEFAULT_CONTENT =
             "#Uncomment and fill out the following properties to enable the data source.\n"
@@ -88,10 +89,16 @@ public class DatabaseService {
 
                     if (valid) {
                         logger.info("Constructing persistence unit: ", name);
-
                         StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
+
+                        if (dataSourceProps.containsKey(HIBERNATE_BUILTIN_POOLSIZE)) {
+                            logger.warning("Hibernate built-in pool size configured. This is forbidden and will be removed.");
+                            dataSourceProps.remove(HIBERNATE_BUILTIN_POOLSIZE);
+                        }
+
                         applyDefaults(registryBuilder);
                         dataSourceProps.forEach((k, v) -> registryBuilder.applySetting((String) k, v));
+
                         persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
                     } else {
                         logger.warning("Cannot construct persistence unit: " + name + "! Make sure to set url, username and password.");
@@ -106,7 +113,6 @@ public class DatabaseService {
     private void applyDefaults(StandardServiceRegistryBuilder registryBuilder) {
         registryBuilder.applySetting("hibernate.format_sql", "true");
         registryBuilder.applySetting("hibernate.connection.driver_class", "com.mysql.jdbc.Driver");
-        registryBuilder.applySetting("hibernate.connection.pool_size", "1");
         registryBuilder.applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
         registryBuilder.applySetting("hibernate.c3p0.min_size", "1");
         registryBuilder.applySetting("hibernate.c3p0.max_size", "20");
@@ -140,6 +146,7 @@ public class DatabaseService {
     public void onShutdown(IBotStateEvent.IPostShutdown event) {
         persistenceUnits.forEach((k, u) -> u.close());
         persistenceUnits.clear();
+        BootstrapServiceRegistryBuilder.destroy(baseRegistry);
     }
 
     public Optional<EntityManager> getEntityManager(String unitName) {

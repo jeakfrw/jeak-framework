@@ -69,7 +69,6 @@ public class Main {
         File logDir = new File("logs");
 
         if (logDir.isDirectory() || (!logDir.isDirectory() && logDir.mkdirs())) {
-            // TODO: Add actual file logging
             FileHandler logFileHandler = new FileHandler(new File(logDir, "latest.log"), true);
             logFileHandler.setFormatter(formatter);
             try {
@@ -111,8 +110,8 @@ public class Main {
             System.exit(1);
         } else {
             mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));
-            File pluginSource = new File("plugins");
-            mgr.addSource(pluginSource);
+            mgr.addSource(new File("plugins"));
+            mgr.addSource(new File("libraries"));
 
             Map<String, ConfigNode> nodes = bots.get();
             nodes.forEach((k, node) -> {

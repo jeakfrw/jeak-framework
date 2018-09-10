@@ -106,7 +106,7 @@ public class PluginManager {
 
         if (includeCP) {
             log.info("Including classpath");
-            builder.addUrls(ClasspathHelper.forClassLoader());
+            builder.addUrls(ClasspathHelper.forClassLoader(ClassLoader.getSystemClassLoader()));
         }
         return new Reflections(builder);
     }
