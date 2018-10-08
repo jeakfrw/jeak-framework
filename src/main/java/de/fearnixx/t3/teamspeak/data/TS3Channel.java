@@ -136,4 +136,9 @@ public class TS3Channel extends BasicDataHolder implements IChannel {
             throw new IllegalArgumentException(id + ": Channel " + channel.getID() + "is not my child! :" + channel.getParent());
         if (!children.contains(channel)) children.add(channel);
     }
+
+    @Override
+    public String toString() {
+        return getName() + '/' + getID();
+    }
 }

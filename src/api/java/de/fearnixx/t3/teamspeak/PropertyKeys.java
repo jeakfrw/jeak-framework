@@ -15,7 +15,11 @@ public abstract class PropertyKeys {
     /**
      * All available keys used in TextMessage stuff
      */
-    public static class TextMessage {
+    public abstract static class TextMessage {
+
+        private TextMessage() {
+        }
+
         public static final String TARGET_TYPE = "targetmode";
         public static final String TARGET_ID = "target";
         public static final String SOURCE_ID = "invokerid";
@@ -27,7 +31,11 @@ public abstract class PropertyKeys {
     /**
      * All available client properties (clientlist response)
      */
-    public static class Client {
+    public abstract static class Client {
+
+        private Client() {
+        }
+
         public static final String ID = "clid";
         public static final String CHANNEL_ID = Channel.ID;
         public static final String DBID = "client_database_id";
@@ -66,7 +74,11 @@ public abstract class PropertyKeys {
     /**
      * All available client properties (clientdblist response)
      */
-    public static class DBClient {
+    public abstract static class DBClient {
+
+        private DBClient() {
+        }
+
         public static final String UID = Client.UID;
         public static final String UID64 = "client_base64HashClientUID";
         public static final String NICKNAME = Client.NICKNAME;
@@ -87,7 +99,11 @@ public abstract class PropertyKeys {
     /**
      * All available channel properties
      */
-    public static class Channel {
+    public abstract static class Channel {
+
+        private Channel() {
+        }
+
         public static final String NAME = "channel_name";
         public static final String ID = "cid";
         public static final String PARENT = "pid";
@@ -95,13 +111,17 @@ public abstract class PropertyKeys {
 
         public static final String TALK_POWER = "channel_needed_talk_power";
         public static final String TOPIC = "channel_topic";
+        public static final String DESCRIPTION = "channel_description";
         public static final String ICON_ID = "channel_icon_id";
+        public static final String PASSWORD = "channel_password";
 
         public static final String CLIENT_COUNT = "total_clients";
         public static final String MAX_CLIENTS = "channel_maxclients";
         public static final String FLAG_MAX_CLIENTS_UNLIMITED = "channel_flag_maxclients_unlimited";
         public static final String CLIENT_COUNT_FAMILY = "total_clients_family";
         public static final String MAX_CLIENTS_FAMILY = "channel_maxfamilyclients";
+        public static final String FLAG_MAX_CLIENTS_FAMALY_UNLIMITED = "channel_flag_maxfamilyclients_unlimited";
+        public static final String FLAG_MAX_CLIENTS_FAMALY_INHERITED = "channel_flag_maxfamilyclients_inherited";
 
         public static final String CODEC = "channel_codec";
         public static final String QUALITY = "channel_codec_quality";
@@ -110,9 +130,14 @@ public abstract class PropertyKeys {
         public static final String FLAG_PASSWORD = "channel_flag_password";
         public static final String FLAG_PERMANENT = "channel_flag_permanent";
         public static final String FLAG_SEMI_PERMANENT = "channel_flag_semi_permanent";
+        public static final String FLAG_UNENCRYPTED = "channel_codec_is_unencrypted";
     }
 
-    public static class Permission {
+    public abstract static class Permission {
+
+        private Permission() {
+        }
+
         public static final String ID = "permid";
         public static final String ID_SHORT = "p";
         public static final String VALUE = "permval";

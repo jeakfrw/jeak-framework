@@ -226,4 +226,9 @@ public class TS3Client extends RawQueryEvent.Message implements IClient {
     public LocalDateTime getLastJoinTime() {
         return LocalDateTime.ofEpochSecond(getLastJoin(), 0, ZoneOffset.UTC);
     }
+
+    @Override
+    public String toString() {
+        return getNickName() + '/' + getClientID() + "/db" + getClientDBID();
+    }
 }
