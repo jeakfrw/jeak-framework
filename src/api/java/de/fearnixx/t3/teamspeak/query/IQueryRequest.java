@@ -1,94 +1,72 @@
 package de.fearnixx.t3.teamspeak.query;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import de.fearnixx.t3.event.IQueryEvent;
+import de.fearnixx.t3.teamspeak.data.IDataHolder;
+
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
- * Created by MarkL4YG on 28-Jan-18
+ * Framework representation for TeamSpeak query commands.
+ *
+ * @author MarkL4YG
  */
 public interface IQueryRequest {
 
-    static Builder builder() {
-        return new Builder();
+    /**
+     * Create a new request builder.
+     */
+    static QueryBuilder builder() {
+        return new QueryBuilder();
     }
 
-    class Builder {
-        private String command;
-        private Map<String, String> currentObj;
-        private List<Map<String, String>> chain;
-        private List<String> options;
-
-        public Builder() {
-            reset();
-        }
-
-        public Builder reset() {
-            command = "";
-            currentObj =  null;
-            chain = new ArrayList<>();
-            options = new ArrayList<>();
-            newChain();
-            return this;
-        }
-
-        public Builder command(String command) {
-            this.command = command;
-            return this;
-        }
-
-        public Builder newChain() {
-            chain.add(new HashMap<>());
-            currentObj = chain.get(chain.size()-1);
-            return this;
-        }
-
-        /**
-         * Add a parameter to the current chain.
-         * @param key The key
-         * @param value String|Object - on objects {@link #toString()} is invoked
-         */
-        public Builder addKey(String key, Object value) {
-            if (currentObj.containsKey(key))
-                currentObj.replace(key, value != null ? value.toString() : null);
-            else
-                currentObj.put(key, value != null ? value.toString() : null);
-            return this;
-        }
-
-        public Builder addOption(String option) {
-            options.add(option);
-            return this;
-        }
-
-        public IQueryRequest build() {
-            return new IQueryRequest() {
-                final String fComm = command;
-                final List<Map<String, String>> fChain = chain;
-                final List<String> fOptions = options;
-
-                @Override
-                public String getCommand() {
-                    return fComm;
-                }
-
-                @Override
-                public List<Map<String, String>> getChain() {
-                    return fChain;
-                }
-
-                @Override
-                public List<String> getOptions() {
-                    return fOptions;
-                }
-            };
-        }
-    }
-
+    /**
+     * TeamSpeak query command.
+     * A query will not be sent without having a command set.
+     */
     String getCommand();
 
+    /**
+     * @see #getDataChain()
+     * @deprecated replaced by {@link #getDataChain()}.
+     */
+    @Deprecated
     List<Map<String, String>> getChain();
 
+    /**
+     * TS3 allows chaining for most commands to run one command with multiple properties at once.
+     * We will support that by making this a list.
+     * Check if chaining is supported for your requested command during development.
+     * If not, just fill the first element in the chain - only that will be sent in that case.
+     *
+     * The data properties to send with the request.
+     */
+    List<IDataHolder> getDataChain();
+
+    /**
+     * Some commands may be appended with switch-like options.
+     * These are appended to the query after the last chain element.
+     */
     List<String> getOptions();
+
+    /**
+     * When the request has been sent and a complete response has been received from TeamSpeak,
+     * the {@link IQueryConnection} invokes some callbacks based on the response.
+     *
+     * This one is equal to the second parameter of {@link IQueryConnection#sendRequest(IQueryRequest, Consumer)}
+     * but is located in the request for availability reasons.
+     * (The query-connection callback is <strong>not</strong> overwritten by this one and vice-versa.)
+     */
+    Consumer<IQueryEvent.IAnswer> onDone();
+
+    /**
+     * {@link #onDone()} for responses with {@code error = 0}.
+     */
+    Consumer<IQueryEvent.IAnswer> onSuccess();
+
+    /**
+     * {@link #onDone()} for responses with {@code error != 0}
+     */
+    Consumer<IQueryEvent.IAnswer> onError();
 }

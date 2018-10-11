@@ -3,11 +3,14 @@ package de.fearnixx.t3.teamspeak.query;
 import de.fearnixx.t3.event.IRawQueryEvent;
 
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
- * Created by MarkL4YG on 07-Feb-18
+ * Plugins may block their thread for a short amount of time using this {@link Future} implementation.
+ *
+ * It is highly recommended to prefer using the callbacks of {@link IQueryRequest} or {@link IQueryConnection#sendRequest(IQueryRequest, Consumer)}
+ *
+ * @implNote {@link #get()} (without timeout) is <strong>not supported!</strong>
  */
 public interface IQueryPromise extends Future<IRawQueryEvent.IMessage.IAnswer> {
-
-    IRawQueryEvent.IMessage.IAnswer get();
 }

@@ -8,6 +8,7 @@ import de.fearnixx.t3.teamspeak.IServer;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.TargetType;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
+import de.fearnixx.t3.teamspeak.query.QueryBuilder;
 import de.mlessmann.logging.ILogReceiver;
 
 import java.util.*;
@@ -76,7 +77,7 @@ public class CommandService implements ICommandService {
                         // Unknown command
                         if (receivers.isEmpty()) {
                             Integer targetID = Integer.valueOf(event.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
-                            IQueryRequest.Builder request = IQueryRequest.builder()
+                            QueryBuilder request = IQueryRequest.builder()
                                                                          .command("sendtextmessage")
                                                                          .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
                                                                          .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
@@ -139,7 +140,7 @@ public class CommandService implements ICommandService {
             message = message.substring(0, 1022) + "...";
         }
 
-        IQueryRequest.Builder request = IQueryRequest.builder()
+        QueryBuilder request = IQueryRequest.builder()
                                                      .command("sendtextmessage")
                                                      .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
                                                      .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
