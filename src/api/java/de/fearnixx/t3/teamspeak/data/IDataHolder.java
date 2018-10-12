@@ -17,7 +17,7 @@ public interface IDataHolder {
 
     Map<String, String> getValues();
 
-    void copyFrom(IDataHolder other);
+    IDataHolder copyFrom(IDataHolder other);
 
-    void merge(IDataHolder other);
+    IDataHolder merge(IDataHolder other);
 }

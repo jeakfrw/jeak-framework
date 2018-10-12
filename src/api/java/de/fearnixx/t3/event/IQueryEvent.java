@@ -50,8 +50,15 @@ public interface IQueryEvent extends IEvent {
 
         /**
          * The KV chain that has been received.
+         * @deprecated to comply with the deprecation of {@link IQueryRequest#getChain()}
          */
+        @Deprecated
         List<IDataHolder> getChain();
+
+        /**
+         * The KV chain that has been received.
+         */
+        List<IDataHolder> getDataChain();
     }
 
     /**
@@ -118,4 +125,13 @@ public interface IQueryEvent extends IEvent {
         interface IChannelEdited extends ITargetChannel {
         }
     }
+
+    /**
+     * Returns the first reference of the raw event.
+     *
+     * @deprecated To discourage use of this! If you use this you better have a very good reason to do so!
+     */
+    @Deprecated
+    @SuppressWarnings("squid:S1133")
+    IRawQueryEvent getRawReference();
 }

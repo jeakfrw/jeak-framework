@@ -3,7 +3,7 @@ package de.fearnixx.t3.teamspeak.query.parser;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent.Message;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
-import de.fearnixx.t3.teamspeak.query.RequestContainer;
+import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public class QueryParser {
      * Instance of the request that's currently running
      * -> Flushed when Message ended
      */
-    private RequestContainer currentRequest;
+    private IQueryRequest currentRequest;
 
     /**
      * Instance of the currently parsed answer
@@ -79,12 +79,12 @@ public class QueryParser {
 
         } else {
             if (context == null) {
-                context = new ParseContext(new Message.Answer(currentRequest.getRequest()));
+                context = new ParseContext(new Message.Answer(currentRequest));
             }
 
             if (parseInfo.isError) {
                 // This message is an isError message
-                Message.ErrorMessage errorMessage = new Message.ErrorMessage(currentRequest.getRequest());
+                Message.ErrorMessage errorMessage = new Message.ErrorMessage(currentRequest);
                 context.setError(errorMessage);
             }
 
@@ -117,7 +117,7 @@ public class QueryParser {
                             next = new Message.Notification();
                             ((Message.Notification) next).setCaption(parseInfo.caption);
                         } else {
-                            next = new Message.Answer(currentRequest.getRequest());
+                            next = new Message.Answer(currentRequest);
                         }
                         parseContext.nextObject(next);
                     }
@@ -144,24 +144,22 @@ public class QueryParser {
         }
     }
 
-    public void setCurrentRequest(RequestContainer container) {
-        this.currentRequest = container;
+    public void setCurrentRequest(IQueryRequest request) {
+        this.currentRequest = request;
     }
 
     /**
      * Extracts basic information about the input by peeking into it.
      */
     public static class ParseInfo {
-        private int firstSpace;
-        private int firstEquals;
         private String caption;
 
         private boolean isError;
         private boolean isNotification;
 
         public String inspect(String input) {
-            firstSpace = input.indexOf(Chars.PROPDIV);
-            firstEquals = input.indexOf(Chars.PROPVALDIV);
+            int firstSpace = input.indexOf(Chars.PROPDIV);
+            int firstEquals = input.indexOf(Chars.PROPVALDIV);
 
             // Determine message type (check for notification)
             caption = null;

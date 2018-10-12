@@ -43,18 +43,20 @@ public class BasicDataHolder implements IDataHolder {
         }
     }
 
-    public void copyFrom(IDataHolder other) {
+    public IDataHolder copyFrom(IDataHolder other) {
         synchronized (LOCK) {
             this.values = new ConcurrentHashMap<>();
-            merge(other);
+            return merge(other);
         }
     }
 
-    public void merge(IDataHolder other) {
+    public IDataHolder merge(IDataHolder other) {
         synchronized (LOCK) {
             for (Map.Entry<String, String> entry : other.getValues().entrySet()) {
                 this.values.put(entry.getKey(), entry.getValue());
             }
         }
+
+        return this;
     }
 }

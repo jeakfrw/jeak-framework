@@ -55,14 +55,18 @@ public interface IQueryConnection {
      * The callback will be called when a full answer has been received
      * @param req The request
      * @param onDone The callback consumer
+     *
+     * @deprecated Replaced by {@link IQueryRequest#onDone()} but not immediately deactivated.
+     *             For removal by RC#1!
      */
+    @Deprecated
     void sendRequest(IQueryRequest req, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone);
 
     /**
      * Send a request
      *
      * This queues the request and sends it when possible.
-     * The callback will be called when a full answer has been received
+     * The callback will be called when a full answer has been received.
      */
     IQueryPromise promiseRequest(IQueryRequest request);
 }

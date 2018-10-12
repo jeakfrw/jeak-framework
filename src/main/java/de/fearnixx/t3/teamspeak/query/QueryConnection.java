@@ -54,8 +54,8 @@ public class QueryConnection extends Thread implements IQueryConnection {
     private OutputStreamWriter wOut;
     private BufferedWriter netDumpOutput;
 
-    private final List<RequestContainer> reqQueue;
-    private RequestContainer currentRequest;
+    private final List<IQueryRequest> reqQueue;
+    private IQueryRequest currentRequest;
     private QueryParser parser;
 
     private Integer instanceID;
@@ -225,17 +225,13 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
         RawQueryEvent.Message event = optMessage.get();
         event.setConnection(this);
-        if (event instanceof RawQueryEvent.Message.Answer) {
-            if (currentRequest != null && currentRequest.getOnDone() != null) {
-                currentRequest.getOnDone().accept(((RawQueryEvent.Message.Answer) event));
-            }
+
+        try {
+            notifier.processEvent(event, hashCode);
             synchronized (reqQueue) {
                 parser.setCurrentRequest(null);
                 currentRequest = null;
             }
-        }
-        try {
-            notifier.processEvent(event, hashCode);
         } catch (QueryException e) {
             log.severe("Got an exception while processing a message!", e);
         }
@@ -247,7 +243,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 return;
         }
         log.finer("Sending next request");
-        IQueryRequest r = reqQueue.get(0).getRequest();
+        IQueryRequest r = reqQueue.get(0);
         if (r.getCommand() == null || !r.getCommand().matches("^[a-z0-9_]+$")) {
             Throwable e = new IllegalArgumentException("Invalid request command used!").fillInStackTrace();
             log.warning("Encountered exception while preparing request", e);
@@ -334,16 +330,27 @@ public class QueryConnection extends Thread implements IQueryConnection {
 
     /* Interaction */
 
+    /**
+     * @deprecated by {@link IQueryConnection#sendRequest(IQueryRequest, Consumer)} deprecation.
+     */
+    @Deprecated
     @Override
     public void sendRequest(IQueryRequest request, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone) {
-        synchronized (reqQueue) {
-            reqQueue.add(new RequestContainer(onDone, request));
+        QueryBuilder replacement = QueryBuilder.from(request);
+
+        if (request.onDone() != null) {
+            replacement.onDone(request.onDone()
+                    .andThen(answer -> onDone.accept(((IRawQueryEvent.IMessage.IAnswer) answer.getRawReference()))));
         }
+
+        sendRequest(request);
     }
 
     @Override
     public void sendRequest(IQueryRequest request) {
-        sendRequest(request, null);
+        synchronized (reqQueue) {
+            reqQueue.add(request);
+        }
     }
 
     @Override

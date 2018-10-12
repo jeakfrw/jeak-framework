@@ -1,6 +1,7 @@
 package de.fearnixx.t3.event.query;
 
 import de.fearnixx.t3.event.IQueryEvent;
+import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.teamspeak.data.BasicDataHolder;
 import de.fearnixx.t3.teamspeak.data.IChannel;
 import de.fearnixx.t3.teamspeak.data.IClient;
@@ -17,6 +18,7 @@ import java.util.List;
 public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent {
 
     private QueryConnection connection;
+    private RawQueryEvent rawReference;
 
     @Override
     public IQueryConnection getConnection() {
@@ -27,7 +29,16 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         this.connection = connection;
     }
 
-    public static abstract class BasicDataEvent extends QueryEvent implements IDataEvent {
+    @Override
+    public IRawQueryEvent getRawReference() {
+        return rawReference;
+    }
+
+    public void setRawReference(RawQueryEvent rawReference) {
+        this.rawReference = rawReference;
+    }
+
+    public abstract static class BasicDataEvent extends QueryEvent implements IDataEvent {
 
         public static class RefreshClients extends BasicDataEvent implements IRefreshClients {
         }
@@ -52,6 +63,11 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         @Override
         public List<IDataHolder> getChain() {
+            return getDataChain();
+        }
+
+        @Override
+        public List<IDataHolder> getDataChain() {
             return chain;
         }
 
@@ -60,7 +76,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
     }
 
-    public static abstract class Notification extends QueryEvent implements IQueryEvent.INotification {
+    public abstract static class Notification extends QueryEvent implements IQueryEvent.INotification {
 
         private String caption;
 
@@ -71,16 +87,9 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         public void setCaption(String caption) {
             this.caption = caption;
         }
-
-        /**
-         * Tells the notification to read its BasicDataHolder.
-         */
-        public void readFrom() {
-
-        }
     }
 
-    public static abstract class TargetClient extends Notification implements INotification.ITargetClient {
+    public abstract static class TargetClient extends Notification implements INotification.ITargetClient {
 
         private IClient client;
 
@@ -106,7 +115,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {
     }
 
-    public static abstract class TargetChannel extends Notification implements INotification.ITargetChannel {
+    public abstract static class TargetChannel extends Notification implements INotification.ITargetChannel {
 
         private IChannel channel;
 
@@ -132,7 +141,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     public static class ChannelTextMessage extends TargetChannel implements IQueryEvent.INotification.IChannelTextMessage {
     }
 
-    public static abstract class TargetServer extends Notification {
+    public abstract static class TargetServer extends Notification {
     }
 
     public static class ServerTextMessage extends TargetServer implements IQueryEvent.INotification.IServerTextMessage {

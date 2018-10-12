@@ -4,6 +4,7 @@ import de.fearnixx.t3.event.EventAbortException;
 import de.fearnixx.t3.event.IQueryEvent;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
+import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.service.task.ITask;
@@ -282,6 +283,7 @@ public class DataCache implements IDataCache {
         logger.finer("Clientlist updated");
         QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
         refresh.setConnection(((QueryConnection) event.getConnection()));
+        refresh.setRawReference(((RawQueryEvent.Message.Answer) event));
         eventService.fireEvent(refresh);
     }
 
@@ -378,6 +380,7 @@ public class DataCache implements IDataCache {
         logger.finer("Channellist updated");
         QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
         refresh.setConnection(((QueryConnection) event.getConnection()));
+        refresh.setRawReference(((RawQueryEvent.Message.Answer) event));
         eventService.fireEvent(refresh);
     }
 

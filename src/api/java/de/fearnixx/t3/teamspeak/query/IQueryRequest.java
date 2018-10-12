@@ -54,9 +54,9 @@ public interface IQueryRequest {
      * When the request has been sent and a complete response has been received from TeamSpeak,
      * the {@link IQueryConnection} invokes some callbacks based on the response.
      *
-     * This one is equal to the second parameter of {@link IQueryConnection#sendRequest(IQueryRequest, Consumer)}
-     * but is located in the request for availability reasons.
-     * (The query-connection callback is <strong>not</strong> overwritten by this one and vice-versa.)
+     * @implNote Consider callbacks asynchronous.
+     *
+     * This is the replacement of the two-parameter method {@link IQueryConnection#sendRequest(IQueryRequest, Consumer)}
      */
     Consumer<IQueryEvent.IAnswer> onDone();
 
