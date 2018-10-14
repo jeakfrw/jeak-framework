@@ -9,6 +9,7 @@ import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
+import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.parser.QueryParser;
@@ -243,49 +244,21 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 return;
         }
         log.finer("Sending next request");
-        IQueryRequest r = reqQueue.get(0);
-        if (r.getCommand() == null || !r.getCommand().matches("^[a-z0-9_]+$")) {
+        IQueryRequest request = reqQueue.get(0);
+        if (request.getCommand() == null || !request.getCommand().matches("^[a-z0-9_]+$")) {
             Throwable e = new IllegalArgumentException("Invalid request command used!").fillInStackTrace();
             log.warning("Encountered exception while preparing request", e);
             return;
         }
 
-        StringBuilder reqB = new StringBuilder();
-        if (r.getCommand().length() > 0)
-            reqB.append(r.getCommand()).append(' ');
-
-        String[] keys;
-        int len;
-        char[] key;
-        char[] value;
-        for (int i = 0; i < r.getChain().size(); i++) {
-            keys = r.getChain().get(i).keySet().toArray(new String[r.getChain().get(i).keySet().size()]);
-            for (int i1 = 0; i1 < keys.length; i1++) {
-                len = keys[i1].length();
-                key = new char[len];
-                keys[i1].getChars(0, len, key, 0);
-                len = r.getChain().get(i).get(keys[i1]).length();
-                value = new char[len];
-                r.getChain().get(i).get(keys[i1]).getChars(0, len, value, 0);
-                reqB.append(new String(QueryEncoder.encodeBuffer(key))).append('=').append(new String(QueryEncoder.encodeBuffer(value)));
-                if (i1 < keys.length-1)
-                    reqB.append(' ');
-            }
-            if (i < r.getChain().size() - 1)
-                reqB.append('|');
-        }
-        r.getOptions().forEach(o -> {
-            if (reqB.length() > 0)
-                reqB.append(' ');
-            reqB.append(o);
-        });
+        final String message = buildSocketMessage(request);
 
         synchronized (mySock) {
             if (!mySock.isConnected()) return;
             try {
                 if (netDumpOutput != null) {
                     try {
-                        String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + " ==> " + reqB.toString();
+                        String ln = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + " ==> " + message;
                         if (!ln.endsWith("\n"))
                             ln = ln + "\n";
                         netDumpOutput.write(ln);
@@ -294,9 +267,10 @@ public class QueryConnection extends Thread implements IQueryConnection {
                         netDumpOutput = null;
                     }
                 }
-                String msg = reqB.append('\n').toString();
-                log.finest(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, msg.substring(0, msg.length()-1));
-                sOut.write(msg.getBytes());
+                log.finest(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, message);
+                sOut.write(message.getBytes());
+                sOut.write('\n');
+
                 reqDelay = Math.round(REQ_DELAY * SOCKET_TIMEOUT_MILLIS);
                 synchronized (reqQueue) {
                     currentRequest = reqQueue.remove(0);
@@ -307,6 +281,65 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 log.warning("Failed to send request: ", e.getClass().getSimpleName(), e);
             }
         }
+    }
+
+    /**
+     * Builds the message for the TS3 query from a request.
+     */
+    private String buildSocketMessage(IQueryRequest request) {
+        StringBuilder sockMessage = new StringBuilder();
+
+        // Append: Command
+        if (request.getCommand().length() > 0) {
+            sockMessage.append(request.getCommand()).append(' ');
+        }
+
+        // Append: Objects
+        // (Chain of `key=val key2=val2...` separated by '|')
+        List<IDataHolder> dataChain = request.getDataChain();
+        final int chainLength = dataChain.size();
+        final int chainLastIndex = chainLength - 1;
+
+        for (int i = 0; i < chainLength; i++) {
+            // Copy the mapping in order to avoid concurrent modification
+            Map<String, String> properties = new HashMap<>(dataChain.get(i).getValues());
+            String[] keys = properties.keySet().toArray(new String[0]);
+
+            for (int j = 0; j < keys.length; j++) {
+                String propKey = keys[j];
+                int keyLen = propKey.length();
+                char[] propKeyParts = new char[keyLen];
+                propKey.getChars(0, keyLen, propKeyParts, 0);
+
+                String propValue = properties.get(keys[j]);
+                int valLen = propValue.length();
+                char[] propValParts = new char[valLen];
+                propValue.getChars(0, valLen, propValParts, 0);
+
+                char[] encodedKeyParts = QueryEncoder.encodeBuffer(propKeyParts);
+                char[] encodedValParts = QueryEncoder.encodeBuffer(propValParts);
+                sockMessage.append(encodedKeyParts)
+                        .append('=')
+                        .append(encodedValParts);
+
+                if (j < keys.length-1) {
+                    sockMessage.append(' ');
+                }
+            }
+
+            if (i < chainLastIndex) {
+                sockMessage.append('|');
+            }
+        }
+
+        // Append: Options
+        request.getOptions().forEach(o -> {
+            if (sockMessage.length() > 0)
+                sockMessage.append(' ');
+            sockMessage.append(o);
+        });
+
+        return sockMessage.toString();
     }
 
     /* DEBUG */
