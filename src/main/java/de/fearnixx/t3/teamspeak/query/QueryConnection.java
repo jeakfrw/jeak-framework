@@ -9,7 +9,6 @@ import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
-import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.parser.QueryParser;
@@ -65,7 +64,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public QueryConnection(Consumer<IQueryConnection> onClose) {
         this.mySock = new Socket();
         this.reqQueue = new ArrayList<>();
-        this.parser = new QueryParser();
+        this.parser = new QueryParser(onNotification, onAnswer);
         this.onClose = onClose;
         this.notifier = new QueryNotifier();
     }

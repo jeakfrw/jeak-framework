@@ -6,6 +6,7 @@ import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /**
  * Created by Life4YourGames on 05.07.17.
@@ -25,6 +26,7 @@ public class QueryParser {
      * Instance of the request that's currently running
      * -> Flushed when Message ended
      */
+    @Deprecated
     private IQueryRequest currentRequest;
 
     /**
@@ -32,6 +34,19 @@ public class QueryParser {
      * -> Messages are multi-lined ended by the "error"-response
      */
     private ParseContext context;
+
+
+    private Consumer<Message> onNotification;
+    private Consumer<Message> onAnswer;
+
+    public QueryParser(Consumer<Message> onNotification, Consumer<Message> onAnswer) {
+        this.onNotification = onNotification;
+        this.onAnswer = onAnswer;
+    }
+
+    public QueryParser() {
+        this(null, null);
+    }
 
     /**
      * Parse a query response
@@ -52,10 +67,16 @@ public class QueryParser {
             }
 
             if (currentContext.isClosed()) {
+
                 if (!parseInfo.isNotification) {
                     context = null;
+                    onAnswer(currentContext.getMessage());
+                } else {
+                    onNotification(currentContext.getMessage());
                 }
+
                 return Optional.of(currentContext.getMessage());
+
             } else {
                 return Optional.empty();
             }
@@ -144,6 +165,17 @@ public class QueryParser {
         }
     }
 
+    private void onNotification(Message event) {
+        if (this.onNotification != null)
+            this.onNotification.accept(event);
+    }
+
+    private void onAnswer(Message event) {
+        if (this.onAnswer != null)
+            this.onAnswer.accept(event);
+    }
+
+    @Deprecated
     public void setCurrentRequest(IQueryRequest request) {
         this.currentRequest = request;
     }
