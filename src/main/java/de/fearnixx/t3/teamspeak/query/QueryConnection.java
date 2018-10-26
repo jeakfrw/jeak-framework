@@ -29,6 +29,7 @@ import java.util.function.Consumer;
 /**
  * Created by MarkL4YG on 22.05.17.
  */
+@Deprecated
 public class QueryConnection extends Thread implements IQueryConnection {
 
     public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 500);
@@ -64,7 +65,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public QueryConnection(Consumer<IQueryConnection> onClose) {
         this.mySock = new Socket();
         this.reqQueue = new ArrayList<>();
-        this.parser = new QueryParser(onNotification, onAnswer);
+        this.parser = new QueryParser();
         this.onClose = onClose;
         this.notifier = new QueryNotifier();
     }
