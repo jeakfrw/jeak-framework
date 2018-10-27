@@ -33,6 +33,8 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
 
     @Override
     public void run() {
+        sendRequest(whoAmIRequest);
+
         try {
             read(connection);
         } catch (Exception e) {

@@ -12,24 +12,6 @@ import java.util.function.Consumer;
 public interface IQueryConnection {
 
     /**
-     * Issues a query login.
-     *
-     * Sends the commands "login" and "use"
-     *
-     * Blocks the thread until the answers are available
-     * @param instanceID The desired virtualserver instance ID (0 for none)
-     * @param user The user to login with
-     * @param pass The password to login with
-     * @return Whether or not all commands succeeded
-     */
-    boolean blockingLogin(Integer instanceID, String user, String pass);
-
-    /**
-     * @return The currently selected server instance ID
-     */
-    Integer getInstanceID();
-
-    /**
      * Sets the nickname of this server query connection
      * @param nickName The new nickname
      */

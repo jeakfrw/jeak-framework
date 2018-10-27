@@ -71,10 +71,10 @@ public class QueryParser {
             input = parseInfo.inspect(input);
 
             if (parseInfo.isNotification) {
-                // This message is a notification
-                Message.Notification message = new Message.Notification();
-                message.setCaption(parseInfo.caption);
-                ParseContext<Message.Notification> notificationContext = new ParseContext<>(message);
+                Message.Notification notification = new Message.Notification();
+                notification.setHashCode(input.hashCode());
+                notification.setCaption(parseInfo.caption);
+                ParseContext<Message.Notification> notificationContext = new ParseContext<>(notification);
                 parseToContext(input, parseInfo, notificationContext);
                 notificationContext.setError(RawQueryEvent.ErrorMessage.OK());
 

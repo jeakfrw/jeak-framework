@@ -75,6 +75,43 @@ public class Server implements IServer {
                             .build()
             );
 
+            final String servernotifyregisterCommand = "servernotifyregister";
+            mainConnection.sendRequest(
+                    IQueryRequest.builder()
+                            .command(servernotifyregisterCommand)
+                            .addKey("event", "server")
+                            .build()
+            );
+
+            mainConnection.sendRequest(
+                    IQueryRequest.builder()
+                            .command(servernotifyregisterCommand)
+                            .addKey("event", "channel")
+                            .addKey("id", "0")
+                            .build()
+            );
+
+            mainConnection.sendRequest(
+                    IQueryRequest.builder()
+                            .command(servernotifyregisterCommand)
+                            .addKey("event", "textserver")
+                            .build()
+            );
+
+            mainConnection.sendRequest(
+                    IQueryRequest.builder()
+                            .command(servernotifyregisterCommand)
+                            .addKey("event", "textchannel")
+                            .build()
+            );
+
+            mainConnection.sendRequest(
+                    IQueryRequest.builder()
+                            .command(servernotifyregisterCommand)
+                            .addKey("event", "textprivate")
+                            .build()
+            );
+
             connectionThread = new Thread(mainConnection);
             connectionThread.start();
 

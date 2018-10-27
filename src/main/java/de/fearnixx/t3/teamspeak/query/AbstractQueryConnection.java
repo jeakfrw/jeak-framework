@@ -9,19 +9,17 @@ import java.util.function.Consumer;
 
 public abstract class AbstractQueryConnection implements IQueryConnection {
 
-    @Override
-    public boolean blockingLogin(Integer instanceID, String user, String pass) {
-        return false;
-    }
+    protected final IQueryRequest whoAmIRequest =
+            IQueryRequest.builder()
+                    .command("whoami")
+                    .onSuccess(answer -> whoamiAnswer = answer.getDataChain().get(0))
+                    .build();
+
+    private IDataHolder whoamiAnswer;
 
     @Override
     public IDataHolder getWhoAmI() {
-        return null;
-    }
-
-    @Override
-    public Integer getInstanceID() {
-        return null;
+        return whoamiAnswer;
     }
 
     @Override
