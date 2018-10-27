@@ -31,9 +31,9 @@ public interface IQueryConnection {
 
     /**
      * Sets the nickname of this server query connection
-     * @param newNickName The new nickname
+     * @param nickName The new nickname
      */
-    void setNickName(String newNickName);
+    void setNickName(String nickName);
 
     /**
      * @return The last response to the "whoami" command - contains sometimes useful information
@@ -52,7 +52,7 @@ public interface IQueryConnection {
      * Send a request
      *
      * This queues the request and sends it when possible.
-     * The callback will be called when a full answer has been received
+     * The callback will be called when a full answer has been received.
      * @param req The request
      * @param onDone The callback consumer
      *
@@ -67,6 +67,9 @@ public interface IQueryConnection {
      *
      * This queues the request and sends it when possible.
      * The callback will be called when a full answer has been received.
+     *
+     * @deprecated Convention-Replaced by {@link IQueryRequest#onDone()}. No requests should block framework threads!
      */
+    @Deprecated
     IQueryPromise promiseRequest(IQueryRequest request);
 }

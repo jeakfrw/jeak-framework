@@ -1,6 +1,8 @@
 package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.Main;
+import de.fearnixx.t3.reflect.Inject;
+import de.mlessmann.logging.ILogReceiver;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +22,9 @@ public class TS3Connection implements AutoCloseable {
     public static final int MAX_FAILING_KEEP_ALIVE = Main.getProperty("bot.connection.max_keepalive", 1);
     public static final float REQ_DELAY_SOT_FACTOR = Main.getProperty("bot.connection.reqdelay", 0.25f);
     public static final int REQUEST_DELAY_MILLIS = (int) Math.ceil(SOCKET_TIMEOUT_MILLIS * REQ_DELAY_SOT_FACTOR);
+
+    @Inject
+    public ILogReceiver log;
 
     private final QueryMessageReader messageReader;
     private final QueryMessageWriter messageWriter;
@@ -74,8 +79,9 @@ public class TS3Connection implements AutoCloseable {
 
     private void handleTimeout() throws IOException {
         synchronized (requestQueue) {
-            if (requestDelayMillis > 0)
+            if (requestDelayMillis > 0) {
                 requestDelayMillis = requestDelayMillis - SOCKET_TIMEOUT_MILLIS;
+            }
 
             int timeoutTime = ++timeoutCount * SOCKET_TIMEOUT_MILLIS;
             if (timeoutTime >= KEEP_ALIVE_MILLIS) {
@@ -121,5 +127,9 @@ public class TS3Connection implements AutoCloseable {
     public void close() throws IOException {
         messageReader.close();
         messageWriter.close();
+    }
+
+    public boolean isClosed() {
+        return messageReader.isClosed();
     }
 }

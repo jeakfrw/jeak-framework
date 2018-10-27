@@ -34,7 +34,7 @@ public class QueryMessageReader implements AutoCloseable {
 
     public void read() throws IOException {
         boolean gotLF = false;
-        while (reader.read(character) != -1) {
+        while (!isClosed() && reader.read(character) != -1) {
 
             if (character[0] == '\n') {
                 gotLF = true;

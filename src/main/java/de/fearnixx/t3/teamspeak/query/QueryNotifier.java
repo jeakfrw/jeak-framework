@@ -122,6 +122,7 @@ public class QueryNotifier {
         QueryEvent.Answer answer = new QueryEvent.Answer();
         answer.setConnection(event.getConnection());
         answer.setRequest(request);
+        answer.setError(event.getError());
         answer.setRawReference(event);
 
         List<IDataHolder> dataHolders = new ArrayList<>(event.toList());

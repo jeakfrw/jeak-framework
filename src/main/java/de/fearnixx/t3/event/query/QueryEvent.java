@@ -51,6 +51,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         private IQueryRequest request;
         private List<IDataHolder> chain;
+        private IRawQueryEvent.IMessage.IErrorMessage error;
 
         @Override
         public IQueryRequest getRequest() {
@@ -73,6 +74,15 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         public void setChain(List<IDataHolder> chain) {
             this.chain = chain;
+        }
+
+        public void setError(IRawQueryEvent.IMessage.IErrorMessage error) {
+            this.error = error;
+        }
+
+        @Override
+        public IRawQueryEvent.IMessage.IErrorMessage getError() {
+            return error;
         }
     }
 
