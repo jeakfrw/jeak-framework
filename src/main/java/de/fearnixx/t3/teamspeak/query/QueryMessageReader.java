@@ -8,10 +8,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
-import static de.fearnixx.t3.event.query.RawQueryEvent.Message.Message;
+import static de.fearnixx.t3.event.IRawQueryEvent.IMessage;
 
-public class QueryMessageReader {
+public class QueryMessageReader implements AutoCloseable {
 
     private final InputStreamReader reader;
     private final QueryParser parser;
@@ -20,13 +21,18 @@ public class QueryMessageReader {
     private final char[] buffer = new char[1024];
     private int bufferPos = 0;
     private char[] character = new char[1];
+    private boolean closed = false;
 
-    public QueryMessageReader(InputStream in, Consumer<Message> onNotification, Consumer<Message> onAnswer) {
+    public QueryMessageReader(InputStream in,
+                              Consumer<IMessage.INotification> onNotification,
+                              Consumer<IMessage.IAnswer> onAnswer,
+                              Supplier<IQueryRequest> requestSupplier) {
+
         this.reader = new InputStreamReader(in, Charset.forName("UTF-8"));
-        this.parser = new QueryParser(onNotification, onAnswer);
+        this.parser = new QueryParser(onNotification, onAnswer, requestSupplier);
     }
 
-    public void readMessage() throws IOException {
+    public void read() throws IOException {
         boolean gotLF = false;
         while (reader.read(character) != -1) {
 
@@ -60,5 +66,17 @@ public class QueryMessageReader {
     private void flushBuffer() {
         largeBuffer.append(buffer, 0, bufferPos);
         bufferPos = 0;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (!isClosed()) {
+            closed = true;
+            reader.close();
+        }
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }

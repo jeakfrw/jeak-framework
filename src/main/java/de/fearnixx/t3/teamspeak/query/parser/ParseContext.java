@@ -6,12 +6,12 @@ import de.fearnixx.t3.teamspeak.query.QueryEncoder;
 
 import java.nio.BufferOverflowException;
 
-public class ParseContext {
+public class ParseContext<T extends RawQueryEvent.Message> {
 
     private static final int KEY_BUFFER_SIZE = 1024;
     private static final int VAL_BUFFER_SIZE = 4096;
 
-    private RawQueryEvent.Message first;
+    private T first;
     private RawQueryEvent.Message last;
     private RawQueryEvent.Message working;
     private RawQueryEvent.ErrorMessage error;
@@ -22,7 +22,7 @@ public class ParseContext {
     private char[] valBuffer = new char[VAL_BUFFER_SIZE];
     private int valBuffPos = 0;
 
-    public ParseContext(RawQueryEvent.Message first) {
+    public ParseContext(T first) {
         this.first = first;
         this.working = first;
         this.last = first;
@@ -82,7 +82,7 @@ public class ParseContext {
         return error != null;
     }
 
-    public RawQueryEvent.Message getMessage() {
+    public T getMessage() {
         return first;
     }
 }

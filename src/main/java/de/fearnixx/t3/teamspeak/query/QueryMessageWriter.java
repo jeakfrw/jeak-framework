@@ -10,10 +10,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QueryMessageWriter {
+public class QueryMessageWriter implements AutoCloseable {
 
     private boolean autoFlush = true;
     private final OutputStreamWriter writer;
+    private boolean closed = false;
 
     public QueryMessageWriter(OutputStream outputStream) {
         writer = new OutputStreamWriter(outputStream, Charset.forName("UTF-8"));
@@ -96,5 +97,17 @@ public class QueryMessageWriter {
 
     public void setAutoFlush(boolean autoFlush) {
         this.autoFlush = autoFlush;
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (!isClosed()) {
+            closed = true;
+            writer.close();
+        }
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 }
