@@ -112,6 +112,10 @@ public class TS3Connection implements AutoCloseable {
     }
 
     private void onAnswer(IMessage.IAnswer event) {
+        synchronized (requestQueue) {
+            currentRequest = null;
+        }
+        
         if (onAnswer != null) {
             onAnswer.accept(event);
         }

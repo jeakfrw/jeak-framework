@@ -21,6 +21,7 @@ public class QueryMessageWriter implements AutoCloseable {
     }
 
     public void writeMessage(IQueryRequest request) throws IOException {
+        System.out.println("Sending command: " + request.getCommand());
         writer.write(buildSocketMessage(request));
 
         if (autoFlush) {
@@ -82,10 +83,10 @@ public class QueryMessageWriter implements AutoCloseable {
         }
 
         // Append: Options
-        request.getOptions().forEach(o -> {
+        request.getOptions().forEach(option -> {
             if (sockMessage.length() > 0)
                 sockMessage.append(' ');
-            sockMessage.append(o);
+            sockMessage.append(option);
         });
 
         return sockMessage.toString();

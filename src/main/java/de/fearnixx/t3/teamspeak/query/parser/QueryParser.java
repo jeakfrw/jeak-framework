@@ -5,6 +5,7 @@ import de.fearnixx.t3.event.query.RawQueryEvent.Message;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 
+import javax.crypto.spec.OAEPParameterSpec;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -216,6 +217,7 @@ public class QueryParser {
                 caption = input.substring(0, firstSpace).toLowerCase();
                 input = input.substring(firstSpace + 1);
             }
+
             isError = "error".equals(caption);
             isNotification = caption != null && caption.startsWith("notify");
 
