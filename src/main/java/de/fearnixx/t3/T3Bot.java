@@ -24,7 +24,6 @@ import de.fearnixx.t3.teamspeak.IServer;
 import de.fearnixx.t3.teamspeak.Server;
 import de.fearnixx.t3.teamspeak.cache.DataCache;
 import de.fearnixx.t3.teamspeak.cache.IDataCache;
-import de.fearnixx.t3.teamspeak.query.QueryConnection;
 import de.fearnixx.t3.teamspeak.except.QueryConnectException;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
@@ -73,15 +72,9 @@ public class T3Bot implements Runnable,IBot {
     private Server server;
     private DataCache dataCache;
 
-    private ServiceManager serviceManager;
     private EventService eventService;
     private TaskService taskService;
     private CommandService commandService;
-    private PermissionService permissionService;
-    private TS3PermissionProvider ts3permissionProvider;
-    private DatabaseService databaseService;
-
-    private final Object lock = new Object();
 
     // * * * CONSTRUCTION * * * //
 
@@ -116,13 +109,16 @@ public class T3Bot implements Runnable,IBot {
         }
 
         // Bot Pre-Initialization
-        // setBaseDir(confFile.getAbsoluteFile().getParentFile().getParentFile());
         initCalled = true;
         plugins = new HashMap<>();
 
         // Create services and register them
         log.fine("Constructing services");
-        serviceManager = new ServiceManager();
+        ServiceManager serviceManager = new ServiceManager();
+        PermissionService permissionService = new PermissionService();
+        TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
+        DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
+
         eventService = new EventService(log.getChild("EM"));
         taskService = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService();
@@ -130,9 +126,6 @@ public class T3Bot implements Runnable,IBot {
         injectionManager.setBaseDir(getBaseDirectory());
         server = new Server(eventService, log.getChild("SVR"));
         dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
-        permissionService = new PermissionService();
-        ts3permissionProvider = new TS3PermissionProvider();
-        databaseService = new DatabaseService(new File(confDir, "databases"));
 
         serviceManager.registerService(PluginManager.class, pMgr);
         serviceManager.registerService(IBot.class, this);
@@ -199,10 +192,11 @@ public class T3Bot implements Runnable,IBot {
 
         if (doNetDump) {
             File netDumpFile = new File(logDir, botInstID);
-            if (!netDumpFile.isDirectory())
-                netDumpFile.mkdirs();
+            if (!netDumpFile.isDirectory() && !netDumpFile.mkdirs()) {
+                log.warning("Failed to enable netdump! Could not create directory: ", netDumpFile.getPath());
+            }
             netDumpFile = new File(netDumpFile, "net_dump.main.log");
-            ((QueryConnection) server.getConnection()).setNetworkDump(netDumpFile);
+//            ((QueryConnectionAccessor) server.getConnection()).setNetworkDump(netDumpFile);
         }
 
         server.getConnection().setNickName(config.getNode("nick").optString(null));
@@ -336,28 +330,6 @@ public class T3Bot implements Runnable,IBot {
         return baseDir;
     }
 
-    public File getConfDir() {
-        return confDir;
-    }
-
-    public File getLogDir() {
-        return logDir;
-    }
-
-    public IServiceManager getServiceManager() {
-        return serviceManager;
-    }
-
-    public IEventService getEventService() {
-        return eventService;
-    }
-
-    public ITaskService getTaskService() {
-        return taskService;
-    }
-
-    public ICommandService getCommandService() { return commandService; }
-
     @Override
     public IServer getServer() {
         return server;
@@ -366,15 +338,6 @@ public class T3Bot implements Runnable,IBot {
     @Override
     public IDataCache getDataCache() {
         return dataCache;
-    }
-
-
-    public IPermissionService getPermissionService() {
-        return permissionService;
-    }
-
-    public ITS3PermissionProvider getTs3permissionProvider() {
-        return ts3permissionProvider;
     }
 
 
