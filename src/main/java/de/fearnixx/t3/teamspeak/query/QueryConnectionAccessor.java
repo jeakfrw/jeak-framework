@@ -3,7 +3,8 @@ package de.fearnixx.t3.teamspeak.query;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +12,7 @@ import java.io.OutputStream;
 
 public class QueryConnectionAccessor extends AbstractQueryConnection implements Runnable {
 
-    @Inject
-    public ILogReceiver receiver;
+    private static final Logger logger = LoggerFactory.getLogger(QueryConnectionAccessor.class);
 
     @Inject
     public IInjectionService injectionService;
@@ -39,7 +39,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         try {
             read(connection);
         } catch (Exception e) {
-            receiver.severe("Fatal error occurred while reading the connection!", e);
+            logger.error("Fatal error occurred while reading the connection!", e);
         }
     }
 
@@ -48,7 +48,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
             try {
                 connection.read();
             } catch (IOException e) {
-                receiver.severe("Failed to read from connection.", e);
+                logger.error("Failed to read from connection.", e);
                 return;
             }
         }
@@ -72,7 +72,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
             terminated = true;
             connection.close();
         } catch (IOException e) {
-            receiver.warning("Error while trying to close connection.", e);
+            logger.warn("Error while trying to close connection.", e);
         }
     }
 }

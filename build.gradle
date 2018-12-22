@@ -1,5 +1,4 @@
 group 'de.fearnixx'
-project.ext.artifactId = 't3serverbot'
 version '0.1.12-bleeding'
 
 apply plugin: 'java'
@@ -8,11 +7,15 @@ apply plugin: 'maven-publish'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+project.ext {
+    artifact = 't3serverbot'
+}
+
 repositories {
     mavenLocal()
     mavenCentral()
     maven {
-        url uri('https://maven.fearnixx.de:4040')
+        url uri('https://nexus.fearnixx.de/repository/maven-public')
     }
 }
 
@@ -37,27 +40,17 @@ sourceSets {
 }
 
 dependencies {
-
-    apiCompile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
     apiCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
     apiCompile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.13.Final'
 
-    compile group: 'de.mlessmann', name: 'javacommon', version: '2.4.3'
     compile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
+    
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
     compile group: 'org.hibernate', name: 'hibernate-core', version: '5.3.6.Final'
     compile group: 'org.hibernate', name: 'hibernate-c3p0', version: '5.3.6.Final'
     compile files('libraries/mysql-connector-bin.jar')
-}
-
-task apiJar (type: Jar){
-    from sourceSets.api.output
-    from sourceSets.api.allSource
-    classifier 'api'
-}
-
-jar {
-    dependsOn tasks.apiJar
 }
 
 task zipPublish(type: Zip){
@@ -74,30 +67,8 @@ build {
     dependsOn zipPublish
 }
 
-publishing {
-    repositories {
-        mavenLocal()
-        maven {
-            url uri('build/maven2')
-        }
-    }
-    publications {
-        main(MavenPublication) {
-            groupId project.group
-            artifactId project.ext.artifactId
-            version project.version
-
-            artifact jar
-        }
-        api(MavenPublication) {
-            groupId project.group
-            artifactId project.ext.artifactId
-            version project.version
-
-            artifact apiJar
-        }
-    }
-}
+apply from: './artifacts.gradle'
+apply from: './publication.gradle'
 
 wrapper {
     gradleVersion '4.2.1'

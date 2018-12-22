@@ -4,7 +4,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.service.task.ITask;
 import de.fearnixx.t3.service.task.ITaskService;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,10 +20,10 @@ import java.util.concurrent.ThreadFactory;
  */
 public class TaskService extends Thread implements ITaskService {
 
+    private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
+
     public static final Integer THREAD_POOL_SIZE = 10;
     public static Integer AWAIT_TERMINATION_DELAY = 5000;
-
-    private ILogReceiver log;
 
     private final Map<ITask, Long> tasks;
     private boolean terminated = false;
@@ -30,8 +31,7 @@ public class TaskService extends Thread implements ITaskService {
     private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("task-scheduler-%d").build();
     private ExecutorService taskExecutor;
 
-    public TaskService(ILogReceiver log, int capacity) {
-        this.log = log;
+    public TaskService(int capacity) {
         tasks = new HashMap<>(capacity, 0.8f);
         taskExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.taskmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
         AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
@@ -54,7 +54,7 @@ public class TaskService extends Thread implements ITaskService {
             throw new IllegalArgumentException("Repeating task MUST have an interval of at least 5 seconds");
         }
         if (task.getName() == null || task.getName().trim().isEmpty()) {
-            log.warning("Some plugin tried to register a task missing a proper name. Task not registered");
+            logger.warn("Some plugin tried to register a task missing a proper name. Task not registered");
             return;
         }
         synchronized (tasks) {
@@ -62,7 +62,7 @@ public class TaskService extends Thread implements ITaskService {
                 return;
             tasks.put(task, delay);
         }
-        log.fine("Task", task.getName(), " scheduled for ", delay, " seconds");
+        logger.debug("Task {} scheduled for {} seconds", task.getName(), delay);
     }
 
     @Override
@@ -85,13 +85,13 @@ public class TaskService extends Thread implements ITaskService {
         synchronized (tasks) {
             tasks.remove(task);
         }
-        log.finer("Running task ", task.getName());
+        logger.debug("Running task {}", task.getName());
         final Runnable r = task.getRunnable();
         taskExecutor.execute(() -> {
             try {
                 r.run();
-            } catch (Throwable e) {
-                log.warning("Uncaught exception from task: ", task.getName(), e);
+            } catch (Exception e) {
+                logger.error("Uncaught exception from task: {}", task.getName(), e);
             }
             if (task.getType() == ITask.TaskType.REPEAT) {
                 scheduleTask(task);
@@ -111,7 +111,7 @@ public class TaskService extends Thread implements ITaskService {
                             toDo.add(t);
                         } else {
                             if (l % 100 == 0)
-                                log.finer(t.getName(), " has ", l, " seconds left");
+                                logger.debug("{} has {} seconds left", t.getName(), l);
                             tasks.replace(t, l);
                         }
                     });
@@ -130,7 +130,7 @@ public class TaskService extends Thread implements ITaskService {
 
     public void kill() {
         synchronized (tasks) {
-            log.finer(tasks.size(), " task(s) scheduled upon shutdown.");
+            logger.debug("{} task(s) scheduled upon shutdown.", tasks.size());
             tasks.clear();
             terminated = true;
         }

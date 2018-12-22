@@ -14,7 +14,8 @@ import de.fearnixx.t3.teamspeak.data.*;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.query.QueryConnection;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,8 +29,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class DataCache implements IDataCache {
 
+    private static final Logger logger = LoggerFactory.getLogger(DataCache.class);
+
     private final Object LOCK = new Object();
-    private ILogReceiver logger;
 
     private IQueryConnection connection;
     private IEventService eventService;
@@ -37,8 +39,7 @@ public class DataCache implements IDataCache {
     private Map<Integer, TS3Client> clientCache;
     private Map<Integer, TS3Channel> channelCache;
 
-    public DataCache(ILogReceiver logger, IQueryConnection connection, IEventService eventService) {
-        this.logger = logger;
+    public DataCache(IQueryConnection connection, IEventService eventService) {
         this.connection = connection;
         this.eventService = eventService;
         clientCache = new ConcurrentHashMap<>(50);
@@ -187,7 +188,7 @@ public class DataCache implements IDataCache {
                 Integer clientID = Integer.valueOf(event.getProperty("clid").orElse("-1"));
                 TS3Client client = clientCache.getOrDefault(clientID, null);
                 if (client == null) {
-                    logger.warning("Insufficient information for clientMoved update: Client not yet cached.");
+                    logger.warn("Insufficient information for clientMoved update: Client not yet cached.");
                     return;
                 }
 
@@ -196,12 +197,12 @@ public class DataCache implements IDataCache {
                 TS3Channel toChannel = channelCache.getOrDefault(Integer.parseInt(event.getProperty("ctid").get()), null);
                 Integer toChannelId = toChannel != null ? toChannel.getID() : -1;
                 if (fromChannel == null || toChannel == null) {
-                    logger.warning("Insufficient information for clientMoved update: ", fromChannelId, "->", toChannelId);
+                    logger.warn("Insufficient information for clientMoved update: {} -> {}", fromChannelId, toChannelId);
                     return;
                 }
 
-                logger.fine("Updating cached client ", clientID, " \"", PropertyKeys.Client.CHANNEL_ID, "\" ",
-                        fromChannelId, "->", toChannelId);
+                logger.debug("Updating cached client {} \"{}\" | Channel: {} -> {}",
+                        clientID, PropertyKeys.Client.CHANNEL_ID, fromChannelId, toChannelId);
 
                 // Set new channel
                 client.setProperty(PropertyKeys.Client.CHANNEL_ID, fromChannelId.toString());
@@ -280,7 +281,7 @@ public class DataCache implements IDataCache {
             clientMapping.clear();
         }
 
-        logger.finer("Clientlist updated");
+        logger.debug("Clientlist updated");
         QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
         refresh.setConnection(((QueryConnection) event.getConnection()));
         refresh.setRawReference(((RawQueryEvent.Message.Answer) event));
@@ -303,7 +304,7 @@ public class DataCache implements IDataCache {
                         int cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
 
                         if (cid == -1) {
-                            logger.warning("Skipping a client due to invalid ID: ",
+                            logger.warn("Skipping a client due to invalid ID: {}",
                                     message.getProperty(PropertyKeys.Client.ID)
                                             .orElse("null"));
                             return;
@@ -323,7 +324,7 @@ public class DataCache implements IDataCache {
 
                         mapping.put(cid, client);
                     } catch (Exception e) {
-                        logger.warning("Failed to parse a client", e);
+                        logger.warn("Failed to parse a client", e);
                     }
                 });
         return mapping;
@@ -370,14 +371,14 @@ public class DataCache implements IDataCache {
                 if (pid == 0) return;
                 TS3Channel parent = channelCache.getOrDefault(pid, null);
                 if (parent == null) {
-                    logger.warning("Channel", cid, "has nonexistent parent", c.getParent());
+                    logger.warn("Channel {} has nonexistent parent: {}", cid, c.getParent());
                     return;
                 }
                 parent.addSubChannel(c);
             });
         }
 
-        logger.finer("Channellist updated");
+        logger.debug("Channellist updated");
         QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
         refresh.setConnection(((QueryConnection) event.getConnection()));
         refresh.setRawReference(((RawQueryEvent.Message.Answer) event));
@@ -399,7 +400,7 @@ public class DataCache implements IDataCache {
             try {
                 int cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
                 if (cid == -1) {
-                    logger.warning("Skipping a channel due to invalid channel ID");
+                    logger.warn("Skipping a channel due to invalid channel ID");
                     return;
                 }
 
@@ -414,7 +415,7 @@ public class DataCache implements IDataCache {
                     String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
 
                     if (nName == null) {
-                        logger.warning("Skipping a channel due to missing name");
+                        logger.warn("Skipping a channel due to missing name");
                         return;
                     }
 
@@ -435,7 +436,7 @@ public class DataCache implements IDataCache {
                 fixChannelIconId(channel);
                 channelMap.put(cid, channel);
             } catch (Exception e) {
-                logger.warning("Failed to parse a channel", e);
+                logger.warn("Failed to parse a channel", e);
             }
         });
         return channelMap;

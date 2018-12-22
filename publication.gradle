@@ -1,0 +1,32 @@
+import org.gradle.api.publish.maven.MavenPublication
+
+publishing {
+    repositories {
+        mavenLocal()
+        maven {
+            def releaseRepository = 'https://nexus.fearnixx.de/repository/maven-releases'
+            def snapshotRepository = 'https://nexus.fearnixx.de/repository/maven-snapshots'
+
+            name = 'FNGNexus'
+            url uri(project.version.endsWith('SNAPSHOT') ? snapshotRepository : releaseRepository)
+
+            if (project.hasProperty('fngNexusUser') && project.hasProperty('fngNexusPass')) {
+                credentials {
+                    username "$fngNexusUser"
+                    password "$fngNexusPass"
+                }
+            }
+        }
+    }
+
+    publications {
+        api(MavenPublication) {
+            artifactId = "${project.ext.artifact}-api"
+            artifact apiJar
+        }
+        publish(MavenPublication) {
+            artifactId = project.ext.artifact
+            artifact jar
+        }
+    }
+}

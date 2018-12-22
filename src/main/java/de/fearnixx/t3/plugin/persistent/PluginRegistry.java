@@ -5,8 +5,9 @@ import de.fearnixx.t3.plugin.PluginContainer;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.reflect.T3BotPlugin;
-import de.mlessmann.common.Common;
-import de.mlessmann.logging.ILogReceiver;
+import de.fearnixx.t3.util.Common;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -19,14 +20,7 @@ import java.util.*;
  */
 public class PluginRegistry {
 
-    private static ILogReceiver log;
-    public static void setLog(ILogReceiver log) {
-        if (PluginRegistry.log != null) {
-            PluginRegistry.log.severe("Logger got hot-swapped!");
-            log.severe("Hot-swapped in for old pr logger");
-        }
-        PluginRegistry.log = log;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(PluginRegistry.class);
 
     public static Optional<PluginRegistry> getFor(Class<?> pluginClass) {
         PluginRegistry pr = new PluginRegistry(pluginClass);
@@ -53,21 +47,22 @@ public class PluginRegistry {
     }
 
     protected boolean analyze() {
-        log.fine("Analyzing class: ", pluginClass.toGenericString(), " from ", pluginClass.getProtectionDomain().getCodeSource().getLocation().getPath());
-        log.finer("Reading tag");
+        logger.debug("Analyzing class: {} from {}",
+                pluginClass.toGenericString(), pluginClass.getProtectionDomain().getCodeSource().getLocation().getPath());
+
         tag = pluginClass.getAnnotation(T3BotPlugin.class);
         if (tag == null) {
-            log.severe("Attempt to analyze untagged plugin class: ", pluginClass.toGenericString());
+            logger.error("Attempt to analyze untagged plugin class: {}", pluginClass.toGenericString());
             return false;
         }
         id = tag.id();
         if (!id.matches("^[a-z0-9.]+$")) {
-            log.severe("Plugin ID: ", this.id, " is invalid!");
+            logger.error("Plugin ID: {} is invalid!",  this.id);
             return false;
         }
         version = Common.stripVersion(tag.version());
         if ("0".equals(version)) {
-            log.warning("Plugin ID: ", this.id, " is using an invalid version: ", tag.version());
+            logger.warn("Plugin ID: {} is using an invalid version: {}", this.id, tag.version());
             version = null;
         }
 
@@ -88,7 +83,7 @@ public class PluginRegistry {
         }
 
 
-        log.finer("Pre-processing listeners");
+        logger.debug("Pre-processing listeners");
         listeners = new ArrayList<>();
 
         Method[] methods = pluginClass.getDeclaredMethods();
@@ -96,29 +91,29 @@ public class PluginRegistry {
             Annotation anno = method.getAnnotation(Listener.class);
             if (anno == null) continue;
             if (method.getParameterCount() != 1) {
-                log.finest("Wrong parameter count for method: ", method.getName());
+                logger.debug("Wrong parameter count for method: {}", method.getName());
                 continue;
             }
             if (!Modifier.isPublic(method.getModifiers())) {
-                log.finest("Wrong visibility for method: ", method.getName());
+                logger.debug("Wrong visibility for method: {}", method.getName());
                 continue;
             }
             if (!IEvent.class.isAssignableFrom(method.getParameterTypes()[0])) {
-                log.finest("Wrong parameterType for method: ", method.getName());
+                logger.debug("Wrong parameterType for method: {}", method.getName());
                 continue;
             }
 
             listeners.add(method);
         }
 
-        log.finer("Pre-processing injections");
+        logger.debug("Pre-processing injections");
         injections = new HashMap<>();
         Field[] fields = pluginClass.getFields();
         for (Field field : fields) {
             if (field.getAnnotation(Inject.class) == null) continue;
             int mod = field.getModifiers();
             if (!Modifier.isPublic(mod) || Modifier.isAbstract(mod) || Modifier.isFinal(mod) || Modifier.isVolatile(mod)) {
-                log.finest("Wrong modifiers for field:", field.getName());
+                logger.debug("Wrong modifiers for field: {}", field.getName());
             }
             List<Field> l = injections.getOrDefault(field.getType(), null);
             if (l == null) {
@@ -128,11 +123,9 @@ public class PluginRegistry {
             l.add(field);
         }
 
-        log.fine("Plugin class ", pluginClass.toGenericString(), " analysed.");
-        log.finer("ID: ", this.id, " Version: " + this.version,
-                " HDependencies: ", HARD_depends.size(),
-                " SDependencies: ", SOFT_depends.size(),
-                " Build-INFO:[", breaksBefore, ',', buildAgainst, ',', breaksAfter, ']');
+        logger.debug("Plugin class {} analysed", pluginClass.toGenericString());
+        final String logMessage = String.format("ID: %s Version: %s HDependencies: %d SDependencies: %d Build-INFO:[%s,%s,%s]", this.id, this.version, HARD_depends.size(), SOFT_depends.size(), breaksBefore, buildAgainst, breaksAfter);
+        logger.debug(logMessage);
         return true;
     }
 

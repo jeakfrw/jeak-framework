@@ -12,7 +12,8 @@ import de.fearnixx.t3.teamspeak.query.IQueryPromise;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.service.permission.teamspeak.ITS3Permission.PriorityType;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -29,8 +30,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
     public static final Integer CACHE_TIMEOUT_SECONDS = 90;
     public static final Integer EMPTY_RESULT_ID = 1281;
 
-    @Inject
-    public ILogReceiver logger;
+    private static final Logger logger = LoggerFactory.getLogger(TS3PermissionProvider.class);
 
     @Inject
     public IDataCache dataCache;
@@ -333,7 +333,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
             perm.copyFrom(answer);
             return Optional.of(perm);
         }
-        logger.fine("Permission ", permSID, " not found in list");
+        logger.debug("Permission {} not found in list", permSID);
         return Optional.empty();
     }
 

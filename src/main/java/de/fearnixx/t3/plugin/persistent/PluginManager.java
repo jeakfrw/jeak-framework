@@ -1,13 +1,14 @@
 package de.fearnixx.t3.plugin.persistent;
 
 import de.fearnixx.t3.reflect.T3BotPlugin;
-import de.mlessmann.logging.ILogReceiver;
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.scanners.TypeElementsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -22,37 +23,31 @@ public class PluginManager {
 
     // * * * STATICS * * * //
 
+    private static final Logger logger = LoggerFactory.getLogger(PluginManager.class);
+
     private static volatile PluginManager INST;
 
     public static PluginManager getInstance() {
         if (INST == null) {
-            initialize(ILogReceiver.Dummy.newDummy());
+            initialize();
         }
         return INST;
     }
 
-    public static void initialize(ILogReceiver log) {
-        INST = new PluginManager(log);
+    public static void initialize() {
+        INST = new PluginManager();
     }
 
 
     // * * * FIELDS * * * //
 
-    private ILogReceiver log;
-    private List<File> sources;
-    private List<URL> urlList;
+    private List<File> sources = new ArrayList<>();
+    private List<URL> urlList = new ArrayList<>();
     private boolean includeCP;
     private ClassLoader pluginClassLoader;
-    private Map<String, PluginRegistry> registryMap;
+    private Map<String, PluginRegistry> registryMap = new HashMap<>();
 
     // * * * CONSTRUCTION * * * //
-
-    public PluginManager(ILogReceiver log) {
-        this.log = log;
-        registryMap = new HashMap<>();
-        sources = new ArrayList<>();
-        urlList = new ArrayList<>();
-    }
 
     public void addSource(File dir) {
         if (dir.exists())
@@ -67,19 +62,18 @@ public class PluginManager {
         if (registryMap.size() > 0) {
             return;
         }
-        PluginRegistry.setLog(log.getChild("REG"));
         scanPluginSources();
 
         List<Class<?>> candidates = new ArrayList<>();
         Reflections reflect = getPluginScanner(getPluginClassLoader());
 
         candidates.addAll(reflect.getTypesAnnotatedWith(T3BotPlugin.class, true));
-        log.info(candidates.size(), " candidates found");
+        logger.info("Found {} plugin candidates", candidates.size());
         candidates.forEach(c -> {
             Optional<PluginRegistry> r = PluginRegistry.getFor(c);
             if (r.isPresent()) {
                 if (registryMap.containsKey(r.get().getID())) {
-                    log.warning("Duplicate plugin ID found! ", r.get().getID());
+                    logger.warn("Duplicate plugin ID found! {}", r.get().getID());
                     return;
                 }
                 registryMap.put(r.get().getID(), r.get());
@@ -105,7 +99,7 @@ public class PluginManager {
                 .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
 
         if (includeCP) {
-            log.info("Including classpath");
+            logger.info("Including classpath");
             builder.addUrls(ClasspathHelper.forClassLoader(ClassLoader.getSystemClassLoader()));
         }
         return new Reflections(builder);
@@ -117,7 +111,7 @@ public class PluginManager {
 
     private void scanPluginSources() {
         if (sources.isEmpty()) {
-            log.warning("No sources defined!");
+            logger.warn("No sources defined!");
         } else {
             sources.forEach(f -> {
                 try {
@@ -131,10 +125,10 @@ public class PluginManager {
                             }
                         }
                     } else {
-                        log.warning("Skipping plugin source,", f.getAbsolutePath());
+                        logger.warn("Skipping plugin source: {}", f.getAbsolutePath());
                     }
                 } catch (MalformedURLException e) {
-                    log.warning(e);
+                    logger.warn("Failed to construct plugin URL. HOW DID YOU DO THIS???", e);
                 }
             });
         }

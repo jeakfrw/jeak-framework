@@ -5,6 +5,7 @@ import de.fearnixx.t3.T3Bot;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 
+import de.fearnixx.t3.logging.ANSIColors;
 import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
@@ -12,8 +13,8 @@ import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.parser.QueryParser;
-import de.mlessmann.logging.ANSIColors;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -36,8 +37,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public static final int KEEP_ALIVE_SECS = Main.getProperty("bot.connection.keepalive", 240);
     public static final float REQ_DELAY = Main.getProperty("bot.connection.reqdelay", 0.25f);
 
-    @Inject
-    public ILogReceiver log;
+    private static final Logger logger = LoggerFactory.getLogger(QueryConnection.class);
 
     @Inject
     public IInjectionService injectionService;
@@ -99,13 +99,13 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 if (lfC == 1) {
                     String greet = new String(buffer, pos - 3, 3, T3Bot.CHAR_ENCODING);
                     if (!"TS3".equals(greet)) {
-                        log.severe("ATTENTION TS3Connection for " + addr + " received an invalid greeting: " + greet);
+                        logger.error("ATTENTION TS3Connection for {} received an invalid greeting: {}", addr, greet);
                     }
                 }
             }
             pos++;
         }
-        log.info("Connected to query at " + mySock.getInetAddress().toString());
+        logger.info("Connected to query at {}", mySock.getInetAddress());
     }
 
     @Override
@@ -135,7 +135,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 synchronized (mySock) {
                     if (terminated || sIn.read(rByte) == -1) {
                         terminated = true;
-                        log.severe("Disconnected");
+                        logger.error("Disconnected");
                         break;
                     }
                     timeout[0] = 0;
@@ -162,16 +162,16 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 }
                 if ((++timeout[0] * SOCKET_TIMEOUT_MILLIS) >= (KEEP_ALIVE_SECS * 1000)) {
                     if (keepAliveSent[0]) {
-                        log.severe("Connection lost - Read timed out");
+                        logger.error("Connection lost - Read timed out");
                         kill();
                     } else {
-                        log.finest("Sending keepalive");
+                        logger.debug("Sending keepalive");
                         keepAliveSent[0] = true;
                         sendRequest(keepAliveReq, r -> keepAliveSent[0] = false);
                     }
                 }
             } catch (IOException e) {
-                log.severe("Connection lost - Exception while reading", e);
+                logger.error("Connection lost - Exception while reading", e);
                 kill();
             }
         }
@@ -190,7 +190,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 netDumpOutput.write(ln);
                 netDumpOutput.flush();
             } catch (IOException e) {
-                log.warning("Failed to write to network dump - disabling", e);
+                logger.warn("Failed to write to network dump - disabling", e);
                 netDumpOutput = null;
             }
         }
@@ -209,16 +209,16 @@ public class QueryConnection extends Thread implements IQueryConnection {
         }
         int len = line.length();
         if (len > 120) {
-            log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, 120), "...", ANSIColors.RESET);
+            logger.debug(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, 120), "...", ANSIColors.RESET);
         } else {
-            log.finest(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
+            logger.debug(col, arrow, ANSIColors.RESET, blockCol, line.substring(0, len-1), ANSIColors.RESET, ' ');
         }
         Optional<RawQueryEvent.Message> optMessage;
         Integer hashCode = line.hashCode();
         try {
             optMessage = parser.parse(line);
         } catch (QueryParseException e) {
-            log.severe("Failed to parse QueryMessage!", e);
+            logger.error("Failed to parse QueryMessage!", e);
             return;
         }
         if (!optMessage.isPresent())
@@ -234,7 +234,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 currentRequest = null;
             }
         } catch (QueryException e) {
-            log.severe("Got an exception while processing a message!", e);
+            logger.error("Got an exception while processing a message!", e);
         }
     }
 
@@ -243,11 +243,11 @@ public class QueryConnection extends Thread implements IQueryConnection {
             if (reqDelay > 0)
                 return;
         }
-        log.finer("Sending next request");
+        logger.debug("Sending next request");
         IQueryRequest request = reqQueue.get(0);
         if (request.getCommand() == null || !request.getCommand().matches("^[a-z0-9_]+$")) {
             Throwable e = new IllegalArgumentException("Invalid request command used!").fillInStackTrace();
-            log.warning("Encountered exception while preparing request", e);
+            logger.warn("Encountered exception while preparing request", e);
             return;
         }
 
@@ -263,11 +263,11 @@ public class QueryConnection extends Thread implements IQueryConnection {
                             ln = ln + "\n";
                         netDumpOutput.write(ln);
                     } catch (IOException e) {
-                        log.warning("Failed to write to network dump - disabling", e);
+                        logger.warn("Failed to write to network dump - disabling", e);
                         netDumpOutput = null;
                     }
                 }
-                log.finest(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, message);
+                logger.debug(ANSIColors.Font.CYAN, ANSIColors.Background.BLACK, " --> ", ANSIColors.RESET, message);
                 sOut.write(message.getBytes());
                 sOut.write('\n');
 
@@ -278,7 +278,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
                 parser.setCurrentRequest(currentRequest);
                 sOut.flush();
             } catch (IOException e) {
-                log.warning("Failed to send request: ", e.getClass().getSimpleName(), e);
+                logger.warn("Failed to send request: {}", e.getClass().getSimpleName(), e);
             }
         }
     }
@@ -356,7 +356,7 @@ public class QueryConnection extends Thread implements IQueryConnection {
             netDumpOutput = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file)));
 
         } catch (IOException e) {
-            log.warning("Unable to open dump path for writing: ", file.toString(), e);
+            logger.warn("Unable to open dump path for writing: {}", file, e);
             netDumpOutput = null;
         }
     }
@@ -426,12 +426,12 @@ public class QueryConnection extends Thread implements IQueryConnection {
     public void kill() {
         synchronized (mySock) {
             if (terminated) return;
-            log.warning("Kill requested");
+            logger.warn("Kill requested");
             if (mySock.isConnected()) {
                 try {
                     mySock.close();
                 } catch (IOException e) {
-                    log.warning(e);
+                    logger.warn("Failed to close socket", e);
                 }
             }
             if (netDumpOutput != null) {

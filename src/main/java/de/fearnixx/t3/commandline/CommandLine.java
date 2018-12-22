@@ -1,7 +1,8 @@
 package de.fearnixx.t3.commandline;
 
 import de.fearnixx.t3.Main;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,15 +16,15 @@ import java.util.regex.Pattern;
  */
 public class CommandLine implements Runnable {
 
+    private static final Logger logger = LoggerFactory.getLogger(CommandLine.class);
+
     private final Object lock = new Object();
     private boolean terminated = false;
 
-    private ILogReceiver log;
     private InputStream in;
     private OutputStreamWriter out;
 
-    public CommandLine(InputStream in, OutputStream out, ILogReceiver log) {
-        this.log = log;
+    public CommandLine(InputStream in, OutputStream out) {
         this.in = in;
         this.out = new OutputStreamWriter(out);
     }
@@ -41,14 +42,14 @@ public class CommandLine implements Runnable {
                 do {
                     synchronized (lock) {
                         if (terminated) {
-                            log.info("Commandline closed");
+                            logger.info("Commandline closed");
                             break outer;
                         }
                     }
                     Thread.sleep(100);
                 } while (in.available() <= 0 && !terminated);
                 if (in.read(cc) == -1) {
-                    log.severe("Commandline reached EOS");
+                    logger.error("Commandline reached EOS");
                     synchronized (lock) {
                         kill();
                         break outer;
@@ -73,7 +74,7 @@ public class CommandLine implements Runnable {
             } catch (InterruptedException e) {
                 continue;
             } catch (IOException e) {
-                log.severe("Commandline crashed", e);
+                logger.error("Commandline crashed", e);
                 kill();
             }
         }
@@ -82,7 +83,7 @@ public class CommandLine implements Runnable {
     private static final Pattern commp = Pattern.compile("[\\w\\d]+");
     private void processCommand(String command) throws IOException {
         if (!commp.matcher(command).matches()) {
-            log.warning("Command not matching: ", command);
+            logger.warn("Command not matching: {}", command);
             return;
         }
         switch (command) {
@@ -93,11 +94,11 @@ public class CommandLine implements Runnable {
                 Main.getInstance().shutdown();
                 break;
             case "help":
-                log.info("\nCommands: \n\thelp - Display this page" +
+                logger.info("\nCommands: \n\thelp - Display this page" +
                         "\n\tstop - Shutdown all bots");
                 break;
             default:
-                log.warning("Unknown command: " + command + '\n');
+                logger.warn("Unknown command: {}\n", command);
                 break;
         }
     }

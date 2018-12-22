@@ -6,7 +6,8 @@ import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.mlessmann.config.ConfigNode;
 import de.mlessmann.config.JSONConfigLoader;
 import de.mlessmann.config.api.ConfigLoader;
-import de.mlessmann.logging.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +20,8 @@ import java.util.logging.Level;
  */
 public class Main {
 
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+
     private static Main INST;
 
     public static Main getInstance() {
@@ -29,7 +32,6 @@ public class Main {
         getInstance().run(args);
     }
 
-    private LogWrapper logger = new LogWrapper("", true);
     private ConfigNode config;
     private List<T3Bot> t3bots = new ArrayList<>();
     private PluginManager mgr;
@@ -57,6 +59,7 @@ public class Main {
         consoleLogLevel = parseLogLevel(getProperty("bot.loglevel.console", null));
         fileLogLevel = parseLogLevel(getProperty("bot.loglevel.file", null));
 
+        /* TODO: Log4J Setup!
         logger.getLogger().setLevel(Level.ALL);
         LogFormatter formatter = new LogFormatter();
         formatter.setDebug(false);
@@ -81,35 +84,35 @@ public class Main {
         } else {
             log.warning("Cannot enable file logging into dir: ", logDir.getAbsoluteFile().getPath());
         }
-
+        */
 
         for (int i = 0; i < args.length; i++) {
-            log.info("ARG: ", args[i]);
+            logger.info("ARG: ", args[i]);
         }
 
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
         for (int i = 0; i < jvmArgs.size(); i++) {
-            log.info("JVM_ARG: ", jvmArgs.get(i));
+            logger.info("JVM_ARG: {}", jvmArgs.get(i));
         }
 
         ConfigLoader loader = new JSONConfigLoader();
         File mainConfig = new File("t3serverbot.json");
         config = loader.loadFromFile(mainConfig);
         if (loader.hasError()) {
-            log.severe("Cannot open configuration: ", loader.getError().getMessage());
+            logger.error("Cannot open configuration: ", loader.getError().getMessage());
             loader.getError().printStackTrace();
             System.exit(1);
         }
         Optional<Map<String,ConfigNode>> bots = config.getNode("bots").getHub();
         if (!bots.isPresent()) {
-            logger.getLogger().warning("No bots configured");
+            logger.warn("No bots configured");
             config.getNode("bots", "main").getNode("config").setValue("main/config/bot.json");
             config.getNode("bots", "main").getNode("base-dir").setValue("main");
             new File("main").mkdirs();
             loader.save(config);
             System.exit(1);
         } else {
-            mgr = new PluginManager(logger.getLogReceiver().getChild("PMGR"));
+            mgr = new PluginManager();
             mgr.addSource(new File("plugins"));
             mgr.addSource(new File("libraries"));
 
@@ -118,10 +121,10 @@ public class Main {
                 String confPath = node.getNode("config").optString(k + "/config/bot.json");
                 File botConf = new File(confPath);
                 if (!botConf.exists() && !botConf.getAbsoluteFile().getParentFile().mkdirs()) {
-                    log.severe("Cannot start bot: " + k);
+                    logger.error("Cannot start bot: " + k);
                     return;
                 }
-                T3Bot bot = new T3Bot(logger.getLogReceiver().getChild(k));
+                T3Bot bot = new T3Bot();
                 bot.setLogDir(new File("logs"));
                 bot.setBaseDir(new File(node.getNode("base-dir").optString(k)));
                 bot.setConfDir(new File(bot.getBaseDirectory(),"config"));
@@ -134,7 +137,7 @@ public class Main {
             });
         }
 
-        cmd = new CommandLine(System.in, System.out, logger.getLogReceiver().getChild("CM"));
+        cmd = new CommandLine(System.in, System.out);
         cmd.run();
     }
 
@@ -156,11 +159,11 @@ public class Main {
         try {
             Thread.sleep(1200);
         } catch (InterruptedException e) {
-            logger.getLogReceiver().warning("Shutdown sleep interrupted!", e);
+            logger.warn("Shutdown sleep interrupted!", e);
         }
 
         List<Thread> runningThreads = new LinkedList<>(Thread.getAllStackTraces().keySet());
-        logger.getLogReceiver().info(runningThreads.size(), " threads running upon shutdown.");
+        logger.info("{} threads running upon shutdown.", runningThreads.size());
 
         for (Thread thread : runningThreads) {
             StackTraceElement[] trace = thread.getStackTrace();
@@ -169,7 +172,7 @@ public class Main {
             if (trace.length > 0)
                 position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
 
-            logger.getLogReceiver().finer("Running thread on shutdown: [", thread.getState().toString(), "] ",
+            logger.debug("Running thread on shutdown: [", thread.getState().toString(), "] ",
                     thread.getId(), '/', thread.getName(), " @ ", position);
         }
     }
