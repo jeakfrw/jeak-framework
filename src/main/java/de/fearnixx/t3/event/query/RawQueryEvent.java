@@ -104,11 +104,11 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
                 this.caption = caption;
             }
 
-            public void setHash(Integer hash) {
+            public void setHashCode(Integer hash) {
                 this.hash = hash;
             }
 
-            public Integer getHash() {
+            public int getHashCode() {
                 return hash;
             }
         }

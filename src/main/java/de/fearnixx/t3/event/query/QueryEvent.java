@@ -17,15 +17,15 @@ import java.util.List;
  */
 public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent {
 
-    private QueryConnection connection;
-    private RawQueryEvent rawReference;
+    private IQueryConnection connection;
+    private IRawQueryEvent rawReference;
 
     @Override
     public IQueryConnection getConnection() {
         return connection;
     }
 
-    public void setConnection(QueryConnection connection) {
+    public void setConnection(IQueryConnection connection) {
         this.connection = connection;
     }
 
@@ -34,7 +34,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         return rawReference;
     }
 
-    public void setRawReference(RawQueryEvent rawReference) {
+    public void setRawReference(IRawQueryEvent rawReference) {
         this.rawReference = rawReference;
     }
 
@@ -51,6 +51,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         private IQueryRequest request;
         private List<IDataHolder> chain;
+        private IRawQueryEvent.IMessage.IErrorMessage error;
 
         @Override
         public IQueryRequest getRequest() {
@@ -73,6 +74,15 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         public void setChain(List<IDataHolder> chain) {
             this.chain = chain;
+        }
+
+        public void setError(IRawQueryEvent.IMessage.IErrorMessage error) {
+            this.error = error;
+        }
+
+        @Override
+        public IRawQueryEvent.IMessage.IErrorMessage getError() {
+            return error;
         }
     }
 

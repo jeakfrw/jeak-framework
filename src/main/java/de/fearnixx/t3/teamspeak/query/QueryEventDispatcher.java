@@ -1,10 +1,10 @@
 package de.fearnixx.t3.teamspeak.query;
 
+import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.reflect.Inject;
-import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.EventCaptions;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
@@ -17,40 +17,22 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by MarkL4YG on 28-Jan-18
+ * Dispatches events based on incoming {@link de.fearnixx.t3.event.IRawQueryEvent}s.
  */
-@Deprecated
-public class QueryNotifier {
+public class QueryEventDispatcher {
 
     @Inject
     public ILogReceiver logger;
 
     @Inject
-    public IEventService eventService;
+    public EventService eventService;
 
-    private Integer lastHash;
+    private int lastNotificationHash;
 
-    public void processEvent(RawQueryEvent event, Integer hashCode) {
-
-        // Fire the RAW event. (Will allow manipulation)
-        // This WILL also fire for unknown events ;)
-        eventService.fireEvent(event);
-
-        if (event instanceof RawQueryEvent.Message.Notification) {
-            sendNotificationEvent(event, hashCode);
-
-        } else if (event instanceof RawQueryEvent.Message.Answer) {
-            sendAnswerEvent((RawQueryEvent.Message.Answer) event);
-
-        } else {
-            throw new QueryException("Unknown query event class: " + event.getClass().getName());
-        }
-    }
-
-    private void sendNotificationEvent(RawQueryEvent event, Integer hashCode) {
-        RawQueryEvent.Message.Notification rawNotification = ((RawQueryEvent.Message.Notification) event);
+    public void dispatchNotification(IRawQueryEvent.IMessage.INotification event) {
         QueryEvent.Notification notification;
-        String caption = rawNotification.getCaption().toLowerCase();
+        String caption = event.getCaption().toLowerCase();
+        int hashCode = event.getHashCode();
 
         boolean checkHash = true;
 
@@ -98,11 +80,11 @@ public class QueryNotifier {
                 throw new QueryException("Unknown event: " + caption);
         }
 
-        if (checkHash && hashCode.equals(lastHash)) {
+        if (checkHash && hashCode == lastNotificationHash) {
             logger.finer("Dropping duplicate ", caption);
             return;
         }
-        lastHash = hashCode;
+        lastNotificationHash = hashCode;
 
         notification.setConnection(event.getConnection());
         notification.setCaption(caption);
@@ -117,7 +99,7 @@ public class QueryNotifier {
         } while ((msg = msg.getNext()) != null);
     }
 
-    private void sendAnswerEvent(RawQueryEvent.Message.Answer event) {
+    public void dispatchAnswer(IRawQueryEvent.IMessage.IAnswer event) {
         IQueryRequest request = event.getRequest();
 
         QueryEvent.Answer answer = new QueryEvent.Answer();
@@ -136,7 +118,7 @@ public class QueryNotifier {
         eventService.fireEvent(answer);
     }
 
-    private void invokeCallbacks(RawQueryEvent.Message.Answer event, IQueryRequest request, QueryEvent.Answer answer) {
+    private void invokeCallbacks(IRawQueryEvent.IMessage.IAnswer event, IQueryRequest request, QueryEvent.Answer answer) {
         int errorCode = event.getError().getCode();
         if (errorCode == 0 && request.onSuccess() != null) {
             request.onSuccess().accept(answer);

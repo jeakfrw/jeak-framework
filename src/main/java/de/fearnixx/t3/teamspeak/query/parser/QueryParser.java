@@ -5,7 +5,12 @@ import de.fearnixx.t3.event.query.RawQueryEvent.Message;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 
+import javax.crypto.spec.OAEPParameterSpec;
 import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+
+import static de.fearnixx.t3.event.IRawQueryEvent.IMessage;
 
 /**
  * Created by Life4YourGames on 05.07.17.
@@ -13,8 +18,11 @@ import java.util.Optional;
 public class QueryParser {
 
     /* Parsing */
-
     public static class Chars {
+
+        private Chars() {
+            // Hide public constructor.
+        }
 
         public static final char PROPDIV = ' ';
         public static final char CHAINDIV = '|';
@@ -25,13 +33,32 @@ public class QueryParser {
      * Instance of the request that's currently running
      * -> Flushed when Message ended
      */
+    @Deprecated
     private IQueryRequest currentRequest;
+    private final Supplier<IQueryRequest> requestSupplier;
 
     /**
      * Instance of the currently parsed answer
      * -> Messages are multi-lined ended by the "error"-response
      */
-    private ParseContext context;
+    private ParseContext<Message.Answer> context;
+
+
+    private final Consumer<IMessage.INotification> onNotification;
+    private final Consumer<IMessage.IAnswer> onAnswer;
+
+    public QueryParser(Consumer<IMessage.INotification> onNotification, Consumer<IMessage.IAnswer> onAnswer, Supplier<IQueryRequest> requestSupplier) {
+        this.onNotification = onNotification;
+        this.onAnswer = onAnswer;
+        this.requestSupplier = requestSupplier;
+    }
+
+    @Deprecated
+    public QueryParser() {
+        this.onNotification = null;
+        this.onAnswer = null;
+        this.requestSupplier = null;
+    }
 
     /**
      * Parse a query response
@@ -44,23 +71,34 @@ public class QueryParser {
             ParseInfo parseInfo = new ParseInfo();
             input = parseInfo.inspect(input);
 
-            ParseContext currentContext = getParseContextFor(parseInfo);
-            parseToContext(input, parseInfo, currentContext);
-
             if (parseInfo.isNotification) {
-                currentContext.setError(RawQueryEvent.ErrorMessage.OK());
+                Message.Notification notification = new Message.Notification();
+                notification.setHashCode(input.hashCode());
+                notification.setCaption(parseInfo.caption);
+                ParseContext<Message.Notification> notificationContext = new ParseContext<>(notification);
+                parseToContext(input, parseInfo, notificationContext);
+                notificationContext.setError(RawQueryEvent.ErrorMessage.OK());
+
+                if (notificationContext.isClosed()) {
+                    onNotification(notificationContext.getMessage());
+                    return Optional.of(notificationContext.getMessage());
+                }
+
+            } else {
+                ParseContext<Message.Answer> answerContext = getParseContextFor(parseInfo);
+                parseToContext(input, parseInfo, answerContext);
+
+                if (answerContext.isClosed()) {
+                    context = null;
+                    onAnswer(answerContext.getMessage());
+                    return Optional.of(answerContext.getMessage());
+                }
             }
 
-            if (currentContext.isClosed()) {
-                if (!parseInfo.isNotification) {
-                    context = null;
-                }
-                return Optional.of(currentContext.getMessage());
-            } else {
-                return Optional.empty();
-            }
-        } catch (Exception t) {
-            throw new QueryParseException("An exception was encountered during parsing.", t);
+            return Optional.empty();
+
+        } catch (Exception ex) {
+            throw new QueryParseException("An exception was encountered during parsing.", ex);
         }
     }
 
@@ -68,29 +106,18 @@ public class QueryParser {
      * Returns the parsing context in regard to the peek information.
      * Determines whether or not to slot in a Notification context or to continue parsing on the current answer context.
      */
-    private ParseContext getParseContextFor(ParseInfo parseInfo) {
-        ParseContext currentContext;
-
-        if (parseInfo.isNotification) {
-            // This message is a notification
-            Message.Notification message = new Message.Notification();
-            message.setCaption(parseInfo.caption);
-            currentContext = new ParseContext(message);
-
-        } else {
-            if (context == null) {
-                context = new ParseContext(new Message.Answer(currentRequest));
-            }
-
-            if (parseInfo.isError) {
-                // This message is an isError message
-                Message.ErrorMessage errorMessage = new Message.ErrorMessage(currentRequest);
-                context.setError(errorMessage);
-            }
-
-            currentContext = context;
+    private ParseContext<Message.Answer> getParseContextFor(ParseInfo parseInfo) {
+        if (context == null) {
+            context = new ParseContext<>(new Message.Answer(internalProvideRequest()));
         }
-        return currentContext;
+
+        if (parseInfo.isError) {
+            // This message is an isError message
+            Message.ErrorMessage errorMessage = new Message.ErrorMessage(internalProvideRequest());
+            context.setError(errorMessage);
+        }
+
+        return context;
     }
 
     /**
@@ -117,7 +144,7 @@ public class QueryParser {
                             next = new Message.Notification();
                             ((Message.Notification) next).setCaption(parseInfo.caption);
                         } else {
-                            next = new Message.Answer(currentRequest);
+                            next = new Message.Answer(internalProvideRequest());
                         }
                         parseContext.nextObject(next);
                     }
@@ -144,6 +171,28 @@ public class QueryParser {
         }
     }
 
+    private void onNotification(Message.Notification event) {
+        if (this.onNotification != null)
+            this.onNotification.accept(event);
+    }
+
+    private void onAnswer(Message.Answer event) {
+        if (this.onAnswer != null)
+            this.onAnswer.accept(event);
+    }
+
+    @SuppressWarnings({"deprecation", "squid:CallToDeprecatedMethod"})
+    private IQueryRequest internalProvideRequest() {
+        IQueryRequest request = requestSupplier != null ? requestSupplier.get() : currentRequest;
+
+        if (request == null) {
+            throw new QueryParseException("Request may not be null for anwers!");
+        }
+
+        return request;
+    }
+
+    @Deprecated
     public void setCurrentRequest(IQueryRequest request) {
         this.currentRequest = request;
     }
@@ -168,6 +217,7 @@ public class QueryParser {
                 caption = input.substring(0, firstSpace).toLowerCase();
                 input = input.substring(firstSpace + 1);
             }
+
             isError = "error".equals(caption);
             isNotification = caption != null && caption.startsWith("notify");
 

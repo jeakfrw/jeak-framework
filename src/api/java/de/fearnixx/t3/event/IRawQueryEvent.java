@@ -52,6 +52,8 @@ public interface IRawQueryEvent extends IEvent, IDataHolder {
 
         interface INotification extends IMessage {
 
+            int getHashCode();
+
             String getCaption();
         }
     }

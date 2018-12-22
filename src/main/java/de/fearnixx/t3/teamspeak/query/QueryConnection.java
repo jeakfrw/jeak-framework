@@ -9,7 +9,6 @@ import de.fearnixx.t3.reflect.IInjectionService;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
-import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.t3.teamspeak.except.QueryException;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.parser.QueryParser;
@@ -30,6 +29,7 @@ import java.util.function.Consumer;
 /**
  * Created by MarkL4YG on 22.05.17.
  */
+@Deprecated
 public class QueryConnection extends Thread implements IQueryConnection {
 
     public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 500);
@@ -391,89 +391,6 @@ public class QueryConnection extends Thread implements IQueryConnection {
         final PromisedRequest promise = new PromisedRequest(request);
         sendRequest(request, promise::setAnswer);
         return promise;
-    }
-
-    @Override
-    public boolean blockingLogin(Integer instID, String user, String pass) {
-        IQueryRequest use = IQueryRequest.builder()
-                                         .command("use")
-                                         .addOption(instID.toString())
-                                         .build();
-        IQueryRequest login = IQueryRequest.builder()
-                                           .command("login")
-                                           .addOption(user)
-                                           .addOption(pass)
-                                           .build();
-        IQueryRequest whoami = IQueryRequest.builder()
-                                            .command("whoami")
-                                            .build();
-        IQueryRequest subscribe_server = IQueryRequest.builder()
-                                                    .command("servernotifyregister")
-                                                    .addKey("event", "server")
-                                                    .build();
-        IQueryRequest subscribe_channels = IQueryRequest.builder()
-                                                        .command("servernotifyregister")
-                                                        .addKey("event", "channel")
-                                                        .addKey("id", "0")
-                                                        .build();
-        IQueryRequest subscribe_textserver = IQueryRequest.builder()
-                                                          .command("servernotifyregister")
-                                                          .addKey("event", "textserver")
-                                                          .build();
-        IQueryRequest subscribe_textchannel = IQueryRequest.builder()
-                                                           .command("servernotifyregister")
-                                                           .addKey("event", "textchannel")
-                                                           .build();
-        IQueryRequest subscribe_textprivate = IQueryRequest.builder()
-                                                           .command("servernotifyregister")
-                                                           .addKey("event", "textprivate")
-                                                           .build();
-        // Wait for and lock receiver to prevent commands from returning too early
-        final Map<Integer, IRawQueryEvent.IMessage.IAnswer> map = new ConcurrentHashMap<>(4);
-        synchronized (mySock) {
-            sendRequest(use, r -> map.put(0, r));
-            sendRequest(login, r -> map.put(1, r));
-            sendRequest(whoami, r -> map.put(2, r));
-            sendRequest(subscribe_server);
-            sendRequest(subscribe_channels);
-            sendRequest(subscribe_textserver);
-            sendRequest(subscribe_textchannel);
-            sendRequest(subscribe_textprivate);
-        }
-        try {
-            while (map.getOrDefault(0, null) == null
-                   || map.getOrDefault(1, null) == null
-                   || map.getOrDefault(2, null) == null) {
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            log.severe("Login attempt interrupted - Failed");
-            return false;
-        }
-        IRawQueryEvent.IMessage.IAnswer rUse = map.get(0);
-        IRawQueryEvent.IMessage.IAnswer rLogin = map.get(1);
-        IRawQueryEvent.IMessage.IAnswer rWhoAmI = map.get(2);
-        this.whoamiResponse = rWhoAmI;
-        boolean success = true;
-        if (rUse.getError().getCode() != 0) {
-            success = false;
-            log.warning("Command 'use' failed: ", rUse.getError().toString());
-            instanceID = instID;
-        }
-        if (rLogin.getError().getCode() != 0) {
-            success = false;
-            log.warning("Command 'login' failed: ", rLogin.getError().toString());
-        }
-        if (rWhoAmI.getError().getCode() != 0) {
-            success = false;
-            log.warning("Command 'whoami' failed: ", rWhoAmI.getError().toString());
-        }
-        return success;
-    }
-
-    @Override
-    public Integer getInstanceID() {
-        return instanceID;
     }
 
     @Override

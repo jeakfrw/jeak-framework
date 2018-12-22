@@ -59,6 +59,11 @@ public interface IQueryEvent extends IEvent {
          * The KV chain that has been received.
          */
         List<IDataHolder> getDataChain();
+
+        /**
+         * The error response returned by TS3.
+         */
+        IRawQueryEvent.IMessage.IErrorMessage getError();
     }
 
     /**
