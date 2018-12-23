@@ -6,7 +6,8 @@ import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.query.*;
 import de.fearnixx.t3.teamspeak.except.QueryConnectException;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,8 +20,7 @@ import java.net.Socket;
  */
 public class Server implements IServer {
 
-    @Inject
-    public ILogReceiver log;
+    private static final Logger logger = LoggerFactory.getLogger(Server.class);
 
     @Inject
     public IEventService eventService;
@@ -33,8 +33,7 @@ public class Server implements IServer {
     private Thread connectionThread;
     private QueryConnectionAccessor mainConnection;
 
-    public Server(EventService eventService, ILogReceiver log) {
-        this.log = log;
+    public Server(EventService eventService) {
         this.eventService = eventService;
         mainConnection = new QueryConnectionAccessor();
     }
@@ -70,7 +69,7 @@ public class Server implements IServer {
                         .command("use")
                         .addOption(Integer.toString(instID))
                         .onError(answer -> {
-                            log.severe("Failed to use desired instance: ", answer.getError().getMessage());
+                            logger.error("Failed to use desired instance: {}", answer.getError().getMessage());
                             shutdown();
                         })
                         .build()
@@ -81,7 +80,7 @@ public class Server implements IServer {
                         .addOption(user)
                         .addOption(pass)
                         .onError(answer -> {
-                            log.severe("Failed to login to server: ", answer.getError().getMessage());
+                            logger.error("Failed to login to server: {}", answer.getError().getMessage());
                             shutdown();
                         })
                         .build()

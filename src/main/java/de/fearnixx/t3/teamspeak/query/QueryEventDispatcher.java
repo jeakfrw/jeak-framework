@@ -10,7 +10,8 @@ import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.t3.teamspeak.except.QueryException;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,8 +22,7 @@ import java.util.List;
  */
 public class QueryEventDispatcher {
 
-    @Inject
-    public ILogReceiver logger;
+    private static final Logger logger = LoggerFactory.getLogger(QueryEventDispatcher.class);
 
     @Inject
     public EventService eventService;
@@ -81,7 +81,7 @@ public class QueryEventDispatcher {
         }
 
         if (checkHash && hashCode == lastNotificationHash) {
-            logger.finer("Dropping duplicate ", caption);
+            logger.debug("Dropping duplicate {}", caption);
             return;
         }
         lastNotificationHash = hashCode;

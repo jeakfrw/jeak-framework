@@ -9,7 +9,8 @@ import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.TargetType;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
 import de.fearnixx.t3.teamspeak.query.QueryBuilder;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -25,8 +26,7 @@ public class CommandService implements ICommandService {
     public static final Integer THREAD_POOL_SIZE = 5;
     public static Integer AWAIT_TERMINATION_DELAY = 5000;
 
-    @Inject
-    public ILogReceiver log;
+    private static final Logger logger = LoggerFactory.getLogger(CommandService.class);
 
     @Inject
     public IServer server;
@@ -92,7 +92,7 @@ public class CommandService implements ICommandService {
                         ctx.setTargetType(TargetType.fromQueryNum(Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get())));
                         executorSvc.execute(() -> {
                             ICommandReceiver last = null;
-                            log.finer("Executing command receiver");
+                            logger.debug("Executing command receiver");
                             for (int i = receivers.size() - 1; i >= 0; i--) {
                                 last = receivers.get(i);
                                 try {
@@ -100,8 +100,8 @@ public class CommandService implements ICommandService {
                                 }  catch (CommandException ex) {
                                     handleExceptionOn(ctx.getRawEvent(), ex, last);
 
-                                }  catch (Throwable thrown) {
-                                    log.severe("Uncaught exception while executing command!", thrown);
+                                }  catch (Exception thrown) {
+                                    logger.error("Uncaught exception while executing command!", thrown);
                                     handleExceptionOn(ctx.getRawEvent(), thrown, last);
                                 }
                             }
@@ -116,7 +116,7 @@ public class CommandService implements ICommandService {
     }
 
     private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage, Throwable exception, ICommandReceiver receiver) {
-        log.warning("Error executing command", (exception instanceof CommandParameterException ? null : exception));
+        logger.warn("Error executing command", (exception instanceof CommandParameterException ? null : exception));
         Integer targetType = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
         Integer targetID = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
 
@@ -135,8 +135,8 @@ public class CommandService implements ICommandService {
             message = "There was an error processing your command!\n" + exception.getClass().getSimpleName() + ": " + exception.getMessage();
         }
         if (message.length() > 1024) {
-            log.info("Cropped error feedback!");
-            log.fine(message);
+            logger.info("Cropped error feedback!");
+            logger.debug(message);
             message = message.substring(0, 1022) + "...";
         }
 
@@ -175,11 +175,11 @@ public class CommandService implements ICommandService {
                 executorSvc.shutdownNow();
                 terminated_successfully = executorSvc.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                log.severe("Got interrupted while awaiting thread termination!", e);
+                logger.error("Got interrupted while awaiting thread termination!", e);
             }
             if (!terminated_successfully) {
-                log.warning("Some command receivers did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
-                log.warning("Be aware that the JVM will not exit until ALL threads have terminated!");
+                logger.warn("Some command receivers did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
+                logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
             }
         }
     }

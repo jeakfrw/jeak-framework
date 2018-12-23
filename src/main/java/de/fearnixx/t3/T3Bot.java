@@ -25,12 +25,15 @@ import de.fearnixx.t3.teamspeak.Server;
 import de.fearnixx.t3.teamspeak.cache.DataCache;
 import de.fearnixx.t3.teamspeak.cache.IDataCache;
 import de.fearnixx.t3.teamspeak.except.QueryConnectException;
-import de.mlessmann.config.ConfigNode;
-import de.mlessmann.config.JSONConfigLoader;
-import de.mlessmann.config.api.ConfigLoader;
-import de.mlessmann.logging.ILogReceiver;
+import de.mlessmann.confort.api.IConfig;
+import de.mlessmann.confort.api.IConfigNode;
+import de.mlessmann.confort.api.except.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -46,6 +49,8 @@ public class T3Bot implements Runnable,IBot {
     public static final Charset CHAR_ENCODING = Charset.forName("UTF-8");
     public static final String VERSION = "@VERSION@";
 
+    private static final Logger logger = LoggerFactory.getLogger(T3Bot.class);
+
     // * * * VOLATILES * * * //
 
     private volatile boolean initCalled = false;
@@ -57,13 +62,10 @@ public class T3Bot implements Runnable,IBot {
     private File baseDir;
     private File logDir;
     private File confDir;
-    private File confFile;
     private String botInstID;
 
-    private ILogReceiver log;
-    private ConfigLoader loader;
-
-    private ConfigNode config;
+    private IConfig configRep;
+    private IConfigNode config;
 
     private PluginManager pMgr;
     private InjectionManager injectionManager;
@@ -78,14 +80,10 @@ public class T3Bot implements Runnable,IBot {
 
     // * * * CONSTRUCTION * * * //
 
-    public T3Bot(ILogReceiver log) {
-        this.log = log;
-    }
-
-    public void setConfig(File confFile) {
-        if (this.confFile != null)
+    public void setConfig(IConfig configRep) {
+        if (this.configRep != null)
             throw new IllegalStateException("Cannot change config once set!");
-        this.confFile = confFile;
+        this.configRep = configRep;
     }
 
     public void setPluginManager(PluginManager pMgr) {
@@ -102,10 +100,10 @@ public class T3Bot implements Runnable,IBot {
 
     @Override
     public void run() {
-        log.info("Initializing T3Bot version " + VERSION);
+        logger.info("Initializing T3Bot version {}", VERSION);
 
         if (initCalled) {
-            throw new RuntimeException("Reinitialization of T3Bot instances is not supported! Completely shut down beforehand and/or create a new one.");
+            throw new IllegalStateException("Reinitialization of T3Bot instances is not supported! Completely shut down beforehand and/or create a new one.");
         }
 
         // Bot Pre-Initialization
@@ -113,19 +111,19 @@ public class T3Bot implements Runnable,IBot {
         plugins = new HashMap<>();
 
         // Create services and register them
-        log.fine("Constructing services");
+        logger.debug("Constructing services");
         ServiceManager serviceManager = new ServiceManager();
         PermissionService permissionService = new PermissionService();
         TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
         DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
 
-        eventService = new EventService(log.getChild("EM"));
-        taskService = new TaskService(log.getChild("TM"), (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        eventService = new EventService();
+        taskService = new TaskService( (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService();
-        injectionManager = new InjectionManager(log, serviceManager);
+        injectionManager = new InjectionManager(serviceManager);
         injectionManager.setBaseDir(getBaseDirectory());
-        server = new Server(eventService, log.getChild("SVR"));
-        dataCache = new DataCache(log.getChild("cache"), server.getConnection(), eventService);
+        server = new Server(eventService);
+        dataCache = new DataCache(server.getConnection(), eventService);
 
         serviceManager.registerService(PluginManager.class, pMgr);
         serviceManager.registerService(IBot.class, this);
@@ -160,30 +158,35 @@ public class T3Bot implements Runnable,IBot {
         regMap.forEach((n, pr) -> loadPlugin(regMap, n, pr));
         StringBuilder b = new StringBuilder();
         plugins.forEach((k, v) -> b.append(k).append(", "));
-        log.info("Loaded ", plugins.size(), " plugin(s): ", b.toString());
+        logger.info("Loaded {} plugin(s): {}", plugins.size(), b);
         eventService.fireEvent(new BotStateEvent.PluginsLoaded().setBot(this));
 
         // Initialize Bot configuration and Plugins
         BotStateEvent.Initialize event = ((BotStateEvent.Initialize) new BotStateEvent.Initialize().setBot(this));
         initializeConfiguration(event);
+        if (event.isCanceled()) {
+            shutdown();
+            return;
+        }
+
         eventService.fireEvent(event);
         if (event.isCanceled()) {
-            log.warning("An initialization task has requested the bot to cancel startup. Doing that.");
+            logger.warn("An initialization task has requested the bot to cancel startup. Doing that.");
             shutdown();
             return;
         }
 
         String host = config.getNode("host").getString();
-        Integer port = config.getNode("port").getInt();
+        Integer port = config.getNode("port").getInteger();
         String user = config.getNode("user").getString();
         String pass = config.getNode("pass").getString();
-        Integer ts3InstID = config.getNode("instance").getInt();
+        Integer ts3InstID = config.getNode("instance").getInteger();
         eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
 
         try {
             server.connect(host, port, user, pass, ts3InstID);
         } catch (QueryConnectException e) {
-            log.severe("Failed to start bot: TS3INIT failed", e);
+            logger.error("Failed to start bot: TS3INIT failed", e);
             shutdown();
             return;
         }
@@ -193,35 +196,34 @@ public class T3Bot implements Runnable,IBot {
         if (doNetDump) {
             File netDumpFile = new File(logDir, botInstID);
             if (!netDumpFile.isDirectory() && !netDumpFile.mkdirs()) {
-                log.warning("Failed to enable netdump! Could not create directory: ", netDumpFile.getPath());
+                logger.warn("Failed to enable netdump! Could not create directory: {}", netDumpFile.getPath());
             }
             netDumpFile = new File(netDumpFile, "net_dump.main.log");
 //            ((QueryConnectionAccessor) server.getConnection()).setNetworkDump(netDumpFile);
         }
 
-        server.getConnection().setNickName(config.getNode("nick").optString(null));
+        server.getConnection().setNickName(config.getNode("nick").optString().orElse(null));
         dataCache.scheduleTasks(taskService);
 
         eventService.registerListeners(commandService);
         eventService.registerListener(dataCache);
 
-        log.info("Connected");
+        logger.info("Connected");
         eventService.fireEvent(new BotStateEvent.PostConnect().setBot(this));
     }
 
     private boolean loadPlugin(Map<String, PluginRegistry> reg, String id, PluginRegistry pr) {
-        ILogReceiver log  = this.log.getChild("PLINIT");
-        log.fine("Loading plugin ", id);
+        logger.info("Loading plugin {}", id);
         PluginContainer c = plugins.getOrDefault(id, null);
 
         if (c == null) c = pr.newContainer();
         plugins.put(id, c);
 
         if (c.getState() == PluginContainer.State.DEPENDENCIES) {
-            log.severe("Possible circular dependency detected! Plugin ", id, " was resolving dependencies when requested!");
+            logger.error("Possible circular dependency detected! Plugin {} was resolving dependencies when requested!", id);
             return true;
         } else if (c.getState() == PluginContainer.State.DONE) {
-            log.finer("Plugin already initialized - Skipping");
+            logger.error("Plugin already initialized - Skipping");
             return true;
         } else if (c.getState() != PluginContainer.State.INIT) {
             throw new IllegalStateException(new ConcurrentModificationException("Attempt to load plugin in invalid state!"));
@@ -231,7 +233,7 @@ public class T3Bot implements Runnable,IBot {
 
         for (String dep : pr.getHARD_depends()) {
             if (!reg.containsKey(dep) || !loadPlugin(reg, dep, reg.get(dep))) {
-                log.severe("Unresolvable HARD dependency: ", dep, " for plugin ", id);
+                logger.error("Unresolvable HARD dependency: {} for plugin {}", dep, id);
                 c.setState(PluginContainer.State.FAILED_DEP);
                 return false;
             }
@@ -242,7 +244,7 @@ public class T3Bot implements Runnable,IBot {
         try {
             c.construct();
         } catch (Exception e) {
-            log.severe("Failed to construct plugin: ", id, e);
+            logger.error("Failed to construct plugin: ", id, e);
             c.setState(PluginContainer.State.FAILED);
             return false;
         }
@@ -250,7 +252,7 @@ public class T3Bot implements Runnable,IBot {
         injectionManager.injectInto(c.getPlugin(), id);
         eventService.registerListener(c.getPlugin());
         c.setState(PluginContainer.State.DONE);
-        log.fine("Initialized plugin ", id);
+        logger.debug("Initialized plugin {}", id);
         return true;
     }
 
@@ -263,22 +265,21 @@ public class T3Bot implements Runnable,IBot {
     protected void initializeConfiguration(IBotStateEvent.IInitializeEvent event) {
         // Construct loader but only directly read from the file when it exists
         // Otherwise cancel startup and create default config
-        loader = new JSONConfigLoader();
-        loader.setFile(confFile);
-        loader.setEncoding(CHAR_ENCODING);
-        if (confFile.exists()) {
-            config = loader.load();
 
-            if (loader.hasError()) {
-                log.severe("Can't read configuration! " + confFile.getPath(), loader.getError());
-                event.cancel();
-                return;
-            }
-        } else {
-            log.warning("Creating new default configuration! Requesting shutdown after initialization.");
-            config = new ConfigNode();
+        try {
+            configRep.load();
+
+        } catch (FileNotFoundException e) {
+            logger.warn("Creating new default configuration. Requesting shutdown after initialization.");
+            configRep.createRoot();
             event.cancel();
+
+        } catch (IOException | ParseException e) {
+            logger.error("Failed to load configuration!", e);
+            event.cancel();
+            return;
         }
+        config = configRep.getRoot();
 
         boolean rewrite = false;
 
@@ -289,38 +290,38 @@ public class T3Bot implements Runnable,IBot {
         rewrite = rewrite | config.getNode("instance").defaultValue(1);
 
         if (rewrite) {
-            loader.resetError();
-            loader.save(config);
-            if (loader.hasError()) {
-                log.severe("Failed to rewrite configuration. Aborting startup, just in case.", loader.getError());
+            if (!saveConfig()) {
+                logger.error("Failed to rewrite configuration. Aborting startup, just in case.");
                 event.cancel();
             }
-            log.warning("One or more settings have been set to default values. Please review the configuration at: ", confFile.toURI().toString());
+            logger.warn("One or more settings have been set to default values. Please review the configuration.");
             event.cancel();
         }
     }
 
-    public void saveConfig() {
-        loader.resetError();
-        loader.save(config);
-        if (loader.hasError()) {
-            log.severe("Failed to save configuration: ", loader.getError().getMessage(), loader.getError());
+    public boolean saveConfig() {
+        try {
+            configRep.save();
+            return true;
+        } catch (IOException e) {
+            logger.error("Failed to save configuration!", e);
+            return false;
         }
     }
 
     public void setBaseDir(File baseDir) {
         this.baseDir = baseDir;
-        log.fine("Base directory changed to: ", baseDir.toString());
+        logger.debug("Base directory changed to: {}", baseDir);
     }
 
     public void setLogDir(File logDir) {
         this.logDir = logDir;
-        log.fine("Log directory changed to: ", logDir.toString());
+        logger.debug("Log directory changed to: {}", logDir);
     }
 
     public void setConfDir(File confDir) {
         this.confDir = confDir;
-        log.fine("Conf directory changed to: ", confDir.toString());
+        logger.debug("Conf directory changed to: {}", confDir);
     }
 
     // * * * MISC * * * //

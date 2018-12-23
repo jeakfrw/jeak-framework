@@ -7,7 +7,8 @@ import de.fearnixx.t3.event.bot.IBotStateEvent;
 import de.fearnixx.t3.reflect.Listener;
 import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.except.ConsistencyViolationException;
-import de.mlessmann.logging.ILogReceiver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -31,20 +32,17 @@ public class EventService implements IEventService {
     public static final Integer THREAD_POOL_SIZE = 10;
     public static Integer AWAIT_TERMINATION_DELAY = 5000;
 
-    private ILogReceiver log;
+    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
+
     private final Object LOCK = new Object();
-    private final List<EventListenerContainer> containers;
+    private final List<EventListenerContainer> containers =  new LinkedList<>();
 
     private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
     private final ExecutorService eventExecutor;
 
     private boolean terminated;
 
-    public EventService(ILogReceiver log) {
-        this.log = log;
-        containers = new LinkedList<>();
-        terminated = false;
-
+    public EventService() {
         eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
         AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
     }
@@ -73,7 +71,7 @@ public class EventService implements IEventService {
     }
 
     private void sendEvent(IEvent event, List<EventListenerContainer> listeners) {
-        log.finest("Sending event: ", event.getClass().getSimpleName(), " to ", listeners.size(), " listeners");
+        logger.debug("Sending event: {} to {} listeners", event.getClass().getSimpleName(), listeners.size());
 
         // The following events shall not be called asynchronously:
         // * Initialize
@@ -99,26 +97,27 @@ public class EventService implements IEventService {
                 listeners.get(i).accept(event);
 
             } catch (InterruptedException e) {
-                log.info("Interrupted event: ", event.getClass().getSimpleName(), " ! Processed ", i + 1, " out of ", listeners.size(), e);
                 Thread.currentThread().interrupt();
+                logger.info("Interrupted event: {}! Processed {} out of {}",
+                        event.getClass().getSimpleName(), i + 1, listeners.size(), e);
                 return;
 
             } catch (EventAbortException abort) {
                 // Event aborted!
-                log.warning("An event has been aborted!", abort);
+                logger.warn("An event has been aborted!", abort);
                 return;
 
             } catch (ConsistencyViolationException e) {
-                log.severe("An event listener has declared a consistency violation! We will abort the event execution.", e);
+                logger.error("An event listener has declared a consistency violation! We will abort the event execution.", e);
                 return;
 
             } catch (Exception e) {
                 // Skip the invocation exception for readability
                 Throwable cause = e.getCause() != null ? e.getCause() : e;
-                log.warning("Failed to pass event ", event.getClass().getSimpleName(), " to ", listeners.get(i).getVictim().getClass().toGenericString(), cause);
+                logger.warn("Failed to pass event {} to ", event.getClass().getSimpleName(), listeners.get(i).getVictim().getClass().toGenericString(), cause);
 
                 if (!(e instanceof RuntimeException)) {
-                    log.severe("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
+                    logger.error("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
                     unregisterListener(listeners.get(i).getVictim());
                 }
             }
@@ -188,12 +187,12 @@ public class EventService implements IEventService {
                 eventExecutor.shutdownNow();
                 terminated_successfully = eventExecutor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
-                log.severe("Got interrupted while awaiting thread termination!", e);
+                logger.error("Got interrupted while awaiting thread termination!", e);
                 Thread.currentThread().interrupt();
             }
             if (!terminated_successfully) {
-                log.warning("Some events did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
-                log.warning("Be aware that the JVM will not exit until ALL threads have terminated!");
+                logger.warn("Some events did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
+                logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
             }
         }
     }

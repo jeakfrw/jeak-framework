@@ -4,11 +4,12 @@ import de.fearnixx.t3.event.bot.IBotStateEvent;
 import de.fearnixx.t3.plugin.persistent.PluginManager;
 import de.fearnixx.t3.reflect.Inject;
 import de.fearnixx.t3.reflect.Listener;
-import de.mlessmann.logging.ILogReceiver;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.reflections.Reflections;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
@@ -33,8 +34,7 @@ public class DatabaseService {
             + "!hibernate.connection.username=\"myuser\"\n"
             + "!hibernate.connection.password=\"mypass\"\n";
 
-    @Inject
-    public ILogReceiver logger;
+    public static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
     @Inject
     public PluginManager pluginManager;
@@ -78,7 +78,7 @@ public class DatabaseService {
 
             for (File dataSourceFile : dataSourceFiles) {
                 String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 11);
-                logger.fine("Trying to construct persistence unit: " + name);
+                logger.debug("Trying to construct persistence unit: {}" + name);
 
                 try {
                     Properties dataSourceProps = new Properties();
@@ -88,11 +88,11 @@ public class DatabaseService {
                             && dataSourceProps.containsKey("hibernate.connection.password");
 
                     if (valid) {
-                        logger.info("Constructing persistence unit: ", name);
+                        logger.info("Constructing persistence unit: {}", name);
                         StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
 
                         if (dataSourceProps.containsKey(HIBERNATE_BUILTIN_POOLSIZE)) {
-                            logger.warning("Hibernate built-in pool size configured. This is forbidden and will be removed.");
+                            logger.warn("Hibernate built-in pool size configured. This is forbidden and will be removed.");
                             dataSourceProps.remove(HIBERNATE_BUILTIN_POOLSIZE);
                         }
 
@@ -101,10 +101,10 @@ public class DatabaseService {
 
                         persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
                     } else {
-                        logger.warning("Cannot construct persistence unit: " + name + "! Make sure to set url, username and password.");
+                        logger.warn("Cannot construct persistence unit: {}! Make sure to set url, username and password.", name);
                     }
                 } catch (IOException e) {
-
+                    logger.error("Failed to create persistence units!", e);
                 }
             }
         }
@@ -124,12 +124,12 @@ public class DatabaseService {
     private void checkClasses() {
         synchronized (CLASS_LOCK) {
             if (ENTITIES.isEmpty()) {
-                logger.fine("Searching Entities.");
+                logger.debug("Searching Entities.");
 
                 Reflections reflect = pluginManager.getPluginScanner(entityClassLoader);
                 Set<Class<?>> types = reflect.getTypesAnnotatedWith(Entity.class);
                 types.forEach(entityType -> {
-                    logger.fine("Found: " + entityType.getName());
+                    logger.debug("Found: " + entityType.getName());
                     ENTITIES.add(entityType);
                 });
             }
@@ -160,7 +160,7 @@ public class DatabaseService {
             try (FileWriter out = new FileWriter(dataSourceFile)) {
                 out.write(PROPERTIES_DEFAULT_CONTENT);
                 out.flush();
-                logger.info("DataSource \"" + unitName + "\" requested but not available. Created template file for you.");
+                logger.info("DataSource \"{}\" requested but not available. Created template file for you.", unitName);
             } catch (IOException e) {
                 logger.info("Cannot pre-create the datasource file. You will have to create it yourself.", e);
             }
