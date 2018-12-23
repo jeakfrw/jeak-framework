@@ -12,6 +12,7 @@ project.ext {
     
     hibernateVersion =  '5.3.6.Final'
     confortVersion = '0.2.6-SNAPSHOT'
+    log4jVersion = '2.11.1'
 }
 
 repositories {
@@ -55,7 +56,9 @@ dependencies {
     compile files('libraries/mysql-connector-bin.jar')
     
     runtime group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.1'
-    runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
+    runtime group: 'org.apache.logging.log4j', name: 'log4j-api', version: project.ext.log4jVersion
+    runtime group: 'org.apache.logging.log4j', name: 'log4j-core', version: project.ext.log4jVersion
+    runtime group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: project.ext.log4jVersion
 }
 
 task zipPublish(type: Zip){
