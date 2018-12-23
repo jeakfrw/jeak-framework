@@ -1,10 +1,10 @@
 package de.fearnixx.t3.teamspeak.query;
 
-import de.fearnixx.t3.event.EventService;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.event.query.QueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.reflect.Inject;
+import de.fearnixx.t3.service.event.IEventService;
 import de.fearnixx.t3.teamspeak.EventCaptions;
 import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
@@ -25,7 +25,7 @@ public class QueryEventDispatcher {
     private static final Logger logger = LoggerFactory.getLogger(QueryEventDispatcher.class);
 
     @Inject
-    public EventService eventService;
+    public IEventService eventService;
 
     private int lastNotificationHash;
 

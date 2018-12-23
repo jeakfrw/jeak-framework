@@ -43,6 +43,11 @@ public class BasicDataHolder implements IDataHolder {
         }
     }
 
+    @Override
+    public void setProperty(String key, Object value) {
+        setProperty(key, value != null ? value.toString() : null);
+    }
+
     public IDataHolder copyFrom(IDataHolder other) {
         synchronized (LOCK) {
             this.values = new ConcurrentHashMap<>();

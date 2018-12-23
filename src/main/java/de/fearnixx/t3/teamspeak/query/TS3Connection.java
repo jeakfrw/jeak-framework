@@ -31,7 +31,7 @@ public class TS3Connection implements AutoCloseable {
     private final Consumer<IMessage.IAnswer> onAnswer;
     private final Consumer<IMessage.INotification> onNotification;
 
-    private IQueryRequest currentRequest;
+    private IQueryRequest currentRequest = IQueryRequest.builder().command("dummy").build();
     private final Queue<IQueryRequest> requestQueue = new LinkedList<>();
 
     private int requestDelayMillis = 0;
@@ -49,7 +49,7 @@ public class TS3Connection implements AutoCloseable {
                     .build();
 
     public TS3Connection(InputStream in, OutputStream out, Consumer<IMessage.IAnswer> onAnswer, Consumer<IMessage.INotification> onNotification) {
-        messageReader = new QueryMessageReader(in, this::onNotification, this::onAnswer, this::supplyRequest);
+        messageReader = new QueryMessageReader(in, this::onNotification, this::onAnswer, this::onGreetingStatus, this::supplyRequest);
         messageWriter = new QueryMessageWriter(out);
         this.onAnswer = onAnswer;
         this.onNotification = onNotification;
@@ -123,6 +123,18 @@ public class TS3Connection implements AutoCloseable {
     private void onNotification(IMessage.INotification event) {
         if (onNotification != null) {
             onNotification.accept(event);
+        }
+    }
+
+    private void onGreetingStatus(Boolean fullyReceived) {
+        if (fullyReceived) {
+            synchronized (requestQueue) {
+                if (currentRequest != null && currentRequest.getCommand().equals("dummy")) {
+                    currentRequest = null;
+                } else {
+                    throw new IllegalStateException("Greeting status may only be received initially!");
+                }
+            }
         }
     }
 

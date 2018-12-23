@@ -28,6 +28,7 @@ public class QueryMessageWriter implements AutoCloseable {
         String message = buildSocketMessage(request);
         netLogger.debug("==> {}", message);
         writer.write(message);
+        writer.write("\n");
 
         if (autoFlush) {
             flush();

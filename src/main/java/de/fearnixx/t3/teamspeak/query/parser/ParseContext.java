@@ -60,12 +60,18 @@ public class ParseContext<T extends RawQueryEvent.Message> {
     }
 
     public void nextObject(RawQueryEvent.Message next) {
-        last.setNext(working);
-        working.setPrevious(last);
+        last.setNext(next);
+        next.setPrevious(last);
         next.copyFrom(working);
 
-        last = working;
+        last = last.getNext();
         working = next;
+    }
+
+    public void closeContext() {
+        if (keyBuffPos > 0) {
+            flushProperty();
+        }
     }
 
     public void setError(RawQueryEvent.Message.ErrorMessage error) {

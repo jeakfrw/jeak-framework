@@ -8,7 +8,6 @@ import de.fearnixx.t3.teamspeak.data.IClient;
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
-import de.fearnixx.t3.teamspeak.query.QueryConnection;
 
 import java.util.List;
 

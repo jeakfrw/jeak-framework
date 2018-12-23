@@ -4,8 +4,9 @@ import de.fearnixx.t3.event.query.RawQueryEvent;
 import de.fearnixx.t3.event.query.RawQueryEvent.Message;
 import de.fearnixx.t3.teamspeak.except.QueryParseException;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.crypto.spec.OAEPParameterSpec;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -17,16 +18,23 @@ import static de.fearnixx.t3.event.IRawQueryEvent.IMessage;
  */
 public class QueryParser {
 
-    /* Parsing */
-    public static class Chars {
+    private static final Logger logger = LoggerFactory.getLogger(QueryParser.class);
 
-        private Chars() {
+    /* Parsing */
+    public static class Symbols {
+
+        private Symbols() {
             // Hide public constructor.
         }
 
         public static final char PROPDIV = ' ';
         public static final char CHAINDIV = '|';
         public static final char PROPVALDIV = '=';
+
+        public static final String[] GREETINGS = {
+                "TS3",
+                "Welcome to the TeamSpeak 3 ServerQuery"
+        };
     }
 
     /**
@@ -42,22 +50,21 @@ public class QueryParser {
      * -> Messages are multi-lined ended by the "error"-response
      */
     private ParseContext<Message.Answer> context;
+    private int greetingPos = 0;
+    private final Consumer<Boolean> onGreetingStatus;
 
 
     private final Consumer<IMessage.INotification> onNotification;
     private final Consumer<IMessage.IAnswer> onAnswer;
 
-    public QueryParser(Consumer<IMessage.INotification> onNotification, Consumer<IMessage.IAnswer> onAnswer, Supplier<IQueryRequest> requestSupplier) {
+    public QueryParser(Consumer<IMessage.INotification> onNotification,
+                       Consumer<IMessage.IAnswer> onAnswer,
+                       Consumer<Boolean> onGreetingStatus,
+                       Supplier<IQueryRequest> requestSupplier) {
         this.onNotification = onNotification;
         this.onAnswer = onAnswer;
+        this.onGreetingStatus = onGreetingStatus;
         this.requestSupplier = requestSupplier;
-    }
-
-    @Deprecated
-    public QueryParser() {
-        this.onNotification = null;
-        this.onAnswer = null;
-        this.requestSupplier = null;
     }
 
     /**
@@ -67,6 +74,18 @@ public class QueryParser {
      * @return The message if finished - Notifications are one-liners thus don't interrupt receiving other messages
      */
     public Optional<Message> parse(String input) {
+
+        if (greetingPos < Symbols.GREETINGS.length) {
+            if (input.startsWith(Symbols.GREETINGS[greetingPos])) {
+                greetingPos++;
+                logger.debug("Received greeting part: {}", greetingPos);
+
+                onGreetingStatus.accept(greetingPos >= Symbols.GREETINGS.length);
+                return Optional.empty();
+            } else {
+                throw new IllegalStateException("Invalid DATA received while awaiting greeting.");
+            }
+        }
 
         try {
             ParseInfo parseInfo = new ParseInfo();
@@ -134,7 +153,7 @@ public class QueryParser {
 
             switch (c) {
                 case '\n':
-                case Chars.CHAINDIV:
+                case Symbols.CHAINDIV:
                     // Flush current key and value
                     parseContext.flushProperty();
                     doKey = true;
@@ -151,12 +170,12 @@ public class QueryParser {
                     }
                     break;
 
-                case Chars.PROPDIV:
+                case Symbols.PROPDIV:
                     parseContext.flushProperty();
                     doKey = true;
                     break;
 
-                case Chars.PROPVALDIV:
+                case Symbols.PROPVALDIV:
                     if (doKey)
                         doKey = false;
                     else
@@ -170,6 +189,8 @@ public class QueryParser {
                         parseContext.addToValBuffer(c);
             }
         }
+
+        parseContext.closeContext();
     }
 
     private void onNotification(Message.Notification event) {
@@ -208,8 +229,8 @@ public class QueryParser {
         private boolean isNotification;
 
         public String inspect(String input) {
-            int firstSpace = input.indexOf(Chars.PROPDIV);
-            int firstEquals = input.indexOf(Chars.PROPVALDIV);
+            int firstSpace = input.indexOf(Symbols.PROPDIV);
+            int firstEquals = input.indexOf(Symbols.PROPVALDIV);
 
             // Determine message type (check for notification)
             caption = null;

@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -30,10 +31,11 @@ public class QueryMessageReader implements AutoCloseable {
     public QueryMessageReader(InputStream in,
                               Consumer<IMessage.INotification> onNotification,
                               Consumer<IMessage.IAnswer> onAnswer,
+                              Consumer<Boolean> onGreetingStatus,
                               Supplier<IQueryRequest> requestSupplier) {
 
         this.reader = new InputStreamReader(in, Charset.forName("UTF-8"));
-        this.parser = new QueryParser(onNotification, onAnswer, requestSupplier);
+        this.parser = new QueryParser(onNotification, onAnswer, onGreetingStatus, requestSupplier);
     }
 
     public void read() throws IOException {

@@ -44,7 +44,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
     }
 
     private void read(TS3Connection connection) {
-        while (!terminated && !connection.isClosed()) {
+        while (!terminated) {
             try {
                 connection.read();
             } catch (IOException e) {

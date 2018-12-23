@@ -15,6 +15,8 @@ public interface IDataHolder {
 
     void setProperty(String key, String value);
 
+    void setProperty(String key, Object value);
+
     Map<String, String> getValues();
 
     IDataHolder copyFrom(IDataHolder other);

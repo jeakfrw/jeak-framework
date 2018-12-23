@@ -3,7 +3,7 @@ package de.fearnixx.t3.event.query;
 import de.fearnixx.t3.event.IRawQueryEvent;
 import de.fearnixx.t3.teamspeak.data.BasicDataHolder;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
-import de.fearnixx.t3.teamspeak.query.QueryConnection;
+import de.fearnixx.t3.teamspeak.query.QueryConnectionAccessor;
 
 import java.util.*;
 
@@ -12,13 +12,13 @@ import java.util.*;
  */
 public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
 
-    public QueryConnection connection;
+    public QueryConnectionAccessor connection;
 
-    public void setConnection(QueryConnection connection) {
+    public void setConnection(QueryConnectionAccessor connection) {
         this.connection = connection;
     }
 
-    public QueryConnection getConnection() {
+    public QueryConnectionAccessor getConnection() {
         return connection;
     }
 

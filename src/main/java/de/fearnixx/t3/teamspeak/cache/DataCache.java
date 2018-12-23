@@ -13,7 +13,7 @@ import de.fearnixx.t3.teamspeak.PropertyKeys;
 import de.fearnixx.t3.teamspeak.data.*;
 import de.fearnixx.t3.teamspeak.query.IQueryConnection;
 import de.fearnixx.t3.teamspeak.query.IQueryRequest;
-import de.fearnixx.t3.teamspeak.query.QueryConnection;
+import de.fearnixx.t3.teamspeak.query.QueryConnectionAccessor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,11 +57,12 @@ public class DataCache implements IDataCache {
             .addOption("-info")
             .addOption("-icon")
             .addOption("-country")
+            .onDone(this::onListAnswer)
             .build();
     private final ITask clientListTask = ITask.builder()
             .name("t3server.clientRefresh")
             .interval(60L, TimeUnit.SECONDS)
-            .runnable(() -> connection.sendRequest(clientListRequest, this::onListAnswer))
+            .runnable(() -> connection.sendRequest(clientListRequest))
             .build();
 
     // == CHANNELLIST == //
@@ -72,11 +73,12 @@ public class DataCache implements IDataCache {
             .addOption("-voice")
             .addOption("-limits")
             .addOption("-icon")
+            .onDone(this::onListAnswer)
             .build();
     private final ITask channelListTask = ITask.builder()
             .name("t3server.channelrefresh")
             .interval(3L, TimeUnit.MINUTES)
-            .runnable(() -> connection.sendRequest(channelListRequest, this::onListAnswer))
+            .runnable(() -> connection.sendRequest(channelListRequest))
             .build();
 
     public void scheduleTasks(TaskService tm) {
@@ -235,15 +237,16 @@ public class DataCache implements IDataCache {
         }
     }
 
-    private void onListAnswer(IRawQueryEvent.IMessage.IAnswer event) {
+    private void onListAnswer(IQueryEvent.IAnswer event) {
         if (event.getError().getCode() != 0)
             return;
 
+        IRawQueryEvent.IMessage.IAnswer rawEvent = ((IRawQueryEvent.IMessage.IAnswer) event.getRawReference());
         if (event.getRequest() == clientListRequest) {
-            refreshClients(event);
+            refreshClients(rawEvent);
 
         } else if (event.getRequest() == channelListRequest) {
-            refreshChannels(event);
+            refreshChannels(rawEvent);
         }
     }
 
@@ -283,8 +286,8 @@ public class DataCache implements IDataCache {
 
         logger.debug("Clientlist updated");
         QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
-        refresh.setConnection(((QueryConnection) event.getConnection()));
-        refresh.setRawReference(((RawQueryEvent.Message.Answer) event));
+        refresh.setConnection(event.getConnection());
+        refresh.setRawReference(event);
         eventService.fireEvent(refresh);
     }
 
@@ -298,7 +301,7 @@ public class DataCache implements IDataCache {
         final Map<Integer, TS3Client> mapping = new HashMap<>(messageObjects.size(), 1.1f);
         messageObjects
                 .stream()
-//                .parallel()
+                .parallel()
                 .forEach(message -> {
                     try {
                         int cid = Integer.parseInt(message.getProperty(PropertyKeys.Client.ID).orElse("-1"));
@@ -316,10 +319,12 @@ public class DataCache implements IDataCache {
                             // Client is new - New reference
                             client = new TS3Client();
                             client.copyFrom(message);
+                            logger.debug("Created new client representation for {}/{}",
+                                    client.getClientUniqueID(), client.getNickName());
 
                         } else {
                             // Client not new - Update values
-                            client.copyFrom(message);
+                            client.merge(message);
                         }
 
                         mapping.put(cid, client);
@@ -380,8 +385,8 @@ public class DataCache implements IDataCache {
 
         logger.debug("Channellist updated");
         QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
-        refresh.setConnection(((QueryConnection) event.getConnection()));
-        refresh.setRawReference(((RawQueryEvent.Message.Answer) event));
+        refresh.setConnection(event.getConnection());
+        refresh.setRawReference(event);
         eventService.fireEvent(refresh);
     }
 

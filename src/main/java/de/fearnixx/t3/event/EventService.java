@@ -104,7 +104,7 @@ public class EventService implements IEventService {
 
             } catch (EventAbortException abort) {
                 // Event aborted!
-                logger.warn("An event has been aborted!", abort);
+                logger.warn("An event has been aborted: {}", abort.getMessage(), abort);
                 return;
 
             } catch (ConsistencyViolationException e) {
