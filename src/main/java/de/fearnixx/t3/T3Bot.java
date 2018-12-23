@@ -25,13 +25,15 @@ import de.fearnixx.t3.teamspeak.Server;
 import de.fearnixx.t3.teamspeak.cache.DataCache;
 import de.fearnixx.t3.teamspeak.cache.IDataCache;
 import de.fearnixx.t3.teamspeak.except.QueryConnectException;
-import de.mlessmann.config.ConfigNode;
-import de.mlessmann.config.JSONConfigLoader;
-import de.mlessmann.config.api.ConfigLoader;
+import de.mlessmann.confort.api.IConfig;
+import de.mlessmann.confort.api.IConfigNode;
+import de.mlessmann.confort.api.except.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -60,12 +62,10 @@ public class T3Bot implements Runnable,IBot {
     private File baseDir;
     private File logDir;
     private File confDir;
-    private File confFile;
     private String botInstID;
 
-    private ConfigLoader loader;
-
-    private ConfigNode config;
+    private IConfig configRep;
+    private IConfigNode config;
 
     private PluginManager pMgr;
     private InjectionManager injectionManager;
@@ -80,10 +80,10 @@ public class T3Bot implements Runnable,IBot {
 
     // * * * CONSTRUCTION * * * //
 
-    public void setConfig(File confFile) {
-        if (this.confFile != null)
+    public void setConfig(IConfig configRep) {
+        if (this.configRep != null)
             throw new IllegalStateException("Cannot change config once set!");
-        this.confFile = confFile;
+        this.configRep = configRep;
     }
 
     public void setPluginManager(PluginManager pMgr) {
@@ -103,7 +103,7 @@ public class T3Bot implements Runnable,IBot {
         logger.info("Initializing T3Bot version {}", VERSION);
 
         if (initCalled) {
-            throw new RuntimeException("Reinitialization of T3Bot instances is not supported! Completely shut down beforehand and/or create a new one.");
+            throw new IllegalStateException("Reinitialization of T3Bot instances is not supported! Completely shut down beforehand and/or create a new one.");
         }
 
         // Bot Pre-Initialization
@@ -164,6 +164,11 @@ public class T3Bot implements Runnable,IBot {
         // Initialize Bot configuration and Plugins
         BotStateEvent.Initialize event = ((BotStateEvent.Initialize) new BotStateEvent.Initialize().setBot(this));
         initializeConfiguration(event);
+        if (event.isCanceled()) {
+            shutdown();
+            return;
+        }
+
         eventService.fireEvent(event);
         if (event.isCanceled()) {
             logger.warn("An initialization task has requested the bot to cancel startup. Doing that.");
@@ -172,10 +177,10 @@ public class T3Bot implements Runnable,IBot {
         }
 
         String host = config.getNode("host").getString();
-        Integer port = config.getNode("port").getInt();
+        Integer port = config.getNode("port").getInteger();
         String user = config.getNode("user").getString();
         String pass = config.getNode("pass").getString();
-        Integer ts3InstID = config.getNode("instance").getInt();
+        Integer ts3InstID = config.getNode("instance").getInteger();
         eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
 
         try {
@@ -197,7 +202,7 @@ public class T3Bot implements Runnable,IBot {
 //            ((QueryConnectionAccessor) server.getConnection()).setNetworkDump(netDumpFile);
         }
 
-        server.getConnection().setNickName(config.getNode("nick").optString(null));
+        server.getConnection().setNickName(config.getNode("nick").optString().orElse(null));
         dataCache.scheduleTasks(taskService);
 
         eventService.registerListeners(commandService);
@@ -260,22 +265,21 @@ public class T3Bot implements Runnable,IBot {
     protected void initializeConfiguration(IBotStateEvent.IInitializeEvent event) {
         // Construct loader but only directly read from the file when it exists
         // Otherwise cancel startup and create default config
-        loader = new JSONConfigLoader();
-        loader.setFile(confFile);
-        loader.setEncoding(CHAR_ENCODING);
-        if (confFile.exists()) {
-            config = loader.load();
 
-            if (loader.hasError()) {
-                logger.error("Can't read configuration! " + confFile.getPath(), loader.getError());
-                event.cancel();
-                return;
-            }
-        } else {
-            logger.warn("Creating new default configuration! Requesting shutdown after initialization.");
-            config = new ConfigNode();
+        try {
+            configRep.load();
+
+        } catch (FileNotFoundException e) {
+            logger.warn("Creating new default configuration. Requesting shutdown after initialization.");
+            configRep.createRoot();
             event.cancel();
+
+        } catch (IOException | ParseException e) {
+            logger.error("Failed to load configuration!", e);
+            event.cancel();
+            return;
         }
+        config = configRep.getRoot();
 
         boolean rewrite = false;
 
@@ -286,22 +290,22 @@ public class T3Bot implements Runnable,IBot {
         rewrite = rewrite | config.getNode("instance").defaultValue(1);
 
         if (rewrite) {
-            loader.resetError();
-            loader.save(config);
-            if (loader.hasError()) {
-                logger.error("Failed to rewrite configuration. Aborting startup, just in case.", loader.getError());
+            if (!saveConfig()) {
+                logger.error("Failed to rewrite configuration. Aborting startup, just in case.");
                 event.cancel();
             }
-            logger.warn("One or more settings have been set to default values. Please review the configuration at: {}", confFile.toURI());
+            logger.warn("One or more settings have been set to default values. Please review the configuration.");
             event.cancel();
         }
     }
 
-    public void saveConfig() {
-        loader.resetError();
-        loader.save(config);
-        if (loader.hasError()) {
-            logger.error("Failed to save configuration: {} {}", loader.getError().getMessage(), loader.getError());
+    public boolean saveConfig() {
+        try {
+            configRep.save();
+            return true;
+        } catch (IOException e) {
+            logger.error("Failed to save configuration!", e);
+            return false;
         }
     }
 

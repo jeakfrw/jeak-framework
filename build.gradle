@@ -9,11 +9,13 @@ targetCompatibility = 1.8
 
 project.ext {
     artifact = 't3serverbot'
+    
+    hibernateVersion =  '5.3.6.Final'
+    confortVersion = '0.2.6-SNAPSHOT'
 }
 
 repositories {
     mavenLocal()
-    mavenCentral()
     maven {
         url uri('https://nexus.fearnixx.de/repository/maven-public')
     }
@@ -40,17 +42,20 @@ sourceSets {
 }
 
 dependencies {
-    apiCompile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
-    apiCompile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.13.Final'
+    apiCompile group: 'de.mlessmann', name: 'confort-api', version: project.ext.confortVersion
+    apiCompile group: 'org.hibernate', name: 'hibernate-core', version: project.ext.hibernateVersion
 
-    compile group: 'de.mlessmann', name: 'configurate', version: '1.0.5'
+    compile group: 'de.mlessmann', name: 'confort', version: project.ext.confortVersion
     
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
     
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
-    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.3.6.Final'
-    compile group: 'org.hibernate', name: 'hibernate-c3p0', version: '5.3.6.Final'
+    compile group: 'org.hibernate', name: 'hibernate-core', version: project.ext.hibernateVersion
+    compile group: 'org.hibernate', name: 'hibernate-c3p0', version: project.ext.hibernateVersion
     compile files('libraries/mysql-connector-bin.jar')
+    
+    runtime group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.1'
+    runtime group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
 }
 
 task zipPublish(type: Zip){

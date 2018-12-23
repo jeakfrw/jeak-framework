@@ -3,18 +3,20 @@ package de.fearnixx.t3.reflect;
 import de.fearnixx.t3.Main;
 import de.fearnixx.t3.database.DatabaseService;
 import de.fearnixx.t3.service.IServiceManager;
-import de.mlessmann.config.JSONConfigLoader;
-import de.mlessmann.config.api.ConfigLoader;
+import de.mlessmann.confort.api.IConfig;
+import de.mlessmann.confort.api.IConfigNode;
+import de.mlessmann.confort.api.except.ParseException;
+import de.mlessmann.confort.config.FileConfig;
+import de.mlessmann.confort.lang.json.JSONConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Optional;
-
-import static de.fearnixx.t3.T3Bot.CHAR_ENCODING;
 
 /**
  * Created by MarkL4YG on 02-Feb-18
@@ -50,7 +52,7 @@ public class InjectionManager implements IInjectionService {
 
     public <T> T injectInto(T victim, String unitName) {
             // Logging
-            logger.debug("Running injections on object of class: ", victim.getClass());
+            logger.debug("Running injections on object of class: {}", victim.getClass().getName());
 
             Class<?> clazz = victim.getClass();
             Field[] fields = clazz.getFields();
@@ -105,7 +107,7 @@ public class InjectionManager implements IInjectionService {
         if (svcResult.isPresent()) {
             return svcResult;
         }
-        logger.warn("Failed to provide injection for: {}", clazz.toString());
+        logger.warn("Failed to provide injection for: {}", clazz.getName());
         return Optional.empty();
     }
 
@@ -157,10 +159,19 @@ public class InjectionManager implements IInjectionService {
 
         File configFile = new File(baseDir, fileName + ".json");
 
-        if (clazz.isAssignableFrom(ConfigLoader.class)) {
-            value = new JSONConfigLoader();
-            ((JSONConfigLoader) value).setEncoding(CHAR_ENCODING);
-            ((JSONConfigLoader) value).setFile(configFile);
+        if (clazz.isAssignableFrom(IConfig.class)) {
+            value = new FileConfig(new JSONConfigLoader(), configFile);
+
+        } else if (clazz.isAssignableFrom(IConfigNode.class)) {
+            logger.warn("DEPRECATION in {}: Injecting ConfigNode(s) is deprecated! Use de.mlessmann.confort.api.IConfig instead.", unitName);
+            IConfig config = new FileConfig(new JSONConfigLoader(), configFile);
+            try {
+                config.load();
+                value = config.getRoot();
+            } catch (IOException | ParseException e) {
+                logger.error("Failed to load configuration for {}. Cannot inject.", unitName, e);
+                return Optional.empty();
+            }
 
         } else if (clazz.isAssignableFrom(File.class)) {
             value = configFile;

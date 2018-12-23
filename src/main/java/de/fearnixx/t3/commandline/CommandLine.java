@@ -74,7 +74,9 @@ public class CommandLine implements Runnable {
             } catch (InterruptedException e) {
                 continue;
             } catch (IOException e) {
-                logger.error("Commandline crashed", e);
+                if (!"Stream closed".equals(e.getMessage())) {
+                    logger.error("Commandline crashed", e);
+                }
                 kill();
             }
         }

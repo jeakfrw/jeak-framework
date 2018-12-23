@@ -1,11 +1,13 @@
 package de.fearnixx.t3;
 
 import de.fearnixx.t3.commandline.CommandLine;
-import de.fearnixx.t3.database.DatabaseService;
 import de.fearnixx.t3.plugin.persistent.PluginManager;
-import de.mlessmann.config.ConfigNode;
-import de.mlessmann.config.JSONConfigLoader;
-import de.mlessmann.config.api.ConfigLoader;
+import de.mlessmann.confort.api.IConfig;
+import de.mlessmann.confort.api.IConfigNode;
+import de.mlessmann.confort.api.except.ParseException;
+import de.mlessmann.confort.config.FileConfig;
+import de.mlessmann.confort.lang.ConfigLoader;
+import de.mlessmann.confort.lang.json.JSONConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +34,8 @@ public class Main {
         getInstance().run(args);
     }
 
-    private ConfigNode config;
+    private IConfig configRef;
+    private IConfigNode config;
     private List<T3Bot> t3bots = new ArrayList<>();
     private PluginManager mgr;
     private CommandLine cmd;
@@ -87,7 +90,7 @@ public class Main {
         */
 
         for (int i = 0; i < args.length; i++) {
-            logger.info("ARG: ", args[i]);
+            logger.info("ARG: {}", args[i]);
         }
 
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
@@ -97,37 +100,51 @@ public class Main {
 
         ConfigLoader loader = new JSONConfigLoader();
         File mainConfig = new File("t3serverbot.json");
-        config = loader.loadFromFile(mainConfig);
-        if (loader.hasError()) {
-            logger.error("Cannot open configuration: ", loader.getError().getMessage());
-            loader.getError().printStackTrace();
+
+        try {
+            configRef = new FileConfig(new JSONConfigLoader(), mainConfig);
+            configRef.load();
+            config = configRef.getRoot();
+        } catch (IOException | ParseException e) {
+            logger.error("Failed to open configuration!", e);
             System.exit(1);
         }
-        Optional<Map<String,ConfigNode>> bots = config.getNode("bots").getHub();
-        if (!bots.isPresent()) {
+
+        if (!config.getNode("bots").isMap()) {
             logger.warn("No bots configured");
-            config.getNode("bots", "main").getNode("config").setValue("main/config/bot.json");
-            config.getNode("bots", "main").getNode("base-dir").setValue("main");
+            config.getNode("bots", "main").getNode("config").setString("main/config/bot.json");
+            config.getNode("bots", "main").getNode("base-dir").setString("main");
             new File("main").mkdirs();
-            loader.save(config);
+
+            try {
+                configRef.save();
+            } catch (IOException e) {
+                logger.error("Failed to save defaul configuration.", e);
+            }
             System.exit(1);
         } else {
             mgr = new PluginManager();
             mgr.addSource(new File("plugins"));
             mgr.addSource(new File("libraries"));
 
-            Map<String, ConfigNode> nodes = bots.get();
-            nodes.forEach((k, node) -> {
-                String confPath = node.getNode("config").optString(k + "/config/bot.json");
-                File botConf = new File(confPath);
-                if (!botConf.exists() && !botConf.getAbsoluteFile().getParentFile().mkdirs()) {
-                    logger.error("Cannot start bot: " + k);
+
+            Map<String, IConfigNode> bots = config.getNode("bots").asMap();
+            bots.forEach((k, node) -> {
+                String confPath = node.getNode("config").optString().orElse(k + "/config/bot.json");
+                File botConfFile = new File(confPath);
+
+                File absoluteConfParent = botConfFile.getAbsoluteFile().getParentFile();
+                if (!absoluteConfParent.isDirectory() && !absoluteConfParent.mkdirs()) {
+                    logger.error("Cannot run mkdirs for bot: {} -> {}", k, absoluteConfParent.getPath());
                     return;
                 }
+
+                IConfig botConf = new FileConfig(new JSONConfigLoader(), botConfFile);
+
                 T3Bot bot = new T3Bot();
                 bot.setLogDir(new File("logs"));
-                bot.setBaseDir(new File(node.getNode("base-dir").optString(k)));
-                bot.setConfDir(new File(bot.getBaseDirectory(),"config"));
+                bot.setBaseDir(new File(node.getNode("base-dir").optString().orElse(k)));
+                bot.setConfDir(new File(bot.getBaseDirectory(), "config"));
                 bot.setConfig(botConf);
                 bot.setBotInstanceID(k);
                 bot.setPluginManager(mgr);
@@ -179,7 +196,7 @@ public class Main {
 
     /**
      * Warning "unchecked" suppressed: Checks are performed!
-     *
+     * <p>
      * Char is not supported - use string .-.
      */
     @SuppressWarnings("unchecked")
