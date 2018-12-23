@@ -2,6 +2,8 @@ package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.teamspeak.except.QueryClosedException;
 import de.fearnixx.t3.teamspeak.query.parser.QueryParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +15,8 @@ import java.util.function.Supplier;
 import static de.fearnixx.t3.event.IRawQueryEvent.IMessage;
 
 public class QueryMessageReader implements AutoCloseable {
+
+    private static final Logger netLogger = LoggerFactory.getLogger("de.fearnixx.t3.teamspeak.query.Netlog");
 
     private final InputStreamReader reader;
     private final QueryParser parser;
@@ -43,12 +47,18 @@ public class QueryMessageReader implements AutoCloseable {
             } else if (character[0] == '\r') {
                 // We ignore CR characters as UNIX-style LF is used.
 
-            } else {
+            } else if (character[0] != '\0') {
                 append();
             }
 
             if (gotLF) {
-                parser.parse(largeBuffer.toString());
+                // Reset buffer
+                String input = largeBuffer.toString();
+                largeBuffer.setLength(0);
+                gotLF = false;
+
+                netLogger.debug("<== {}", input);
+                parser.parse(input);
             }
         }
 

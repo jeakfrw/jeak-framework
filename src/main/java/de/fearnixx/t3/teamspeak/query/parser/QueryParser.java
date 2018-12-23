@@ -67,6 +67,7 @@ public class QueryParser {
      * @return The message if finished - Notifications are one-liners thus don't interrupt receiving other messages
      */
     public Optional<Message> parse(String input) {
+
         try {
             ParseInfo parseInfo = new ParseInfo();
             input = parseInfo.inspect(input);

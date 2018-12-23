@@ -189,14 +189,14 @@ public class Main {
             if (trace.length > 0)
                 position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
 
-            logger.debug("Running thread on shutdown: [", thread.getState().toString(), "] ",
-                    thread.getId(), '/', thread.getName(), " @ ", position);
+            logger.debug("Running thread on shutdown: [{}] {}/{} @ {}",
+                    thread.getState(), thread.getId(), thread.getName(), position);
         }
     }
 
     /**
      * Warning "unchecked" suppressed: Checks are performed!
-     * <p>
+     *
      * Char is not supported - use string .-.
      */
     @SuppressWarnings("unchecked")

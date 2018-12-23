@@ -1,7 +1,6 @@
 package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.Main;
-import de.fearnixx.t3.reflect.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,8 @@
 package de.fearnixx.t3.teamspeak.query;
 
 import de.fearnixx.t3.teamspeak.data.IDataHolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,6 +14,8 @@ import java.util.Map;
 
 public class QueryMessageWriter implements AutoCloseable {
 
+    private static final Logger netLogger = LoggerFactory.getLogger("de.fearnixx.t3.teamspeak.query.Netlog");
+
     private boolean autoFlush = true;
     private final OutputStreamWriter writer;
     private boolean closed = false;
@@ -21,8 +25,9 @@ public class QueryMessageWriter implements AutoCloseable {
     }
 
     public void writeMessage(IQueryRequest request) throws IOException {
-        System.out.println("Sending command: " + request.getCommand());
-        writer.write(buildSocketMessage(request));
+        String message = buildSocketMessage(request);
+        netLogger.debug("==> {}", message);
+        writer.write(message);
 
         if (autoFlush) {
             flush();
