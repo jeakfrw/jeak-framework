@@ -37,12 +37,12 @@ public class EventService implements IEventService {
     private final Object LOCK = new Object();
     private final List<EventListenerContainer> containers =  new LinkedList<>();
 
-    private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
     private final ExecutorService eventExecutor;
 
     private boolean terminated;
 
     public EventService() {
+        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
         eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
         AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
     }
@@ -73,17 +73,17 @@ public class EventService implements IEventService {
     private void sendEvent(IEvent event, List<EventListenerContainer> listeners) {
         logger.debug("Sending event: {} to {} listeners", event.getClass().getSimpleName(), listeners.size());
 
-        // The following events shall not be called asynchronously:
-        // * Initialize
-        // * PostShutdown
-        if (event instanceof IBotStateEvent.IPostShutdown
-                || event instanceof IBotStateEvent.IInitializeEvent) {
+        if (isSynchronized(event)) {
             executeEvent(listeners, event);
 
         } else {
             // Execute using ThreadPoolExecutor
             eventExecutor.execute(() -> this.executeEvent(listeners, event));
         }
+    }
+
+    private boolean isSynchronized(IEvent event) {
+        return event instanceof IBotStateEvent;
     }
 
     @SuppressWarnings("squid:S1193")
