@@ -160,6 +160,7 @@ public class T3Bot implements Runnable,IBot {
         plugins.forEach((k, v) -> b.append(k).append(", "));
         logger.info("Loaded {} plugin(s): {}", plugins.size(), b);
         eventService.fireEvent(new BotStateEvent.PluginsLoaded().setBot(this));
+        eventService.fireEvent(new BotStateEvent.PreInitializeEvent().setBot(this));
 
         // Initialize Bot configuration and Plugins
         BotStateEvent.Initialize event = ((BotStateEvent.Initialize) new BotStateEvent.Initialize().setBot(this));

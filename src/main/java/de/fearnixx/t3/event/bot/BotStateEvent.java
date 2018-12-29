@@ -34,4 +34,7 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
 
     public static class PostShutdown extends BotStateEvent implements IPostShutdown {
     }
+
+    public static class PreInitializeEvent extends BotStateEvent implements IPreInitializeEvent {
+    }
 }
