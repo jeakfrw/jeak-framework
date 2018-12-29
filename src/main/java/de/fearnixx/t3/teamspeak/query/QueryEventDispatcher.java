@@ -57,6 +57,10 @@ public class QueryEventDispatcher {
                 notification = new QueryEvent.ChannelEdit();
                 break;
 
+            case EventCaptions.CHANNEL_EDITED_DESCR:
+                notification = new QueryEvent.ChannelEditDescr();
+                break;
+
             case EventCaptions.CHANNEL_DELETED:
                 notification = new QueryEvent.ChannelDelete();
                 break;

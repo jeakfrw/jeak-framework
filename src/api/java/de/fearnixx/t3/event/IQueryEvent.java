@@ -129,6 +129,9 @@ public interface IQueryEvent extends IEvent {
 
         interface IChannelEdited extends ITargetChannel {
         }
+
+        interface IChannelEditedDescription extends IChannelEdited {
+        }
     }
 
     /**

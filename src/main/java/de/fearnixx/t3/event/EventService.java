@@ -114,7 +114,7 @@ public class EventService implements IEventService {
             } catch (Exception e) {
                 // Skip the invocation exception for readability
                 Throwable cause = e.getCause() != null ? e.getCause() : e;
-                logger.warn("Failed to pass event {} to ", event.getClass().getSimpleName(), listeners.get(i).getVictim().getClass().toGenericString(), cause);
+                logger.warn("Failed to pass event {} to {}", event.getClass().getSimpleName(), listeners.get(i).getVictim().getClass().toGenericString(), cause);
 
                 if (!(e instanceof RuntimeException)) {
                     logger.error("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
