@@ -176,11 +176,11 @@ public class T3Bot implements Runnable,IBot {
             return;
         }
 
-        String host = config.getNode("host").getString();
-        Integer port = config.getNode("port").getInteger();
-        String user = config.getNode("user").getString();
-        String pass = config.getNode("pass").getString();
-        Integer ts3InstID = config.getNode("instance").getInteger();
+        String host = config.getNode("host").asString();
+        Integer port = config.getNode("port").asInteger();
+        String user = config.getNode("user").asString();
+        String pass = config.getNode("pass").asString();
+        Integer ts3InstID = config.getNode("instance").asInteger();
         eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
 
         try {
