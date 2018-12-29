@@ -113,7 +113,7 @@ public class InjectionManager implements IInjectionService {
 
     public <T> Optional<T> provideWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName) {
         Optional<T> result = serviceManager.provide(clazz);
-        if (result.isPresent())
+        if (result.isPresent() && !(result.get() instanceof IInjectionService))
             return result;
 
         InjectionManager value = null;
@@ -124,13 +124,10 @@ public class InjectionManager implements IInjectionService {
             }
         }
 
-        if (clazz.isAssignableFrom(IInjectionService.class)) {
-            value = new InjectionManager(serviceManager);
-            value.setBaseDir(baseDir);
-            value.setUnitName(unitName);
-
-        }
-        return Optional.ofNullable(clazz.cast(value));
+        value = new InjectionManager(serviceManager);
+        value.setBaseDir(baseDir);
+        value.setUnitName(unitName);
+        return Optional.of(clazz.cast(value));
     }
 
     public <T> Optional<T> provideConfigWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName, Config annotation) {
