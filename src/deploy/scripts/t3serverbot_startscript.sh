@@ -29,7 +29,7 @@ export T3SB_JVM_ARGS=""
 export T3SB_ARGS=""
 
 # Do we run as the desired user? If not, sudo re-run the script
-if [ $(whoami) != ${T3SB_RUN_USER} ]; then
+if [[ $(whoami) != ${T3SB_RUN_USER} ]]; then
     sudo -u ${T3SB_RUN_USER} $0 $@
     exit $?
 fi
@@ -57,7 +57,7 @@ function stop() {
             printf "."
             sleep 1s
             ((T3SB_STOP_COUNT++))
-            if [ ${T3SB_STOP_COUNT} -gt 20 ]; then
+            if [[ ${T3SB_STOP_COUNT} -gt 20 ]]; then
                break
             fi
         done
@@ -78,7 +78,7 @@ function stop() {
 function start() {
     if [ -e t3serverbot_minimal_runscript.sh ]; then
         EXECS="$(find *.jar -type f)"
-        if [ 1 -eq "${#EXECS[@]}" ]; then
+        if [[ 1 -eq "${#EXECS[@]}" ]]; then
             T3SB_EXECUTABLE=${EXECS[0]}
         fi
 
@@ -102,7 +102,7 @@ case "$1" in
             printf "\tFailed to stop instance!\n"
             exit 1
         fi
-        if [ -z "$(which java)" ]; then
+        if [[ -z "$(which java)" ]]; then
             printf "\tERROR - It appears java is missing!\n"
             exit 1
         fi
