@@ -8,11 +8,11 @@ if [[ -z "$(which java)" ]]; then
 fi
 
 # Passed from the startscript
-if [ -z "$T3SB_JVM_ARGS" ]; then
+if [[ -z "$T3SB_JVM_ARGS" ]]; then
     T3SB_JVM_ARGS="-Xmx1G -Xms1G"
 fi
 # Passed from the startscript
-if [ -z "$T3SB_ARGS" ]; then
+if [[ -z "$T3SB_ARGS" ]]; then
     T3SB_ARGS=""
 fi
 # Optionally passed from the startscript

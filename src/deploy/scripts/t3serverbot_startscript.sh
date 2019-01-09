@@ -76,7 +76,7 @@ function stop() {
 }
 
 function start() {
-    if [ -e t3serverbot_minimal_runscript.sh ]; then
+    if [[ -e t3serverbot_minimal_runscript.sh ]]; then
         EXECS="$(find *.jar -type f)"
         if [[ 1 -eq "${#EXECS[@]}" ]]; then
             T3SB_EXECUTABLE=${EXECS[0]}
