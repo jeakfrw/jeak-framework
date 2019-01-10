@@ -1,198 +1,52 @@
 package de.fearnixx.jeak;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.commandline.CommandLine;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
-import de.mlessmann.confort.api.IConfigNode;
-import de.mlessmann.confort.api.except.ParseException;
 import de.mlessmann.confort.config.FileConfig;
 import de.mlessmann.confort.lang.ConfigLoader;
-import de.mlessmann.confort.lang.json.JSONConfigLoader;
+import de.mlessmann.confort.lang.RegisterLoaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.management.ManagementFactory;
-import java.util.*;
-import java.util.logging.Level;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
-/**
- * Created by Life4YourGames on 22.05.17.
- */
-public class Main {
+public class Main implements Runnable {
 
+    private static final String CONF_FORMAT = "application/json";
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final Main INSTANCE = new Main();
 
-    private static Main INST;
+    private final PluginManager pluginManager = new PluginManager();
 
-    public static Main getInstance() {
-        return INST == null ? (INST = new Main()) : INST;
-    }
+    private final Executor mainExecutor = Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder()
+                    .setDaemon(false)
+                    .setNameFormat("main-%d")
+                    .setThreadFactory(Executors.defaultThreadFactory())
+                    .build()
+    );
+    private final JeakBot jeakBot = new JeakBot();
+    private final CommandLine cmd = new CommandLine(System.in, System.out);
 
-    public static void main(String[] args) {
-        getInstance().run(args);
-    }
-
-    private IConfig configRef;
-    private IConfigNode config;
-    private List<JeakBot> jeakBots = new ArrayList<>();
-    private PluginManager mgr;
-    private CommandLine cmd;
-
-    private Level commonLogLevel = Level.ALL;
-    private Level consoleLogLevel = commonLogLevel;
-    private Level fileLogLevel = commonLogLevel;
-
-    private final Object lock = new Object();
-
-    public Level parseLogLevel(String level) {
-        try {
-            return level != null ? Level.parse(level) : commonLogLevel;
-        } catch (IllegalArgumentException ex) {
-            return commonLogLevel;
-        }
-    }
-
-    public Main() {
-    }
-
-    public void run(String... args) {
-        commonLogLevel = parseLogLevel(getProperty("bot.loglevel", null));
-        consoleLogLevel = parseLogLevel(getProperty("bot.loglevel.console", null));
-        fileLogLevel = parseLogLevel(getProperty("bot.loglevel.file", null));
-
-        /* TODO: Log4J Setup!
-        logger.getLogger().setLevel(Level.ALL);
-        LogFormatter formatter = new LogFormatter();
-        formatter.setDebug(false);
-        ConsoleHandler consoleHandler = new ConsoleHandler(System.out);
-        consoleHandler.setFormatter(formatter);
-        consoleHandler.setLevel(consoleLogLevel);
-        logger.addHandler(consoleHandler);
-
-        ILogReceiver log = logger.getLogReceiver();
-        File logDir = new File("logs");
-
-        if (logDir.isDirectory() || (!logDir.isDirectory() && logDir.mkdirs())) {
-            FileHandler logFileHandler = new FileHandler(new File(logDir, "latest.log"), true);
-            logFileHandler.setFormatter(formatter);
-            try {
-                logFileHandler.setLevel(fileLogLevel);
-                logFileHandler.open();
-                logger.addHandler(logFileHandler);
-            } catch (IOException e) {
-                log.severe("Failed to open log file!", e);
-            }
-        } else {
-            log.warning("Cannot enable file logging into dir: ", logDir.getAbsoluteFile().getPath());
-        }
-        */
-
-        for (int i = 0; i < args.length; i++) {
-            logger.info("ARG: {}", args[i]);
+    public static void main(String[] arguments) {
+        for (String arg : arguments) {
+            logger.info("ARG: {}", arg);
         }
 
         List<String> jvmArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
-        for (int i = 0; i < jvmArgs.size(); i++) {
-            logger.info("JVM_ARG: {}", jvmArgs.get(i));
+        for (String jvmArg : jvmArgs) {
+            logger.info("JVM_ARG: {}", jvmArg);
         }
 
-        ConfigLoader loader = LoaderFactory.getLoader("json");
-        File mainConfig = new File("jeakbot.json");
-
-        try {
-            configRef = new FileConfig(new JSONConfigLoader(), mainConfig);
-            configRef.load();
-            config = configRef.getRoot();
-        } catch (IOException | ParseException e) {
-            logger.error("Failed to open configuration!", e);
-            System.exit(1);
-        }
-
-        if (!config.getNode("bots").isMap()) {
-            logger.warn("No bots configured");
-            config.getNode("bots", "main").getNode("config").setString("main/config/bot.json");
-            config.getNode("bots", "main").getNode("base-dir").setString("main");
-            new File("main").mkdirs();
-
-            try {
-                configRef.save();
-            } catch (IOException e) {
-                logger.error("Failed to save defaul configuration.", e);
-            }
-            System.exit(1);
-        } else {
-            mgr = new PluginManager();
-            mgr.addSource(new File("plugins"));
-            mgr.addSource(new File("libraries"));
-
-
-            Map<String, IConfigNode> bots = config.getNode("bots").asMap();
-            bots.forEach((k, node) -> {
-                String confPath = node.getNode("config").optString().orElse(k + "/config/bot.json");
-                File botConfFile = new File(confPath);
-
-                File absoluteConfParent = botConfFile.getAbsoluteFile().getParentFile();
-                if (!absoluteConfParent.isDirectory() && !absoluteConfParent.mkdirs()) {
-                    logger.error("Cannot run mkdirs for bot: {} -> {}", k, absoluteConfParent.getPath());
-                    return;
-                }
-
-                IConfig botConf = new FileConfig(new JSONConfigLoader(), botConfFile);
-
-                JeakBot bot = new JeakBot();
-                bot.setLogDir(new File("logs"));
-                bot.setBaseDir(new File(node.getNode("base-dir").optString().orElse(k)));
-                bot.setConfDir(new File(bot.getBaseDirectory(), "config"));
-                bot.setConfig(botConf);
-                bot.setBotInstanceID(k);
-                bot.setPluginManager(mgr);
-                bot.onShutdown(this::onBotShutdown);
-                jeakBots.add(bot);
-                new Thread(bot, k).start();
-            });
-        }
-
-        cmd = new CommandLine(System.in, System.out);
-        cmd.run();
-    }
-
-    private void onBotShutdown(IBot bot) {
-        if (bot instanceof JeakBot) {
-            synchronized (lock) {
-                jeakBots.remove(bot);
-                if (jeakBots.isEmpty())
-                    shutdown();
-            }
-        }
-    }
-
-    public void shutdown() {
-        cmd.kill();
-        for (int i = jeakBots.size() - 1; i >= 0; i--) {
-            jeakBots.get(i).shutdown();
-        }
-        try {
-            Thread.sleep(1200);
-        } catch (InterruptedException e) {
-            logger.warn("Shutdown sleep interrupted!", e);
-        }
-
-        List<Thread> runningThreads = new LinkedList<>(Thread.getAllStackTraces().keySet());
-        logger.info("{} threads running upon shutdown.", runningThreads.size());
-
-        for (Thread thread : runningThreads) {
-            StackTraceElement[] trace = thread.getStackTrace();
-            String position = "No position available";
-
-            if (trace.length > 0)
-                position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
-
-            logger.debug("Running thread on shutdown: [{}] {}/{} @ {}",
-                    thread.getState(), thread.getId(), thread.getName(), position);
-        }
+        getInstance().run();
     }
 
     /**
@@ -200,7 +54,7 @@ public class Main {
      *
      * Char is not supported - use string .-.
      */
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "squid:S3776"})
     public static <T> T getProperty(String name, T def) {
         try {
             String value = System.getProperty(name);
@@ -231,7 +85,84 @@ public class Main {
                 }
             }
         } catch (Exception e) {
+            logger.error("Failed to retrieve system property: {}", name, e);
         }
         return def;
+    }
+
+    public static Main getInstance() {
+        return INSTANCE;
+    }
+
+    public void run() {
+        discoverPlugins();
+        startBot();
+        runLoop();
+    }
+
+    private void discoverPlugins() {
+        pluginManager.addSource(new File("plugins"));
+        pluginManager.addSource(new File("libraries"));
+    }
+
+    private void startBot() {
+        final File baseDir = new File(".");
+        final File confDir = new File(baseDir, "config");
+        final File confFile = new File(confDir, "bot.json");
+        final IConfig botConfig = createConfig(confFile);
+
+        jeakBot.setBaseDir(baseDir);
+        jeakBot.setConfDir(confDir);
+        jeakBot.setConfig(botConfig);
+        jeakBot.setPluginManager(pluginManager);
+        jeakBot.onShutdown(this::onBotShutdown);
+
+        mainExecutor.execute(jeakBot);
+    }
+
+    private IConfig createConfig(File confFile) {
+        RegisterLoaders.registerLoaders();
+        final ConfigLoader configLoader = LoaderFactory.getLoader(CONF_FORMAT);
+        return new FileConfig(configLoader, confFile);
+    }
+
+    private void runLoop() {
+        cmd.run();
+    }
+
+    private void onBotShutdown(IBot bot) {
+        if (bot instanceof JeakBot) {
+            internalShutdown();
+        }
+    }
+
+    public void shutdown() {
+        jeakBot.shutdown();
+        internalShutdown();
+    }
+
+    private void internalShutdown() {
+        cmd.kill();
+        try {
+            Thread.sleep(1200);
+        } catch (InterruptedException e) {
+            logger.warn("Shutdown sleep interrupted!", e);
+        }
+
+        List<Thread> runningThreads = new LinkedList<>(Thread.getAllStackTraces().keySet());
+        logger.info("{} threads running upon shutdown.", runningThreads.size());
+
+        for (Thread thread : runningThreads) {
+            StackTraceElement[] trace = thread.getStackTrace();
+            String position = "No position available";
+
+            if (trace.length > 0)
+                position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
+
+            logger.debug("Running thread on shutdown: [{}] {}/{} @ {}",
+                    thread.getState(), thread.getId(), thread.getName(), position);
+        }
+
+        System.exit(0);
     }
 }

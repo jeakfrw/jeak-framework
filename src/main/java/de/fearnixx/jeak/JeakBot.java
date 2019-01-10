@@ -60,9 +60,7 @@ public class JeakBot implements Runnable,IBot {
     private Consumer<IBot> onShutdown;
 
     private File baseDir;
-    private File logDir;
     private File confDir;
-    private String botInstID;
 
     private IConfig configRep;
     private IConfigNode config;
@@ -90,10 +88,6 @@ public class JeakBot implements Runnable,IBot {
         if (this.pMgr != null)
             throw new IllegalStateException("Cannot change pluginManager once set!");
         this.pMgr = pMgr;
-    }
-
-    public void setBotInstanceID(String instanceID) {
-        this.botInstID = instanceID;
     }
 
     // * * * [Runnable] * * * //
@@ -195,12 +189,7 @@ public class JeakBot implements Runnable,IBot {
         Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
 
         if (doNetDump) {
-            File netDumpFile = new File(logDir, botInstID);
-            if (!netDumpFile.isDirectory() && !netDumpFile.mkdirs()) {
-                logger.warn("Failed to enable netdump! Could not create directory: {}", netDumpFile.getPath());
-            }
-            netDumpFile = new File(netDumpFile, "net_dump.main.log");
-//            ((QueryConnectionAccessor) server.getConnection()).setNetworkDump(netDumpFile);
+            logger.info("Dedicated net-dumping is currently not implemented. The option will have no effect atm.");
         }
 
         server.getConnection().setNickName(config.getNode("nick").optString().orElse(null));
@@ -282,7 +271,7 @@ public class JeakBot implements Runnable,IBot {
         }
         config = configRep.getRoot();
 
-        boolean rewrite = false;
+        boolean rewrite;
 
         rewrite = config.getNode("host").defaultValue("localhost");
         rewrite = rewrite | config.getNode("port").defaultValue(10011);
@@ -313,11 +302,6 @@ public class JeakBot implements Runnable,IBot {
     public void setBaseDir(File baseDir) {
         this.baseDir = baseDir;
         logger.debug("Base directory changed to: {}", baseDir);
-    }
-
-    public void setLogDir(File logDir) {
-        this.logDir = logDir;
-        logger.debug("Log directory changed to: {}", logDir);
     }
 
     public void setConfDir(File confDir) {
