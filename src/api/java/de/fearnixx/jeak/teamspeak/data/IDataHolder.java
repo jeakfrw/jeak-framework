@@ -1,0 +1,25 @@
+package de.fearnixx.jeak.teamspeak.data;
+
+import java.util.Map;
+import java.util.Optional;
+
+/**
+ * Generic data holder.
+ * Basically a wrapper around a map with some convenience methods.
+ */
+public interface IDataHolder {
+
+    boolean hasProperty(String key);
+
+    Optional<String> getProperty(String key);
+
+    void setProperty(String key, String value);
+
+    void setProperty(String key, Object value);
+
+    Map<String, String> getValues();
+
+    IDataHolder copyFrom(IDataHolder other);
+
+    IDataHolder merge(IDataHolder other);
+}

@@ -1,5 +1,5 @@
 group 'de.fearnixx'
-def projectVersion = '0.2.3'
+def projectVersion = '1.0.0'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
@@ -14,7 +14,7 @@ if (!project.hasProperty('release')) {
 version projectVersion
 
 project.ext {
-    artifact = 't3serverbot'
+    artifact = 'jeakbot'
     
     hibernateVersion =  '5.3.6.Final'
     confortVersion = '0.2.10-SNAPSHOT'

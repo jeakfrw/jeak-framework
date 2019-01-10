@@ -1,0 +1,16 @@
+[Unit]
+Description=JeakBot Teamspeak 3 plugin framework
+#After=
+
+[Service]
+User=jeakbot
+Group=jeakbot
+WorkingDirectory=/home/jeakbot
+LimitNOFILE=4096
+PIDFile=/home/jeakbot/jeakbot.pid
+ExecStart=/home/jeakbot/minimal_runscript.sh
+Restart=on-failure
+StartLimitInterval=600
+
+[Install]
+WantedBy=multi-user.target
