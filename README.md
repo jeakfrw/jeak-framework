@@ -22,7 +22,7 @@ For details about the issue section of the GitLab project. See [CONTRIBUTING.md]
 
 # Help the project
 If you want to help the project without directly contributing on GitLab, you can donate.  
-Every donor who donated at least 5 € in the past 10 months will be granted the ``Donor`` role on our Discord.
+Every donor who donated at least 5 € in the past 12 months will be granted the ``Donor`` role on our Discord.
 So make sure to include your Discord name in your donation message :).
 
 [![ko-fi](https://www.ko-fi.com/img/donate_sm.png)](https://ko-fi.com/F1F0OL0V)
