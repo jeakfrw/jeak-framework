@@ -1,7 +1,7 @@
 # Setting up a development workspace  
 1. Clone the project  
 2. Import the gradle project into your favourite IDE  
-  * Note: Please use the gradle version configured in the wrapper task  
+   __Note__: Please use the gradle version configured in the wrapper task  
 3. Done  
 
 # Coding guidelines  
