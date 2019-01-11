@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by MarkL4YG on 28-Jan-18
@@ -18,6 +19,7 @@ import java.net.Socket;
 public class Server implements IServer {
 
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
+    private static final AtomicInteger connectionCounter = new AtomicInteger();
 
     @Inject
     public IEventService eventService;
@@ -43,6 +45,7 @@ public class Server implements IServer {
 
         try {
             this.host = host;
+            logger.info("Trying to connect to {}:{}", host, port);
             Socket socket = new Socket(host, port);
             socket.setSoTimeout(TS3Connection.SOCKET_TIMEOUT_MILLIS);
 
@@ -53,6 +56,7 @@ public class Server implements IServer {
             subscribeToEvents();
 
             connectionThread = new Thread(mainConnection);
+            connectionThread.setName("connection-" + connectionCounter.getAndIncrement());
             connectionThread.start();
 
         } catch (IOException e) {
