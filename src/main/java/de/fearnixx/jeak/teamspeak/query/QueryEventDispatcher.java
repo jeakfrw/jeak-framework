@@ -61,6 +61,10 @@ public class QueryEventDispatcher {
                 notification = new QueryEvent.ChannelEditDescr();
                 break;
 
+            case EventCaptions.CHANNEL_EDITED_PASSWORD:
+                notification = new QueryEvent.ChannelPasswordChanged();
+                break;
+
             case EventCaptions.CHANNEL_DELETED:
                 notification = new QueryEvent.ChannelDelete();
                 break;

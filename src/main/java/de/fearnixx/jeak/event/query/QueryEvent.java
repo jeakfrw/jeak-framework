@@ -142,7 +142,9 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ChannelEditDescr extends ChannelEdit implements INotification.IChannelEditedDescription {
+    }
 
+    public static class ChannelPasswordChanged extends ChannelEdit implements INotification.IChannelPasswordChanged {
     }
 
     public static class ChannelDelete extends TargetChannel implements INotification.IChannelDeleted {

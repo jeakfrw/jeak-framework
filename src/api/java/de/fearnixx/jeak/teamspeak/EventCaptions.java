@@ -11,6 +11,7 @@ public abstract class EventCaptions {
     public static final String CHANNEL_CREATED = "channelcreated";
     public static final String CHANNEL_EDITED = "channeledited";
     public static final String CHANNEL_EDITED_DESCR = "channeldescriptionchanged";
+    public static final String CHANNEL_EDITED_PASSWORD = "channelpasswordchanged";
     public static final String CHANNEL_DELETED = "channeldeleted";
     public static final String TEXT_MESSAGE = "textmessage";
 }
