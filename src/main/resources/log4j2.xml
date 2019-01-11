@@ -29,5 +29,19 @@
             <AppenderRef ref="Console" />
             <AppenderRef ref="LogFile" />
         </Logger>
+
+        <!-- Mute Hibernate and its companions -->
+        <Logger name="org.hibernate" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="com.mchange" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="org.hibernate" level="info">
+            <AppenderRef ref="LogFile" />
+        </Logger>
+        <Logger name="com.mchange" level="info">
+            <AppenderRef ref="LogFile" />
+        </Logger>
     </Loggers>
 </Configuration>

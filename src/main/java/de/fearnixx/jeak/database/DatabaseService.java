@@ -4,9 +4,11 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import org.hibernate.HibernateException;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
+import org.hibernate.service.spi.ServiceException;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +79,7 @@ public class DatabaseService {
 
             for (File dataSourceFile : dataSourceFiles) {
                 String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 11);
-                logger.debug("Trying to construct persistence unit: {}" + name);
+                logger.debug("Trying to construct persistence unit: {}", name);
 
                 try {
                     Properties dataSourceProps = new Properties();
@@ -98,9 +100,14 @@ public class DatabaseService {
                         applyDefaults(registryBuilder);
                         dataSourceProps.forEach((k, v) -> registryBuilder.applySetting((String) k, v));
 
-                        persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
+                        try {
+                            persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
+                        } catch (HibernateException e) {
+                            logger.error("Failed to create persistence unit: {}", name, e);
+                        }
                     } else {
-                        logger.warn("Cannot construct persistence unit: {}! Make sure to set url, username and password.", name);
+                        logger.warn("Cannot construct persistence unit: {}!", name);
+                        logger.warn("Make sure to set 'url', 'username' and 'password'. (hibernate.connection.X)");
                     }
                 } catch (IOException e) {
                     logger.error("Failed to create persistence units!", e);
