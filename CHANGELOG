@@ -1,0 +1,12 @@
+# 1.0.0-RC1
++ Query connection 
+  + Send commands to the server
+  + Receive answers (with and w/o callbacks)
++ API with Javadoc available
++ Event service  
++ Service management
++ Task management
++ Configuration
++ Injections (injects everything stored as a service)
++ Hibernate integration (Rough. But works!)
++ Commandline ``stop`` support (graceful shutdown)
