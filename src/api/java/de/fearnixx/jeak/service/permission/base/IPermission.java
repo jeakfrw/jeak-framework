@@ -2,8 +2,6 @@ package de.fearnixx.jeak.service.permission.base;
 
 /**
  * Representation of a generic permission entry.
- *
- * @author MarkL4YG
  */
 public interface IPermission {
 

@@ -3,8 +3,6 @@ package de.fearnixx.jeak.service.command;
 /**
  * There's no need to send messages when a parameter wasn't accepted.
  * Just throw this exception.
- *
- * @author MarkL4YG
  */
 public class CommandParameterException extends CommandException {
 

@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.event;
 
 /**
- * @author MarkL4YG
  */
 public class EventInvocationException extends RuntimeException {
 

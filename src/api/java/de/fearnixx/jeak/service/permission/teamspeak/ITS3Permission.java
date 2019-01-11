@@ -4,8 +4,6 @@ import de.fearnixx.jeak.service.permission.base.IPermission;
 
 /**
  * Representation of permission entries of TS3
- *
- * @author MarkL4YG
  */
 public interface ITS3Permission extends IPermission {
 

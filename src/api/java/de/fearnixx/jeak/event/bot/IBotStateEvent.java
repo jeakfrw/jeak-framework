@@ -2,8 +2,6 @@ package de.fearnixx.jeak.event.bot;
 
 /**
  * Event classes representing run state changes.
- *
- * @author MarkL4YG
  */
 public interface IBotStateEvent extends IBotEvent {
 

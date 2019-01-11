@@ -9,8 +9,6 @@ import java.util.function.Consumer;
 
 /**
  * Framework representation for TeamSpeak query commands.
- *
- * @author MarkL4YG
  */
 public interface IQueryRequest {
 

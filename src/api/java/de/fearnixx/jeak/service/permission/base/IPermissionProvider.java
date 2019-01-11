@@ -4,7 +4,6 @@ import java.util.Optional;
 
 /**
  *
- * @author MarkL4YG
  */
 public interface IPermissionProvider {
 

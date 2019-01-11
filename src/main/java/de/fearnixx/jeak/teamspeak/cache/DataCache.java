@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * @author MarkL4YG
  * Deployed work-arounds:
  * * enterview uses "ctid" instead of "cid"
  * * TS3 query sending invalid icon IDs. More info: https://twitter.com/MarkL4YG/status/965174407701385216

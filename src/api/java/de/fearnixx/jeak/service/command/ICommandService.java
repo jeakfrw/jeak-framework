@@ -2,8 +2,6 @@ package de.fearnixx.jeak.service.command;
 
 /**
  * Manages commands received by other clients over the query connection
- *
- * @author MarkL4YG
  */
 public interface ICommandService {
 
