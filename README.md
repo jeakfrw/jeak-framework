@@ -9,6 +9,7 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 If you want to engage with the developers/community, feel free to join us:
 
 * Discord Server: https://discord.gg/DPYR5aB
+* E-Mail contact: support@fearnixx.de
 
 For details about the issue section of the GitLab project. See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
