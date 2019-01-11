@@ -5,6 +5,13 @@ The JeakBot-Framework connects to the TeamSpeak server using the _TS3 server que
 Java plugins can use the API to interact with the TeamSpeak server using the JeakBot-API.  
 Plugins can be programmed in a way that developers may be familiar from [the Sponge plugin API for Minecraft](https://spongepowered.org) as the projects idea is inspired by Sponge.  
   
+# Links
+* [Project license](./LICENSE)
+* [Contribution guidelines](./CONTRIBUTING.md)
+* [Changelog](./CHANGELOG)
+* [Releases](https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/tags)
+* [Current logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/3402715/JeakBot-Beta.png?width=64) (Yes, that's just a placeholder.)
+
 # Contact
 If you want to engage with the developers/community, feel free to join us:
 
