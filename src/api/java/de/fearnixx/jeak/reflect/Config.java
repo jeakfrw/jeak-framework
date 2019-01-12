@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * Allowed types:
  * * {@link java.nio.file.Path}
  * * {@link java.io.File}
- * * {@link de.mlessmann.config.api.ConfigLoader}
+ * * {@link de.mlessmann.confort.api.IConfig}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
