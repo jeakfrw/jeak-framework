@@ -5,13 +5,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import de.mlessmann.confort.api.IConfig;
+
 /**
  * Designates a field to be filled with configuration representation.
  *
  * Allowed types:
  * * {@link java.nio.file.Path}
  * * {@link java.io.File}
- * * {@link de.mlessmann.confort.api.IConfig}
+ * * {@link IConfig}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

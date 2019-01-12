@@ -10,6 +10,7 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 * [Contribution guidelines](./CONTRIBUTING.md)
 * [Changelog](./CHANGELOG)
 * [Releases](https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/tags)
+* [Documentation](https://jeakbot.readme.io/)
 * [Current logo](https://assets.gitlab-static.net/uploads/-/system/project/avatar/3402715/JeakBot-Beta.png?width=64) (Yes, that's just a placeholder.)
 
 # Contact
