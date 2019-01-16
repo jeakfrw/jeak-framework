@@ -1,3 +1,8 @@
+The Hibernate integration requires a JDBC driver to be available.
+By default, we are shipping an official version of the mysql connector from mysql.
+
+see https://dev.mysql.com/downloads/connector/j/
+
 Licensing Information User Manual
 
 MySQL Connector/J 8.0
