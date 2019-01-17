@@ -16,9 +16,10 @@ version projectVersion
 project.ext {
     artifact = 'jeakbot'
     
-    hibernateVersion =  '5.3.6.Final'
     confortVersion = '0.2.13-SNAPSHOT'
     log4jVersion = '2.11.1'
+    hibernateVersion =  '5.3.6.Final'
+    mySQLConnectorVersion = '8.0.13'
 }
 
 repositories {
@@ -62,8 +63,8 @@ dependencies {
     runtime group: 'org.apache.logging.log4j', name: 'log4j-api', version: project.ext.log4jVersion
     runtime group: 'org.apache.logging.log4j', name: 'log4j-core', version: project.ext.log4jVersion
     runtime group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: project.ext.log4jVersion
+    runtime group: 'mysql', name: 'mysql-connector-java', version: project.ext.mySQLConnectorVersion
     runtime group: 'org.hibernate', name: 'hibernate-c3p0', version: project.ext.hibernateVersion
-    runtime files('libraries/mysql-connector-8.0.13.jar')
 }
 
 task zipDistribution(type: Zip){
