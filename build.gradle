@@ -79,11 +79,27 @@ task zipDistribution(type: Zip){
     }
 }
 
+task tarDistribution(type: Tar) {
+    from jar
+    from 'src/deploy/scripts'
+    into('libraries') {
+        from configurations.runtime
+        exclude { dep -> !dep.file.name.endsWith('.jar')}
+    }
+    into('libraries/licenses') {
+        from 'src/deploy/licenses'
+        exclude { lic -> !lic.file.name.endsWith('.txt')}
+    }
+    
+    compression = Compression.GZIP
+}
+
 build {
     dependsOn publishToMavenLocal
     
     if (!project.version.endsWith('SNAPSHOT')) {
         dependsOn zipDistribution
+        dependsOn tarDistribution
     }
 }
 
