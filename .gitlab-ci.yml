@@ -39,7 +39,7 @@ test:
 
 publish_snapshot:
   stage: deploy
-  script: gradle publish
+  script: gradle publish tarDistribution
   cache:
     key: "$CI_COMMIT_REF_NAME"
     policy: pull
@@ -48,6 +48,10 @@ publish_snapshot:
       - .gradle
   only:
     - bleeding
+  artifacts:
+    paths:
+      - "build/distributions/*"
+    expire_in: 30 days
 
 publish_release:
   stage: deploy
@@ -62,3 +66,6 @@ publish_release:
     ORG_GRADLE_PROJECT_release: "true"
   only:
     - release
+  artifacts:
+    paths:
+      - "build/distributions/*"
