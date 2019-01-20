@@ -21,7 +21,7 @@ if [[ -z "$JEAK_EXECUTABLE" ]]; then
         JEAK_EXECUTABLE="jeakbot.jar"
     else
         CANDS=($(ls jeakbot*.jar))
-        if [[ 1 -lt "${#CANDS[@]}" ]]; then
+        if [[ 0 -lt "${#CANDS[@]}" ]]; then
             JEAK_EXECUTABLE=${CANDS[0]}
         fi
     fi
