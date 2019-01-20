@@ -278,6 +278,7 @@ public class JeakBot implements Runnable,IBot {
         rewrite = rewrite | config.getNode("user").defaultValue("serveradmin");
         rewrite = rewrite | config.getNode("pass").defaultValue("password");
         rewrite = rewrite | config.getNode("instance").defaultValue(1);
+        rewrite = rewrite | config.getNode("nick").defaultValue("JeakBot");
 
         if (rewrite) {
             if (!saveConfig()) {
