@@ -25,6 +25,7 @@ task tarDistribution(type: Tar) {
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }
 
+    extension 'tar.gz'
     compression = Compression.GZIP
 }
 
