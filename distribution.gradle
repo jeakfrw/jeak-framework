@@ -34,8 +34,8 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
     task uploadZipDistribution(type: Exec) {
         def file = zipDistribution.archivePath.getCanonicalPath()
         def repoPath = "${distributionRepo}/${zipDistribution.archiveName}"
-        commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"commandLine 'sh', '-c', curlCommand
-
+        commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
+        
         environment = [
                 "DIST_NEXUS_USER": fngNexusUser, "DIST_NEXUS_PASS": fngNexusPass
         ]
