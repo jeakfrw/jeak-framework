@@ -55,7 +55,7 @@ public class CommandService implements ICommandService {
     @Listener
     public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
         if (terminated) return;
-        String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse(null);//event.getChatMessage().getMessage();
+        String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse(null);
         if (msg != null) {
             try {
                 Optional<CommandContext> optContext = parser.parseLine(msg + '\n');

@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.teamspeak.query;
 
 import de.fearnixx.jeak.Main;
+import de.fearnixx.jeak.event.query.RawQueryEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,8 +29,8 @@ public class TS3Connection implements AutoCloseable {
     private final QueryMessageReader messageReader;
     private final QueryMessageWriter messageWriter;
 
-    private final Consumer<IMessage.IAnswer> onAnswer;
-    private final Consumer<IMessage.INotification> onNotification;
+    private final Consumer<RawQueryEvent.Message.Answer> onAnswer;
+    private final Consumer<RawQueryEvent.Message.Notification> onNotification;
 
     private IQueryRequest currentRequest = IQueryRequest.builder().command("dummy").build();
     private final Queue<IQueryRequest> requestQueue = new LinkedList<>();
@@ -48,7 +49,7 @@ public class TS3Connection implements AutoCloseable {
                     })
                     .build();
 
-    public TS3Connection(InputStream in, OutputStream out, Consumer<IMessage.IAnswer> onAnswer, Consumer<IMessage.INotification> onNotification) {
+    public TS3Connection(InputStream in, OutputStream out, Consumer<RawQueryEvent.Message.Answer> onAnswer, Consumer<RawQueryEvent.Message.Notification> onNotification) {
         messageReader = new QueryMessageReader(in, this::onNotification, this::onAnswer, this::onGreetingStatus, this::supplyRequest);
         messageWriter = new QueryMessageWriter(out);
         this.onAnswer = onAnswer;
@@ -110,7 +111,7 @@ public class TS3Connection implements AutoCloseable {
         }
     }
 
-    private void onAnswer(IMessage.IAnswer event) {
+    private void onAnswer(RawQueryEvent.Message.Answer event) {
         synchronized (requestQueue) {
             currentRequest = null;
         }
@@ -120,7 +121,7 @@ public class TS3Connection implements AutoCloseable {
         }
     }
 
-    private void onNotification(IMessage.INotification event) {
+    private void onNotification(RawQueryEvent.Message.Notification event) {
         if (onNotification != null) {
             onNotification.accept(event);
         }

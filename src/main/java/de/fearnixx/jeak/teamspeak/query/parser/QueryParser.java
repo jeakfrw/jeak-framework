@@ -54,11 +54,11 @@ public class QueryParser {
     private final Consumer<Boolean> onGreetingStatus;
 
 
-    private final Consumer<IMessage.INotification> onNotification;
-    private final Consumer<IMessage.IAnswer> onAnswer;
+    private final Consumer<Message.Notification> onNotification;
+    private final Consumer<Message.Answer> onAnswer;
 
-    public QueryParser(Consumer<IMessage.INotification> onNotification,
-                       Consumer<IMessage.IAnswer> onAnswer,
+    public QueryParser(Consumer<Message.Notification> onNotification,
+                       Consumer<Message.Answer> onAnswer,
                        Consumer<Boolean> onGreetingStatus,
                        Supplier<IQueryRequest> requestSupplier) {
         this.onNotification = onNotification;

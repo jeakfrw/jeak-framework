@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.teamspeak.query;
 
 import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import org.slf4j.Logger;
@@ -54,11 +55,13 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         }
     }
 
-    private void onAnswer(IRawQueryEvent.IMessage.IAnswer event) {
+    private void onAnswer(RawQueryEvent.Message.Answer event) {
+        event.setConnection(this);
         dispatcher.dispatchAnswer(event);
     }
 
-    private void onNotification(IRawQueryEvent.IMessage.INotification event) {
+    private void onNotification(RawQueryEvent.Message.Notification event) {
+        event.setConnection(this);
         dispatcher.dispatchNotification(event);
     }
 

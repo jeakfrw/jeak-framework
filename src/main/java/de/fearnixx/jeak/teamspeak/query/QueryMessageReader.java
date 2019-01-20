@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.query;
 
+import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.teamspeak.except.QueryClosedException;
 import de.fearnixx.jeak.teamspeak.query.parser.QueryParser;
 import org.slf4j.Logger;
@@ -28,8 +29,8 @@ public class QueryMessageReader implements AutoCloseable {
     private boolean closed = false;
 
     public QueryMessageReader(InputStream in,
-                              Consumer<IMessage.INotification> onNotification,
-                              Consumer<IMessage.IAnswer> onAnswer,
+                              Consumer<RawQueryEvent.Message.Notification> onNotification,
+                              Consumer<RawQueryEvent.Message.Answer> onAnswer,
                               Consumer<Boolean> onGreetingStatus,
                               Supplier<IQueryRequest> requestSupplier) {
 
