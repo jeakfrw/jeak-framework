@@ -22,11 +22,6 @@ jar() {
     from sourceSets.main.output
 
     dependsOn compileJava
-
-    manifest {
-        attributes 'Main-Class': 'de.fearnixx.jeak.Main'
-        attributes 'Class-Path': 'libraries/*'
-    }
 }
 
 build {
