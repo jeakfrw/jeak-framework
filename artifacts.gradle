@@ -11,7 +11,7 @@ task apiJar(type: Jar) {
     from sourceSets.api.allJava
     from sourceSets.api.output
 
-    dependsOn 'compileApiJava'
+    dependsOn compileApiJava
 }
 
 jar() {
@@ -21,7 +21,12 @@ jar() {
     from sourceSets.api.output
     from sourceSets.main.output
 
-    dependsOn 'compileJava'
+    dependsOn compileJava
+
+    manifest {
+        attributes 'Main-Class': 'de.fearnixx.jeak.Main'
+        attributes 'Class-Path': 'libraries/*'
+    }
 }
 
 build {
