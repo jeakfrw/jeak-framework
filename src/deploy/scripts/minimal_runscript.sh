@@ -31,8 +31,13 @@ if [[ -z "$JEAK_EXECUTABLE" ]]; then
     exit 1
 fi
 
+# Note: If you're on a Windows environment (w/ bash/shell),
+# please be aware that the cp separator should be ; instead of :
+JEAK_CP="${JEAK_EXECUTABLE}:libraries/*"
+
 printf "[DJVMARGS] ${JEAK_JVM_ARGS}\n"
 printf "[DARGS] ${JEAK_ARGS}\n"
+printf "[CP] ${JEAK_CP}\n"
 
-java -cp "${JEAK_EXECUTABLE}:libraries/*" ${JEAK_JVM_ARGS} de.fearnixx.jeak.Main ${JEAK_ARGS}
+java -cp ${JEAK_CP} ${JEAK_JVM_ARGS} de.fearnixx.jeak.Main ${JEAK_ARGS}
 exit $?
