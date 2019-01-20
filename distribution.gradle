@@ -35,7 +35,7 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
         def file = zipDistribution.archivePath.getCanonicalPath()
         def repoPath = "${distributionRepo}/${zipDistribution.archiveName}"
         def curlCommand = 'curl -v --user "$DIST_NEXUS_USER:$DIST_NEXUS_PASS"' + " --upload-file '${file}' ${repoPath}"
-        commandLine 'bash', '-c', curlCommand
+        commandLine 'sh', '-c', curlCommand
 
         environment = [
                 "DIST_NEXUS_USER": fngNexusUser, "DIST_NEXUS_PASS": fngNexusPass
@@ -46,7 +46,7 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
     task uploadTarDistribution(type: Exec) {
         def file = tarDistribution.archivePath.getCanonicalPath()
         def repoPath = "${distributionRepo}/${tarDistribution.archiveName}"
-        commandLine 'bash', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
+        commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
 
         environment = [
                 "DIST_USER": fngNexusUser, "DIST_PASS": fngNexusPass
