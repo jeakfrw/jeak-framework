@@ -34,5 +34,5 @@ fi
 printf "[DJVMARGS] ${JEAK_JVM_ARGS}\n"
 printf "[DARGS] ${JEAK_ARGS}\n"
 
-java -cp .:libraries ${JEAK_JVM_ARGS} de.fearnixx.jeak.Main ${JEAK_ARGS}
+java -cp "${JEAK_EXECUTABLE}:libraries/*" ${JEAK_JVM_ARGS} de.fearnixx.jeak.Main ${JEAK_ARGS}
 exit $?
