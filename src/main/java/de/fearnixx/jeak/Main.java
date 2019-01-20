@@ -5,6 +5,7 @@ import de.fearnixx.jeak.commandline.CommandLine;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
+import de.mlessmann.confort.api.lang.IConfigLoader;
 import de.mlessmann.confort.config.FileConfig;
 import de.mlessmann.confort.lang.ConfigLoader;
 import de.mlessmann.confort.lang.RegisterLoaders;
@@ -122,7 +123,7 @@ public class Main implements Runnable {
 
     private IConfig createConfig(File confFile) {
         RegisterLoaders.registerLoaders();
-        final ConfigLoader configLoader = LoaderFactory.getLoader(CONF_FORMAT);
+        final IConfigLoader configLoader = LoaderFactory.getLoader(CONF_FORMAT);
         return new FileConfig(configLoader, confFile);
     }
 
