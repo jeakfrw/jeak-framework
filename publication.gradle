@@ -4,8 +4,8 @@ publishing {
     repositories {
         mavenLocal()
         maven {
-            def releaseRepository = 'https://nexus.fearnixx.de/repository/maven-releases'
-            def snapshotRepository = 'https://nexus.fearnixx.de/repository/maven-snapshots'
+            def releaseRepository = 'https://nexus.fearnixx.de/repository/jeakbot-releases'
+            def snapshotRepository = 'https://nexus.fearnixx.de/repository/jeakbot-snapshots'
 
             name = 'FNGNexus'
             url uri(project.version.endsWith('SNAPSHOT') ? snapshotRepository : releaseRepository)

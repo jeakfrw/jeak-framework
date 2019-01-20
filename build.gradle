@@ -67,34 +67,6 @@ dependencies {
     runtime group: 'org.hibernate', name: 'hibernate-c3p0', version: project.ext.hibernateVersion
 }
 
-task zipDistribution(type: Zip){
-    from jar
-    from 'src/deploy/scripts'
-    into('libraries') {
-        from configurations.runtime
-        exclude { dep -> !dep.file.name.endsWith('.jar')}
-    }
-    into('libraries/licenses') {
-        from 'src/deploy/licenses'
-        exclude { lic -> !lic.file.name.endsWith('.txt')}
-    }
-}
-
-task tarDistribution(type: Tar) {
-    from jar
-    from 'src/deploy/scripts'
-    into('libraries') {
-        from configurations.runtime
-        exclude { dep -> !dep.file.name.endsWith('.jar')}
-    }
-    into('libraries/licenses') {
-        from 'src/deploy/licenses'
-        exclude { lic -> !lic.file.name.endsWith('.txt')}
-    }
-    
-    compression = Compression.GZIP
-}
-
 build {
     dependsOn publishToMavenLocal
     
@@ -105,6 +77,7 @@ build {
 }
 
 apply from: './artifacts.gradle'
+apply from: './distribution.gradle'
 apply from: './publication.gradle'
 
 wrapper {

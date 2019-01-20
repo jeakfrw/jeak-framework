@@ -1,0 +1,63 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+task zipDistribution(type: Zip) {
+    from jar
+    from 'src/deploy/scripts'
+    into('libraries') {
+        from configurations.runtime
+        exclude { dep -> !dep.file.name.endsWith('.jar') }
+    }
+    into('libraries/licenses') {
+        from 'src/deploy/licenses'
+        exclude { lic -> !lic.file.name.endsWith('.txt') }
+    }
+}
+
+task tarDistribution(type: Tar) {
+    from jar
+    from 'src/deploy/scripts'
+    into('libraries') {
+        from configurations.runtime
+        exclude { dep -> !dep.file.name.endsWith('.jar') }
+    }
+    into('libraries/licenses') {
+        from 'src/deploy/licenses'
+        exclude { lic -> !lic.file.name.endsWith('.txt') }
+    }
+
+    compression = Compression.GZIP
+}
+
+if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
+    def distributionRepo = "https://nexus.fearnixx.de/repository/jeakbot-dist"
+
+    task uploadZipDistribution(type: Exec) {
+        def file = zipDistribution.archivePath.getCanonicalPath()
+        def repoPath = "${distributionRepo}/${zipDistribution.archiveName}"
+        def curlCommand = 'curl -v --user "$DIST_NEXUS_USER:$DIST_NEXUS_PASS"' + " --upload-file '${file}' ${repoPath}"
+        commandLine 'bash', '-c', curlCommand
+
+        environment = [
+                "DIST_NEXUS_USER": fngNexusUser, "DIST_NEXUS_PASS": fngNexusPass
+        ]
+        dependsOn zipDistribution
+    }
+
+    task uploadTarDistribution(type: Exec) {
+        def file = tarDistribution.archivePath.getCanonicalPath()
+        def repoPath = "${distributionRepo}/${tarDistribution.archiveName}"
+        commandLine 'bash', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
+
+        environment = [
+                "DIST_USER": fngNexusUser, "DIST_PASS": fngNexusPass
+        ]
+        dependsOn tarDistribution
+    }
+
+    task uploadDistribution() {
+        dependsOn uploadZipDistribution
+        dependsOn uploadTarDistribution
+    }
+    
+    publish.dependsOn(uploadDistribution)
+}
