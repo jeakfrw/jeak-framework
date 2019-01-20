@@ -11,6 +11,9 @@ task zipDistribution(type: Zip) {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }
+    into('plugins') {
+        from 'run/.gitkeep'
+    }
 }
 
 task tarDistribution(type: Tar) {
@@ -23,6 +26,9 @@ task tarDistribution(type: Tar) {
     into('libraries/licenses') {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
+    }
+    into('plugins'){
+        from 'run/.gitkeep'
     }
 
     extension 'tar.gz'
