@@ -16,7 +16,7 @@ version projectVersion
 project.ext {
     artifact = 'jeakbot'
     
-    confortVersion = '0.3.1-SNAPSHOT'
+    confortVersion = '0.3.2-SNAPSHOT'
     log4jVersion = '2.11.1'
     hibernateVersion =  '5.3.6.Final'
     mySQLConnectorVersion = '8.0.13'
