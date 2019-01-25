@@ -21,6 +21,7 @@ import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionProvider;
+import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -214,6 +215,56 @@ public class JeakBot implements Runnable, IBot {
         taskService.runTask(connectionTask);
     }
 
+    /**
+     * Construct services, provide them with injections and register them.
+     */
+    private void createAndRegisterServices() {
+        logger.debug("Constructing services");
+        ServiceManager serviceManager = new ServiceManager();
+        PermissionService permissionService = new PermissionService();
+        TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
+        DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
+        ProfileService profileService = new ProfileService(new File(confDir, "profiles"));
+
+        eventService = new EventService();
+        taskService = new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        commandService = new CommandService();
+        injectionManager = new InjectionManager(serviceManager);
+        injectionManager.setBaseDir(getBaseDirectory());
+        server = new Server(eventService);
+        dataCache = new DataCache(server.getConnection(), eventService);
+
+        serviceManager.registerService(PluginManager.class, pMgr);
+        serviceManager.registerService(IBot.class, this);
+        serviceManager.registerService(IServiceManager.class, serviceManager);
+        serviceManager.registerService(IEventService.class, eventService);
+        serviceManager.registerService(ITaskService.class, taskService);
+        serviceManager.registerService(ICommandService.class, commandService);
+        serviceManager.registerService(IInjectionService.class, injectionManager);
+        serviceManager.registerService(IServer.class, server);
+        serviceManager.registerService(IDataCache.class, dataCache);
+        serviceManager.registerService(IPermissionService.class, permissionService);
+        serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
+        serviceManager.registerService(DatabaseService.class, databaseService);
+        serviceManager.registerService(IProfileService.class, profileService);
+
+        injectionManager.injectInto(serviceManager);
+        injectionManager.injectInto(eventService);
+        injectionManager.injectInto(taskService);
+        injectionManager.injectInto(commandService);
+        injectionManager.injectInto(server);
+        injectionManager.injectInto(permissionService);
+        injectionManager.injectInto(ts3permissionProvider);
+        injectionManager.injectInto(databaseService);
+        injectionManager.injectInto(profileService);
+
+        taskService.start();
+
+        pMgr.setIncludeCP(true);
+        pMgr.load();
+        databaseService.onLoad();
+    }
+
     private boolean loadPlugin(Map<String, PluginRegistry> reg, String id, PluginRegistry pr) {
         logger.info("Loading plugin {}", id);
         PluginContainer c = plugins.getOrDefault(id, null);
@@ -265,7 +316,7 @@ public class JeakBot implements Runnable, IBot {
      * Makes use of the {@link IBotStateEvent.IInitializeEvent} in order to cancel startup on unsuccessful init.
      */
     protected void initializeConfiguration(IBotStateEvent.IInitializeEvent event) {
-        // Construct loader but only directly read from the file when it exists
+        // Construct configLoader but only directly read from the file when it exists
         // Otherwise cancel startup and create default config
 
         try {
