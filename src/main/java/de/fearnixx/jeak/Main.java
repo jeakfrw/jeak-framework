@@ -3,6 +3,8 @@ package de.fearnixx.jeak;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.commandline.CommandLine;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
+import de.fearnixx.jeak.reflect.JeakBotPlugin;
+import de.fearnixx.jeak.test.AbstractTestPlugin;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.lang.IConfigLoader;
@@ -16,6 +18,7 @@ import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -162,6 +165,25 @@ public class Main implements Runnable {
 
             logger.debug("Running thread on shutdown: [{}] {}/{} @ {}",
                     thread.getState(), thread.getId(), thread.getName(), position);
+        }
+
+        if (getProperty("bot.enableTests", false)) {
+            logger.warn("===== Dumping test results =====");
+            AbstractTestPlugin.getTestPlugins()
+                    .stream()
+                    .forEach(plugin -> {
+                        logger.info("  {}", plugin.getClass().getAnnotation(JeakBotPlugin.class).id());
+
+                        final Map<String, Boolean> results = plugin.getResults();
+                        results.forEach((name, result) -> {
+                            if (result) {
+                                logger.info("    {}: Success", name);
+                            } else {
+                                logger.error("    {}: Failure", name);
+                            }
+                        });
+                    });
+            logger.warn("===== END TEST RESULTS =====");
         }
 
         System.exit(0);
