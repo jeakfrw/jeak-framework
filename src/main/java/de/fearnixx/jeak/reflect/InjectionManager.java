@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.reflect;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.database.DatabaseService;
+import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
@@ -193,7 +193,7 @@ public class InjectionManager implements IInjectionService {
         }
 
         DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
-        Optional<EntityManager> manager = service.getEntityManager(annotation.value());
+        Optional<EntityManager> manager = service.getPersistenceUnit(annotation.value());
         Object value = null;
 
         if (clazz.isAssignableFrom(EntityManager.class)) {

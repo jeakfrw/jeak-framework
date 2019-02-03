@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.database;
+package de.fearnixx.jeak.service.database;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
@@ -8,13 +8,11 @@ import org.hibernate.HibernateException;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.hibernate.service.spi.ServiceException;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.Entity;
-import javax.persistence.EntityManager;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +42,7 @@ public class DatabaseService {
 
     private ClassLoader entityClassLoader;
     private BootstrapServiceRegistry baseRegistry;
-    private Map<String, PersistenceUnitRep> persistenceUnits;
+    private Map<String, PersistenceUnitAccessor> persistenceUnits;
 
     public DatabaseService(File dbDir) {
         this.dbDir = dbDir;
@@ -78,41 +76,49 @@ public class DatabaseService {
             this.baseRegistry = baseRegistryBuilder.build();
 
             for (File dataSourceFile : dataSourceFiles) {
-                String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 11);
-                logger.debug("Trying to construct persistence unit: {}", name);
-
-                try {
-                    Properties dataSourceProps = new Properties();
-                    dataSourceProps.load(new FileInputStream(dataSourceFile));
-                    boolean valid = dataSourceProps.containsKey("hibernate.connection.url")
-                            && dataSourceProps.containsKey("hibernate.connection.username")
-                            && dataSourceProps.containsKey("hibernate.connection.password");
-
-                    if (valid) {
-                        logger.info("Constructing persistence unit: {}", name);
-                        StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
-
-                        if (dataSourceProps.containsKey(HIBERNATE_BUILTIN_POOLSIZE)) {
-                            logger.warn("Hibernate built-in pool size configured. This is forbidden and will be removed.");
-                            dataSourceProps.remove(HIBERNATE_BUILTIN_POOLSIZE);
-                        }
-
-                        applyDefaults(registryBuilder);
-                        dataSourceProps.forEach((k, v) -> registryBuilder.applySetting((String) k, v));
-
-                        try {
-                            persistenceUnits.put(name, new PersistenceUnitRep(registryBuilder.build(), getClasses()));
-                        } catch (HibernateException e) {
-                            logger.error("Failed to create persistence unit: {}", name, e);
-                        }
-                    } else {
-                        logger.warn("Cannot construct persistence unit: {}!", name);
-                        logger.warn("Make sure to set 'url', 'username' and 'password'. (hibernate.connection.X)");
-                    }
-                } catch (IOException e) {
-                    logger.error("Failed to create persistence units!", e);
-                }
+                createUnitFromFile(dataSourceFile);
             }
+        }
+    }
+
+    private void createUnitFromFile(File dataSourceFile) {
+        String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 11);
+        logger.debug("Trying to construct persistence unit: {}", name);
+
+        try {
+            Properties dataSourceProps = new Properties();
+            dataSourceProps.load(new FileInputStream(dataSourceFile));
+            boolean valid = dataSourceProps.containsKey("hibernate.connection.url")
+                    && dataSourceProps.containsKey("hibernate.connection.username")
+                    && dataSourceProps.containsKey("hibernate.connection.password");
+
+            if (valid) {
+                logger.info("Constructing persistence unit: {}", name);
+                StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
+
+                if (dataSourceProps.containsKey(HIBERNATE_BUILTIN_POOLSIZE)) {
+                    logger.warn("Hibernate built-in pool size configured. This is forbidden and will be removed.");
+                    dataSourceProps.remove(HIBERNATE_BUILTIN_POOLSIZE);
+                }
+
+                applyDefaults(registryBuilder);
+                dataSourceProps.forEach((k, v) -> registryBuilder.applySetting((String) k, v));
+                createAndRegisterUnit(name, registryBuilder);
+
+            } else {
+                logger.warn("Cannot construct persistence unit: {}!", name);
+                logger.warn("Make sure to set 'url', 'username' and 'password'. (hibernate.connection.X)");
+            }
+        } catch (IOException e) {
+            logger.error("Failed to create persistence units!", e);
+        }
+    }
+
+    private void createAndRegisterUnit(String name, StandardServiceRegistryBuilder registryBuilder) {
+        try {
+            persistenceUnits.put(name, new PersistenceUnitAccessor(name, registryBuilder.build(), getClasses()));
+        } catch (HibernateException e) {
+            logger.error("Failed to create persistence unit: {}", name, e);
         }
     }
 
@@ -135,7 +141,7 @@ public class DatabaseService {
                 Reflections reflect = pluginManager.getPluginScanner(entityClassLoader);
                 Set<Class<?>> types = reflect.getTypesAnnotatedWith(Entity.class);
                 types.forEach(entityType -> {
-                    logger.debug("Found: " + entityType.getName());
+                    logger.debug("Found: {}", entityType.getName());
                     ENTITIES.add(entityType);
                 });
             }
@@ -150,15 +156,21 @@ public class DatabaseService {
 
     @Listener(order = Listener.Orders.LATEST)
     public void onShutdown(IBotStateEvent.IPostShutdown event) {
-        persistenceUnits.forEach((k, u) -> u.close());
+        persistenceUnits.forEach((k, unit) -> {
+            try {
+                unit.close();
+            } catch (Exception e) {
+                logger.warn("Failed to close persistence unit: {}", k, e);
+            }
+        });
         persistenceUnits.clear();
         BootstrapServiceRegistryBuilder.destroy(baseRegistry);
     }
 
-    public Optional<EntityManager> getEntityManager(String unitName) {
-        PersistenceUnitRep rep = persistenceUnits.getOrDefault(unitName, null);
+    public Optional<IPersistenceUnit> getPersistenceUnit(String unitName) {
+        IPersistenceUnit rep = persistenceUnits.getOrDefault(unitName, null);
         if (rep != null) {
-            return Optional.of(rep.getEntityManager());
+            return Optional.of(rep);
         }
 
         File dataSourceFile = new File(dbDir, unitName + ".properties");
