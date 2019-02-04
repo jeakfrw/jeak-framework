@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Deployed work-arounds:
@@ -368,16 +369,7 @@ public class DataCache implements IDataCache {
 
             // All others are new - Add them
             newMap.forEach(channelCache::put);
-            channelCache.forEach((cid, c) -> {
-                int pid = c.getParent();
-                if (pid == 0) return;
-                TS3Channel parent = channelCache.getOrDefault(pid, null);
-                if (parent == null) {
-                    logger.warn("Channel {} has nonexistent parent: {}", cid, c.getParent());
-                    return;
-                }
-                parent.addSubChannel(c);
-            });
+            updateComputedChannelValues();
         }
 
         logger.debug("Channellist updated");
@@ -385,6 +377,32 @@ public class DataCache implements IDataCache {
         refresh.setConnection(event.getConnection());
         refresh.setRawReference(event);
         eventService.fireEvent(refresh);
+    }
+
+    /**
+     * Updates computed values on channels.
+     * @apiNote This is solely to be called within a synchronized block on {@link #LOCK}
+     */
+    private void updateComputedChannelValues() {
+        // Update order & parent references
+        AtomicInteger topLevelOrder = new AtomicInteger();
+        channelCache.forEach((cid, c) -> {
+            int pid = c.getParent();
+            if (pid == 0) {
+                c.setOrderPosition(topLevelOrder.getAndIncrement());
+                return;
+            }
+
+            TS3Channel parent = channelCache.getOrDefault(pid, null);
+            if (parent == null) {
+                c.setOrderPosition(0);
+                logger.warn("Channel {} has nonexistent parent: {}", cid, c.getParent());
+                return;
+            }
+
+            c.setOrderPosition(c.getSubChannels().size());
+            parent.addSubChannel(c);
+        });
     }
 
     /**

@@ -14,12 +14,8 @@ import java.util.List;
 public class TS3Channel extends BasicDataHolder implements IChannel {
 
     private boolean invalidated = false;
-    private List<IChannel> children;
-
-    public TS3Channel(){
-        super();
-        children = new ArrayList<>();
-    }
+    private int orderPosition = 0;
+    private List<IChannel> children = new ArrayList<>();
 
     public void invalidate() {
         clearChildren();
@@ -39,6 +35,19 @@ public class TS3Channel extends BasicDataHolder implements IChannel {
     @Override
     public Integer getOrder() {
         return Integer.parseInt(getProperty(Channel.ORDER).orElse("0"));
+    }
+
+    @Override
+    public Integer getOrderPosition() {
+        synchronized (getLock()) {
+            return orderPosition;
+        }
+    }
+
+    public void setOrderPosition(Integer position) {
+        synchronized (getLock()) {
+            orderPosition = position;
+        }
     }
 
     @Override

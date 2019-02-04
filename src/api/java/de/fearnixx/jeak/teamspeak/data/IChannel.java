@@ -29,9 +29,15 @@ public interface IChannel extends IDataHolder {
     Integer getParent();
 
     /**
-     * @return The channels position under its parent
+     * @return The channel ID of the channel below which this channel is positioned.
      */
     Integer getOrder();
+
+    /**
+     * @return The channels position below its parent in incremental order ("index of" if you will)
+     * @implNote This is a computed value from the cache and not from TS3.
+     */
+    Integer getOrderPosition();
 
     /**
      * @return The current channel name

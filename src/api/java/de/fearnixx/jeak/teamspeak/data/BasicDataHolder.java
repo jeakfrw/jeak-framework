@@ -64,4 +64,8 @@ public class BasicDataHolder implements IDataHolder {
 
         return this;
     }
+
+    protected Object getLock() {
+        return LOCK;
+    }
 }
