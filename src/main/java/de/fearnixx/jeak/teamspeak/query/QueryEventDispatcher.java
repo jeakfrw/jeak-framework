@@ -65,6 +65,7 @@ public class QueryEventDispatcher {
                 break;
 
             case EventCaptions.CHANNEL_EDITED_DESCR:
+                checkHash = false;
                 if (editResume(event)) {
                     return;
                 } else {
@@ -73,6 +74,7 @@ public class QueryEventDispatcher {
                 }
 
             case EventCaptions.CHANNEL_EDITED_PASSWORD:
+                checkHash = false;
                 if (editResume(event)) {
                     return;
                 } else {
