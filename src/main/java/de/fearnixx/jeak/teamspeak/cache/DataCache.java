@@ -207,7 +207,7 @@ public class DataCache implements IDataCache {
                         clientID, PropertyKeys.Client.CHANNEL_ID, fromChannelId, toChannelId);
 
                 // Set new channel
-                client.setProperty(PropertyKeys.Client.CHANNEL_ID, fromChannelId.toString());
+                client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannelId.toString());
                 // Set new client count - FROM
                 fromChannel.setProperty(
                         PropertyKeys.Channel.CLIENT_COUNT,
