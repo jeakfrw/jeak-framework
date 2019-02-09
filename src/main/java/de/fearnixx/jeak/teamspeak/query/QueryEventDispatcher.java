@@ -34,7 +34,7 @@ public class QueryEventDispatcher {
     public IEventService eventService;
 
     private int lastNotificationHash;
-    private IRawQueryEvent.IMessage.INotification pendingEditEvent;
+    private IRawQueryEvent.IMessage.INotification lastEditEvent;
 
     public void dispatchNotification(IRawQueryEvent.IMessage.INotification event) {
         QueryEvent.Notification notification;
@@ -146,9 +146,9 @@ public class QueryEventDispatcher {
             }
         }
 
+        lastEditEvent = event;
         if (!deltaFound) {
             logger.debug("Intermitting channelEdit event. No delta found.");
-            pendingEditEvent = event;
             return null;
         } else {
             return new QueryEvent.ChannelEdit(deltas);
@@ -156,13 +156,13 @@ public class QueryEventDispatcher {
     }
 
     private boolean editResume(IRawQueryEvent.IMessage.INotification event) {
-        if (pendingEditEvent == null) {
+        if (lastEditEvent == null) {
             logger.error("Failed to resume channelEdit event! No pending event found!");
             return true;
         } else {
             // Merge with last event
             // This allows us to capture multi-edits across normal properties and descr/password
-            event.merge(pendingEditEvent);
+            event.merge(lastEditEvent);
             return false;
         }
     }
