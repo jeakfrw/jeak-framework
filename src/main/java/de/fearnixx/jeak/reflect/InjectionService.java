@@ -202,6 +202,9 @@ public class InjectionService implements IInjectionService {
             logger.warn("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + annotation.value()));
             return Optional.empty();
 
+        } else if (clazz.isAssignableFrom(IPersistenceUnit.class)) {
+            value = peristenceUnit.get();
+
         } else if (clazz.isAssignableFrom(EntityManager.class)) {
             value = peristenceUnit.get().getEntityManager();
 
