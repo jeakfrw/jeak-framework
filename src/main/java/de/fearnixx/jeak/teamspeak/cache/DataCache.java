@@ -38,6 +38,7 @@ public class DataCache implements IDataCache {
 
     private Map<Integer, TS3Client> clientCache;
     private Map<Integer, TS3Channel> channelCache;
+    private ChannelUpdateWatcher channelUpdateWatcher = new ChannelUpdateWatcher(this);
 
     public DataCache(IQueryConnection connection, IEventService eventService) {
         this.connection = connection;
@@ -84,6 +85,7 @@ public class DataCache implements IDataCache {
     public void scheduleTasks(TaskService tm) {
         tm.runTask(clientListTask);
         tm.runTask(channelListTask);
+        eventService.registerListener(channelUpdateWatcher);
     }
 
 
@@ -102,9 +104,21 @@ public class DataCache implements IDataCache {
         }
     }
 
+    Map<Integer, TS3Client> getUnsafeClientMap() {
+        synchronized (LOCK) {
+            return clientCache;
+        }
+    }
+
     public Map<Integer, IChannel> getChannelMap() {
         synchronized (LOCK) {
             return Collections.unmodifiableMap(channelCache);
+        }
+    }
+
+    Map<Integer, TS3Channel> getUnsafeChannelMap() {
+        synchronized (LOCK) {
+            return channelCache;
         }
     }
 
