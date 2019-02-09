@@ -3,6 +3,7 @@ package de.fearnixx.jeak.reflect;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.IServiceManager;
+import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -21,11 +22,11 @@ import java.util.Optional;
 /**
  * Created by MarkL4YG on 02-Feb-18
  */
-public class InjectionManager implements IInjectionService {
+public class InjectionService implements IInjectionService {
 
     public static final Boolean UNIT_FULLY_QUALIFIED = Main.getProperty("bot.inject.fqunit", Boolean.FALSE);
 
-    private static final Logger logger = LoggerFactory.getLogger(InjectionManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(InjectionService.class);
 
     private IServiceManager serviceManager;
 
@@ -33,7 +34,7 @@ public class InjectionManager implements IInjectionService {
 
     private File baseDir;
 
-    public InjectionManager(IServiceManager serviceManager) {
+    public InjectionService(IServiceManager serviceManager) {
         this.serviceManager = serviceManager;
     }
 
@@ -41,7 +42,7 @@ public class InjectionManager implements IInjectionService {
         this.baseDir = baseDir;
     }
 
-    public void setUnitName(String unitName) {
+    private void setUnitName(String unitName) {
         this.unitName = unitName;
     }
 
@@ -51,55 +52,55 @@ public class InjectionManager implements IInjectionService {
     }
 
     public <T> T injectInto(T victim, String unitName) {
-            // Logging
-            logger.debug("Running injections on object of class: {}", victim.getClass().getName());
+        // Logging
+        logger.debug("Running injections on object of class: {}", victim.getClass().getName());
 
-            Class<?> clazz = victim.getClass();
-            Field[] fields = clazz.getFields();
+        Class<?> clazz = victim.getClass();
+        Field[] fields = clazz.getFields();
 
-            for (Field field : fields) {
-                Inject inject = field.getAnnotation(Inject.class);
-                if (inject == null)
-                    continue;
+        for (Field field : fields) {
+            Inject inject = field.getAnnotation(Inject.class);
+            if (inject == null)
+                continue;
 
-                // Maybe a config field
-                Config config = field.getAnnotation(Config.class);
+            // Maybe a config field
+            Config config = field.getAnnotation(Config.class);
 
-                // Maybe a datasource field
-                DataSource dataSource = field.getAnnotation(DataSource.class);
+            // Maybe a datasource field
+            DataSource dataSource = field.getAnnotation(DataSource.class);
 
-                // Field information
-                Class<?> type = field.getType();
-                String fieldName = field.getName();
+            // Field information
+            Class<?> type = field.getType();
+            String fieldName = field.getName();
 
-                // Evaluate value
-                Optional<?> optTarget;
-                if (config != null)
-                    optTarget = provideConfigWith(clazz, type, unitName, fieldName, config);
-                else if (dataSource != null)
-                    optTarget = provideDataSourceWith(clazz, type, unitName, fieldName, dataSource);
-                else
-                    optTarget = provideWith(clazz, type, unitName, fieldName);
+            // Evaluate value
+            Optional<?> optTarget;
+            if (config != null)
+                optTarget = provideConfigWith(clazz, type, unitName, fieldName, config);
+            else if (dataSource != null)
+                optTarget = provideDataSourceWith(clazz, type, unitName, fieldName, dataSource);
+            else
+                optTarget = provideWith(clazz, type, unitName, fieldName);
 
-                // Log message is provided by #provide
-                if (!optTarget.isPresent())
-                    continue;
+            // Log message is provided by #provide
+            if (!optTarget.isPresent())
+                continue;
 
-                // Access state
-                boolean accessState = field.isAccessible();
-                field.setAccessible(true);
+            // Access state
+            boolean accessState = field.isAccessible();
+            field.setAccessible(true);
 
-                try {
-                    field.set(victim, optTarget.get());
-                    logger.debug("Injected {} as {}", type.getCanonicalName(), field.getName());
-                } catch (IllegalAccessException e) {
-                    logger.error("Failed injection of class {} into object of class {}", type, clazz.toString(), e);
-                }
-
-                // Reset access state
-                field.setAccessible(accessState);
+            try {
+                field.set(victim, optTarget.get());
+                logger.debug("Injected {} as {}", type.getCanonicalName(), field.getName());
+            } catch (IllegalAccessException e) {
+                logger.error("Failed injection of class {} into object of class {}", type, clazz.toString(), e);
             }
-            return victim;
+
+            // Reset access state
+            field.setAccessible(accessState);
+        }
+        return victim;
     }
 
     public <T> Optional<T> provide(Class<T> clazz) {
@@ -111,24 +112,22 @@ public class InjectionManager implements IInjectionService {
         return Optional.empty();
     }
 
-    public <T> Optional<T> provideWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName) {
+    private <T> Optional<T> provideWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName) {
         Optional<T> result = serviceManager.provide(clazz);
         if (result.isPresent()) {
             if (!(result.get() instanceof IInjectionService)) {
                 return result;
 
             } else {
-                InjectionManager value = null;
-                String unitName = this.unitName != null ? this.unitName : altUnitName;
-                if (!UNIT_FULLY_QUALIFIED) {
-                    if (unitName != null && unitName.contains(".")) {
-                        unitName = unitName.substring(unitName.lastIndexOf('.') + 1, unitName.length());
-                    }
+                InjectionService value;
+                String subUnitName = unitName != null ? unitName : altUnitName;
+                if (!UNIT_FULLY_QUALIFIED && subUnitName != null && subUnitName.contains(".")) {
+                    subUnitName = subUnitName.substring(subUnitName.lastIndexOf('.') + 1);
                 }
 
-                value = new InjectionManager(serviceManager);
+                value = new InjectionService(serviceManager);
                 value.setBaseDir(baseDir);
-                value.setUnitName(unitName);
+                value.setUnitName(subUnitName);
                 return Optional.of(clazz.cast(value));
             }
         }
@@ -136,7 +135,7 @@ public class InjectionManager implements IInjectionService {
         return Optional.empty();
     }
 
-    public <T> Optional<T> provideConfigWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName, Config annotation) {
+    private <T> Optional<T> provideConfigWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName, Config annotation) {
         Object value = null;
         String unitName = this.unitName != null ? this.unitName : altUnitName;
 
@@ -187,27 +186,32 @@ public class InjectionManager implements IInjectionService {
         return Optional.ofNullable(clazz.cast(value));
     }
 
-    public <T> Optional<T> provideDataSourceWith(Class<?> victimClass, Class<T> clazz, String altUnitName, String fieldName, DataSource annotation) {
+    private <T> Optional<T> provideDataSourceWith(Class<?> victimClass, Class<T> clazz, String altUnitName, String fieldName, DataSource annotation) {
         if (annotation.value().isEmpty()) {
             throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
         }
 
         DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
-        Optional<EntityManager> manager = service.getPersistenceUnit(annotation.value());
-        Object value = null;
+        Optional<IPersistenceUnit> peristenceUnit = service.getPersistenceUnit(annotation.value());
+        Object value;
 
-        if (clazz.isAssignableFrom(EntityManager.class)) {
-            if (!manager.isPresent()) {
-                logger.warn("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + annotation.value()));
-                return Optional.empty();
-            }
-            value = manager.get();
+        if (clazz.isAssignableFrom(Boolean.class)) {
+            value = peristenceUnit.isPresent();
 
-        } else if (clazz.isAssignableFrom(Boolean.class)) {
-            value = manager.isPresent();
+        } else if (!peristenceUnit.isPresent()) {
+            logger.warn("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + annotation.value()));
+            return Optional.empty();
 
+        } else if (clazz.isAssignableFrom(EntityManager.class)) {
+            value = peristenceUnit.get().getEntityManager();
+
+        } else if (clazz.isAssignableFrom(javax.sql.DataSource.class)) {
+            value = peristenceUnit.get().getDataSource();
+
+        } else {
+            logger.warn("PeristenceInjection failed! Illegal field type: {}", clazz.getName());
+            return Optional.empty();
         }
-
-        return Optional.ofNullable(clazz.cast(value));
+        return Optional.of(clazz.cast(value));
     }
 }

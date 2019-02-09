@@ -8,7 +8,7 @@ import de.fearnixx.jeak.plugin.PluginContainer;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.plugin.persistent.PluginRegistry;
 import de.fearnixx.jeak.reflect.IInjectionService;
-import de.fearnixx.jeak.reflect.InjectionManager;
+import de.fearnixx.jeak.reflect.InjectionService;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
@@ -66,7 +66,7 @@ public class JeakBot implements Runnable,IBot {
     private IConfigNode config;
 
     private PluginManager pMgr;
-    private InjectionManager injectionManager;
+    private InjectionService injectionService;
     private Map<String, PluginContainer> plugins;
 
     private Server server;
@@ -114,8 +114,8 @@ public class JeakBot implements Runnable,IBot {
         eventService = new EventService();
         taskService = new TaskService( (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService();
-        injectionManager = new InjectionManager(serviceManager);
-        injectionManager.setBaseDir(getBaseDirectory());
+        injectionService = new InjectionService(serviceManager);
+        injectionService.setBaseDir(getBaseDirectory());
         server = new Server(eventService);
         dataCache = new DataCache(server.getConnection(), eventService);
 
@@ -125,21 +125,21 @@ public class JeakBot implements Runnable,IBot {
         serviceManager.registerService(IEventService.class, eventService);
         serviceManager.registerService(ITaskService.class, taskService);
         serviceManager.registerService(ICommandService.class, commandService);
-        serviceManager.registerService(IInjectionService.class, injectionManager);
+        serviceManager.registerService(IInjectionService.class, injectionService);
         serviceManager.registerService(IServer.class, server);
         serviceManager.registerService(IDataCache.class, dataCache);
         serviceManager.registerService(IPermissionService.class, permissionService);
         serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
         serviceManager.registerService(DatabaseService.class, databaseService);
 
-        injectionManager.injectInto(serviceManager);
-        injectionManager.injectInto(eventService);
-        injectionManager.injectInto(taskService);
-        injectionManager.injectInto(commandService);
-        injectionManager.injectInto(server);
-        injectionManager.injectInto(permissionService);
-        injectionManager.injectInto(ts3permissionProvider);
-        injectionManager.injectInto(databaseService);
+        injectionService.injectInto(serviceManager);
+        injectionService.injectInto(eventService);
+        injectionService.injectInto(taskService);
+        injectionService.injectInto(commandService);
+        injectionService.injectInto(server);
+        injectionService.injectInto(permissionService);
+        injectionService.injectInto(ts3permissionProvider);
+        injectionService.injectInto(databaseService);
 
         taskService.start();
 
@@ -239,7 +239,7 @@ public class JeakBot implements Runnable,IBot {
             return false;
         }
 
-        injectionManager.injectInto(c.getPlugin(), id);
+        injectionService.injectInto(c.getPlugin(), id);
         eventService.registerListener(c.getPlugin());
         c.setState(PluginContainer.State.DONE);
         logger.debug("Initialized plugin {}", id);
