@@ -6,6 +6,4 @@ package de.fearnixx.jeak.reflect;
 public interface IInjectionService {
 
     <T> T injectInto(T victim);
-
-    <T> T injectInto(T victim, String unitName);
 }
