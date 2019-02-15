@@ -78,7 +78,12 @@ public class InjectionService implements IInjectionService {
         boolean accessState = field.isAccessible();
         field.setAccessible(true);
 
-        field.set(victim, value);
+        try {
+            field.set(victim, value);
+        } catch (IllegalArgumentException e) {
+            logger.warn("Failed to inject {} into field \"{}\" of class \"{}\" with type \"{}\"",
+                    value.getClass().getName(), field.getName(), victim.getClass().getName(), field.getType().getName(), e);
+        }
         if (logger.isDebugEnabled()) {
             logger.debug("Injected {} as {}", value.getClass().getCanonicalName(), field.getName());
         }

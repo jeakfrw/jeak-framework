@@ -7,24 +7,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceUnit;
 import java.lang.reflect.Field;
 import java.util.Optional;
 
-public class DataSourceProvider extends AbstractSpecialProvider<DataSource> {
+public class DataSourceProvider extends AbstractSpecialProvider<PersistenceUnit> {
 
     private static final Logger logger = LoggerFactory.getLogger(DataSourceProvider.class);
 
     @Override
-    public Class<DataSource> getAnnotationClass() {
-        return DataSource.class;
+    public Class<PersistenceUnit> getAnnotationClass() {
+        return PersistenceUnit.class;
     }
 
     @Override
     public Optional<Object> provideWith(InjectionContext ctx, Field field) {
-        final DataSource annotation = field.getAnnotation(DataSource.class);
+        final PersistenceUnit annotation = field.getAnnotation(PersistenceUnit.class);
         final Class<?> clazz = field.getType();
 
-        String unitName = annotation.value();
+        String unitName = annotation.name().isEmpty() ? annotation.unitName() : annotation.name();
         if (unitName.isEmpty()) {
             throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
         }

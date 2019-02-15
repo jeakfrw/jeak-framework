@@ -4,16 +4,17 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
-import org.hibernate.HibernateException;
+import de.mlessmann.confort.LoaderFactory;
+import de.mlessmann.confort.api.lang.IConfigLoader;
+import de.mlessmann.confort.config.FileConfig;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
-import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.Entity;
-import java.io.*;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -23,15 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class DatabaseService {
 
-    private static final Object CLASS_LOCK =  new Object();
+    private static final Object CLASS_LOCK = new Object();
     private static final List<Class<?>> ENTITIES = new CopyOnWriteArrayList<>();
-    private static final String HIBERNATE_BUILTIN_POOLSIZE = "hibernate.connection.pool_size";
-
-    private static final String PROPERTIES_DEFAULT_CONTENT =
-            "#Uncomment and fill out the following properties to enable the data source.\n"
-            + "!hibernate.connection.url=\"jdbc:mysql://myhost:myport/mydatabase\"\n"
-            + "!hibernate.connection.username=\"myuser\"\n"
-            + "!hibernate.connection.password=\"mypass\"\n";
 
     public static final Logger logger = LoggerFactory.getLogger(DatabaseService.class);
 
@@ -42,20 +36,20 @@ public class DatabaseService {
 
     private ClassLoader entityClassLoader;
     private BootstrapServiceRegistry baseRegistry;
-    private Map<String, PersistenceUnitAccessor> persistenceUnits;
+    private Map<String, HHPersistenceUnit> persistenceUnits;
 
     public DatabaseService(File dbDir) {
         this.dbDir = dbDir;
         persistenceUnits = new ConcurrentHashMap<>();
     }
 
-    private List<File> getPropertyFiles() {
+    private List<File> getDatabaseConfigurations() {
         List<File> list = new ArrayList<>();
         if (dbDir.isDirectory()) {
             File[] files = dbDir.listFiles();
             if (files != null) {
                 for (File file : files) {
-                    if (file.isFile() && file.canRead() && file.getName().endsWith(".properties")) {
+                    if (file.isFile() && file.canRead() && file.getName().endsWith(".json")) {
                         list.add(file);
                     }
                 }
@@ -65,7 +59,7 @@ public class DatabaseService {
     }
 
     public void onLoad() {
-        List<File> dataSourceFiles = getPropertyFiles();
+        List<File> dataSourceFiles = getDatabaseConfigurations();
 
         if (!dataSourceFiles.isEmpty()) {
             this.entityClassLoader = pluginManager.getPluginClassLoader();
@@ -82,55 +76,19 @@ public class DatabaseService {
     }
 
     private void createUnitFromFile(File dataSourceFile) {
-        String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 11);
-        logger.debug("Trying to construct persistence unit: {}", name);
+        String name = dataSourceFile.getName().substring(0, dataSourceFile.getName().length() - 5);
+        logger.info("Constructing persistence unit: {}", name);
 
-        try {
-            Properties dataSourceProps = new Properties();
-            dataSourceProps.load(new FileInputStream(dataSourceFile));
-            boolean valid = dataSourceProps.containsKey("hibernate.connection.url")
-                    && dataSourceProps.containsKey("hibernate.connection.username")
-                    && dataSourceProps.containsKey("hibernate.connection.password");
+        IConfigLoader loader = LoaderFactory.getLoader("application/json");
+        HHPersistenceUnit unit = new HHPersistenceUnit(
+                name,
+                new FileConfig(loader, dataSourceFile),
+                baseRegistry
+        );
 
-            if (valid) {
-                logger.info("Constructing persistence unit: {}", name);
-                StandardServiceRegistryBuilder registryBuilder = new StandardServiceRegistryBuilder(baseRegistry);
-
-                if (dataSourceProps.containsKey(HIBERNATE_BUILTIN_POOLSIZE)) {
-                    logger.warn("Hibernate built-in pool size configured. This is forbidden and will be removed.");
-                    dataSourceProps.remove(HIBERNATE_BUILTIN_POOLSIZE);
-                }
-
-                applyDefaults(registryBuilder);
-                dataSourceProps.forEach((k, v) -> registryBuilder.applySetting((String) k, v));
-                createAndRegisterUnit(name, registryBuilder);
-
-            } else {
-                logger.warn("Cannot construct persistence unit: {}!", name);
-                logger.warn("Make sure to set 'url', 'username' and 'password'. (hibernate.connection.X)");
-            }
-        } catch (IOException e) {
-            logger.error("Failed to create persistence units!", e);
+        if (unit.initialize()) {
+            persistenceUnits.put(name, unit);
         }
-    }
-
-    private void createAndRegisterUnit(String name, StandardServiceRegistryBuilder registryBuilder) {
-        try {
-            persistenceUnits.put(name, new PersistenceUnitAccessor(name, registryBuilder.build(), getClasses()));
-        } catch (HibernateException e) {
-            logger.error("Failed to create persistence unit: {}", name, e);
-        }
-    }
-
-    private void applyDefaults(StandardServiceRegistryBuilder registryBuilder) {
-        registryBuilder.applySetting("hibernate.format_sql", "true");
-        registryBuilder.applySetting("hibernate.connection.driver_class", "com.mysql.jdbc.Driver");
-        registryBuilder.applySetting("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        registryBuilder.applySetting("hibernate.c3p0.min_size", "1");
-        registryBuilder.applySetting("hibernate.c3p0.max_size", "20");
-        registryBuilder.applySetting("hibernate.c3p0.timeout", "300");
-        registryBuilder.applySetting("hibernate.c3p0.max_statements", 50);
-        registryBuilder.applySetting("hibernate.c3p0.idle_test_period", 3000);
     }
 
     private void checkClasses() {
@@ -148,7 +106,7 @@ public class DatabaseService {
         }
     }
 
-    private Set<Class<?>> getClasses() {
+    public static Set<Class<?>> getClasses() {
         synchronized (CLASS_LOCK) {
             return new HashSet<>(ENTITIES);
         }
@@ -171,17 +129,6 @@ public class DatabaseService {
         IPersistenceUnit rep = persistenceUnits.getOrDefault(unitName, null);
         if (rep != null) {
             return Optional.of(rep);
-        }
-
-        File dataSourceFile = new File(dbDir, unitName + ".properties");
-        if (!dataSourceFile.exists()) {
-            try (FileWriter out = new FileWriter(dataSourceFile)) {
-                out.write(PROPERTIES_DEFAULT_CONTENT);
-                out.flush();
-                logger.info("DataSource \"{}\" requested but not available. Created template file for you.", unitName);
-            } catch (IOException e) {
-                logger.info("Cannot pre-create the datasource file. You will have to create it yourself.", e);
-            }
         }
         return Optional.empty();
     }

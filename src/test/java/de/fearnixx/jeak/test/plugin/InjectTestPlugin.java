@@ -18,20 +18,10 @@ public class InjectTestPlugin extends AbstractTestPlugin {
     @Inject
     public IDataCache dataCache;
 
-    @Inject
-    @DataSource("test")
-    public Boolean dsTestExists;
-
-    @Inject
-    @DataSource("test")
-    public EntityManager dsTest;
-
     public InjectTestPlugin() {
         super();
         addTest("test_injected_configRef");
         addTest("test_injected_dataCache");
-        addTest("test_injected_entityMgr_b");
-        addTest("test_injected_entityMgr");
     }
 
     @Listener
@@ -42,11 +32,6 @@ public class InjectTestPlugin extends AbstractTestPlugin {
 
         if (dataCache != null) {
             success("test_injected_dataCache");
-        }
-
-        if (!dsTestExists || dsTest != null) {
-            success("test_injected_entityMgr_b");
-            success("test_injected_entityMgr");
         }
     }
 }

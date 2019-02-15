@@ -20,7 +20,11 @@ project.ext {
     log4jVersion = '2.11.1'
     hibernateVersion =  '5.3.6.Final'
     hikariCPVersion = '3.3.1'
-    mySQLConnectorVersion = '8.0.13'
+
+    connectors = [
+        mysql: '8.0.13',
+        mariadb: '2.1.2'
+    ]
 }
 
 repositories {
@@ -66,7 +70,8 @@ dependencies {
     runtime group: 'org.apache.logging.log4j', name: 'log4j-api', version: project.ext.log4jVersion
     runtime group: 'org.apache.logging.log4j', name: 'log4j-core', version: project.ext.log4jVersion
     runtime group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: project.ext.log4jVersion
-    runtime group: 'mysql', name: 'mysql-connector-java', version: project.ext.mySQLConnectorVersion
+    runtime group: 'mysql', name: 'mysql-connector-java', version: project.ext.connectors.mysql
+    runtime group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: project.ext.connectors.mariadb
 }
 
 build {
