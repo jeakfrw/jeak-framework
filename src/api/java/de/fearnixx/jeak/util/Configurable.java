@@ -111,4 +111,17 @@ public abstract class Configurable  {
             return false;
         }
     }
+
+    /**
+     * Saves the configuration and returns whether or not that was successful.
+     */
+    protected boolean saveConfig() {
+        try {
+            getConfigRef().save();
+            return true;
+        } catch (IOException e) {
+            logger.warn("Failed to save configuration!", e);
+            return false;
+        }
+    }
 }
