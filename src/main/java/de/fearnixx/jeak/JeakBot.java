@@ -115,7 +115,7 @@ public class JeakBot implements Runnable,IBot {
         taskService = new TaskService( (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService();
         injectionManager = new InjectionManager(serviceManager);
-        injectionManager.setBaseDir(getBaseDirectory());
+        injectionManager.setBaseDir();
         server = new Server(eventService);
         dataCache = new DataCache(server.getConnection(), eventService);
 
