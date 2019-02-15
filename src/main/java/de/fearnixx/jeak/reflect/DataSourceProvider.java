@@ -1,6 +1,8 @@
 package de.fearnixx.jeak.reflect;
 
-import de.fearnixx.jeak.database.DatabaseService;
+
+import de.fearnixx.jeak.service.database.DatabaseService;
+import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,25 +24,30 @@ public class DataSourceProvider extends AbstractSpecialProvider<DataSource> {
         final DataSource annotation = field.getAnnotation(DataSource.class);
         final Class<?> clazz = field.getType();
 
-        if (annotation.value().isEmpty()) {
+        String unitName = annotation.value();
+        if (unitName.isEmpty()) {
             throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
         }
 
         DatabaseService service = ctx.getServiceManager().provideUnchecked(DatabaseService.class);
-        Optional<EntityManager> manager = service.getEntityManager(annotation.value());
+        Optional<IPersistenceUnit> unit = service.getPersistenceUnit(unitName);
         Object value = null;
 
-        if (clazz.isAssignableFrom(EntityManager.class)) {
-            if (!manager.isPresent()) {
-                final IllegalStateException except = new IllegalStateException("Failed to find persistence unit: " + annotation.value());
-                logger.warn("PersistenceInjection failed", except);
-                return Optional.empty();
-            }
-            value = manager.get();
+        if (clazz.isAssignableFrom(Boolean.class)) {
+            value = unit.isPresent();
 
-        } else if (clazz.isAssignableFrom(Boolean.class)) {
-            value = manager.isPresent();
+        } else if (!unit.isPresent()) {
+            logger.warn("Persistence unit not available: {}", unitName);
+            return Optional.empty();
 
+        } else if (clazz.isAssignableFrom(IPersistenceUnit.class)) {
+            value = unit.get();
+
+        } else if (clazz.isAssignableFrom(javax.sql.DataSource.class)) {
+            value = unit.get().getDataSource();
+
+        } else if (clazz.isAssignableFrom(EntityManager.class)) {
+            value = unit.get().getEntityManager();
         }
 
         return Optional.ofNullable(clazz.cast(value));
