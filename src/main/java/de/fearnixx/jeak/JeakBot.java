@@ -7,8 +7,7 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.PluginContainer;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.plugin.persistent.PluginRegistry;
-import de.fearnixx.jeak.reflect.IInjectionService;
-import de.fearnixx.jeak.reflect.InjectionService;
+import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
@@ -114,8 +113,10 @@ public class JeakBot implements Runnable,IBot {
         eventService = new EventService();
         taskService = new TaskService( (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService();
-        injectionService = new InjectionService(serviceManager);
-        injectionService.setBaseDir(getBaseDirectory());
+
+        injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
+        injectionService.addProvider(new ConfigProvider(confDir));
+        injectionService.addProvider(new DataSourceProvider());
         server = new Server(eventService);
         dataCache = new DataCache(server.getConnection(), eventService);
 
@@ -239,7 +240,7 @@ public class JeakBot implements Runnable,IBot {
             return false;
         }
 
-        injectionService.injectInto(c.getPlugin(), id);
+        injectionService.injectInto(c.getPlugin());
         eventService.registerListener(c.getPlugin());
         c.setState(PluginContainer.State.DONE);
         logger.debug("Initialized plugin {}", id);

@@ -13,9 +13,7 @@ import de.fearnixx.jeak.teamspeak.except.QueryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Dispatches events based on incoming {@link de.fearnixx.jeak.event.IRawQueryEvent}s.
@@ -24,10 +22,19 @@ public class QueryEventDispatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryEventDispatcher.class);
 
+    private static final List<String> STD_CHANNELEDIT_PROPS = Arrays.asList(
+            PropertyKeys.Channel.ID,
+            PropertyKeys.TextMessage.SOURCE_ID,
+            PropertyKeys.TextMessage.SOURCE_NICKNAME,
+            PropertyKeys.TextMessage.SOURCE_UID,
+            "reasonid"
+    );
+
     @Inject
     public IEventService eventService;
 
     private int lastNotificationHash;
+    private IRawQueryEvent.IMessage.INotification lastEditEvent;
 
     public void dispatchNotification(IRawQueryEvent.IMessage.INotification event) {
         QueryEvent.Notification notification;
@@ -54,16 +61,26 @@ public class QueryEventDispatcher {
                 break;
 
             case EventCaptions.CHANNEL_EDITED:
-                notification = new QueryEvent.ChannelEdit();
+                notification = checkEditSuspend(event);
                 break;
 
             case EventCaptions.CHANNEL_EDITED_DESCR:
-                notification = new QueryEvent.ChannelEditDescr();
-                break;
+                checkHash = false;
+                if (editResume(event)) {
+                    return;
+                } else {
+                    notification = new QueryEvent.ChannelEditDescr();
+                    break;
+                }
 
             case EventCaptions.CHANNEL_EDITED_PASSWORD:
-                notification = new QueryEvent.ChannelPasswordChanged();
-                break;
+                checkHash = false;
+                if (editResume(event)) {
+                    return;
+                } else {
+                    notification = new QueryEvent.ChannelPasswordChanged();
+                    break;
+                }
 
             case EventCaptions.CHANNEL_DELETED:
                 notification = new QueryEvent.ChannelDelete();
@@ -77,10 +94,17 @@ public class QueryEventDispatcher {
 
                 int mode = Integer.parseInt(strMode);
                 switch (mode) {
-                    case 1: notification = new QueryEvent.ClientTextMessage(); break;
-                    case 2: notification = new QueryEvent.ChannelTextMessage(); break;
-                    case 3: notification = new QueryEvent.ServerTextMessage(); break;
-                    default: throw new QueryException("Unknown message targetMode: " + mode);
+                    case 1:
+                        notification = new QueryEvent.ClientTextMessage();
+                        break;
+                    case 2:
+                        notification = new QueryEvent.ChannelTextMessage();
+                        break;
+                    case 3:
+                        notification = new QueryEvent.ServerTextMessage();
+                        break;
+                    default:
+                        throw new QueryException("Unknown message targetMode: " + mode);
                 }
                 break;
 
@@ -88,7 +112,11 @@ public class QueryEventDispatcher {
                 throw new QueryException("Unknown event: " + caption);
         }
 
-        if (checkHash && hashCode == lastNotificationHash) {
+        // === Possible valid skips === //
+        if (notification == null) {
+            logger.debug("No event type determined. Skipping dispatching.");
+            return;
+        } else if (checkHash && hashCode == lastNotificationHash) {
             logger.debug("Dropping duplicate {}", caption);
             return;
         }
@@ -105,6 +133,38 @@ public class QueryEventDispatcher {
             notification.merge(msg);
             eventService.fireEvent(notification);
         } while ((msg = msg.getNext()) != null);
+    }
+
+    private QueryEvent.ChannelEdit checkEditSuspend(IRawQueryEvent.IMessage.INotification event) {
+        final Map<String, String> deltas = new HashMap<>();
+        boolean deltaFound = false;
+        for (String key : event.getValues().keySet()) {
+            if (!STD_CHANNELEDIT_PROPS.contains(key)) {
+                logger.debug("ChannelEdit delta found: {}", key);
+                deltaFound = true;
+                deltas.put(key, event.getValues().get(key));
+            }
+        }
+
+        lastEditEvent = event;
+        if (!deltaFound) {
+            logger.debug("Intermitting channelEdit event. No delta found.");
+            return null;
+        } else {
+            return new QueryEvent.ChannelEdit(deltas);
+        }
+    }
+
+    private boolean editResume(IRawQueryEvent.IMessage.INotification event) {
+        if (lastEditEvent == null) {
+            logger.error("Failed to resume channelEdit event! No pending event found!");
+            return true;
+        } else {
+            // Merge with last event
+            // This allows us to capture multi-edits across normal properties and descr/password
+            event.merge(lastEditEvent);
+            return false;
+        }
     }
 
     public void dispatchAnswer(IRawQueryEvent.IMessage.IAnswer event) {

@@ -9,7 +9,9 @@ import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by MarkL4YG on 01-Feb-18
@@ -139,6 +141,21 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ChannelEdit extends TargetChannel implements INotification.IChannelEdited {
+
+        private final Map<String, String> deltas;
+
+        public ChannelEdit(Map<String, String> deltas) {
+            this.deltas = Collections.unmodifiableMap(deltas);
+        }
+
+        protected ChannelEdit() {
+            this.deltas = Collections.emptyMap();
+        }
+
+        @Override
+        public Map<String, String> getChanges() {
+            return deltas;
+        }
     }
 
     public static class ChannelEditDescr extends ChannelEdit implements INotification.IChannelEditedDescription {

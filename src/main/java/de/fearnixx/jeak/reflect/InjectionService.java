@@ -1,22 +1,12 @@
 package de.fearnixx.jeak.reflect;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.service.database.DatabaseService;
-import de.fearnixx.jeak.service.IServiceManager;
-import de.fearnixx.jeak.service.database.IPersistenceUnit;
-import de.mlessmann.confort.api.IConfig;
-import de.mlessmann.confort.api.IConfigNode;
-import de.mlessmann.confort.api.except.ParseException;
-import de.mlessmann.confort.config.FileConfig;
-import de.mlessmann.confort.lang.json.JSONConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.EntityManager;
-import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.nio.file.Path;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -28,193 +18,89 @@ public class InjectionService implements IInjectionService {
 
     private static final Logger logger = LoggerFactory.getLogger(InjectionService.class);
 
-    private IServiceManager serviceManager;
+    private final FieldSearch searchAlgo = new FieldSearch();
+    private final InjectionContext injectionContext;
+    private final List<AbstractSpecialProvider<?>> providers = new LinkedList<>();
+    private final ServiceBasedProvider fallbackProvider = new ServiceBasedProvider(this);
 
-    private String unitName;
-
-    private File baseDir;
-
-    public InjectionService(IServiceManager serviceManager) {
-        this.serviceManager = serviceManager;
+    public InjectionService(InjectionContext injectionContext) {
+        this.injectionContext = injectionContext;
     }
 
-    public void setBaseDir(File baseDir) {
-        this.baseDir = baseDir;
-    }
-
-    private void setUnitName(String unitName) {
-        this.unitName = unitName;
+    public void addProvider(AbstractSpecialProvider<?> provider) {
+        if (!providers.contains(provider)) {
+            providers.add(provider);
+        }
     }
 
     @Override
     public <T> T injectInto(T victim) {
-        return injectInto(victim, null);
-    }
-
-    public <T> T injectInto(T victim, String unitName) {
-        // Logging
-        logger.debug("Running injections on object of class: {}", victim.getClass().getName());
+        if (logger.isDebugEnabled()) {
+            logger.debug("Running injections on object of class: {}", victim.getClass().getName());
+        }
 
         Class<?> clazz = victim.getClass();
-        Field[] fields = clazz.getFields();
+        JeakBotPlugin plugin = clazz.getAnnotation(JeakBotPlugin.class);
+        if (plugin != null && proxySubContextInjection(victim, plugin) != null) {
+            return victim;
+        }
 
+        final List<Field> fields = searchAlgo.getAnnotatedFields(clazz);
         for (Field field : fields) {
-            Inject inject = field.getAnnotation(Inject.class);
-            if (inject == null)
-                continue;
-
-            // Maybe a config field
-            Config config = field.getAnnotation(Config.class);
-
-            // Maybe a datasource field
-            DataSource dataSource = field.getAnnotation(DataSource.class);
-
-            // Field information
-            Class<?> type = field.getType();
-            String fieldName = field.getName();
+            // Check if there's a special injection to run
+            final Optional<AbstractSpecialProvider<?>> optSpecialProvider =
+                    providers.stream()
+                            .filter(provider -> provider.test(field))
+                            .findFirst();
 
             // Evaluate value
             Optional<?> optTarget;
-            if (config != null)
-                optTarget = provideConfigWith(clazz, type, unitName, fieldName, config);
-            else if (dataSource != null)
-                optTarget = provideDataSourceWith(clazz, type, unitName, fieldName, dataSource);
-            else
-                optTarget = provideWith(clazz, type, unitName, fieldName);
-
-            // Log message is provided by #provide
-            if (!optTarget.isPresent())
-                continue;
-
-            // Access state
-            boolean accessState = field.isAccessible();
-            field.setAccessible(true);
-
-            try {
-                field.set(victim, optTarget.get());
-                logger.debug("Injected {} as {}", type.getCanonicalName(), field.getName());
-            } catch (IllegalAccessException e) {
-                logger.error("Failed injection of class {} into object of class {}", type, clazz.toString(), e);
+            if (optSpecialProvider.isPresent()) {
+                optTarget = optSpecialProvider.get().provideWith(injectionContext, field);
+            } else {
+                optTarget = fallbackProvider.provideWith(injectionContext, field);
             }
 
-            // Reset access state
-            field.setAccessible(accessState);
+            // Inject the value
+            optTarget.ifPresent(value -> {
+                try {
+                    setFieldValue(victim, field, value);
+                } catch (IllegalAccessException e) {
+                    logger.error("Failed injection of class {} into object of class {}", field.getType(), clazz.toString(), e);
+                }
+            });
         }
         return victim;
     }
 
-    public <T> Optional<T> provide(Class<T> clazz) {
-        Optional<T> svcResult = serviceManager.provide(clazz);
-        if (svcResult.isPresent()) {
-            return svcResult;
+    private <T> void setFieldValue(T victim, Field field, Object value) throws IllegalAccessException {
+        // Access state
+        boolean accessState = field.isAccessible();
+        field.setAccessible(true);
+
+        field.set(victim, value);
+        if (logger.isDebugEnabled()) {
+            logger.debug("Injected {} as {}", value.getClass().getCanonicalName(), field.getName());
         }
-        logger.warn("Failed to provide injection for: {}", clazz.getName());
-        return Optional.empty();
+
+        // Reset access state
+        field.setAccessible(accessState);
     }
 
-    private <T> Optional<T> provideWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName) {
-        Optional<T> result = serviceManager.provide(clazz);
-        if (result.isPresent()) {
-            if (!(result.get() instanceof IInjectionService)) {
-                return result;
-
-            } else {
-                InjectionService value;
-                String subUnitName = unitName != null ? unitName : altUnitName;
-                if (!UNIT_FULLY_QUALIFIED && subUnitName != null && subUnitName.contains(".")) {
-                    subUnitName = subUnitName.substring(subUnitName.lastIndexOf('.') + 1);
-                }
-
-                value = new InjectionService(serviceManager);
-                value.setBaseDir(baseDir);
-                value.setUnitName(subUnitName);
-                return Optional.of(clazz.cast(value));
-            }
+    private <T> T proxySubContextInjection(T victim, JeakBotPlugin plugin) {
+        String id = plugin.id();
+        if (id.contains(".")) {
+            id = id.substring(id.lastIndexOf('.') + 1);
         }
 
-        return Optional.empty();
-    }
-
-    private <T> Optional<T> provideConfigWith(Class<?> victimClazz, Class<T> clazz, String altUnitName, String fieldName, Config annotation) {
-        Object value = null;
-        String unitName = this.unitName != null ? this.unitName : altUnitName;
-
-        String fileName = annotation.id();
-        if (fileName.isEmpty())
-            fileName = unitName;
-
-        if (fileName == null) {
-            fileName = victimClazz.getName() + '.' + fieldName;
-            fileName = fileName.replaceAll("(?i)loader", "");
-            fileName = fileName.replaceAll("(?i)config", "");
+        if (!id.equals(injectionContext.getContextId())) {
+            logger.debug("Proxying injection context: {}", id);
+            final InjectionContext childCtx = injectionContext.getChild(id);
+            final InjectionService child = new InjectionService(childCtx);
+            providers.forEach(child::addProvider);
+            return child.injectInto(victim);
         }
 
-        File baseDir = new File(this.baseDir, "config");
-        if (unitName != null)
-            baseDir = new File(baseDir, unitName);
-
-        if (!annotation.category().isEmpty())
-            baseDir = new File(baseDir, annotation.category());
-
-        if (!baseDir.isDirectory() && !baseDir.mkdirs())
-            throw new RuntimeException("Failed to create target directory: " + baseDir.getPath());
-
-        File configFile = new File(baseDir, fileName + ".json");
-
-        if (clazz.isAssignableFrom(IConfig.class)) {
-            value = new FileConfig(new JSONConfigLoader(), configFile);
-
-        } else if (clazz.isAssignableFrom(IConfigNode.class)) {
-            logger.warn("DEPRECATION in {}: Injecting ConfigNode(s) is deprecated! Use de.mlessmann.confort.api.IConfig instead.", unitName);
-            IConfig config = new FileConfig(new JSONConfigLoader(), configFile);
-            try {
-                config.load();
-                value = config.getRoot();
-            } catch (IOException | ParseException e) {
-                logger.error("Failed to load configuration for {}. Cannot inject.", unitName, e);
-                return Optional.empty();
-            }
-
-        } else if (clazz.isAssignableFrom(File.class)) {
-            value = configFile;
-
-        } else if (clazz.isAssignableFrom(Path.class)) {
-            value = configFile.toPath();
-
-        }
-
-        return Optional.ofNullable(clazz.cast(value));
-    }
-
-    private <T> Optional<T> provideDataSourceWith(Class<?> victimClass, Class<T> clazz, String altUnitName, String fieldName, DataSource annotation) {
-        if (annotation.value().isEmpty()) {
-            throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
-        }
-
-        DatabaseService service = serviceManager.provideUnchecked(DatabaseService.class);
-        Optional<IPersistenceUnit> peristenceUnit = service.getPersistenceUnit(annotation.value());
-        Object value;
-
-        if (clazz.isAssignableFrom(Boolean.class)) {
-            value = peristenceUnit.isPresent();
-
-        } else if (!peristenceUnit.isPresent()) {
-            logger.warn("PersistenceInjection failed", new IllegalStateException("Failed to find persistence unit: " + annotation.value()));
-            return Optional.empty();
-
-        } else if (clazz.isAssignableFrom(IPersistenceUnit.class)) {
-            value = peristenceUnit.get();
-
-        } else if (clazz.isAssignableFrom(EntityManager.class)) {
-            value = peristenceUnit.get().getEntityManager();
-
-        } else if (clazz.isAssignableFrom(javax.sql.DataSource.class)) {
-            value = peristenceUnit.get().getDataSource();
-
-        } else {
-            logger.warn("PeristenceInjection failed! Illegal field type: {}", clazz.getName());
-            return Optional.empty();
-        }
-        return Optional.of(clazz.cast(value));
+        return null;
     }
 }

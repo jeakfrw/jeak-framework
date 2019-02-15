@@ -52,6 +52,7 @@ sourceSets {
 dependencies {
     apiCompile group: 'de.mlessmann', name: 'confort-api', version: project.ext.confortVersion
     apiCompile group: 'org.hibernate', name: 'hibernate-core', version: project.ext.hibernateVersion
+    apiCompile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
 
     compile sourceSets.api.output
     compile group: 'de.mlessmann', name: 'confort', version: project.ext.confortVersion

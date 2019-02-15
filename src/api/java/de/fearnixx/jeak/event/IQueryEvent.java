@@ -7,6 +7,7 @@ import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base interface for all events fired by an {@link IQueryConnection} instance.
@@ -128,6 +129,12 @@ public interface IQueryEvent extends IEvent {
         }
 
         interface IChannelEdited extends ITargetChannel {
+
+            /**
+             * Channel properties and their new values.
+             * @implNote changes for {@link IChannelEditedDescription} and {@link IChannelPasswordChanged} are always empty!
+             */
+            Map<String, String> getChanges();
         }
 
         interface IChannelEditedDescription extends IChannelEdited {

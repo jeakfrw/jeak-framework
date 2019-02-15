@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.cache;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.EventAbortException;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
@@ -26,6 +27,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class DataCache implements IDataCache {
 
+    private static final int CLIENT_REFRESH_INVERVAL = Main.getProperty("jeak.cache.clientRefresh", 60);
+    private static final int CHANNEL_REFRESH_INTERVAL = Main.getProperty("jeak.cache.channelRefresh", 180);
     private static final Logger logger = LoggerFactory.getLogger(DataCache.class);
 
     private final Object LOCK = new Object();
@@ -35,6 +38,7 @@ public class DataCache implements IDataCache {
 
     private Map<Integer, TS3Client> clientCache;
     private Map<Integer, TS3Channel> channelCache;
+    private ChannelUpdateWatcher channelUpdateWatcher = new ChannelUpdateWatcher(this);
 
     public DataCache(IQueryConnection connection, IEventService eventService) {
         this.connection = connection;
@@ -58,7 +62,7 @@ public class DataCache implements IDataCache {
             .build();
     private final ITask clientListTask = ITask.builder()
             .name("cache.clientRefresh")
-            .interval(60L, TimeUnit.SECONDS)
+            .interval(CLIENT_REFRESH_INVERVAL, TimeUnit.SECONDS)
             .runnable(() -> connection.sendRequest(clientListRequest))
             .build();
 
@@ -74,13 +78,14 @@ public class DataCache implements IDataCache {
             .build();
     private final ITask channelListTask = ITask.builder()
             .name("cache.channelrefresh")
-            .interval(3L, TimeUnit.MINUTES)
+            .interval(CHANNEL_REFRESH_INTERVAL, TimeUnit.SECONDS)
             .runnable(() -> connection.sendRequest(channelListRequest))
             .build();
 
     public void scheduleTasks(TaskService tm) {
         tm.runTask(clientListTask);
         tm.runTask(channelListTask);
+        eventService.registerListener(channelUpdateWatcher);
     }
 
 
@@ -99,9 +104,21 @@ public class DataCache implements IDataCache {
         }
     }
 
+    Map<Integer, TS3Client> getUnsafeClientMap() {
+        synchronized (LOCK) {
+            return clientCache;
+        }
+    }
+
     public Map<Integer, IChannel> getChannelMap() {
         synchronized (LOCK) {
             return Collections.unmodifiableMap(channelCache);
+        }
+    }
+
+    Map<Integer, TS3Channel> getUnsafeChannelMap() {
+        synchronized (LOCK) {
+            return channelCache;
         }
     }
 
@@ -204,7 +221,7 @@ public class DataCache implements IDataCache {
                         clientID, PropertyKeys.Client.CHANNEL_ID, fromChannelId, toChannelId);
 
                 // Set new channel
-                client.setProperty(PropertyKeys.Client.CHANNEL_ID, fromChannelId.toString());
+                client.setProperty(PropertyKeys.Client.CHANNEL_ID, toChannelId.toString());
                 // Set new client count - FROM
                 fromChannel.setProperty(
                         PropertyKeys.Channel.CLIENT_COUNT,
