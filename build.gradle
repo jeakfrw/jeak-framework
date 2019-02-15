@@ -19,6 +19,7 @@ project.ext {
     confortVersion = '0.3.4-SNAPSHOT'
     log4jVersion = '2.11.1'
     hibernateVersion =  '5.3.6.Final'
+    hikariCPVersion = '3.3.1'
     mySQLConnectorVersion = '8.0.13'
 }
 
@@ -59,13 +60,13 @@ dependencies {
     compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
     compile group: 'org.hibernate', name: 'hibernate-core', version: project.ext.hibernateVersion
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+    compile group: 'com.zaxxer', name: 'HikariCP', version: project.ext.hikariCPVersion
 
     runtime group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.1'
     runtime group: 'org.apache.logging.log4j', name: 'log4j-api', version: project.ext.log4jVersion
     runtime group: 'org.apache.logging.log4j', name: 'log4j-core', version: project.ext.log4jVersion
     runtime group: 'org.apache.logging.log4j', name: 'log4j-slf4j-impl', version: project.ext.log4jVersion
     runtime group: 'mysql', name: 'mysql-connector-java', version: project.ext.mySQLConnectorVersion
-    runtime group: 'org.hibernate', name: 'hibernate-c3p0', version: project.ext.hibernateVersion
 }
 
 build {
