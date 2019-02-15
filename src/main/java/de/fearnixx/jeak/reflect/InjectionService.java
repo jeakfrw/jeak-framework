@@ -40,8 +40,12 @@ public class InjectionService implements IInjectionService {
         }
 
         Class<?> clazz = victim.getClass();
-        final List<Field> fields = searchAlgo.getAnnotatedFields(clazz);
+        JeakBotPlugin plugin = clazz.getAnnotation(JeakBotPlugin.class);
+        if (plugin != null && proxySubContextInjection(victim, plugin) != null) {
+            return victim;
+        }
 
+        final List<Field> fields = searchAlgo.getAnnotatedFields(clazz);
         for (Field field : fields) {
             // Check if there's a special injection to run
             final Optional<AbstractSpecialProvider<?>> optSpecialProvider =
@@ -83,10 +87,20 @@ public class InjectionService implements IInjectionService {
         field.setAccessible(accessState);
     }
 
-    public InjectionService getChild(String contextId) {
-        final InjectionContext childCtx = injectionContext.getChild(contextId);
-        final InjectionService child = new InjectionService(childCtx);
-        providers.forEach(child::addProvider);
-        return child;
+    private <T> T proxySubContextInjection(T victim, JeakBotPlugin plugin) {
+        String id = plugin.id();
+        if (id.contains(".")) {
+            id = id.substring(id.lastIndexOf('.') + 1);
+        }
+
+        if (!id.equals(injectionContext.getContextId())) {
+            logger.debug("Proxying injection context: {}", id);
+            final InjectionContext childCtx = injectionContext.getChild(id);
+            final InjectionService child = new InjectionService(childCtx);
+            providers.forEach(child::addProvider);
+            return child.injectInto(victim);
+        }
+
+        return null;
     }
 }

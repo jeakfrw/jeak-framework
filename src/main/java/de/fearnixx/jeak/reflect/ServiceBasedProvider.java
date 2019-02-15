@@ -5,10 +5,10 @@ import java.util.Optional;
 
 public class ServiceBasedProvider {
 
-    private InjectionService manager;
+    private InjectionService injectionService;
 
-    public ServiceBasedProvider(InjectionService manager) {
-        this.manager = manager;
+    public ServiceBasedProvider(InjectionService injectionService) {
+        this.injectionService = injectionService;
     }
 
     @SuppressWarnings("squid:S1452")
@@ -17,28 +17,13 @@ public class ServiceBasedProvider {
         Optional<?> result = ctx.getServiceManager().provide(clazz);
         if (result.isPresent()) {
             if (result.get() instanceof IInjectionService) {
-                InjectionService value = provideInjectionSvc(ctx, field);
-                return Optional.of(clazz.cast(value));
+                return Optional.of(clazz.cast(injectionService));
             } else {
                 return result;
             }
         }
 
         return Optional.empty();
-    }
-
-    protected InjectionService provideInjectionSvc(InjectionContext ctx, Field field) {
-        final String ctxId = checkForCtxId(field.getDeclaringClass())
-                .map(id -> {
-                    if (id.contains(".")) {
-                        return id.substring(id.lastIndexOf('.') + 1);
-                    } else {
-                        return id;
-                    }
-                })
-                .orElse(ctx.getContextId());
-
-        return manager.getChild(ctxId);
     }
 
     private Optional<String> checkForCtxId(Class<?> clazz) {
