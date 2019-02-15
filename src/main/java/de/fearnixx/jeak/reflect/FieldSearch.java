@@ -28,6 +28,7 @@ public class FieldSearch {
             return;
         }
 
+        final List<Field> andBelow = new LinkedList<>();
         for (Field field : cls.getDeclaredFields()) {
             Inject annotation = field.getAnnotation(Inject.class);
 
@@ -42,9 +43,10 @@ public class FieldSearch {
 
         final Class<?> superClass = cls.getSuperclass();
         if (superClass != null && !superClass.isSynthetic()) {
-            aggregateFields(superClass, list);
+            aggregateFields(superClass, andBelow);
         }
-        toCache(cls, new LinkedList<>(list));
+        toCache(cls, new LinkedList<>(andBelow));
+        list.addAll(andBelow);
     }
 
     private List<Field> fromCache(Class<?> cls) {

@@ -1,0 +1,11 @@
+{
+  "host": "localhost",
+  "port": "3306",
+  "schema": "jeakbot",
+  "user": "jeakbot-user",
+  "pass": "secret",
+  "driver": "mariadb",
+  "dataSourceOpts": {
+
+  }
+}

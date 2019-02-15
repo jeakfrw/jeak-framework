@@ -11,9 +11,11 @@ import java.lang.annotation.Target;
  * Supported field types:
  * * {@link javax.persistence.EntityManager}
  * * {@link Boolean} // Will return whether or not this DataSource is available
+ * @deprecated Use {@link javax.persistence.PersistenceUnit} instead. (Also avoids naming collision with JPA.)
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
+@Deprecated
 public @interface DataSource {
 
     /**

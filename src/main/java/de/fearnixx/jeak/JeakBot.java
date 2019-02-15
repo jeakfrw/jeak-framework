@@ -1,6 +1,6 @@
 package de.fearnixx.jeak;
 
-import de.fearnixx.jeak.database.DatabaseService;
+import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.event.EventService;
 import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
