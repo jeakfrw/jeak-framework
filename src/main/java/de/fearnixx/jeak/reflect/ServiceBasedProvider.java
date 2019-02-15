@@ -5,9 +5,9 @@ import java.util.Optional;
 
 public class ServiceBasedProvider {
 
-    private InjectionManager manager;
+    private InjectionService manager;
 
-    public ServiceBasedProvider(InjectionManager manager) {
+    public ServiceBasedProvider(InjectionService manager) {
         this.manager = manager;
     }
 
@@ -17,7 +17,7 @@ public class ServiceBasedProvider {
         Optional<?> result = ctx.getServiceManager().provide(clazz);
         if (result.isPresent()) {
             if (result.get() instanceof IInjectionService) {
-                InjectionManager value = provideInjectionSvc(ctx, field);
+                InjectionService value = provideInjectionSvc(ctx, field);
                 return Optional.of(clazz.cast(value));
             } else {
                 return result;
@@ -27,7 +27,7 @@ public class ServiceBasedProvider {
         return Optional.empty();
     }
 
-    protected InjectionManager provideInjectionSvc(InjectionContext ctx, Field field) {
+    protected InjectionService provideInjectionSvc(InjectionContext ctx, Field field) {
         final String ctxId = checkForCtxId(field.getDeclaringClass())
                 .map(id -> {
                     if (id.contains(".")) {

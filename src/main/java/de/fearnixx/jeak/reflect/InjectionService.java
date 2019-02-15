@@ -1,22 +1,10 @@
 package de.fearnixx.jeak.reflect;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.database.DatabaseService;
-import de.mlessmann.confort.api.IConfig;
-import de.mlessmann.confort.api.IConfigNode;
-import de.mlessmann.confort.api.except.ParseException;
-import de.mlessmann.confort.config.FileConfig;
-import de.mlessmann.confort.lang.json.JSONConfigLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.persistence.EntityManager;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.nio.file.Path;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -24,18 +12,18 @@ import java.util.Optional;
 /**
  * Created by MarkL4YG on 02-Feb-18
  */
-public class InjectionManager implements IInjectionService {
+public class InjectionService implements IInjectionService {
 
     public static final Boolean UNIT_FULLY_QUALIFIED = Main.getProperty("bot.inject.fqunit", Boolean.FALSE);
 
-    private static final Logger logger = LoggerFactory.getLogger(InjectionManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(InjectionService.class);
 
     private final FieldSearch searchAlgo = new FieldSearch();
     private final InjectionContext injectionContext;
     private final List<AbstractSpecialProvider<?>> providers = new LinkedList<>();
     private final ServiceBasedProvider fallbackProvider = new ServiceBasedProvider(this);
 
-    public InjectionManager(InjectionContext injectionContext) {
+    public InjectionService(InjectionContext injectionContext) {
         this.injectionContext = injectionContext;
     }
 
@@ -95,9 +83,9 @@ public class InjectionManager implements IInjectionService {
         field.setAccessible(accessState);
     }
 
-    public InjectionManager getChild(String contextId) {
+    public InjectionService getChild(String contextId) {
         final InjectionContext childCtx = injectionContext.getChild(contextId);
-        final InjectionManager child = new InjectionManager(childCtx);
+        final InjectionService child = new InjectionService(childCtx);
         providers.forEach(child::addProvider);
         return child;
     }
