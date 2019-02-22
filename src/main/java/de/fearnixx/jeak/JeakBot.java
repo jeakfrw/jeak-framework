@@ -177,10 +177,11 @@ public class JeakBot implements Runnable,IBot {
         String user = config.getNode("user").asString();
         String pass = config.getNode("pass").asString();
         Integer ts3InstID = config.getNode("instance").asInteger();
+        Boolean useSSL = config.getNode("ssl").optBoolean(false);
         eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
 
         try {
-            server.connect(host, port, user, pass, ts3InstID);
+            server.connect(host, port, user, pass, ts3InstID, useSSL);
         } catch (QueryConnectException e) {
             logger.error("Failed to start bot: TS3INIT failed", e);
             shutdown();

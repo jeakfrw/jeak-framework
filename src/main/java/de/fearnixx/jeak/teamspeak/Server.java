@@ -9,6 +9,8 @@ import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -38,7 +40,7 @@ public class Server implements IServer {
     }
 
     @SuppressWarnings("squid:S2095")
-    public void connect(String host, int port, String user, String pass, int instID) {
+    public void connect(String host, int port, String user, String pass, int instID, boolean ssl) {
         if (this.host != null) {
             throw new IllegalStateException("Can only connect a server once!");
         }
@@ -46,7 +48,15 @@ public class Server implements IServer {
         try {
             this.host = host;
             logger.info("Trying to connect to {}:{}", host, port);
-            Socket socket = new Socket(host, port);
+
+            Socket socket;
+            if (!ssl) {
+                socket = new Socket(host, port);
+            } else {
+                logger.info("SSL: Enabled.");
+                socket = SSLSocketFactory.getDefault().createSocket(host, port);
+                ((SSLSocket) socket).startHandshake();
+            }
             socket.setSoTimeout(TS3Connection.SOCKET_TIMEOUT_MILLIS);
 
             injectService.injectInto(mainConnection);
