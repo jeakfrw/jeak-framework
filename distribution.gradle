@@ -13,6 +13,7 @@ task zipDistribution(type: Zip) {
     }
     into('utils') {
         from 'src/deploy/utils'
+        fileMode = 0755
         exclude { f -> f.file.name.endsWith('.jks') || f.file.name.endsWith('.pem') || f.file.name.endsWith('.der') }
     }
     into('plugins') {
@@ -33,6 +34,7 @@ task tarDistribution(type: Tar) {
     }
     into('utils') {
         from 'src/deploy/utils'
+        fileMode = 0755
         exclude { f -> f.file.name.endsWith('.jks') || f.file.name.endsWith('.pem') || f.file.name.endsWith('.der') }
     }
     into('plugins'){
