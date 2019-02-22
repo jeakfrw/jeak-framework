@@ -31,6 +31,10 @@ task tarDistribution(type: Tar) {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }
+    into('utils') {
+        from 'src/deploy/utils'
+        exclude { f -> f.file.name.endsWith('.jks') || f.file.name.endsWith('.pem') || f.file.name.endsWith('.der') }
+    }
     into('plugins'){
         from 'run/.gitkeep'
     }
