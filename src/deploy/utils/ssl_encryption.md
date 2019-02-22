@@ -5,6 +5,8 @@ This way, the main connection would be secured and SSL termination can be perfor
   
 ## Configuration
 
+
+### Nginx (SSL termination proxy)
 ```nginx
 stream {
   server {
@@ -18,3 +20,11 @@ stream {
 ```
 Please note: In this configuration, the local port is equivalent to the remote port, because it is assumed that the listening IPs are statically configured.  
 If you want to use wildcard IPs for the server configurations (``0.0.0.0``, ``::1``), make sure to change one of the ports.  
+
+### JeakBot
+
+```
+-Djavax.net.ssl.trustStore=../src/deploy/utils/trustedcerts.jks
+-Djavax.net.ssl.keyStorePassword=password
+-Djavax.net.debug=ssl
+```
