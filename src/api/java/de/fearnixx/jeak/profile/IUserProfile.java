@@ -21,7 +21,18 @@ public interface IUserProfile {
      * List of TeamSpeak identities linked to this profile.
      * As provided by {@link IClient#getClientUniqueID()}
      */
-    List<String> getTSIdentities();
+    List<IUserIdentity> getTSIdentities();
+
+    /**
+     * List of identities linked to this profile for a specific service.
+     */
+    List<IUserIdentity> getLinkedIdentities(String serviceId);
+
+    /**
+     * List of identities linked to this profile.
+     * Includes identities from all services.
+     */
+    List<IUserIdentity> getLinkedIdentities();
 
     /**
      * Returns the value stored for an option.
