@@ -53,6 +53,7 @@ public class Server implements IServer {
             if (!ssl) {
                 socket = new Socket(host, port);
             } else {
+                logger.info("SSL: Enabled.");
                 socket = SSLSocketFactory.getDefault().createSocket(host, port);
                 ((SSLSocket) socket).startHandshake();
             }
