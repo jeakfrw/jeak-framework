@@ -21,6 +21,7 @@ import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
+import de.fearnixx.jeak.teamspeak.TS3ConnectionTask;
 import de.fearnixx.jeak.teamspeak.cache.DataCache;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
@@ -68,6 +69,7 @@ public class JeakBot implements Runnable,IBot {
     private InjectionService injectionService;
     private Map<String, PluginContainer> plugins;
 
+    private TS3ConnectionTask connectionTask = new TS3ConnectionTask();
     private Server server;
     private DataCache dataCache;
 
@@ -117,8 +119,8 @@ public class JeakBot implements Runnable,IBot {
         injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
         injectionService.addProvider(new ConfigProvider(confDir));
         injectionService.addProvider(new DataSourceProvider());
-        server = new Server(eventService);
-        dataCache = new DataCache(server.getConnection(), eventService);
+        server = new Server();
+        dataCache = new DataCache(eventService);
 
         serviceManager.registerService(PluginManager.class, pMgr);
         serviceManager.registerService(IBot.class, this);
@@ -138,11 +140,16 @@ public class JeakBot implements Runnable,IBot {
         injectionService.injectInto(taskService);
         injectionService.injectInto(commandService);
         injectionService.injectInto(server);
+        injectionService.injectInto(connectionTask);
         injectionService.injectInto(permissionService);
         injectionService.injectInto(ts3permissionProvider);
         injectionService.injectInto(databaseService);
+        injectionService.injectInto(dataCache);
 
         taskService.start();
+        eventService.registerListener(connectionTask);
+        eventService.registerListeners(commandService);
+        eventService.registerListener(dataCache);
 
         pMgr.setIncludeCP(true);
         pMgr.load();
@@ -158,7 +165,8 @@ public class JeakBot implements Runnable,IBot {
         eventService.fireEvent(new BotStateEvent.PreInitializeEvent().setBot(this));
 
         // Initialize Bot configuration and Plugins
-        BotStateEvent.Initialize event = ((BotStateEvent.Initialize) new BotStateEvent.Initialize().setBot(this));
+        BotStateEvent.Initialize event = new BotStateEvent.Initialize();
+        event.setBot(this);
         initializeConfiguration(event);
         if (event.isCanceled()) {
             shutdown();
@@ -178,30 +186,15 @@ public class JeakBot implements Runnable,IBot {
         String pass = config.getNode("pass").asString();
         Integer ts3InstID = config.getNode("instance").asInteger();
         Boolean useSSL = config.getNode("ssl").optBoolean(false);
-        eventService.fireEvent(new BotStateEvent.PreConnect().setBot(this));
-
-        try {
-            server.connect(host, port, user, pass, ts3InstID, useSSL);
-        } catch (QueryConnectException e) {
-            logger.error("Failed to start bot: TS3INIT failed", e);
-            shutdown();
-            return;
-        }
+        String nickName = config.getNode("nick").optString("JeakBot");
+        server.setCredentials(host, port, user, pass, ts3InstID, useSSL, nickName);
 
         Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
-
         if (doNetDump) {
             logger.info("Dedicated net-dumping is currently not implemented. The option will have no effect atm.");
         }
 
-        server.getConnection().setNickName(config.getNode("nick").optString().orElse(null));
-        dataCache.scheduleTasks(taskService);
-
-        eventService.registerListeners(commandService);
-        eventService.registerListener(dataCache);
-
-        logger.info("Connected");
-        eventService.fireEvent(new BotStateEvent.PostConnect().setBot(this));
+        taskService.runTask(connectionTask);
     }
 
     private boolean loadPlugin(Map<String, PluginRegistry> reg, String id, PluginRegistry pr) {

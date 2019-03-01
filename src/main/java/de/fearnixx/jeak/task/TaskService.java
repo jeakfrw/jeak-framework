@@ -93,7 +93,7 @@ public class TaskService extends Thread implements ITaskService {
             } catch (Exception e) {
                 logger.error("Uncaught exception from task: {}", task.getName(), e);
             }
-            if (task.getType() == ITask.TaskType.REPEAT) {
+            if (task.getType() == ITask.TaskType.REPEAT && task.shouldReschedule()) {
                 scheduleTask(task);
             }
         });

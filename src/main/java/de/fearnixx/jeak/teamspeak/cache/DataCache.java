@@ -4,14 +4,17 @@ import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.EventAbortException;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
+import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.task.ITask;
+import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.task.TaskService;
+import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.*;
-import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,15 +36,20 @@ public class DataCache implements IDataCache {
 
     private final Object LOCK = new Object();
 
-    private IQueryConnection connection;
+    @Inject
+    private IServer server;
+
+    @Inject
+    private ITaskService taskService;
+
+    @Inject
     private IEventService eventService;
 
     private Map<Integer, TS3Client> clientCache;
     private Map<Integer, TS3Channel> channelCache;
     private ChannelUpdateWatcher channelUpdateWatcher = new ChannelUpdateWatcher(this);
 
-    public DataCache(IQueryConnection connection, IEventService eventService) {
-        this.connection = connection;
+    public DataCache(IEventService eventService) {
         this.eventService = eventService;
         clientCache = new ConcurrentHashMap<>(50);
         channelCache = new ConcurrentHashMap<>(60);
@@ -63,7 +71,7 @@ public class DataCache implements IDataCache {
     private final ITask clientListTask = ITask.builder()
             .name("cache.clientRefresh")
             .interval(CLIENT_REFRESH_INVERVAL, TimeUnit.SECONDS)
-            .runnable(() -> connection.sendRequest(clientListRequest))
+            .runnable(() -> server.optConnection().ifPresent(conn -> conn.sendRequest(clientListRequest)))
             .build();
 
     // == CHANNELLIST == //
@@ -79,7 +87,7 @@ public class DataCache implements IDataCache {
     private final ITask channelListTask = ITask.builder()
             .name("cache.channelrefresh")
             .interval(CHANNEL_REFRESH_INTERVAL, TimeUnit.SECONDS)
-            .runnable(() -> connection.sendRequest(channelListRequest))
+            .runnable(() -> server.optConnection().ifPresent(conn -> conn.sendRequest(channelListRequest)))
             .build();
 
     public void scheduleTasks(TaskService tm) {
@@ -480,5 +488,17 @@ public class DataCache implements IDataCache {
                 );
             }
         }
+    }
+
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onConnected(IBotStateEvent.IConnectStateEvent.IPostConnect event) {
+        taskService.scheduleTask(clientListTask);
+        taskService.scheduleTask(channelListTask);
+    }
+
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onDisconnected(IBotStateEvent.IConnectStateEvent.IDisconnect event) {
+        taskService.removeTask(clientListTask);
+        taskService.removeTask(channelListTask);
     }
 }

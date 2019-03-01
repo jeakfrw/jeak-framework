@@ -57,32 +57,66 @@ public interface IBotStateEvent extends IBotEvent {
     }
 
     /**
-     * ## Phase 4 ##
-     * The Bot is about to establish the main query connection.
-     * Plugins may also start initializing external connections such as pinging APIs or similar actions.
-     * Please note that all persistent connections MUST be:
-     * * asynchronous!
-     * * closed at {@link IPostShutdown} if not earlier!
-     * * responding to interrupts!
+     * Child interfaces of this event can be fired multiple times during the application lifecycle.
+     * This is due to reconnect-attempts when the connection has been lost.
      */
-    interface IPreConnect extends IBotStateEvent {
+    interface IConnectStateEvent extends IBotStateEvent{
 
+        /**
+         * ## Phase 4 ##
+         * The Bot is about to establish the main query connection.
+         * @see IConnectFailed for when the attempt failed.
+         */
+        interface IPreConnect extends IConnectStateEvent {
+
+        }
+
+        /**
+         * ## Phase 5 ##
+         * The Bot has established the main query connection successfully
+         * The following commands have been executed:
+         * * use
+         * * login
+         * * clientupdate nickname
+         *
+         * Plugins may now spawn additional connections to the server.
+         * (As now credentials and nickname have been validated)
+         */
+        interface IPostConnect extends IConnectStateEvent {
+
+        }
+
+        /**
+         * ## Intermediate phase ##
+         * Application lifecycle will do either:
+         * <ul>
+         *     <li>Roll back to phase 4 for reconnection attempts.</li>
+         *     <li>Continue to {@link IPreShutdown} when no re-connection attempt shall be made.</li>
+         * </ul>
+         * @implNote Will fire only once per connection lost.
+         */
+        interface IDisconnect extends IConnectStateEvent {
+
+            boolean isGraceful();
+        }
+
+        /**
+         * ## Intermediate phase ##
+         * Application lifecycle will do either:
+         * <ul>
+         *     <li>Roll back to phase 4 ({@link IPreConnect}) for connection attempts.</li>
+         *     <li>Continue to {@link IPreShutdown} when max connection attempts has been reached.</li>
+         * </ul>
+         */
+        interface IConnectFailed extends IConnectStateEvent {
+
+            int attemptCount();
+
+            int maxAttempts();
+        }
     }
 
-    /**
-     * ## Phase 5 ##
-     * The Bot has established the main query connection successfully
-     * The following commands have been executed:
-     * * use
-     * * login
-     * * clientupdate nickname
-     *
-     * Plugins may now spawn additional connections to the server.
-     * (As now credentials and nickname have been validated)
-     */
-    interface IPostConnect extends IBotStateEvent {
 
-    }
 
     /**
      * ## Phase 6 ##
