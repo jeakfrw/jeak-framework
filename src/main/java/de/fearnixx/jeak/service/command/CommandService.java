@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.command;
 
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.IQueryEvent;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -167,12 +168,13 @@ public class CommandService implements ICommandService {
         }
     }
 
-    public void shutdown() {
+    @Listener
+    public void shutdown(IBotStateEvent.IPreShutdown event) {
         synchronized (lock) {
             terminated = true;
             boolean terminated_successfully = false;
             try {
-                executorSvc.shutdownNow();
+                executorSvc.shutdown();
                 terminated_successfully = executorSvc.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 logger.error("Got interrupted while awaiting thread termination!", e);
@@ -181,6 +183,7 @@ public class CommandService implements ICommandService {
                 logger.warn("Some command receivers did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
                 logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
             }
+            event.addExecutor(executorSvc);
         }
     }
 }

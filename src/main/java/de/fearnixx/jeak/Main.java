@@ -20,6 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Main implements Runnable {
@@ -119,6 +120,8 @@ public class Main implements Runnable {
         jeakBot.setConfDir(confDir);
         jeakBot.setConfig(botConfig);
         jeakBot.setPluginManager(pluginManager);
+
+
         jeakBot.onShutdown(this::onBotShutdown);
 
         mainExecutor.execute(jeakBot);
@@ -134,10 +137,8 @@ public class Main implements Runnable {
         cmd.run();
     }
 
-    private void onBotShutdown(IBot bot) {
-        if (bot instanceof JeakBot) {
-            internalShutdown();
-        }
+    private void onBotShutdown(JeakBot bot) {
+        internalShutdown();
     }
 
     public void shutdown() {

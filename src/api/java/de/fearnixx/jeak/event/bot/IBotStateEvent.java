@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.event.bot;
 
+import java.util.concurrent.ExecutorService;
+
 /**
  * Event classes representing run state changes.
  */
@@ -116,17 +118,21 @@ public interface IBotStateEvent extends IBotEvent {
         }
     }
 
-
-
     /**
      * ## Phase 6 ##
      * The Bot is about to shut down
      * The main connection is about to close
      *
      * Please start terminating non-vital asynchronous threads such as other connections.
+     * @implNote may be followed by a graceful {@link IConnectStateEvent.IDisconnect} when the connection is alive.
      */
     interface IPreShutdown extends IBotStateEvent {
 
+        /**
+         * Register executors to the event consumer.
+         * The framework will call {@link ExecutorService#shutdownNow()} after the shutdown sleep period.
+         */
+        void addExecutor(ExecutorService executorService);
     }
 
     /**
@@ -137,5 +143,9 @@ public interface IBotStateEvent extends IBotEvent {
      */
     interface IPostShutdown extends IBotStateEvent {
 
+        /**
+         * @see IPreShutdown#addExecutor(ExecutorService)
+         */
+        void addExecutor(ExecutorService executorService);
     }
 }

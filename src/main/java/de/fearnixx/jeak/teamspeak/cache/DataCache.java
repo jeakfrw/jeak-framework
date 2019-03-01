@@ -97,11 +97,12 @@ public class DataCache implements IDataCache {
     }
 
 
-    public void reset() {
+    @Listener
+    public void onShutdown(IBotStateEvent.IPreShutdown event) {
         synchronized (LOCK) {
             clientCache.forEach((clid, c) -> c.invalidate());
-            clientCache.clear();
             channelCache.forEach((cid, c) -> c.invalidate());
+            clientCache.clear();
             channelCache.clear();
         }
     }

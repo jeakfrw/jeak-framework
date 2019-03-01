@@ -35,15 +35,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ConcurrentModificationException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 /**
  * Created by Life4YourGames on 22.05.17.
  */
-public class JeakBot implements Runnable,IBot {
+public class JeakBot implements Runnable, IBot {
 
     // * * * STATICS  * * * //
     public static final Charset CHAR_ENCODING = Charset.forName("UTF-8");
@@ -57,7 +58,8 @@ public class JeakBot implements Runnable,IBot {
 
     // * * * FIELDS * * * //
 
-    private Consumer<IBot> onShutdown;
+    private Consumer<JeakBot> onShutdown;
+    private UUID instanceUUID = UUID.randomUUID();
 
     private File baseDir;
     private File confDir;
@@ -76,6 +78,8 @@ public class JeakBot implements Runnable,IBot {
     private EventService eventService;
     private TaskService taskService;
     private CommandService commandService;
+
+    private ExecutorService shutdownExecutor = Executors.newSingleThreadExecutor();
 
     // * * * CONSTRUCTION * * * //
 
@@ -113,7 +117,7 @@ public class JeakBot implements Runnable,IBot {
         DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
 
         eventService = new EventService();
-        taskService = new TaskService( (pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
+        taskService = new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
         commandService = new CommandService();
 
         injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
@@ -326,20 +330,48 @@ public class JeakBot implements Runnable,IBot {
     // * * * RUNTIME * * * //
 
     public void shutdown() {
-        eventService.fireEvent(new BotStateEvent.PreShutdown().setBot(this));
-        saveConfig();
-        taskService.shutdown();
-        commandService.shutdown();
-        dataCache.reset();
-        server.shutdown();
-        eventService.fireEvent(new BotStateEvent.PostShutdown().setBot(this));
-        eventService.shutdown();
 
-        if (onShutdown != null)
-            onShutdown.accept(this);
+        // Decouple the shutdown callback from threads running inside the bots context.
+        // This avoids any termination interrupts going on inside the framework instance from interrupting our shutdown handler.
+        shutdownExecutor.execute(() -> {
+            final LinkedList<ExecutorService> executors = new LinkedList<>();
+            final BotStateEvent.PreShutdown preShutdown = new BotStateEvent.PreShutdown();
+            preShutdown.setBot(this);
+            eventService.fireEvent(preShutdown);
+            executors.addAll(preShutdown.getExecutors());
+
+            saveConfig();
+
+            final BotStateEvent.PostShutdown postShutdown = new BotStateEvent.PostShutdown();
+            postShutdown.setBot(this);
+            eventService.fireEvent(postShutdown);
+            executors.addAll(postShutdown.getExecutors());
+
+
+            executors.removeIf(ExecutorService::isShutdown);
+            if (!executors.isEmpty()) {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException e) {
+                    // ignore interruption.
+                }
+                executors.forEach(ExecutorService::shutdownNow);
+            }
+
+            eventService.shutdown();
+
+            if (onShutdown != null) {
+                onShutdown.accept(this);
+            }
+        });
     }
 
-    protected void onShutdown(Consumer<IBot> onShutdown) {
+    public void onShutdown(Consumer<JeakBot> onShutdown) {
         this.onShutdown = onShutdown;
+    }
+
+    @Override
+    public UUID getInstanceUUID() {
+        return instanceUUID;
     }
 }

@@ -2,8 +2,10 @@ package de.fearnixx.jeak.teamspeak;
 
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.BotStateEvent;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.query.*;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
@@ -221,15 +223,6 @@ public class Server implements IServer {
         );
     }
 
-    /* * * RUNTIME CONTROL * * */
-
-    public void shutdown() {
-        if (connectionThread != null) {
-            mainConnection.shutdown();
-            connectionThread.interrupt();
-        }
-    }
-
     /* * * MISC * * */
 
     public IQueryConnection getConnection() {
@@ -249,5 +242,12 @@ public class Server implements IServer {
     @Override
     public boolean isConnected() {
         return mainConnection != null && !mainConnection.isClosed();
+    }
+
+    @Listener
+    public void onShutdown(IBotStateEvent.IPreShutdown event) {
+        if (isConnected()) {
+            mainConnection.shutdown();
+        }
     }
 }

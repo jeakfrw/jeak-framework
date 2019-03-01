@@ -1,5 +1,10 @@
 package de.fearnixx.jeak.event.bot;
 
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+
 /**
  * Created by MarkL4YG on 09.06.17.
  */
@@ -69,9 +74,33 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
     }
 
     public static class PreShutdown extends BotStateEvent implements IPreShutdown {
+
+        private List<ExecutorService> executors = new LinkedList<>();
+
+        @Override
+        public void addExecutor(ExecutorService executorService) {
+            Objects.requireNonNull(executorService, "Executor service may not be null!");
+            executors.add(executorService);
+        }
+
+        public List<ExecutorService> getExecutors() {
+            return executors;
+        }
     }
 
     public static class PostShutdown extends BotStateEvent implements IPostShutdown {
+
+        private List<ExecutorService> executors = new LinkedList<>();
+
+        @Override
+        public void addExecutor(ExecutorService executorService) {
+            Objects.requireNonNull(executorService, "Executor service may not be null!");
+            executors.add(executorService);
+        }
+
+        public List<ExecutorService> getExecutors() {
+            return executors;
+        }
     }
 
     public static class PreInitializeEvent extends BotStateEvent implements IPreInitializeEvent {

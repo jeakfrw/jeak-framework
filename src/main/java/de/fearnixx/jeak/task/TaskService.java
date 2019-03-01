@@ -2,6 +2,10 @@ package de.fearnixx.jeak.task;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.Main;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import org.slf4j.Logger;
@@ -30,6 +34,9 @@ public class TaskService extends Thread implements ITaskService {
 
     private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("task-scheduler-%d").build();
     private ExecutorService taskExecutor;
+
+    @Inject
+    private IEventService eventService;
 
     public TaskService(int capacity) {
         tasks = new HashMap<>(capacity, 0.8f);
@@ -101,6 +108,7 @@ public class TaskService extends Thread implements ITaskService {
 
     @Override
     public void run() {
+        eventService.registerListener(this);
         List<ITask> toDo = new ArrayList<>();
         while (!terminated) {
             try {
@@ -124,16 +132,14 @@ public class TaskService extends Thread implements ITaskService {
         }
     }
 
-    public void shutdown() {
-        kill();
-    }
-
-    public void kill() {
+    @Listener
+    public void onPreShutdown(IBotStateEvent.IPreShutdown event) {
         synchronized (tasks) {
             logger.debug("{} task(s) scheduled upon shutdown.", tasks.size());
             tasks.clear();
             terminated = true;
+            taskExecutor.shutdown();
+            event.addExecutor(taskExecutor);
         }
-        taskExecutor.shutdownNow();
     }
 }
