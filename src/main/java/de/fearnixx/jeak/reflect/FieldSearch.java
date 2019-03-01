@@ -37,7 +37,7 @@ public class FieldSearch {
                     final String fieldName = field.toGenericString();
                     logger.debug("Discovered field: {}", fieldName);
                 }
-                list.add(field);
+                andBelow.add(field);
             }
         }
 
