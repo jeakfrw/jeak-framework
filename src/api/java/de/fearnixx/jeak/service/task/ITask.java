@@ -128,6 +128,11 @@ public interface ITask {
                 }
 
                 @Override
+                public boolean shouldReschedule() {
+                    return true;
+                }
+
+                @Override
                 public String getName() {
                     return fName;
                 }
@@ -167,6 +172,13 @@ public interface ITask {
      * @return The type
      */
     TaskType getType();
+
+    /**
+     * By default, tasks that are set to an interval will be rescheduled after they have been run.
+     * Return false for when the task should no longer be re-scheduled.
+     * @apiNote As this is for advanced tasks, this cannot be changed using the task builder. <br>Use {@link TaskType#DELAY} for the builder.
+     */
+    boolean shouldReschedule();
 
     /**
      * The {@link Runnable} of the task

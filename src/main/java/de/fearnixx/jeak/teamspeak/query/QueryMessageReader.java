@@ -64,6 +64,7 @@ public class QueryMessageReader implements AutoCloseable {
             }
         }
 
+        closed = true;
         throw new QueryClosedException("End of input stream reached.");
     }
 

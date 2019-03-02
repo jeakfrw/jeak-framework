@@ -1,9 +1,12 @@
 package de.fearnixx.jeak.teamspeak.query;
 
-import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.IBot;
+import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.except.QueryClosedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +19,13 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
     private static final Logger logger = LoggerFactory.getLogger(QueryConnectionAccessor.class);
 
     @Inject
-    public IInjectionService injectionService;
+    private IInjectionService injectionService;
+
+    @Inject
+    private IEventService eventService;
+
+    @Inject
+    private IBot bot;
 
     private QueryEventDispatcher dispatcher;
     private TS3Connection connection;
@@ -39,6 +48,12 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
 
         try {
             read(connection);
+        } catch (QueryClosedException e) {
+            logger.info("Disconnected.");
+            BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(false);
+            disconnectEvent.setBot(bot);
+            eventService.fireEvent(disconnectEvent);
+
         } catch (Exception e) {
             logger.error("Fatal error occurred while reading the connection!", e);
         }
@@ -50,9 +65,17 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
                 connection.read();
             } catch (IOException e) {
                 logger.error("Failed to read from connection.", e);
+                BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(false);
+                disconnectEvent.setBot(bot);
+                eventService.fireEvent(disconnectEvent);
                 return;
             }
         }
+
+        logger.info("Disconnected.");
+        BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(true);
+        disconnectEvent.setBot(bot);
+        eventService.fireEvent(disconnectEvent);
     }
 
     private void onAnswer(RawQueryEvent.Message.Answer event) {
@@ -77,5 +100,15 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         } catch (IOException e) {
             logger.warn("Error while trying to close connection.", e);
         }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return connection != null && connection.isClosed();
+    }
+
+    @Override
+    public void close() throws IOException {
+        connection.close();
     }
 }

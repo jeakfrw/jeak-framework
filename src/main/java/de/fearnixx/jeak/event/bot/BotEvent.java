@@ -10,7 +10,7 @@ public class BotEvent implements IBotEvent {
 
     private IBot bot;
 
-    public BotEvent setBot(JeakBot bot) {
+    public BotEvent setBot(IBot bot) {
         this.bot = bot;
         return this;
     }

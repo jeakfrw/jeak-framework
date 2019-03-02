@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 /**
  * Created by MarkL4YG on 10.06.17.
  */
-public interface IQueryConnection {
+public interface IQueryConnection extends AutoCloseable {
 
     /**
      * Sets the nickname of this server query connection
@@ -53,4 +53,9 @@ public interface IQueryConnection {
      */
     @Deprecated
     IQueryPromise promiseRequest(IQueryRequest request);
+
+    /**
+     * Whether or not this connection has been closed for any reason.
+     */
+    boolean isClosed();
 }

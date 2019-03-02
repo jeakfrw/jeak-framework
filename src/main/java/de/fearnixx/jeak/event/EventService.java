@@ -182,7 +182,7 @@ public class EventService implements IEventService {
             terminated = true;
             boolean terminated_successfully = false;
             try {
-                eventExecutor.shutdownNow();
+                eventExecutor.shutdown();
                 terminated_successfully = eventExecutor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 logger.error("Got interrupted while awaiting thread termination!", e);
