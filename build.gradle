@@ -16,7 +16,7 @@ version projectVersion
 project.ext {
     artifact = 'jeakbot'
     
-    confortVersion = '0.3.4-SNAPSHOT'
+    confortVersion = '0.3.5-SNAPSHOT'
     log4jVersion = '2.11.1'
     hibernateVersion =  '5.3.6.Final'
     hikariCPVersion = '3.3.1'
