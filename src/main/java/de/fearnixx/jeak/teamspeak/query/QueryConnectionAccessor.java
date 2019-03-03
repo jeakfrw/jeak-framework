@@ -6,6 +6,7 @@ import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.jeak.teamspeak.except.QueryClosedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +54,6 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
             BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(false);
             disconnectEvent.setBot(bot);
             eventService.fireEvent(disconnectEvent);
-
-        } catch (Exception e) {
-            logger.error("Fatal error occurred while reading the connection!", e);
         }
     }
 
@@ -69,6 +67,12 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
                 disconnectEvent.setBot(bot);
                 eventService.fireEvent(disconnectEvent);
                 return;
+
+            } catch (ConsistencyViolationException e) {
+                reportConsistencyViolation(e);
+
+            } catch (Exception e) {
+                logger.error("Fatal error occurred while reading the connection!", e);
             }
         }
 
@@ -76,6 +80,10 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(true);
         disconnectEvent.setBot(bot);
         eventService.fireEvent(disconnectEvent);
+    }
+
+    private void reportConsistencyViolation(ConsistencyViolationException e) {
+        logger.warn("Consistency violation reported: {}", e);
     }
 
     private void onAnswer(RawQueryEvent.Message.Answer event) {
