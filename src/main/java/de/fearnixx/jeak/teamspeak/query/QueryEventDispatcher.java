@@ -82,6 +82,11 @@ public class QueryEventDispatcher {
                     break;
                 }
 
+            case EventCaptions.CHANNEL_MOVED:
+                checkHash = false;
+                notification = new QueryEvent.ChannelMoved();
+                break;
+
             case EventCaptions.CHANNEL_DELETED:
                 notification = new QueryEvent.ChannelDelete();
                 break;

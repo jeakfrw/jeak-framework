@@ -128,6 +128,9 @@ public interface IQueryEvent extends IEvent {
         interface IChannelDeleted extends ITargetChannel {
         }
 
+        interface IChannelMoved extends IChannelEdited {
+        }
+
         interface IChannelEdited extends ITargetChannel {
 
             /**
@@ -135,6 +138,7 @@ public interface IQueryEvent extends IEvent {
              * @implNote changes for {@link IChannelEditedDescription} and {@link IChannelPasswordChanged} are always empty!
              */
             Map<String, String> getChanges();
+
         }
 
         interface IChannelEditedDescription extends IChannelEdited {

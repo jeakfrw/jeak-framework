@@ -178,4 +178,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
     public static class ServerTextMessage extends TargetServer implements IQueryEvent.INotification.IServerTextMessage {
     }
+
+    public static class ChannelMoved extends ChannelEdit implements INotification.IChannelMoved {
+    }
 }
