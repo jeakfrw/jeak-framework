@@ -123,6 +123,7 @@ public class Server implements IServer {
                 failedEvent.setBot(bot);
                 eventService.fireEvent(failedEvent);
             } else {
+                logger.info("Connected successfully.");
                 subscribeToEvents();
                 mainConnection.setNickName(nickname);
                 // Notify listeners.
