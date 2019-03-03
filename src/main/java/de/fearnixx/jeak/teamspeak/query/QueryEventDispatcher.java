@@ -109,7 +109,8 @@ public class QueryEventDispatcher {
                 break;
 
             default:
-                throw new QueryException("Unknown event: " + caption);
+                notification = null;
+                logger.warn("Unknown event encountered: {}", caption);
         }
 
         // === Possible valid skips === //
