@@ -8,9 +8,18 @@ task apiJar(type: Jar) {
     baseName = project.ext.artifact + '-api'
     version = project.version
 
-    from sourceSets.api.allJava
-    from sourceSets.api.output
+        from sourceSets.api.output
 
+    dependsOn compileApiJava
+}
+
+task apiSourcesJar(type: Jar) {
+    baseName = project.ext.artifact + '-api'
+    version = project.version
+
+    classifier = 'sources'
+
+    from sourceSets.api.allJava
     dependsOn compileApiJava
 }
 
@@ -24,7 +33,19 @@ jar() {
     dependsOn compileJava
 }
 
+task sourcesJar(type: Jar) {
+    baseName = project.ext.artifact
+    version = project.version
+    classifier = 'sources'
+
+    from sourceSets.api.allJava
+    from sourceSets.main.allJava
+
+    dependsOn compileJava
+}
+
 build {
     dependsOn 'apiJar'
+    dependsOn 'apiSourcesJar'
     dependsOn 'jar'
 }
