@@ -9,8 +9,16 @@ task apiJar(type: Jar) {
     version = project.version
 
     from sourceSets.api.output
-    from sourceSets.api.allJava
 
+    dependsOn compileApiJava
+}
+
+task apiSourcesJar(type: Jar) {
+    baseName = project.ext.artifact + '-api'
+    version = project.version
+    
+    from sourceSets.api.allJava
+    
     dependsOn compileApiJava
 }
 
@@ -37,6 +45,7 @@ task sourcesJar(type: Jar) {
 
 build {
     dependsOn 'apiJar'
+    dependsOn 'apiSourcesJar'
     dependsOn 'jar'
     dependsOn 'sourcesJar'
 }
