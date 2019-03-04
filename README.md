@@ -1,4 +1,8 @@
 # JeakBot TeamSpeak 3 Plugin Framework  
+
+![Version](https://img.shields.io/badge/Version-1.0.0--RC%231-success.svg)
+![Build Status](https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/badges/bleeding/build.svg)
+
 ## TS3 Servers on the next level!
 
 The JeakBot-Framework connects to the TeamSpeak server using the _TS3 server query interface_.  
