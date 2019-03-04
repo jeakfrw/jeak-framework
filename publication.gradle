@@ -24,17 +24,15 @@ publishing {
             artifactId = "${project.ext.artifact}-api"
             artifact apiJar
         }
-        apiSources(MavenPublication) {
-            artifactId = "${project.ext.artifact}-api"
-            artifact apiSourcesJar
-        }
         publish(MavenPublication) {
             artifactId = project.ext.artifact
             artifact jar
         }
         publishSources(MavenPublication) {
             artifactId = project.ext.artifact
-            artifact sourcesJar
+            artifact sourcesJar {
+                classifier "sources"
+            }
         }
     }
 }
