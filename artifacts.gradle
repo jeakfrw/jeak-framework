@@ -26,7 +26,6 @@ jar() {
     baseName = project.ext.artifact
     version = project.version
 
-    from sourceSets.api.output
     from sourceSets.main.output
 
     dependsOn compileJava
