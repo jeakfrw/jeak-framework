@@ -32,7 +32,9 @@ public @interface JeakBotPlugin {
     /**
      * Soft dependencies - Bot will try to load this plugin AFTER all of these
      * This cannot be 100% guaranteed though.
+     * @deprecated Will be removed without replacement. There is currently no safe plan for handling soft dependencies.
      */
+    @Deprecated
     String[] requireAfter() default {};
 
     /**
@@ -46,6 +48,17 @@ public @interface JeakBotPlugin {
      * - Note: Currently unused. Will be added later
      */
     String builtAgainst() default "";
+
+    /**
+     * @deprecated use {@link #builtAgainst()}. Values will be inferred by semver rules.
+     */
+    @Deprecated
     String breaksBefore() default "";
+
+    /**
+     *
+     * @deprecated use {@link #builtAgainst()}. Values will be inferred by semver rules.
+     */
+    @Deprecated
     String breaksAfter() default "";
 }
