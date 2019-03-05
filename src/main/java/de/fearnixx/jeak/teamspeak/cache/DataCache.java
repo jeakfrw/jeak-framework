@@ -493,8 +493,8 @@ public class DataCache implements IDataCache {
 
     @Listener(order = Listener.Orders.SYSTEM)
     public void onConnected(IBotStateEvent.IConnectStateEvent.IPostConnect event) {
-        taskService.scheduleTask(clientListTask);
-        taskService.scheduleTask(channelListTask);
+        taskService.runTask(clientListTask);
+        taskService.runTask(channelListTask);
     }
 
     @Listener(order = Listener.Orders.SYSTEM)
