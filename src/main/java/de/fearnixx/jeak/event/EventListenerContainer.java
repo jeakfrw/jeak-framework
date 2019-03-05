@@ -2,6 +2,8 @@ package de.fearnixx.jeak.event;
 
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -9,6 +11,8 @@ import java.lang.reflect.Method;
 /**
  */
 public class EventListenerContainer {
+
+    private static final Logger logger = LoggerFactory.getLogger(EventListenerContainer.class);
 
     private Listener annotation;
     private Object victim;
@@ -47,8 +51,10 @@ public class EventListenerContainer {
     }
 
     public void accept(IEvent event) {
+        if (logger.isDebugEnabled()) {
+            logger.debug("Sending event \"{}\" to listener of class \"{}\": {}", event.getClass(), victim.getClass(), method.getName());
+        }
         try {
-
             try {
                 method.invoke(victim, event);
             } catch (InvocationTargetException e) {
