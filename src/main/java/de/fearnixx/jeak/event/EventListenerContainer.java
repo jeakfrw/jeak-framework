@@ -72,4 +72,8 @@ public class EventListenerContainer {
             throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + method.toGenericString(), e);
         }
     }
+
+    public String getName() {
+        return getVictim().getClass().getName() + '#' + method.getName();
+    }
 }

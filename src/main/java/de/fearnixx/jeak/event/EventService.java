@@ -5,16 +5,12 @@ import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * <p>
@@ -27,22 +23,28 @@ import java.util.concurrent.TimeUnit;
  */
 public class EventService implements IEventService {
 
-    public static final Integer THREAD_POOL_SIZE = 10;
-    public static Integer AWAIT_TERMINATION_DELAY = 5000;
+    public static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.eventmgr.poolsize", 10);
+    public static Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.eventmgr.terminatedelay", 10000);
 
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
     private final Object LOCK = new Object();
-    private final List<EventListenerContainer> containers =  new LinkedList<>();
-
-    private final ExecutorService eventExecutor;
+    private final List<EventListenerContainer> registeredListeners =  new LinkedList<>();
+    private final List<EventContainer> runningEvents = new ArrayList<>();
+    private final ThreadPoolExecutor eventExecutor;
+    private final ExecutorService deadCheckExecutor = Executors.newSingleThreadExecutor(
+            new ThreadFactoryBuilder().setNameFormat("tasksvc-deadcheck-%d").build()
+    );
 
     private boolean terminated;
 
     public EventService() {
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
-        eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
-        AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
+        eventExecutor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(),
+                threadFactory);
+        deadCheckExecutor.execute(this::deadListenerCheck);
     }
 
     /**
@@ -58,25 +60,36 @@ public class EventService implements IEventService {
         final List<EventListenerContainer> acceptingListeners = new LinkedList<>();
         synchronized (LOCK) {
             if (terminated) return;
-            containers.stream()
-                    .filter(eventListenerContainer -> eventListenerContainer.accepts(event.getClass()))
+            registeredListeners.stream()
+                    .filter(container -> container.accepts(event.getClass()))
                     .forEach(acceptingListeners::add);
         }
 
         // Sort by event order
         acceptingListeners.sort(Comparator.comparingInt(EventListenerContainer::getOrder));
-        sendEvent(event, acceptingListeners);
+        sendEvent(new EventContainer(this, acceptingListeners, event));
     }
 
-    private void sendEvent(IEvent event, List<EventListenerContainer> listeners) {
-        logger.debug("Sending event: {} to {} listeners", event.getClass().getSimpleName(), listeners.size());
-
-        if (isSynchronized(event)) {
-            executeEvent(listeners, event);
+    private void sendEvent(final EventContainer container) {
+        final String eventName = container.getEvent().getClass().getSimpleName();
+        if (isSynchronized(container.getEvent())) {
+            logger.debug("Sending event: {} to {} listeners", eventName, container.getListeners().size());
+            container.run();
 
         } else {
             // Execute using ThreadPoolExecutor
-            eventExecutor.execute(() -> this.executeEvent(listeners, event));
+            logger.debug("Queueing event {}", eventName);
+            eventExecutor.execute(() -> {
+                logger.debug("Sending event: {} to {} listeners", eventName, container.getListeners().size());
+                synchronized (runningEvents) {
+                    runningEvents.add(container);
+                }
+                container.run();
+                synchronized (runningEvents) {
+                    runningEvents.remove(container);
+                }
+                logger.debug("Finished executing listeners for: {}", eventName);
+            });
         }
     }
 
@@ -84,50 +97,12 @@ public class EventService implements IEventService {
         return event instanceof IBotStateEvent;
     }
 
-    @SuppressWarnings("squid:S1193")
-    private void executeEvent(List<EventListenerContainer> listeners, IEvent event) {
-        for (int i = 0; i < listeners.size(); i++) {
-            // Catch exceptions for each listener so a broken one doesn't break the whole event
-            try {
-                // Check if we got interrupted during processing
-                if (Thread.currentThread().isInterrupted())
-                    throw new InterruptedException("Interrupted during event execution");
-                listeners.get(i).accept(event);
-
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                logger.info("Interrupted event: {}! Processed {} out of {}",
-                        event.getClass().getSimpleName(), i + 1, listeners.size(), e);
-                return;
-
-            } catch (EventAbortException abort) {
-                // Event aborted!
-                logger.warn("An event has been aborted: {}", abort.getMessage(), abort);
-                return;
-
-            } catch (ConsistencyViolationException e) {
-                logger.error("An event listener has declared a consistency violation! We will abort the event execution.", e);
-                return;
-
-            } catch (Exception e) {
-                // Skip the invocation exception for readability
-                Throwable cause = e.getCause() != null ? e.getCause() : e;
-                logger.warn("Failed to pass event {} to {}", event.getClass().getSimpleName(), listeners.get(i).getVictim().getClass().toGenericString(), cause);
-
-                if (!(e instanceof RuntimeException)) {
-                    logger.error("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
-                    unregisterListener(listeners.get(i).getVictim());
-                }
-            }
-        }
-    }
-
     /**
      * Adds a new {@link EventListenerContainer} to the event listeners
      */
     public void addContainer(EventListenerContainer container) {
         synchronized (LOCK) {
-            containers.add(container);
+            registeredListeners.add(container);
         }
     }
 
@@ -153,7 +128,7 @@ public class EventService implements IEventService {
                 if (anno == null)
                     continue;
 
-                containers.add(new EventListenerContainer(victim, method));
+                registeredListeners.add(new EventListenerContainer(victim, method));
             }
         }
     }
@@ -168,7 +143,32 @@ public class EventService implements IEventService {
                 if (anno == null)
                     continue;
 
-                containers.removeIf(container -> container.getVictim() == victim);
+                registeredListeners.removeIf(container -> container.getVictim() == victim);
+            }
+        }
+    }
+
+    @SuppressWarnings("squid:S2142")
+    private void deadListenerCheck() {
+        while (true) {
+            synchronized (LOCK) {
+                if (terminated) return;
+            }
+
+            synchronized (runningEvents) {
+                runningEvents.stream()
+                        .filter(container -> container.getListenerRuntime() > 10000)
+                        .forEach(container -> {
+                            logger.debug("Attempting to interrupt listener for event: {}", container.getEvent().getClass().getSimpleName());
+                            container.interruptReceiver();
+                        });
+            }
+
+            try {
+                Thread.sleep(8000);
+            } catch (InterruptedException e) {
+                logger.warn("Dead-Listener check interrupted.");
+                return;
             }
         }
     }
@@ -183,6 +183,7 @@ public class EventService implements IEventService {
             boolean terminated_successfully = false;
             try {
                 eventExecutor.shutdown();
+                deadCheckExecutor.shutdown();
                 terminated_successfully = eventExecutor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 logger.error("Got interrupted while awaiting thread termination!", e);
