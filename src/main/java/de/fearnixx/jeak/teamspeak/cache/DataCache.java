@@ -394,6 +394,8 @@ public class DataCache implements IDataCache {
 
             // All others are new - Add them
             newMap.forEach(channelCache::put);
+
+            // Update children
             channelCache.forEach((cid, c) -> {
                 int pid = c.getParent();
                 if (pid == 0) return;
@@ -404,6 +406,10 @@ public class DataCache implements IDataCache {
                 }
                 parent.addSubChannel(c);
             });
+
+            // Ensure children lists to be ordered
+            // TODO: Find a better solution than re-sorting the whole list every time!
+            channelCache.values().forEach(TS3Channel::sortChildren);
         }
 
         logger.debug("Channellist updated");

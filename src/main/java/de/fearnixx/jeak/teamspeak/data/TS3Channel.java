@@ -2,9 +2,12 @@ package de.fearnixx.jeak.teamspeak.data;
 
 import de.fearnixx.jeak.teamspeak.PropertyKeys.Channel;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -12,6 +15,8 @@ import java.util.List;
  */
 @SuppressWarnings("ConstantConditions")
 public class TS3Channel extends BasicDataHolder implements IChannel {
+
+    private static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
 
     private boolean invalidated = false;
     private List<IChannel> children;
@@ -141,4 +146,33 @@ public class TS3Channel extends BasicDataHolder implements IChannel {
     public String toString() {
         return getName() + '/' + getID();
     }
+
+    public void sortChildren() {
+        List<IChannel> sortedChildren = new LinkedList<>();
+        int lastId = 0;
+        final int childCount = children.size();
+        int tries = 0;
+        while (sortedChildren.size() < childCount) {
+            tries++;
+            for (IChannel channel : children) {
+                if (channel.getOrder() == lastId) {
+                    sortedChildren.add(channel);
+                    lastId = channel.getID();
+                    break;
+                }
+            }
+
+            if (tries > childCount) {
+                for (IChannel child : children) {
+                    logger.debug("Child: {} -> {}", child, child.getOrder());
+                }
+                logger.warn("Could not sort children of channel {}. Aborted sorting.", this);
+                break;
+            }
+        }
+
+        clearChildren();
+        children.addAll(sortedChildren);
+    }
+
 }
