@@ -42,10 +42,13 @@
             <property name="allowNonPrintableEscapes" value="true"/>
         </module>
         <module name="LineLength">
-            <property name="max" value="100"/>
-            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
+            <!-- Changed from 100 to 120 to comply w/ the custom hard-break at 120 -->
+            <!-- Lines for logging may also be longer -->
+            <property name="max" value="120"/>
+            <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://|logger\."/>
         </module>
-        <module name="AvoidStarImport"/>
+        <!-- Disabled as imports are starred by IntelliJ by default when more than 5 members are used.
+        <module name="AvoidStarImport"/>-->
         <module name="OneTopLevelClass"/>
         <module name="NoLineWrap"/>
         <module name="EmptyBlock">
@@ -178,6 +181,7 @@
              value="GenericWhitespace ''{0}'' is not preceded with whitespace."/>
         </module>
         <module name="Indentation">
+            <!-- Indentation changed to a value of 4 from 2 to comply w/ IntelliJ defaults -->
             <property name="basicOffset" value="4"/>
             <property name="braceAdjustment" value="0"/>
             <property name="caseIndent" value="4"/>
@@ -186,16 +190,19 @@
             <property name="arrayInitIndent" value="4"/>
         </module>
         <module name="AbbreviationAsWordInName">
+            <!-- Allowed abbreviation length changed from 1 to 5 to allow short abbreviation to be used and searched -->
+            <!-- Abbreviations longer than this limit shall be avoided!  -->
             <property name="ignoreFinal" value="false"/>
-            <property name="allowedAbbreviationLength" value="1"/>
+            <property name="allowedAbbreviationLength" value="5"/>
         </module>
         <module name="OverloadMethodsDeclarationOrder"/>
         <module name="VariableDeclarationUsageDistance"/>
+        <!-- Disabled import checks as they do not line up w/ IntelliJ defaults.
         <module name="CustomImportOrder">
             <property name="sortImportsInGroupAlphabetically" value="true"/>
             <property name="separateLineBetweenGroups" value="true"/>
             <property name="customImportOrderRules" value="STATIC###THIRD_PARTY_PACKAGE"/>
-        </module>
+        </module>-->
         <module name="MethodParamPad"/>
         <module name="NoWhitespaceBefore">
             <property name="tokens"
