@@ -81,7 +81,12 @@ public abstract class Configurable  {
 
             } else {
                 logger.debug("Implementation does not provide a default URI. Using programmatic approach.");
-                return populateDefaultConf(config);
+                if (populateDefaultConf(config)) {
+                    onDefaultConfigLoaded();
+                    return true;
+                } else {
+                    return false;
+                }
             }
         }
         return true;
@@ -104,12 +109,22 @@ public abstract class Configurable  {
             IConfigNode defRoot = LoaderFactory.getLoader("application/json").parse(reader);
             getConfigRef().setRoot(defRoot);
             config = defRoot;
+
+            onDefaultConfigLoaded();
             return true;
 
         } catch (ParseException | IOException e) {
             logger.error("Failed to load default configuration!", e);
             return false;
         }
+    }
+
+    /**
+     * Sub classes may override this to be notified when the default configuration has been loaded.
+     * E.g. scheduling a save would be good here.
+     */
+    protected void onDefaultConfigLoaded() {
+        // unimplemented: By default, nothing is done.
     }
 
     /**
