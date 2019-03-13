@@ -5,6 +5,7 @@ import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Cache accessor.
@@ -30,4 +31,15 @@ public interface IDataCache {
      * Value accessor for {@link #getChannelMap()} for convenience.
      */
     List<IChannel> getChannels();
+
+    /**
+     * Searches for a client with that unique ID. Returns the first match as an optional.
+     */
+    Optional<IClient> findClientByUniqueId(String uniqueId);
+
+    /**
+     * Searches for a channel with that unique ID. Returns the first match as an optional.
+     * Name will match case-insensitive and partially.
+     */
+    Optional<IChannel> findChannelByName(String name);
 }

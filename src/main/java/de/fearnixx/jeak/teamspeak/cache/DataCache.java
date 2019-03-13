@@ -143,6 +143,21 @@ public class DataCache implements IDataCache {
         }
     }
 
+    @Override
+    public Optional<IClient> findClientByUniqueId(String uniqueId) {
+        return getClients().stream()
+                .filter(c -> c.getClientUniqueID().equals(uniqueId))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<IChannel> findChannelByName(String name) {
+        return getChannels()
+                .stream()
+                .filter(c -> c.getName().toLowerCase().contains(name.toLowerCase()))
+                .findFirst();
+    }
+
     @Listener(order = Listener.Orders.SYSTEM)
     public void onQueryNotification(IQueryEvent.INotification event) {
 
