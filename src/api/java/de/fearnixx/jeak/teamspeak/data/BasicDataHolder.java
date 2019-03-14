@@ -12,7 +12,7 @@ public class BasicDataHolder implements IDataHolder {
     private Map<String, String> values;
 
     public BasicDataHolder() {
-        values = new ConcurrentHashMap<>();
+        values = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
     public Map<String, String> getValues() {
