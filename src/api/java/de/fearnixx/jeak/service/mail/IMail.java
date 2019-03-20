@@ -17,6 +17,8 @@ public interface IMail {
 
     List<String> getRecipientsBCC();
 
+    String getSubject();
+
     String getBody();
 
     List<IAttachment> getAttachments();
