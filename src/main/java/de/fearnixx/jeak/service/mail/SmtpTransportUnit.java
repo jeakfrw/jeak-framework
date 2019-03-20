@@ -22,7 +22,6 @@ public class SmtpTransportUnit implements ITransportUnit {
     private Properties jMailProperties;
     private Transport jMailSmtp;
     private Session jMailSession;
-    private MimeMessage defaultMIME;
 
     public SmtpTransportUnit(String unitName, ExecutorService executorService) {
         this.unitName = unitName;
@@ -57,11 +56,6 @@ public class SmtpTransportUnit implements ITransportUnit {
             jMailSession = Session.getInstance(jMailProperties);
         }
         jMailSmtp = jMailSession.getTransport("smtp");
-        defaultMIME = new MimeMessage(jMailSession);
-    }
-
-    public MimeMessage getDefaultMIME() {
-        return defaultMIME;
     }
 
     public void dispatch(IMail message) {
@@ -71,7 +65,10 @@ public class SmtpTransportUnit implements ITransportUnit {
     public void dispatch(MimeMessage message) {
         executorService.execute(() -> {
             try {
+                jMailSmtp.connect();
                 jMailSmtp.sendMessage(message, message.getAllRecipients());
+                jMailSmtp.close();
+                logger.debug("[{}] Successfully sent message.", unitName);
             } catch (MessagingException e) {
                 logger.warn("[{}] Failed to dispatch message!", unitName, e);
             }
@@ -80,7 +77,7 @@ public class SmtpTransportUnit implements ITransportUnit {
 
     private Optional<MimeMessage> buildMime(IMail message) {
         try {
-            MimeMessage mimeMessage = new MimeMessage(getDefaultMIME());
+            MimeMessage mimeMessage = new MimeMessage(jMailSession);
 
             message.getRecipientsTO().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.TO));

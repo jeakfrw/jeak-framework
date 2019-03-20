@@ -29,8 +29,7 @@ public class MailService implements IMailService {
         this.confDir = confDir;
     }
 
-    @Listener
-    public void initialize(IBotStateEvent.IInitializeEvent event) {
+    public void onLoad() {
         List<File> configCandidates = new LinkedList<>();
 
         if (confDir.isDirectory()) {
@@ -57,6 +56,7 @@ public class MailService implements IMailService {
             String unitName = fileName.substring(0, fileName.lastIndexOf('.'));
             SmtpTransportUnit unit = new SmtpTransportUnit(unitName, dispatchExecutor);
             unit.load(config);
+            transportUnits.put(unitName, unit);
             logger.info("Loaded transport-unit: {}", unitName);
 
         } catch (ParseException | IOException | MessagingException e) {

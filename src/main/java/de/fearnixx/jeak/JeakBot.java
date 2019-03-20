@@ -126,6 +126,7 @@ public class JeakBot implements Runnable, IBot {
         injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
         injectionService.addProvider(new ConfigProvider(confDir));
         injectionService.addProvider(new DataSourceProvider());
+        injectionService.addProvider(new TransportProvider());
         server = new Server();
         dataCache = new DataCache(eventService);
 
@@ -164,6 +165,7 @@ public class JeakBot implements Runnable, IBot {
         pMgr.setIncludeCP(true);
         pMgr.load();
         databaseService.onLoad();
+        mailService.onLoad();
 
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
         // Load all plugins - This is where dependencies are being enforced

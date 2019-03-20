@@ -2,14 +2,18 @@ package de.fearnixx.jeak.test.plugin;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.reflect.TransportUnit;
 import de.fearnixx.jeak.service.mail.IMail;
 import de.fearnixx.jeak.service.mail.ITransportUnit;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
 
+@JeakBotPlugin(id = "mailtest")
 public class MailTestPlugin extends AbstractTestPlugin {
 
     @Inject
+    @TransportUnit(name = "test")
     private ITransportUnit transportUnit;
 
     public MailTestPlugin() {
