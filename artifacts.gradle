@@ -42,6 +42,17 @@ task sourcesJar(type: Jar) {
     dependsOn compileJava
 }
 
+task testJar(type: Jar) {
+    baseName = project.ext.artifact + '-test'
+    version = project.version
+
+    from sourceSets.main.output
+    from sourceSets.test.output
+    
+    dependsOn compileJava
+    dependsOn compileTestJava
+}
+
 build {
     dependsOn 'apiJar'
     dependsOn 'apiSourcesJar'
