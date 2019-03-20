@@ -42,6 +42,10 @@ public class SmtpTransportUnit implements ITransportUnit {
         jMailProperties.setProperty("mail.smtp.port", configuration.getNode("port").optString("25"));
         jMailProperties.setProperty("mail.smtp.from", configuration.getNode("from").optString("mail@localhost"));
 
+        configuration.getNode("properties")
+                .optMap()
+                .ifPresent(map -> map.forEach((k, v) -> jMailProperties.setProperty(k, v.asString())));
+
         if ("true".equals(jMailProperties.getProperty("mail.smtp.auth"))) {
             jMailSession = Session.getInstance(jMailProperties, new Authenticator() {
                 @Override
