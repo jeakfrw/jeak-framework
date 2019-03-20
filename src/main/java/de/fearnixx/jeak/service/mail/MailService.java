@@ -57,6 +57,7 @@ public class MailService implements IMailService {
             String unitName = fileName.substring(0, fileName.lastIndexOf('.'));
             SmtpTransportUnit unit = new SmtpTransportUnit(unitName, dispatchExecutor);
             unit.load(config);
+            logger.info("Loaded transport-unit: {}", unitName);
 
         } catch (ParseException | IOException | MessagingException e) {
             logger.warn("Failed to load unit from: \"{}\"!", file.getPath(), e);

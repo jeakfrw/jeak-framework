@@ -30,8 +30,32 @@ public class SmtpTransportUnit implements ITransportUnit {
     }
 
     public void load(IConfigNode configuration) throws MessagingException {
+        jMailProperties = new Properties();
 
-        jMailSession = Session.getInstance(jMailProperties);
+        configuration.getNode("username").optString().ifPresent(user -> {
+            jMailProperties.setProperty("mail.smtp.auth", "true");
+            jMailProperties.setProperty("mail.smtp.user", user);
+        });
+
+        jMailProperties.setProperty("mail.smtp.pass", configuration.getNode("pass").optString("webmaster"));
+        jMailProperties.setProperty("mail.smtp.starttls.enable", configuration.getNode("starttls").optString("true"));
+        jMailProperties.setProperty("mail.smtp.host", configuration.getNode("host").optString("localhost"));
+        jMailProperties.setProperty("mail.smtp.port", configuration.getNode("port").optString("25"));
+        jMailProperties.setProperty("mail.smtp.from", configuration.getNode("from").optString("mail@localhost"));
+
+        if ("true".equals(jMailProperties.getProperty("mail.smtp.auth"))) {
+            jMailSession = Session.getInstance(jMailProperties, new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(
+                            jMailProperties.getProperty("mail.smtp.user"),
+                            jMailProperties.getProperty("mail.smtp.pass")
+                    );
+                }
+            });
+        } else {
+            jMailSession = Session.getInstance(jMailProperties);
+        }
         jMailSmtp = jMailSession.getTransport("smtp");
         defaultMIME = new MimeMessage(jMailSession);
     }

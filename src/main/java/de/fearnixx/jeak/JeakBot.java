@@ -13,6 +13,8 @@ import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.mail.IMailService;
+import de.fearnixx.jeak.service.mail.MailService;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
@@ -115,6 +117,7 @@ public class JeakBot implements Runnable, IBot {
         PermissionService permissionService = new PermissionService();
         TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
         DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
+        MailService mailService = new MailService(new File(confDir, "mail"));
 
         eventService = new EventService();
         taskService = new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
@@ -138,6 +141,7 @@ public class JeakBot implements Runnable, IBot {
         serviceManager.registerService(IPermissionService.class, permissionService);
         serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
         serviceManager.registerService(DatabaseService.class, databaseService);
+        serviceManager.registerService(IMailService.class, mailService);
 
         injectionService.injectInto(serviceManager);
         injectionService.injectInto(eventService);
@@ -149,11 +153,13 @@ public class JeakBot implements Runnable, IBot {
         injectionService.injectInto(ts3permissionProvider);
         injectionService.injectInto(databaseService);
         injectionService.injectInto(dataCache);
+        injectionService.injectInto(mailService);
 
         taskService.start();
         eventService.registerListener(connectionTask);
         eventService.registerListeners(commandService);
         eventService.registerListener(dataCache);
+        eventService.registerListener(mailService);
 
         pMgr.setIncludeCP(true);
         pMgr.load();
