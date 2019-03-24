@@ -78,8 +78,18 @@ public class SmtpTransportUnit implements ITransportUnit {
                 jMailSmtp.sendMessage(message, message.getAllRecipients());
                 jMailSmtp.close();
                 logger.debug("[{}] Successfully sent message.", unitName);
+
             } catch (MessagingException e) {
                 logger.warn("[{}] Failed to dispatch message!", unitName, e);
+
+            } finally {
+                if (jMailSmtp.isConnected()) {
+                    try {
+                        jMailSmtp.close();
+                    } catch (MessagingException e) {
+                        logger.warn("[{}] Failed to close SMTP connection.", unitName, e);
+                    }
+                }
             }
         });
     }
