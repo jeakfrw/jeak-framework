@@ -5,12 +5,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.Properties;
@@ -119,21 +120,24 @@ public class SmtpTransportUnit implements ITransportUnit {
                 message.getAttachments()
                         .forEach(a -> {
                             try {
-                                MimeBodyPart bodyPart = new MimeBodyPart();
-
+                                DataSource attachmentSource;
                                 if (a.isFileSource()) {
-                                    bodyPart.attachFile(a.getFileSource().getAbsoluteFile());
+                                    attachmentSource = new FileDataSource(a.getFileSource().getAbsoluteFile());
                                 } else if (a.isPathSource()) {
-                                    bodyPart.attachFile(a.getPathSource().toFile().getAbsoluteFile());
+                                    attachmentSource = new FileDataSource(a.getPathSource().toFile().getAbsoluteFile());
                                 } else if (a.isNativeSource()) {
-                                    bodyPart.setDataHandler(new DataHandler(a.getNativeSource()));
+                                    attachmentSource = a.getNativeSource();
                                 } else {
                                     logger.warn("Failed to attach unknown attachment type! {}", a);
                                     return;
                                 }
 
+                                MimeBodyPart bodyPart = new MimeBodyPart();
+                                bodyPart.setFileName(a.getName());
+                                bodyPart.setDataHandler(new DataHandler(attachmentSource));
+
                                 mimeMultipart.addBodyPart(bodyPart);
-                            } catch (MessagingException | IOException e) {
+                            } catch (MessagingException e) {
                                 logger.warn("[{}] Failed to add/build attachment source.", unitName, e);
                             }
                         });
