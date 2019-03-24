@@ -4,9 +4,14 @@ import de.mlessmann.confort.api.IConfigNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.Properties;
@@ -79,10 +84,11 @@ public class SmtpTransportUnit implements ITransportUnit {
         });
     }
 
-    private Optional<MimeMessage> buildMime(IMail message) {
+    protected Optional<MimeMessage> buildMime(IMail message) {
         try {
             MimeMessage mimeMessage = new MimeMessage(jMailSession);
 
+            logger.debug("[{}] Adding recipients.", unitName);
             message.getRecipientsTO().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.TO));
             message.getRecipientsCC().forEach(rec ->
@@ -90,6 +96,40 @@ public class SmtpTransportUnit implements ITransportUnit {
             message.getRecipientsBCC().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.BCC));
 
+            BodyPart textBody = new MimeBodyPart();
+            textBody.setContent(message.getBody(), "text/html");
+            MimeMultipart mimeMultipart = new MimeMultipart(textBody);
+
+            logger.debug("[{}] Adding attachments.", unitName);
+            if (!message.getAttachments().isEmpty()) {
+                message.getAttachments()
+                        .forEach(a -> {
+                            DataSource attachmentSource;
+                            if (a.isFileSource()) {
+                                attachmentSource = new FileDataSource(a.getFileSource());
+                            } else if (a.isPathSource()) {
+                                attachmentSource = new FileDataSource(a.getPathSource().toFile());
+                            } else if (a.isNativeSource()) {
+                                attachmentSource = a.getNativeSource();
+                            } else {
+                                logger.warn("Failed to attach unknown attachment type! {}", a);
+                                return;
+                            }
+
+                            try {
+                                MimeBodyPart bodyPart = new MimeBodyPart();
+                                bodyPart.setDataHandler(new DataHandler(attachmentSource));
+                                bodyPart.setFileName(a.getName());
+                                mimeMultipart.addBodyPart(bodyPart);
+                            } catch (MessagingException e) {
+                                logger.warn("[{}] Failed to add/build attachment source.", unitName, e);
+                            }
+                        });
+            }
+
+            mimeMessage.setContent(mimeMultipart);
+
+            logger.debug("[{}] Adding headers.", unitName);
             message.getHeaders().forEach((k, v) -> {
                 try {
                     mimeMessage.addHeader(k, v);
@@ -108,7 +148,7 @@ public class SmtpTransportUnit implements ITransportUnit {
         }
     }
 
-    private void addRecipient(MimeMessage mimeMessage, String rec, Message.RecipientType type) {
+    protected void addRecipient(MimeMessage mimeMessage, String rec, Message.RecipientType type) {
         try {
             Address addr = new InternetAddress(rec);
             mimeMessage.addRecipient(type, addr);

@@ -1,8 +1,7 @@
 package de.fearnixx.jeak.service.mail;
 
+import javax.activation.DataSource;
 import java.io.File;
-import java.io.Reader;
-import java.net.URI;
 import java.nio.file.Path;
 
 public interface IAttachment {
@@ -10,6 +9,8 @@ public interface IAttachment {
     static AttachmentBuilder builder() {
         return new AttachmentBuilder();
     }
+
+    String getName();
 
     boolean isFileSource();
 
@@ -19,11 +20,7 @@ public interface IAttachment {
 
     Path getPathSource();
 
-    boolean isReaderSource();
+    boolean isNativeSource();
 
-    Reader getReaderSource();
-
-    boolean isURISource();
-
-    URI getURISource();
+    DataSource getNativeSource();
 }

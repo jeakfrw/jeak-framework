@@ -1,40 +1,40 @@
 package de.fearnixx.jeak.service.mail;
 
+import javax.activation.DataSource;
 import java.io.File;
-import java.io.Reader;
-import java.net.URI;
 import java.nio.file.Path;
 
 public class AttachmentBuilder {
 
-    public IAttachment fromFile(File attachment) {
-        return new AttachmentImpl(attachment, null, null, null);
+    public IAttachment fromFile(String name, File attachment) {
+        return new AttachmentImpl(name, attachment, null, null);
     }
 
-    public IAttachment fromPath(Path attachment) {
-        return new AttachmentImpl(null, attachment, null, null);
+    public IAttachment fromPath(String name, Path attachment) {
+        return new AttachmentImpl(name, null, attachment, null);
     }
 
-    public IAttachment fromURI(URI attachment) {
-        return new AttachmentImpl(null, null, attachment, null);
-    }
-
-    public IAttachment fromReader(Reader attachment) {
-        return new AttachmentImpl(null, null, null, attachment);
+    public IAttachment fromNative(String name, DataSource source) {
+        return new AttachmentImpl(name, null, null, source);
     }
 
     private static class AttachmentImpl implements IAttachment {
 
+        private final String attachmentName;
         private final File fileSource;
         private final Path pathSource;
-        private final URI uriSource;
-        private final Reader readerSource;
+        private final DataSource dataSource;
 
-        public AttachmentImpl(File fileSource, Path pathSource, URI uriSource, Reader readerSource) {
+        public AttachmentImpl(String attachmentName, File fileSource, Path pathSource, DataSource dataSource) {
+            this.attachmentName = attachmentName;
             this.fileSource = fileSource;
             this.pathSource = pathSource;
-            this.uriSource = uriSource;
-            this.readerSource = readerSource;
+            this.dataSource = dataSource;
+        }
+
+        @Override
+        public String getName() {
+            return attachmentName;
         }
 
         @Override
@@ -58,23 +58,13 @@ public class AttachmentBuilder {
         }
 
         @Override
-        public boolean isReaderSource() {
-            return readerSource != null;
+        public boolean isNativeSource() {
+            return dataSource != null;
         }
 
         @Override
-        public Reader getReaderSource() {
-            return readerSource;
-        }
-
-        @Override
-        public boolean isURISource() {
-            return uriSource != null;
-        }
-
-        @Override
-        public URI getURISource() {
-            return uriSource;
+        public DataSource getNativeSource() {
+            return dataSource;
         }
     }
 }
