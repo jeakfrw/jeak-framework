@@ -5,13 +5,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.Properties;
@@ -97,6 +96,7 @@ public class SmtpTransportUnit implements ITransportUnit {
     protected Optional<MimeMessage> buildMime(IMail message) {
         try {
             MimeMessage mimeMessage = new MimeMessage(jMailSession);
+            MimeMultipart mimeMultipart = new MimeMultipart();
 
             logger.debug("[{}] Adding recipients.", unitName);
             message.getRecipientsTO().forEach(rec ->
@@ -106,38 +106,43 @@ public class SmtpTransportUnit implements ITransportUnit {
             message.getRecipientsBCC().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.BCC));
 
-            BodyPart textBody = new MimeBodyPart();
-            textBody.setContent(message.getBody(), "text/html");
-            MimeMultipart mimeMultipart = new MimeMultipart(textBody);
+
+            mimeMessage.setSubject(message.getSubject(), CHARSET.toString());
+
 
             logger.debug("[{}] Adding attachments.", unitName);
             if (!message.getAttachments().isEmpty()) {
+                BodyPart textBody = new MimeBodyPart();
+                textBody.setContent(message.getBody(), "text/html");
+                mimeMultipart.addBodyPart(textBody);
+
                 message.getAttachments()
                         .forEach(a -> {
-                            DataSource attachmentSource;
-                            if (a.isFileSource()) {
-                                attachmentSource = new FileDataSource(a.getFileSource());
-                            } else if (a.isPathSource()) {
-                                attachmentSource = new FileDataSource(a.getPathSource().toFile());
-                            } else if (a.isNativeSource()) {
-                                attachmentSource = a.getNativeSource();
-                            } else {
-                                logger.warn("Failed to attach unknown attachment type! {}", a);
-                                return;
-                            }
-
                             try {
                                 MimeBodyPart bodyPart = new MimeBodyPart();
-                                bodyPart.setDataHandler(new DataHandler(attachmentSource));
-                                bodyPart.setFileName(a.getName());
+
+                                if (a.isFileSource()) {
+                                    bodyPart.attachFile(a.getFileSource().getAbsoluteFile());
+                                } else if (a.isPathSource()) {
+                                    bodyPart.attachFile(a.getPathSource().toFile().getAbsoluteFile());
+                                } else if (a.isNativeSource()) {
+                                    bodyPart.setDataHandler(new DataHandler(a.getNativeSource()));
+                                } else {
+                                    logger.warn("Failed to attach unknown attachment type! {}", a);
+                                    return;
+                                }
+
                                 mimeMultipart.addBodyPart(bodyPart);
-                            } catch (MessagingException e) {
+                            } catch (MessagingException | IOException e) {
                                 logger.warn("[{}] Failed to add/build attachment source.", unitName, e);
                             }
                         });
+                mimeMessage.setContent(mimeMultipart);
+
+            } else {
+                mimeMessage.setText(message.getBody(), CHARSET.toString());
             }
 
-            mimeMessage.setContent(mimeMultipart);
 
             logger.debug("[{}] Adding headers.", unitName);
             message.getHeaders().forEach((k, v) -> {
@@ -147,9 +152,6 @@ public class SmtpTransportUnit implements ITransportUnit {
                     logger.warn("[{}] Failed to add header to MIME message: {}: {}", unitName, k, v, e);
                 }
             });
-
-            mimeMessage.setSubject(message.getSubject(), CHARSET.toString());
-            mimeMessage.setText(message.getBody(), CHARSET.toString());
 
             return Optional.of(mimeMessage);
         } catch (MessagingException e) {
