@@ -11,3 +11,5 @@ build/
 ## Plugins (Added using submodules) ##
 plugins/
 
+# File managers #
+.directory
