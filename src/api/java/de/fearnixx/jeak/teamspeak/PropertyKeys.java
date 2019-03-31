@@ -1,14 +1,12 @@
 package de.fearnixx.jeak.teamspeak;
 
 /**
- * Created by MarkL4YG on 15.06.17.
  * A collection of Strings in order to minimize the amount of hardcoded Strings needed in plugins/implementation
  * Simplifies optimization
  * Also simplifies adaptation to small query changes
  *
- * At some point these may be replaced with enums for faster processing
- * If possible that'll only require plugins to recompile once without changes
- * or change from PropertyKeys to PropertyEnums
+ * These values are taken directly from the server query manual backpages.
+ * However, since the manual is dated here and there, we have to make adjustments to those values.
  */
 public abstract class PropertyKeys {
 
@@ -29,7 +27,8 @@ public abstract class PropertyKeys {
     }
 
     /**
-     * All available client properties (clientlist response)
+     * All available client properties.
+     * As defined by the server query manual.
      */
     public abstract static class Client {
 
@@ -41,6 +40,8 @@ public abstract class PropertyKeys {
         public static final String DBID = "client_database_id";
         public static final String UID = "client_unique_identifier";
         public static final String NICKNAME = "client_nickname";
+        public static final String NICKNAME_PHONETIC = "client_nickname_phonetic";
+        public static final String DESCRIPTION = "client_description";
         public static final String TYPE = "client_type";
         public static final String PLATFORM = "client_platform";
         public static final String VERSION = "client_version";
@@ -54,6 +55,8 @@ public abstract class PropertyKeys {
         public static final String IDLE_TIME = "client_idle_time";
         public static final String CREATED_TIME = "client_created";
         public static final String LAST_JOIN_TIME = "client_lastconnected";
+        public static final String UNREAD_MESSAGES = "client_unread_messages";
+        public static final String IPV4_ADDRESS = "connection_client_ip";
 
         public static final String FLAG_AWAY = "client_away";
         public static final String AWAY_MESSAGE = "client_away_message";
@@ -67,7 +70,6 @@ public abstract class PropertyKeys {
         public static final String IOIN = "client_input_hardware";
         public static final String IOIN_MUTED = "client_input_muted";
         public static final String IOOUT = "client_output_hardware";
-
         public static final String IOOUT_MUTED = "client_output_muted";
     }
 
