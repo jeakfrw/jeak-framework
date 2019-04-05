@@ -224,7 +224,7 @@ public class DataCache implements IDataCache {
      */
     @Listener(order = Listener.Orders.LATEST)
     public void onNotify(IQueryEvent.INotification event) {
-        if (event instanceof ITargetClient.IClientMoved) {
+        if (event instanceof IQueryEvent.INotification.IClientMoved) {
             // Client has moved - Apply to representation
             synchronized (LOCK) {
                 Integer clientID = Integer.valueOf(event.getProperty("clid").orElse("-1"));
