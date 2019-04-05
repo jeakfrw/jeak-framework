@@ -1,7 +1,5 @@
 package de.fearnixx.jeak.event;
 
-import de.fearnixx.jeak.teamspeak.data.IChannel;
-import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
@@ -78,36 +76,13 @@ public interface IQueryEvent extends IEvent {
          */
         String getCaption();
 
-        /**
-         * Event that targeted a specific client.
-         * The target is injected using a SystemListener.
-         * In case the injection fails this event will not be fired to preserve consistency.
-         */
-        interface ITargetClient extends INotification {
-
-            IClient getTarget();
+        interface IClientEnter extends ITargetClient, IQueryEvent.INotification {
         }
 
-        /**
-         * Event that targeted a specific channel.
-         * The target is injected using a SystemListener.
-         * In case the injection fails this event will not be fired to preserve consistency.
-         */
-        interface ITargetChannel extends INotification {
-
-            IChannel getTarget();
+        interface IClientLeave extends ITargetClient, IQueryEvent.INotification {
         }
 
-        interface ITargetServer extends INotification {
-        }
-
-        interface IClientEnter extends ITargetClient {
-        }
-
-        interface IClientLeave extends ITargetClient {
-        }
-
-        interface IClientMoved extends ITargetClient {
+        interface IClientMoved extends ITargetClient, IQueryEvent.INotification {
         }
 
         interface ITextMessage extends INotification {
@@ -131,7 +106,7 @@ public interface IQueryEvent extends IEvent {
         interface IChannelMoved extends IChannelEdited {
         }
 
-        interface IChannelEdited extends ITargetChannel {
+        interface IChannelEdited extends ITargetChannel, IQueryEvent.INotification {
 
             /**
              * Channel properties and their new values.

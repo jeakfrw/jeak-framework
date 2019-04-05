@@ -2,6 +2,8 @@ package de.fearnixx.jeak.event.query;
 
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.event.ITargetChannel;
+import de.fearnixx.jeak.event.ITargetClient;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
@@ -100,7 +102,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
     }
 
-    public abstract static class TargetClient extends Notification implements INotification.ITargetClient {
+    public abstract static class TargetClient extends Notification implements ITargetClient {
 
         private IClient client;
 
@@ -126,7 +128,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {
     }
 
-    public abstract static class TargetChannel extends Notification implements INotification.ITargetChannel {
+    public abstract static class TargetChannel extends Notification implements ITargetChannel {
 
         private IChannel channel;
 

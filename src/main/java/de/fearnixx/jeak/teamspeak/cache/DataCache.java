@@ -4,6 +4,7 @@ import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.EventAbortException;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.event.ITargetClient;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.reflect.Inject;
@@ -223,7 +224,7 @@ public class DataCache implements IDataCache {
      */
     @Listener(order = Listener.Orders.LATEST)
     public void onNotify(IQueryEvent.INotification event) {
-        if (event instanceof IQueryEvent.INotification.ITargetClient.IClientMoved) {
+        if (event instanceof ITargetClient.IClientMoved) {
             // Client has moved - Apply to representation
             synchronized (LOCK) {
                 Integer clientID = Integer.valueOf(event.getProperty("clid").orElse("-1"));
