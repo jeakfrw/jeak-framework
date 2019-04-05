@@ -1,7 +1,10 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 20.06.17.
@@ -173,4 +176,65 @@ public interface IClient extends IDataHolder {
      * Translation of {@link #getLastJoin()}.
      */
     LocalDateTime getLastJoinTime();
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to send a message to this client.
+     */
+    IQueryRequest sendMessage(String message);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to send a poke to this client.
+     */
+    IQueryRequest sendPoke(String message);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to edit the clients description.
+     */
+    IQueryRequest setDescription(String clientDescription);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to move the client to another channel.
+     */
+    IQueryRequest moveToChannel(Integer channelId);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to add the client to server groups.
+     */
+    IQueryRequest addServerGroup(Integer... serverGroupIds);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to remove the client from server groups.
+     */
+    IQueryRequest removeServerGroup(Integer... serverGroupIds);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to set the clients channel group.
+     * @apiNote There is no method for "the current channel" as we want plugins to explicitly specify the channel.
+     */
+    IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to kick the client.
+     */
+    IQueryRequest kick(String reasonMessage);
+
+    /**
+     * @see #kick(String)
+     */
+    IQueryRequest kick();
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to ban the client from the server.
+     */
+    IQueryRequest ban(String reasonMessage, TimeUnit durationUnit, Integer duration);
+
+    /**
+     * @see #ban(String, TimeUnit, Integer)
+     */
+    IQueryRequest ban(String reasonMessage, Integer durationInSeconds);
+
+    /**
+     * @see #ban(String, TimeUnit, Integer)
+     */
+    IQueryRequest banPermanent(String reasonMessage);
 }

@@ -1,8 +1,11 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by MarkL4YG on 15.06.17.
@@ -120,4 +123,42 @@ public interface IChannel extends IDataHolder {
      * @return All sub channels of this channel
      */
     List<IChannel> getSubChannels();
+
+    /**
+     * Sends a message to this channel.
+     * @deprecated <p>Not available at the moment. TS3 forces any messages directed at a channel to be sent to the current one.
+     * As this is likely to be the default channel or a dedicated bot-channel, this is not useful.
+     * A work-around is scheduled to be put in place: https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/issues/32
+     * </p>
+     */
+    @Deprecated
+    IQueryRequest sendMessage(String message);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to delete this channel.
+     */
+    IQueryRequest delete();
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to rename this channel.
+     */
+    IQueryRequest rename(String channelName);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to move the channel below another one.
+     * (Edits "channel_order_id", for "below" as in a tree structure, see {@link #moveInto}
+     */
+    IQueryRequest moveBelow(Integer channelAboveId);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to move the channel into another one.
+     * (Edits the parent id.)
+     */
+    IQueryRequest moveInto(Integer channelParentId);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to edit the given channel properties.
+     * Use {@link PropertyKeys.Channel} for the property names.
+     */
+    IQueryRequest edit(Map<String, String> properties);
 }
