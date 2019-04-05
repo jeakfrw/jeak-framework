@@ -1,18 +1,15 @@
 package de.fearnixx.jeak.teamspeak.data;
 
-import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.teamspeak.KickType;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.TargetType;
-import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 
-import javax.management.Query;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
