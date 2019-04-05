@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.teamspeak.cache.IDataCache;
+
 import java.util.List;
 
 /**
@@ -9,10 +11,10 @@ import java.util.List;
  * Spacers extend this:
  * @see ISpacer
  *
- * @apiNote All values can be changed through the {@link IQueryMessageObject} interface - At least on instances created by the bot itself
+ * @apiNote All values can be changed through the {@link IDataHolder} interface - At least on instances created by the bot itself
  * @apiNote Remember that changing the values will not actually edit the channel on the server!
  *
- * @implNote Channels acquired using {@link ITS3Server#getChannelList()} are currently updated regularly and thread safe.
+ * @implNote Channels acquired using {@link IDataCache#getChannels()} are currently updated regularly and thread safe.
  * @implNote That means obsolete channels are invalidated automatically through {@link #getPersistence()} as {@link ChannelPersistence#DELETED}
  * @implNote However the API can not make this guarantee for any custom implementations!
  */
