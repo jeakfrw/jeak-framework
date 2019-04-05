@@ -7,6 +7,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
@@ -79,7 +80,7 @@ public class CommandService implements ICommandService {
                         if (receivers.isEmpty()) {
                             Integer targetID = Integer.valueOf(event.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
                             QueryBuilder request = IQueryRequest.builder()
-                                                                         .command("sendtextmessage")
+                                                                         .command(QueryCommands.TEXTMESSAGE_SEND)
                                                                          .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
                                                                          .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
                                                                          .addKey(PropertyKeys.TextMessage.MESSAGE, "Unknown command!");
@@ -142,7 +143,7 @@ public class CommandService implements ICommandService {
         }
 
         QueryBuilder request = IQueryRequest.builder()
-                                                     .command("sendtextmessage")
+                                                     .command(QueryCommands.TEXTMESSAGE_SEND)
                                                      .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
                                                      .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
                                                      .addKey(PropertyKeys.TextMessage.MESSAGE, message);

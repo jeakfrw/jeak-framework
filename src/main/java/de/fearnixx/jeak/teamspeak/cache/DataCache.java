@@ -14,6 +14,7 @@ import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.data.*;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public class DataCache implements IDataCache {
 
     // == CLIENTLIST = //
     private final IQueryRequest clientListRequest = IQueryRequest.builder()
-            .command("clientlist")
+            .command(QueryCommands.CLIENT.CLIENT_LIST)
             .addOption("-uid")
             .addOption("-away")
             .addOption("-voice")
@@ -76,7 +77,7 @@ public class DataCache implements IDataCache {
 
     // == CHANNELLIST == //
     private final IQueryRequest channelListRequest = IQueryRequest.builder()
-            .command("channellist")
+            .command(QueryCommands.CHANNEL.CHANNEL_LIST)
             .addOption("-topic")
             .addOption("-flags")
             .addOption("-voice")

@@ -3,6 +3,7 @@ package de.fearnixx.jeak.teamspeak.query;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 
 import java.util.function.Consumer;
@@ -11,7 +12,7 @@ public abstract class AbstractQueryConnection implements IQueryConnection {
 
     protected final IQueryRequest whoAmIRequest =
             IQueryRequest.builder()
-                    .command("whoami")
+                    .command(QueryCommands.WHOAMI)
                     .onSuccess(answer -> whoamiAnswer = answer.getDataChain().get(0))
                     .build();
 
@@ -25,7 +26,7 @@ public abstract class AbstractQueryConnection implements IQueryConnection {
     @Override
     public void setNickName(String nickName) {
         IQueryRequest request = IQueryRequest.builder()
-                .command("clientupdate")
+                .command(QueryCommands.CLIENT.CLIENT_UPDATE)
                 .addKey(PropertyKeys.Client.NICKNAME, nickName)
                 .build();
 

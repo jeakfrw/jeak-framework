@@ -57,11 +57,6 @@ public abstract class QueryCommands {
         public static final String SERVERGROUP_DEL = "servergroupdel";
         public static final String SERVERGROUP_COPY = "servergroupcopy";
         public static final String SERVERGROUP_RENAME = "servergrouprename";
-        public static final String SERVERGROUP_LIST_PERMISSIONS = "servergrouppermlist";
-        public static final String SERVERGROUP_ADD_PERMISSION = "servergroupaddperm";
-        public static final String SERVERGROUP_ADD_PERMISSION_AUTO = "servergroupautoaddperm";
-        public static final String SERVERGROUP_DEL_PERMISSION = "servergroupdelperm";
-        public static final String SERVERGROUP_DEL_PERMISSION_AUTO = "servergroupautodelperm";
         public static final String SERVERGROUP_ADD_CLIENT = "servergroupaddclient";
         public static final String SERVERGROUP_DEL_CLIENT = "servergroupdelclient";
         public static final String SERVERGROUP_LIST_CLIENTS = "servergroupclientlist";
@@ -96,8 +91,15 @@ public abstract class QueryCommands {
      * Permission commands grouped from the other categories.
      */
     public abstract static class PERMISSION {
+
         private PERMISSION() {
         }
+
+        public static final String SERVERGROUP_LIST_PERMISSIONS = "servergrouppermlist";
+        public static final String SERVERGROUP_ADD_PERMISSION = "servergroupaddperm";
+        public static final String SERVERGROUP_ADD_PERMISSION_AUTO = "servergroupautoaddperm";
+        public static final String SERVERGROUP_DEL_PERMISSION = "servergroupdelperm";
+        public static final String SERVERGROUP_DEL_PERMISSION_AUTO = "servergroupautodelperm";
 
         public static final String CHANNEL_LIST_PERMISSIONS = "channelpermlist";
         public static final String CHANNEL_PERMISSION_ADD = "channeladdperm";

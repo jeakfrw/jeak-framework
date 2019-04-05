@@ -157,7 +157,7 @@ public class Server implements IServer {
         AtomicBoolean useResult = new AtomicBoolean(true);
         mainConnection.sendRequest(
                 IQueryRequest.builder()
-                        .command("use")
+                        .command(QueryCommands.SERVER.USE_INSTANCE)
                         .addOption(Integer.toString(instID))
                         .onError(answer -> {
                             logger.error("Failed to use desired instance: {}", answer.getError().getMessage());
@@ -169,7 +169,7 @@ public class Server implements IServer {
         );
 
         mainConnection.sendRequest(
-                IQueryRequest.builder().command("login")
+                IQueryRequest.builder().command(QueryCommands.SERVER.LOGIN)
                         .addOption(user)
                         .addOption(pass)
                         .onError(answer -> {
@@ -185,18 +185,17 @@ public class Server implements IServer {
     }
 
     private void subscribeToEvents() {
-        final String servernotifyregisterCommand = "servernotifyregister";
         final String eventKey = "event";
         mainConnection.sendRequest(
                 IQueryRequest.builder()
-                        .command(servernotifyregisterCommand)
+                        .command(QueryCommands.SERVER.SERVER_NOTIFY_REGISTER)
                         .addKey(eventKey, "server")
                         .build()
         );
 
         mainConnection.sendRequest(
                 IQueryRequest.builder()
-                        .command(servernotifyregisterCommand)
+                        .command(QueryCommands.SERVER.SERVER_NOTIFY_REGISTER)
                         .addKey(eventKey, "channel")
                         .addKey("id", "0")
                         .build()
@@ -204,21 +203,21 @@ public class Server implements IServer {
 
         mainConnection.sendRequest(
                 IQueryRequest.builder()
-                        .command(servernotifyregisterCommand)
+                        .command(QueryCommands.SERVER.SERVER_NOTIFY_REGISTER)
                         .addKey(eventKey, "textserver")
                         .build()
         );
 
         mainConnection.sendRequest(
                 IQueryRequest.builder()
-                        .command(servernotifyregisterCommand)
+                        .command(QueryCommands.SERVER.SERVER_NOTIFY_REGISTER)
                         .addKey(eventKey, "textchannel")
                         .build()
         );
 
         mainConnection.sendRequest(
                 IQueryRequest.builder()
-                        .command(servernotifyregisterCommand)
+                        .command(QueryCommands.SERVER.SERVER_NOTIFY_REGISTER)
                         .addKey(eventKey, "textprivate")
                         .build()
         );

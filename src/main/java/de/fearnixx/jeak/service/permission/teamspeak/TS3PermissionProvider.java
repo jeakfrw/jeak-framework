@@ -6,6 +6,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.query.IQueryPromise;
@@ -156,7 +157,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command("clientpermlist")
+                                             .command(QueryCommands.PERMISSION.CLIENT_LIST_PERMISSIONS)
                                              .addKey("cldbid", clientDBID)
                                              .addOption("-permsid")
                                              .build();
@@ -189,7 +190,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command("servergrouppermlist")
+                                             .command(QueryCommands.PERMISSION.SERVERGROUP_LIST_PERMISSIONS)
                                              .addKey("sgid", serverGroupID)
                                              .addOption("-permsid")
                                              .build();
@@ -222,7 +223,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command("channelgrouppermlist")
+                                             .command(QueryCommands.PERMISSION.CHANNEL_GROUP_PERMISSION_LIST)
                                              .addKey("cgid", channelGroupID)
                                              .addOption("-permsid")
                                              .build();
@@ -259,7 +260,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command("channelclientpermlist")
+                                             .command(QueryCommands.PERMISSION.CHANNEL_CLIENT_LIST_PERMISSIONS)
                                              .addKey(PropertyKeys.Channel.ID, channelID)
                                              .addKey("cldbid", clientDBID)
                                              .addOption("-permsid")
@@ -297,7 +298,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command("channelpermlist")
+                                             .command(QueryCommands.PERMISSION.CHANNEL_LIST_PERMISSIONS)
                                              .addKey("cid", channelID)
                                              .addOption("-permsid")
                                              .build();
@@ -341,7 +342,7 @@ public class TS3PermissionProvider implements ITS3PermissionProvider {
         Integer intID = permIDCache.getOrDefault(permSID, -1);
         if (intID == -1) {
             IQueryRequest request = IQueryRequest.builder()
-                                                 .command("permidgetbyname")
+                                                 .command(QueryCommands.PERMISSION.PERMISSION_GET_ID_BYNAME)
                                                  .addKey("permsid", permSID)
                                                  .build();
             IQueryPromise promise = server.getConnection().promiseRequest(request);

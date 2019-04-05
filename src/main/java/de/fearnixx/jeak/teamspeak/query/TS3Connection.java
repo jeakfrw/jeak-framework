@@ -2,6 +2,7 @@ package de.fearnixx.jeak.teamspeak.query;
 
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class TS3Connection implements AutoCloseable {
     private int keepAliveCount = 0;
     private final IQueryRequest keepAliveRequest =
             IQueryRequest.builder()
-                    .command("version")
+                    .command(QueryCommands.SERVER.VERSION)
                     .onDone(event -> {
                         synchronized (requestQueue) {
                             timeoutCount = 0;
