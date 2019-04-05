@@ -1,14 +1,16 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 20.06.17.
- *
+ * <p>
  * Abstract representation of online clients
  */
 public interface IClient extends IDataHolder {
@@ -39,6 +41,7 @@ public interface IClient extends IDataHolder {
     /**
      * CRC32 checksum of the icon associated with the client.
      * Empty if none is set.
+     *
      * @implNote The fix applied to {@link IChannel#}
      */
     String getIconID();
@@ -51,6 +54,7 @@ public interface IClient extends IDataHolder {
         OSX,
         IOS
     }
+
     PlatformType getPlatform();
 
     /**
@@ -62,16 +66,19 @@ public interface IClient extends IDataHolder {
         VOICE,
         QUERY
     }
+
     ClientType getClientType();
 
     /**
      * ID of the channel, the client is currently joined.
+     *
      * @implNote This is updated dynamically outside of the usual cache-refresh after a move-event.
      */
     Integer getChannelID();
 
     /**
      * ID of the channel group that is currently associated with the client.
+     *
      * @implNote Contary to the channel id, this is NOT dynamically updated at the moment.
      */
     Integer getChannelGroupID();
@@ -100,6 +107,7 @@ public interface IClient extends IDataHolder {
 
     /**
      * Whether or not the client was seen talking during the last cache refresh.
+     *
      * @apiNote Not that useful, but available.
      */
     Boolean isTalking();
@@ -153,6 +161,7 @@ public interface IClient extends IDataHolder {
 
     /**
      * For how long the client has been idle.
+     *
      * @implNote the value is provided by TeamSpeak.
      */
     Integer getIdleTime();
@@ -188,6 +197,12 @@ public interface IClient extends IDataHolder {
     IQueryRequest sendPoke(String message);
 
     /**
+     * Returns a {@link IQueryRequest} that can be used to edit the given channel properties.
+     * Use {@link PropertyKeys.Client} for the property names.
+     */
+    IQueryRequest edit(Map<String, String> properties);
+
+    /**
      * Returns a {@link IQueryRequest} that can be used to edit the clients description.
      */
     IQueryRequest setDescription(String clientDescription);
@@ -209,19 +224,30 @@ public interface IClient extends IDataHolder {
 
     /**
      * Returns a {@link IQueryRequest} that can be used to set the clients channel group.
+     *
      * @apiNote There is no method for "the current channel" as we want plugins to explicitly specify the channel.
      */
     IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId);
 
     /**
-     * Returns a {@link IQueryRequest} that can be used to kick the client.
+     * Returns a {@link IQueryRequest} that can be used to kick the client form the server.
      */
-    IQueryRequest kick(String reasonMessage);
+    IQueryRequest kickFromServer(String reasonMessage);
 
     /**
-     * @see #kick(String)
+     * @see #kickFromServer(String)
      */
-    IQueryRequest kick();
+    IQueryRequest kickFromServer();
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to kick the client from the channel.
+     */
+    IQueryRequest kickFromChannel(String reasonMessage);
+
+    /**
+     * @see #kickFromChannel(String)
+     */
+    IQueryRequest kickFromChannel();
 
     /**
      * Returns a {@link IQueryRequest} that can be used to ban the client from the server.

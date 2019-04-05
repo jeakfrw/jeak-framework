@@ -1,234 +1,152 @@
 package de.fearnixx.jeak.teamspeak.data;
 
 import de.fearnixx.jeak.event.query.RawQueryEvent;
+import de.fearnixx.jeak.teamspeak.KickType;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
+import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 
+import javax.management.Query;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Created by MarkL4YG on 20.06.17.
+ * Behavioral class for cached clients.
+ * For data layer, see {@link TS3ClientHolder}
  */
-@SuppressWarnings("ConstantConditions")
-public class TS3Client extends RawQueryEvent.Message implements IClient {
+public class TS3Client extends TS3ClientHolder {
 
-    private boolean invalidated = false;
-
-    public TS3Client(){
-        super();
-    }
-
-    public void invalidate() {
-        invalidated = true;
+    @Override
+    public IQueryRequest sendMessage(String message) {
+        return IQueryRequest.builder()
+                .command(QueryCommands.TEXTMESSAGE_SEND)
+                .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT)
+                .addKey(PropertyKeys.TextMessage.TARGET_ID, this.getClientID())
+                .addKey(PropertyKeys.TextMessage.MESSAGE, message)
+                .build();
     }
 
     @Override
-    public Boolean isValid() {
-        return !invalidated;
+    public IQueryRequest sendPoke(String message) {
+        return IQueryRequest.builder()
+                .command(QueryCommands.CLIENT.CLIENT_POKE)
+                .addKey(PropertyKeys.Client.ID, this.getClientID())
+                .addKey(PropertyKeys.TextMessage.MESSAGE, message)
+                .build();
     }
 
     @Override
-    public String getClientUniqueID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.UID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing unique ID")
-                    .setSourceObject(this);
-        return optProperty.get();
+    public IQueryRequest edit(Map<String, String> properties) {
+        QueryBuilder queryBuilder = IQueryRequest.builder()
+                .command(QueryCommands.CLIENT.CLIENT_EDIT)
+                .addKey(PropertyKeys.Client.ID, this.getClientID());
+        properties.forEach(queryBuilder::addKey);
+        return queryBuilder.build();
+
     }
 
     @Override
-    public Integer getClientID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.ID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing ID")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
+    public IQueryRequest setDescription(String clientDescription) {
+        return edit(Collections.singletonMap(PropertyKeys.Client.DESCRIPTION, clientDescription));
     }
 
     @Override
-    public Integer getClientDBID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.DBID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing database ID")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
+    public IQueryRequest moveToChannel(Integer channelId) {
+        return IQueryRequest.builder()
+                .command(QueryCommands.CLIENT.CLIENT_MOVE)
+                .addKey(PropertyKeys.Client.ID, this.getClientID())
+                .addKey(PropertyKeys.Channel.ID, channelId)
+                .build();
     }
 
     @Override
-    public String getNickName() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.NICKNAME);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing nickname")
-                    .setSourceObject(this);
-        return optProperty.get();
+    public IQueryRequest addServerGroup(Integer... serverGroupIds) {
+        QueryBuilder queryBuilder = IQueryRequest.builder()
+                .command(QueryCommands.SERVER_GROUP.SERVERGROUP_ADD_CLIENT)
+                .addKey(PropertyKeys.Client.ID, this.getClientID());
+        Arrays.stream(serverGroupIds).forEach(id -> {
+            queryBuilder.addKey("sgid", id).commitChainElement();
+        });
+        return queryBuilder.build();
     }
 
     @Override
-    public String getIconID() {
-        return getProperty(PropertyKeys.Client.ICON_ID).orElse("0");
+    public IQueryRequest removeServerGroup(Integer... serverGroupIds) {
+        QueryBuilder queryBuilder = IQueryRequest.builder()
+                .command(QueryCommands.SERVER_GROUP.SERVERGROUP_DEL_CLIENT)
+                .addKey(PropertyKeys.Client.ID, this.getClientID());
+        Arrays.stream(serverGroupIds).forEach(id -> {
+            queryBuilder.addKey("sgid", id).commitChainElement();
+        });
+        return queryBuilder.build();
     }
 
     @Override
-    public PlatformType getPlatform() {
-        switch (getProperty(PropertyKeys.Client.PLATFORM).orElse("unknown").toLowerCase()) {
-            case "windows": return PlatformType.WINDOWS;
-            case "android": return PlatformType.ANDROID;
-            case "linux": return PlatformType.LINUX;
-            case "ios": return PlatformType.IOS;
-            case "os: x": return PlatformType.OSX;
-            default: return PlatformType.UNKNOWN;
+    public IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId) {
+        return IQueryRequest.builder()
+                .command(QueryCommands.CLIENT.CLIENT_SET_CHANNEL_GROUP)
+                .addKey(PropertyKeys.Client.ID, this.getClientID())
+                .addKey(PropertyKeys.Channel.ID, channelId)
+                .addKey("cgid", channelGroupId)
+                .build();
+    }
+
+    @Override
+    public IQueryRequest kickFromServer(String reasonMessage) {
+        return kick(KickType.FROM_SERVER, reasonMessage);
+    }
+
+    @Override
+    public IQueryRequest kickFromServer() {
+        return kickFromServer("Kicked.");
+    }
+
+    @Override
+    public IQueryRequest kickFromChannel(String reasonMessage) {
+        return kick(KickType.FROM_CHANNEL, reasonMessage);
+    }
+
+    @Override
+    public IQueryRequest kickFromChannel() {
+        return kickFromChannel("Kicked.");
+    }
+
+    private IQueryRequest kick(KickType kickType, String reasonMessage) {
+        return IQueryRequest.builder()
+                .command(QueryCommands.CLIENT.CLIENT_KICK)
+                .addKey(PropertyKeys.Client.ID, this.getClientID())
+                .addKey("reasonmsg", reasonMessage)
+                .addKey("reasonid", kickType.getQueryNum())
+                .build();
+    }
+
+    @Override
+    public IQueryRequest ban(String reasonMessage, TimeUnit durationUnit, Integer duration) {
+        QueryBuilder queryBuilder = IQueryRequest.builder()
+                .command(QueryCommands.BAN.BAN_CLIENT)
+                .addKey("banreason", reasonMessage)
+                .addKey(PropertyKeys.Client.ID, this.getClientID());
+
+        int banTime = ((int) Math.ceil(durationUnit.toSeconds(duration)));
+        if (banTime > 0) {
+            queryBuilder.addKey("time", banTime);
         }
+
+        return queryBuilder.build();
     }
 
     @Override
-    public String getVersion() {
-        return getProperty(PropertyKeys.Client.VERSION).orElse("unknown");
+    public IQueryRequest ban(String reasonMessage, Integer durationInSeconds) {
+        return ban(reasonMessage, TimeUnit.SECONDS, durationInSeconds);
     }
 
     @Override
-    public ClientType getClientType() {
-        return ClientType.values()[Integer.parseInt(getProperty(PropertyKeys.Client.TYPE).orElse("0"))];
-    }
-
-    @Override
-    public Integer getChannelID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_ID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing channel ID")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
-    }
-
-    @Override
-    public Integer getChannelGroupID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_GROUP);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing channel group ID")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
-    }
-
-    @Override
-    public Integer getChannelGroupSource() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_GROUP_SOURCE);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client has no channel group source!")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
-    }
-
-    @Override
-    public Boolean isAway() {
-        return "1".equals(getProperty(PropertyKeys.Client.FLAG_AWAY).orElse(null));
-    }
-
-    @Override
-    public String getAwayMessage() {
-        return getProperty(PropertyKeys.Client.AWAY_MESSAGE).orElse("");
-    }
-
-    @Override
-    public Integer getTalkPower() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.TALKPOWER).orElse("0"));
-    }
-
-    @Override
-    public Boolean isTalking() {
-        return "1".equals(getProperty(PropertyKeys.Client.FLAG_TALKING).orElse(null));
-    }
-
-    @Override
-    public Boolean isTalker() {
-        return "1".equals(getProperty(PropertyKeys.Client.FLAG_TALKER).orElse(null));
-    }
-
-    @Override
-    public Boolean isPrioTalker() {
-        return "1".equals(getProperty(PropertyKeys.Client.FLAG_PRIO_TALKER).orElse(null));
-    }
-
-    @Override
-    public Boolean isCommander() {
-        return "1".equals(getProperty(PropertyKeys.Client.FLAG_COMMANDER).orElse(null));
-    }
-
-    @Override
-    public Boolean isRecording() {
-        return "1".equals(getProperty(PropertyKeys.Client.FLAG_RECORDING).orElse(null));
-    }
-
-    @Override
-    public Boolean hasMic() {
-        return "1".equals(getProperty(PropertyKeys.Client.IOIN).orElse(null));
-    }
-
-    @Override
-    public Boolean hasMicMuted() {
-        return "1".equals(getProperty(PropertyKeys.Client.IOIN_MUTED).orElse(null));
-    }
-
-    @Override
-    public Boolean hasOutput() {
-        return "1".equals(getProperty(PropertyKeys.Client.IOOUT).orElse(null));
-    }
-
-    @Override
-    public Boolean hasOutputMuted() {
-        return "1".equals(getProperty(PropertyKeys.Client.IOOUT_MUTED).orElse(null));
-    }
-
-    @Override
-    public List<Integer> getGroupIDs() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.GROUPS);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client has no server groups")
-                    .setSourceObject(this);
-
-        String s = optProperty.get();
-        String[] sIDs = s.split(",");
-        Integer[] ids = new Integer[sIDs.length];
-        for (int i = 0; i < sIDs.length; i++) {
-            ids[i] = Integer.parseInt(sIDs[i]);
-        }
-        return Collections.unmodifiableList(Arrays.asList(ids));
-    }
-
-    @Override
-    public Integer getIdleTime() {
-        return Integer.parseInt(getProperty(PropertyKeys.Client.IDLE_TIME).orElse("0"));
-    }
-
-    @Override
-    public Long getCreated() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.CREATED_TIME);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing creation timestamp")
-                    .setSourceObject(this);
-        return Long.parseLong(optProperty.get());
-    }
-
-    @Override
-    public LocalDateTime getCreatedTime() {
-        return LocalDateTime.ofEpochSecond(getCreated(), 0, ZoneOffset.UTC);
-    }
-
-    @Override
-    public Long getLastJoin() {
-        return Long.parseLong(getProperty(PropertyKeys.Client.LAST_JOIN_TIME).orElse("0"));
-    }
-
-    @Override
-    public LocalDateTime getLastJoinTime() {
-        return LocalDateTime.ofEpochSecond(getLastJoin(), 0, ZoneOffset.UTC);
-    }
-
-    @Override
-    public String toString() {
-        return getNickName() + '/' + getClientID() + "/db" + getClientDBID();
+    public IQueryRequest banPermanent(String reasonMessage) {
+        return ban(reasonMessage, TimeUnit.SECONDS, 0);
     }
 }
