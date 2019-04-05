@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.teamspeak.query;
 
 import de.fearnixx.jeak.event.IQueryEvent;
+import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 
@@ -88,6 +89,13 @@ public class QueryBuilder {
         else
             currentObj.setProperty(key, value != null ? value.toString() : null);
         return this;
+    }
+
+    /**
+     * Convenience method to avoid having to call {@link TargetType#getQueryNum()} manually.
+     */
+    public QueryBuilder addKey(String key, TargetType targetType) {
+        return addKey(key, targetType.getQueryNum());
     }
 
     public QueryBuilder addOption(String option) {
