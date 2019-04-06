@@ -53,6 +53,12 @@ sourceSets {
             srcDirs = ['src/api/resources', 'src/main/resources']
         }
     }
+    
+    test {
+        java {
+            srcDirs = ['src/test/java']
+        }
+    }
 }
 
 dependencies {
@@ -76,6 +82,8 @@ dependencies {
     runtime group: 'org.mariadb.jdbc', name: 'mariadb-java-client', version: project.ext.connectors.mariadb
     runtime group: 'com.sun.mail', name: 'smtp', version: project.ext.jakartaMailVersion
     runtime group: 'com.sun.mail', name: 'dsn', version: project.ext.jakartaMailVersion
+    
+    testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
 build {
