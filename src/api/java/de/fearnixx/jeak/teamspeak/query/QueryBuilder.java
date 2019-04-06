@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class QueryBuilder {
 
-    private static final Boolean WARN_CB_REPLACE = !System.getProperty("jeak.checks.queryCBReplace").equals("false");
+    private static final Boolean WARN_CB_REPLACE = !"false".equals(System.getProperty("jeak.checks.queryCBReplace"));
     public static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
 
     public static QueryBuilder from(IQueryRequest request) {
