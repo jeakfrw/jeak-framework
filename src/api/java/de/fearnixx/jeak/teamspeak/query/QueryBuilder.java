@@ -1,6 +1,5 @@
 package de.fearnixx.jeak.teamspeak.query;
 
-import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class QueryBuilder {
 
-    private static final Boolean WARN_CB_REPLACE = Main.getProperty("jeak.checks.queryCBReplace", true);
+    private static final Boolean WARN_CB_REPLACE = !System.getProperty("jeak.checks.queryCBReplace").equals("false");
     public static final Logger logger = LoggerFactory.getLogger(QueryBuilder.class);
 
     public static QueryBuilder from(IQueryRequest request) {
