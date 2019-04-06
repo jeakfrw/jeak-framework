@@ -38,14 +38,8 @@ public abstract class AbstractQueryConnection implements IQueryConnection {
         Consumer<IQueryEvent.IAnswer> rDone = answer ->
                 onDone.accept(((IRawQueryEvent.IMessage.IAnswer) answer.getRawReference()));
 
-        if (req.onDone() != null) {
-            rDone = rDone.andThen(req.onDone());
-        }
-
-        IQueryRequest queryRequest = QueryBuilder.from(req)
-                .onDone(rDone)
-                .build();
-        sendRequest(queryRequest);
+        req.onDone(rDone);
+        sendRequest(req);
     }
 
     @Override

@@ -59,12 +59,27 @@ public interface IQueryRequest {
     Consumer<IQueryEvent.IAnswer> onDone();
 
     /**
+     * Attach an additional callback to this request.
+     */
+    void onDone(Consumer<IQueryEvent.IAnswer> onDoneConsumer);
+
+    /**
      * {@link #onDone()} for responses with {@code error = 0}.
      */
     Consumer<IQueryEvent.IAnswer> onSuccess();
 
     /**
+     * Attach an additional callback to this request.
+     */
+    void onSuccess(Consumer<IQueryEvent.IAnswer> onSuccessConsumer);
+
+    /**
      * {@link #onDone()} for responses with {@code error != 0}
      */
     Consumer<IQueryEvent.IAnswer> onError();
+
+    /**
+     * Attach an additional callback to this request.
+     */
+    void onError(Consumer<IQueryEvent.IAnswer> onErrorConsumer);
 }

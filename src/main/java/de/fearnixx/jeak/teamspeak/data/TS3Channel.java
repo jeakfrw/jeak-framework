@@ -18,13 +18,13 @@ import java.util.Map;
  */
 public class TS3Channel extends TS3ChannelHolder {
 
-    private static final Boolean SKIP_CHANNEL_MSG_WARNING = Main.getProperty("jeak.checks.channelMsg", false);
+    private static final Boolean CHANNEL_MSG_WARNING = Main.getProperty("jeak.checks.channelMsg", true);
 
     public static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
 
     @Override
     public IQueryRequest sendMessage(String message) {
-        if (!SKIP_CHANNEL_MSG_WARNING) {
+        if (CHANNEL_MSG_WARNING) {
             logger.warn("Sending commands to channels is not supported at the moment! You will see the message only in the current channel");
         }
         return IQueryRequest.builder()
