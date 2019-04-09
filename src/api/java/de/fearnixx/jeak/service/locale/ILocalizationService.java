@@ -4,6 +4,10 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 
 import java.util.Locale;
 
+/**
+ * The localization services takes care of loading and initializing localization units.
+ * It provides access to localization units no matter who initially registered them.
+ */
 public interface ILocalizationService {
 
     /**
@@ -12,7 +16,7 @@ public interface ILocalizationService {
      *
      * Registrations are recommended to be done in {@link IBotStateEvent.IPreInitializeEvent}
      */
-    ILocaleContext registerUnit(String unitId);
+    ILocalizationUnit registerUnit(String unitId);
 
     /**
      * Return the locale representation for the given county code.
