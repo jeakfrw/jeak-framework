@@ -56,6 +56,7 @@ public class LocalizationService extends Configurable implements ILocalizationSe
     @Listener
     public void onShutdown(IBotStateEvent.IPreShutdown event) {
         registeredUnits.values().forEach(LocalizationUnit::save);
+        saveConfig();
     }
 
     @Listener
