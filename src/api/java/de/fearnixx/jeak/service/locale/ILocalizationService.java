@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.locale;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.Locale;
 
@@ -23,6 +24,24 @@ public interface ILocalizationService {
      * E.g. de or au would be de_DE and de_AU respectively.
      */
     Locale getLocaleForCountryId(String ts3countryCode);
+
+    /**
+     * Returns the locale associated with a specific client.
+     * Two values will be taken into account for this:
+     * <ul>
+     *     <li>The clients custom language setting, if defined.</li>
+     *     <li>The clients country flag from TS3.</li>
+     * </ul>
+     */
+    Locale getLocaleOfClient(IClient client);
+
+    /**
+     * Sets the custom language setting for the given client.
+     * {@code null} to unset.
+     *
+     * @implNote This will internally use the profile service, once that's added to bleeding.
+     */
+    void setLocaleForClient(String clientUniqueId, Locale locale);
 
     /**
      * Returns the configured fallback locale.

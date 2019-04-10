@@ -5,6 +5,8 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
@@ -83,6 +85,33 @@ public class LocalizationService extends Configurable implements ILocalizationSe
         Objects.requireNonNull(ts3countryCode, "Country code must not be null!");
 
         return Locale.forLanguageTag(ts3countryCode);
+    }
+
+    @Override
+    public Locale getLocaleOfClient(IClient client) {
+        IConfigNode customLangNode = getConfig().getNode("customLangs", client.getClientUniqueID());
+
+        if (!customLangNode.isVirtual()) {
+            return getLocaleForCountryId(customLangNode.asString());
+
+        } else {
+            return client.getProperty(PropertyKeys.Client.COUNTRY)
+                    .map(this::getLocaleForCountryId)
+                    .orElseGet(this::getFallbackLocale);
+        }
+    }
+
+    @Override
+    public void setLocaleForClient(String clientUniqueId, Locale locale) {
+        if (locale == null) {
+            unsetLocaleForClient(clientUniqueId);
+        } else {
+            getConfig().getNode("customLangs", clientUniqueId).setString(locale.toLanguageTag());
+        }
+    }
+
+    private void unsetLocaleForClient(String clientUniqueId) {
+        getConfig().getNode("customLangs").remove(clientUniqueId);
     }
 
     @Override
