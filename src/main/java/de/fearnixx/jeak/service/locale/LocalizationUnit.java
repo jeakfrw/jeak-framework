@@ -149,4 +149,9 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         root.getNode("langs").setMap();
         return true;
     }
+
+    public void save() {
+        logger.debug("[{}] Saving language definitions.", unitId);
+        saveConfig();
+    }
 }

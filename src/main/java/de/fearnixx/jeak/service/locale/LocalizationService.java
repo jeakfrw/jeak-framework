@@ -34,17 +34,15 @@ public class LocalizationService extends Configurable implements ILocalizationSe
     @Config(id = "localization")
     private IConfig localizationConfig;
 
-    private File langConfigDir;
-
-    private final Map<String, ILocalizationUnit> registeredUnits = new ConcurrentHashMap<>();
+    private final Map<String, LocalizationUnit> registeredUnits = new ConcurrentHashMap<>();
 
     public LocalizationService() {
         super(LocalizationService.class);
     }
 
     @Listener(order = Listener.Orders.SYSTEM)
-    public void onPreInitialize(IBotStateEvent.IPreInitializeEvent event) {
-        langConfigDir = new File(bot.getConfigDirectory(), "lang");
+    public void onPreInitialize(IBotStateEvent.IPluginsLoaded event) {
+        File langConfigDir = new File(bot.getConfigDirectory(), "lang");
 
         if (!langConfigDir.exists() || !langConfigDir.isDirectory()) {
             logger.debug("Creating localization directory.");
@@ -53,6 +51,11 @@ public class LocalizationService extends Configurable implements ILocalizationSe
                 logger.warn("Failed to create localization directory! Expect errors!");
             }
         }
+    }
+
+    @Listener
+    public void onShutdown(IBotStateEvent.IPreShutdown event) {
+        registeredUnits.values().forEach(LocalizationUnit::save);
     }
 
     @Listener
@@ -69,8 +72,10 @@ public class LocalizationService extends Configurable implements ILocalizationSe
         synchronized (registeredUnits) {
             if (!registeredUnits.containsKey(unitId)) {
                 logger.debug("Creating localization unit: {}", unitId);
+                File langConfigDir = new File(bot.getConfigDirectory(), "lang");
                 File langFile = new File(langConfigDir, unitId + ".json");
                 FileConfig langFileRef = new FileConfig(LoaderFactory.getLoader("application/json"), langFile);
+
                 LocalizationUnit unit = new LocalizationUnit(unitId, langFileRef, this);
                 registeredUnits.put(unitId, unit);
                 return unit;
