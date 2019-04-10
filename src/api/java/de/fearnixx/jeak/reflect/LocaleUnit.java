@@ -2,9 +2,16 @@ package de.fearnixx.jeak.reflect;
 
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * Indicates that a locale unit should be injected.
  */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
 public @interface LocaleUnit {
 
     /**

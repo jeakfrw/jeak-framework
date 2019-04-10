@@ -116,7 +116,7 @@ public class LocalizationService extends Configurable implements ILocalizationSe
 
     @Override
     public Locale getFallbackLocale() {
-        return getLocaleForCountryId(getConfig().getNode("fallbackLocale").optString("en_US"));
+        return Locale.forLanguageTag(getConfig().getNode("fallbackLocale").optString("en"));
     }
 
     @Override

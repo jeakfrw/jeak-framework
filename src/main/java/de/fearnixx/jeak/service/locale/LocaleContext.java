@@ -30,13 +30,15 @@ public class LocaleContext implements ILocaleContext {
     }
 
     private void preExplodeMessages() {
-        languageNode.optMap()
-                .orElseThrow(() -> new IllegalStateException("Language context nodes may only be maps!"))
-                .forEach((msgId, template) -> {
-                    String templateString = template.optString()
-                            .orElseThrow(() -> new IllegalStateException("Message templates may only be strings!"));
-                    preExploded.put(msgId, new MessageRep(templateString));
-                });
+        if (!languageNode.isVirtual()) {
+            languageNode.optMap()
+                    .orElseThrow(() -> new IllegalStateException("Language context nodes may only be maps!"))
+                    .forEach((msgId, template) -> {
+                        String templateString = template.optString()
+                                .orElseThrow(() -> new IllegalStateException("Message templates may only be strings!"));
+                        preExploded.put(msgId, new MessageRep(templateString));
+                    });
+        }
     }
 
     @Override

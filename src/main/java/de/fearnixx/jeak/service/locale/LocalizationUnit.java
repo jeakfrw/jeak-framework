@@ -30,6 +30,9 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         this.unitId = unitId;
         this.configRef = configRef;
         this.localizationService = localizationService;
+        if (!loadConfig()) {
+            throw new IllegalStateException("Failed to load language configuration!");
+        }
     }
 
     @Override
@@ -61,7 +64,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         Objects.requireNonNull(ts3CountryCode, "TS3 country code must not be null!");
         Locale locale = localizationService.getLocaleForCountryId(ts3CountryCode);
         if (locale != null) {
-            getContext(locale);
+            return getContext(locale);
         }
         return null;
     }
@@ -78,6 +81,8 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
             } catch (IOException | ParseException e) {
                 logger.error("[{}] Failed to load default configuration from resource URI: {}", unitId, resourceURI, e);
             }
+        } else {
+            logger.error("[{}] Failed to find resource URI: {}", unitId, resourceURI);
         }
     }
 
@@ -101,21 +106,22 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         configNode.getNode("langs")
                 .optMap()
                 .orElseGet(Collections::emptyMap)
-                .forEach((languageKey, value) -> {
-                    if (!value.isMap()) {
-                        logger.warn("[{}] Non-map language node found: {}", unitId, languageKey);
-                    } else {
-                        value.asMap().forEach((templateId, template) -> {
-                            IConfigNode templateNode = getConfig().getNode(languageKey, templateId);
+                .forEach((defLanguageKey, defLanguageEntries) -> {
 
-                            if (templateNode.isVirtual()) {
-                                String templateStr = template.optString(null);
+                    if (!defLanguageEntries.isMap()) {
+                        logger.warn("[{}] Non-map language node found: {}", unitId, defLanguageKey);
+                    } else {
+                        defLanguageEntries.asMap().forEach((defTemplateId, defTemplate) -> {
+                            IConfigNode storedTemplateNode = getConfig().getNode("langs", defLanguageKey, defTemplateId);
+
+                            if (storedTemplateNode.isVirtual()) {
+                                String templateStr = defTemplate.optString(null);
 
                                 if (templateStr != null) {
-                                    logger.debug("[{}] Loading default template for key: {}", unitId, languageKey);
-                                    template.setString(templateStr);
+                                    logger.debug("[{}] Loading default template for key: {}.{}", unitId, defLanguageKey, defTemplateId);
+                                    storedTemplateNode.setString(templateStr);
                                 } else {
-                                    logger.warn("[{}] Non-string template node found: {}.{}", unitId, languageKey, templateId);
+                                    logger.warn("[{}] Non-string template node found: {}.{}", unitId, defLanguageKey, defTemplateId);
                                 }
                             }
                         });

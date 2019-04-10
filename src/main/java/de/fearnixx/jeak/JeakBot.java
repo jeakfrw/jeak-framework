@@ -1,6 +1,5 @@
 package de.fearnixx.jeak;
 
-import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.event.EventService;
 import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
@@ -12,7 +11,10 @@ import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
+import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.locale.ILocalizationService;
+import de.fearnixx.jeak.service.locale.LocalizationService;
 import de.fearnixx.jeak.service.mail.IMailService;
 import de.fearnixx.jeak.service.mail.MailService;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
@@ -26,7 +28,6 @@ import de.fearnixx.jeak.teamspeak.Server;
 import de.fearnixx.jeak.teamspeak.TS3ConnectionTask;
 import de.fearnixx.jeak.teamspeak.cache.DataCache;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
-import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -38,7 +39,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -118,6 +118,7 @@ public class JeakBot implements Runnable, IBot {
         TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
         DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
         MailService mailService = new MailService(new File(confDir, "mail"));
+        LocalizationService localizationService = new LocalizationService();
 
         eventService = new EventService();
         taskService = new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
@@ -127,6 +128,7 @@ public class JeakBot implements Runnable, IBot {
         injectionService.addProvider(new ConfigProvider(confDir));
         injectionService.addProvider(new DataSourceProvider());
         injectionService.addProvider(new TransportProvider());
+        injectionService.addProvider(new LocalizationProvider(localizationService));
         server = new Server();
         dataCache = new DataCache(eventService);
 
@@ -135,6 +137,7 @@ public class JeakBot implements Runnable, IBot {
         serviceManager.registerService(IServiceManager.class, serviceManager);
         serviceManager.registerService(IEventService.class, eventService);
         serviceManager.registerService(ITaskService.class, taskService);
+        serviceManager.registerService(ILocalizationService.class, localizationService);
         serviceManager.registerService(ICommandService.class, commandService);
         serviceManager.registerService(IInjectionService.class, injectionService);
         serviceManager.registerService(IServer.class, server);
@@ -147,6 +150,7 @@ public class JeakBot implements Runnable, IBot {
         injectionService.injectInto(serviceManager);
         injectionService.injectInto(eventService);
         injectionService.injectInto(taskService);
+        injectionService.injectInto(localizationService);
         injectionService.injectInto(commandService);
         injectionService.injectInto(server);
         injectionService.injectInto(connectionTask);
@@ -158,6 +162,7 @@ public class JeakBot implements Runnable, IBot {
 
         taskService.start();
         eventService.registerListener(connectionTask);
+        eventService.registerListeners(localizationService);
         eventService.registerListeners(commandService);
         eventService.registerListener(dataCache);
         eventService.registerListener(mailService);
