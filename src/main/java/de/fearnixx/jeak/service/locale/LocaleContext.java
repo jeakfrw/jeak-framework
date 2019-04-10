@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -12,14 +13,18 @@ import java.util.Optional;
  * Implementation of the locale context.
  * {@inheritDoc}
  */
-public class LocalizationContext implements ILocaleContext {
+public class LocaleContext implements ILocaleContext {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalizationContext.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocaleContext.class);
 
+    private final String unitId;
+    private final Locale locale;
     private final IConfigNode languageNode;
     private final Map<String, MessageRep> preExploded = new HashMap<>();
 
-    public LocalizationContext(IConfigNode languageNode) {
+    public LocaleContext(String unitId, Locale locale, IConfigNode languageNode) {
+        this.unitId = unitId;
+        this.locale = locale;
         this.languageNode = languageNode;
         preExplodeMessages();
     }
@@ -32,6 +37,16 @@ public class LocalizationContext implements ILocaleContext {
                             .orElseThrow(() -> new IllegalStateException("Message templates may only be strings!"));
                     preExploded.put(msgId, new MessageRep(templateString));
                 });
+    }
+
+    @Override
+    public String getUnitId() {
+        return unitId;
+    }
+
+    @Override
+    public Locale getLocale() {
+        return locale;
     }
 
     /**

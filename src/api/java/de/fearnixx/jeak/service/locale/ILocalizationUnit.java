@@ -12,6 +12,12 @@ import java.util.Locale;
 public interface ILocalizationUnit {
 
     /**
+     * Returns the associated unit identifier.
+     * This is likely to be the plugin or service id in most cases.
+     */
+    String getUnitId();
+
+    /**
      * Returns a context for the given locale.
      * If a context for the locale is not available, the default context will be returned.
      */
@@ -45,7 +51,7 @@ public interface ILocalizationUnit {
      *
      * The unit will read the keys "default" and "langs".
      * <ul>
-     *     <li><strong>default</strong> being the country or locale code for the default context. E.g. "en"</li>
+     *     <li><strong>defaultLanguage</strong> being the country or locale code for the default context. E.g. "en"</li>
      *     <li><strong>"langs" containing keys which are either country or locale codes with a mapping from message id to template below.</strong></li>
      * </ul>
      */
