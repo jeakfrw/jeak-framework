@@ -23,4 +23,10 @@ public interface ILocalizationService {
      * E.g. de or au would be de_DE and de_AU respectively.
      */
     Locale getLocaleForCountryId(String ts3countryCode);
+
+    /**
+     * Returns the configured fallback locale.
+     * If unchanged, this will be en_US.
+     */
+    Locale getFallbackLocale();
 }
