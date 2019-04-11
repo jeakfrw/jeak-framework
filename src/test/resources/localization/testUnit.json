@@ -1,0 +1,10 @@
+{
+  "langs": {
+    "en": {
+      "test.message": "This is the English message."
+    },
+    "de": {
+      "test.message": "Dies ist die deutsche Nachricht."
+    }
+  }
+}
