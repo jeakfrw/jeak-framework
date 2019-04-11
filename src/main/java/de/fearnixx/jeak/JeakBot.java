@@ -325,6 +325,11 @@ public class JeakBot implements Runnable, IBot {
     }
 
     @Override
+    public File getConfigDirectory() {
+        return confDir;
+    }
+
+    @Override
     public IServer getServer() {
         return server;
     }

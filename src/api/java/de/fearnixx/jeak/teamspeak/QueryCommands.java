@@ -210,8 +210,12 @@ public abstract class QueryCommands {
         public static final String CLIENT_LIST = "clientlist";
         public static final String CLIENT_INFO = "clientinfo";
         public static final String CLIENT_FIND = "clientfind";
+
+        // Updates a client //
         public static final String CLIENT_EDIT = "clientedit";
+        // Updates the query client //
         public static final String CLIENT_UPDATE = "clientupdate";
+
         public static final String CLIENT_MOVE = "clientmove";
         public static final String CLIENT_KICK = "clientkick";
         public static final String CLIENT_POKE = "clientpoke";

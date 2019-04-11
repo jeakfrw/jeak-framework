@@ -1,8 +1,6 @@
 package de.fearnixx.jeak.logging;
 
 /**
- * Created by Life4YourGames on 03.07.17.
- *
  * Thanks to StackOverflow
  * https://stackoverflow.com/questions/5762491/how-to-print-color-in-console-using-system-out-println
  */

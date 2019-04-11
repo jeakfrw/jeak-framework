@@ -38,7 +38,7 @@ public interface IQueryConnection extends AutoCloseable {
      * @param onDone The callback consumer
      *
      * @deprecated Replaced by {@link IQueryRequest#onDone()} but not immediately deactivated.
-     *             For removal by RC#1!
+     *             For removal by release 1.0.0!
      */
     @Deprecated
     void sendRequest(IQueryRequest req, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone);
@@ -50,6 +50,7 @@ public interface IQueryConnection extends AutoCloseable {
      * The callback will be called when a full answer has been received.
      *
      * @deprecated Convention-Replaced by {@link IQueryRequest#onDone()}. No requests should block framework threads!
+     *             For removal by release 1.0.0!
      */
     @Deprecated
     IQueryPromise promiseRequest(IQueryRequest request);

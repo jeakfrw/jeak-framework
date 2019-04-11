@@ -7,8 +7,11 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.teamspeak.query.*;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
+import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import de.fearnixx.jeak.teamspeak.query.QueryConnectionAccessor;
+import de.fearnixx.jeak.teamspeak.query.TS3Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -221,6 +224,18 @@ public class Server implements IServer {
                         .addKey(eventKey, "textprivate")
                         .build()
         );
+    }
+
+    /* * * Utility * * */
+
+    @Override
+    public IQueryRequest sendMessage(String message) {
+        return IQueryRequest.builder()
+                .command(QueryCommands.TEXTMESSAGE_SEND)
+                .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.SERVER)
+                .addKey(PropertyKeys.TextMessage.TARGET_ID, instanceId)
+                .addKey(PropertyKeys.TextMessage.MESSAGE, message)
+                .build();
     }
 
     /* * * MISC * * */

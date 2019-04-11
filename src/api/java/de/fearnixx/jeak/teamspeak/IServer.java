@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.teamspeak;
 
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
 import java.util.Optional;
 
@@ -31,4 +32,9 @@ public interface IServer {
      * Whether or not an active connection is available.
      */
     boolean isConnected();
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to send a server-wide message
+     */
+    IQueryRequest sendMessage(String message);
 }
