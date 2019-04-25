@@ -7,12 +7,12 @@ import de.fearnixx.jeak.controller.reflect.RestController;
 @RestController(name = "test")
 public class TestController {
 
-    @RequestMapping(method = RequestMethod.GET)
+    @RequestMapping(method = RequestMethod.GET, endpoint = "hello")
     public String hello() {
         return "hallo";
     }
 
-    @RequestMapping(method =  RequestMethod.GET)
+    @RequestMapping(method =  RequestMethod.GET, endpoint = "info")
     public String returnSentInfo(String name) {
         return "received" + name;
     }
