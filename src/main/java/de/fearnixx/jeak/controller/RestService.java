@@ -5,10 +5,13 @@ import de.fearnixx.jeak.controller.connection.RequestMethod;
 import de.fearnixx.jeak.controller.interfaces.IRestService;
 import de.fearnixx.jeak.controller.reflect.RequestMapping;
 import de.fearnixx.jeak.controller.reflect.RestController;
-import java.lang.reflect.Method;
-import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Route;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.Map;
 
 public class RestService implements IRestService {
     private static final Logger logger = LoggerFactory.getLogger(RestService.class);
@@ -17,8 +20,8 @@ public class RestService implements IRestService {
 
     private RestControllerManager restControllerManager;
 
-    public RestService(HttpServer httpServer, RestControllerManager restControllerManager) {
-        this.httpServer = httpServer;
+    public RestService(RestControllerManager restControllerManager) {
+        this.httpServer = new HttpServer();
         this.restControllerManager = restControllerManager;
     }
 
@@ -29,18 +32,28 @@ public class RestService implements IRestService {
 
     private void registerMethods(Class<?> clazz, Object o) {
         RequestMethod requestMethod;
-        StringBuilder endpoint = new StringBuilder(REST_API_ENDPOINT);
         RequestMapping requestMapping;
         RestController restController = o.getClass().getAnnotation(RestController.class);
-        endpoint.append(restController.name());
+        String basicEndpoint = REST_API_ENDPOINT + "/" + restController.name();
 
         for (Method method : o.getClass().getDeclaredMethods()) {
+            String fullEndpoint = basicEndpoint;
             requestMapping = method.getAnnotation(RequestMapping.class);
-            endpoint.append(requestMapping.endpoint());
+            fullEndpoint+="/"+requestMapping.endpoint();
             requestMethod = requestMapping.method();
-            httpServer.registerMethod(requestMethod, endpoint.toString(), method);
+            httpServer.registerMethod(requestMethod, fullEndpoint, generateRoute(clazz, method));
         }
         o.getClass().getAnnotation(RestController.class);
     }
 
+    private Route generateRoute(Class<?> clazz, Method method) {
+        return (request, response) -> {
+            Parameter[] parameters = method.getParameters();
+            Object[] methodParams = new Object[parameters.length];
+            for (int i = 0; i < parameters.length; i++) {
+                methodParams[i] = request.params(parameters[i].getName());
+            }
+            return method.invoke(clazz.newInstance(), methodParams);
+        };
+    }
 }
