@@ -1,7 +1,5 @@
 package de.fearnixx.jeak.controller.connection;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import spark.Route;
 import spark.Spark;
 
@@ -14,10 +12,12 @@ public class HttpServer {
     private int port = 8723;
 
     public HttpServer() {
+        init();
     }
 
     public HttpServer(int port) {
         this.port = port;
+        init();
     }
 
     public void init() {
