@@ -2,14 +2,15 @@ package de.fearnixx.jeak.controller;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
+import java.util.Optional;
 
 public class MethodParameter {
     private final int position;
     private final Class<?> type;
     private final String name;
-    private final List<Class<? extends Annotation>> annotations;
+    private final List<? extends Annotation> annotations;
 
-    public MethodParameter(int position, Class<?> type, String name, List<Class<? extends Annotation>> annotations) {
+    public MethodParameter(int position, Class<?> type, String name, List<? extends Annotation> annotations) {
         this.position = position;
         this.type = type;
         this.name = name;
@@ -28,7 +29,21 @@ public class MethodParameter {
         return name;
     }
 
-    public boolean hasAnnotation(Class<? extends Annotation> annotation) {
-        return this.annotations.contains(annotation);
+    public boolean hasAnnotation(Class<? extends Annotation> clazz) {
+        return annotations.stream()
+                .map(Annotation::annotationType)
+                .anyMatch(annotationType -> annotationType.equals(clazz));
     }
+
+    /**
+     *
+     * @param clazz
+     * @return
+     */
+    public Optional<? extends Annotation> getAnnotation(Class<? extends Annotation> clazz) {
+        return annotations.stream()
+                .filter(o -> o.annotationType().equals(clazz))
+                .findFirst();
+    }
+
 }

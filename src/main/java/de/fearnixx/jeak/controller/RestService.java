@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.controller;
 
+import com.sun.org.glassfish.gmbal.ParameterNames;
 import de.fearnixx.jeak.controller.connection.EndpointBuilder;
 import de.fearnixx.jeak.controller.connection.HttpServer;
 import de.fearnixx.jeak.controller.connection.RequestMethod;
@@ -11,10 +12,7 @@ import de.fearnixx.jeak.controller.reflect.RestController;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +32,10 @@ public class RestService implements IRestService {
 
     public void someStuff() {
         Map<Class<?>, Object> restControllers = restControllerManager.provideAll();
-        restControllers.forEach(this::registerMethods);
+        restControllers.forEach((o, o2) -> registerMethods(o2));
     }
 
-    private void registerMethods(Class<?> clazz, Object o) {
+    private void registerMethods(Object o) {
         RequestMethod requestMethod;
         RestController restController = o.getClass().getAnnotation(RestController.class);
         RequestMapping requestMapping;
@@ -49,36 +47,51 @@ public class RestService implements IRestService {
             requestMapping = method.getAnnotation(RequestMapping.class);
             endpointBuilder.add(requestMapping.endpoint());
             requestMethod = requestMapping.method();
-            httpServer.registerMethod(requestMethod, endpointBuilder.build(), generateRoute(clazz, method));
+            httpServer.registerMethod(requestMethod, endpointBuilder.build(), generateRoute(o, method));
         }
         o.getClass().getAnnotation(RestController.class);
     }
 
-    private Route generateRoute(Class<?> clazz, Method method) {
+    private Route generateRoute(Object o, Method method) {
         List<MethodParameter> methodParameterList = getMethodParameters(method);
         return (request, response) -> {
             Object[] methodParameters = new Object[methodParameterList.size()];
             for (MethodParameter methodParameter : methodParameterList) {
                 if (methodParameter.hasAnnotation(RequestParam.class)) {
-                    methodParameters[methodParameter.getPosition()] = request.params(methodParameter.getName());
+                    methodParameters[methodParameter.getPosition()] = request.params(getNameFromAnnotation(methodParameter));
                 } else if (methodParameter.hasAnnotation(RequestBody.class)) {
                     methodParameters[methodParameter.getPosition()] = request.body();
                 }
             }
-            return method.invoke(clazz.newInstance(), methodParameters);
+            return method.invoke(o, methodParameters);
         };
+    }
+
+    /**
+     * retrieve the name from a as {@link RequestParam} annotated value.
+     *
+     * @param methodParameter
+     * @return The name of the annotated variable.
+     */
+    private String getNameFromAnnotation(MethodParameter methodParameter) {
+        Optional<? extends Annotation> optionalAnnotation = methodParameter.getAnnotation(RequestParam.class);
+        String annotatedName = null;
+        if (optionalAnnotation.isPresent()) {
+            annotatedName = ((RequestParam) optionalAnnotation.get()).name();
+        }
+        return annotatedName;
     }
 
     private List<MethodParameter> getMethodParameters(Method method) {
         List<MethodParameter> methodParameterList = new ArrayList<>(method.getParameterCount());
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < method.getParameterCount(); i++) {
-            methodParameterList.add(new MethodParameter(i,
+            methodParameterList.add(
+                    new MethodParameter(i,
                     parameters[i].getType(),
                     parameters[i].getName(),
-                    Arrays.stream(parameters[i].getAnnotations())
-                            .map(Annotation::annotationType)
-                            .collect(Collectors.toList())));
+                    Arrays.asList(parameters[i].getAnnotations()))
+            );
         }
         return methodParameterList;
     }

@@ -2,7 +2,7 @@ package de.fearnixx.jeak.controller.connection;
 
 public class EndpointBuilder {
     private StringBuilder tmpEndpoint;
-    private static final String PART_DELIMITER = "/";
+    private static final char PART_DELIMITER = '/';
 
     public EndpointBuilder() {
         initTmpEndpoint();
@@ -28,7 +28,13 @@ public class EndpointBuilder {
     }
 
     private String cleanUpString(String string) {
-        return string
-                .replace(PART_DELIMITER, "");
+        String createdString = string;
+        if (string.charAt(string.length() - 1) == PART_DELIMITER) {
+            createdString = string.substring(0, createdString.length() - 2);
+        }
+        if (string.charAt(0) == PART_DELIMITER) {
+            createdString = string.substring(1);
+        }
+        return createdString;
     }
 }

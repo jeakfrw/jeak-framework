@@ -14,8 +14,8 @@ public class TestController {
         return "hallo";
     }
 
-    @RequestMapping(method =  RequestMethod.GET, endpoint = "/info/:endpoint")
-    public String returnSentInfo(@RequestParam(value = "endpoint") String name) {
+    @RequestMapping(method =  RequestMethod.GET, endpoint = "/info/:name")
+    public String returnSentInfo(@RequestParam(name = "name") String name) {
         return "received " + name;
     }
 
