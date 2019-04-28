@@ -6,10 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a class as a REST controller and specifies the specific REST endpoint of the class.
+ * Marks the type the expected request body.
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RestController {
-    String endpoint() default "";
+@Target(ElementType.PARAMETER)
+public @interface RequestBody {
+    Class<?> type();
+    String name();
 }

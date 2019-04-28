@@ -6,10 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a class as a REST controller and specifies the specific REST endpoint of the class.
+ * Contains the endpoint of the expected request parameter.
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface RestController {
-    String endpoint() default "";
+@Target(ElementType.PARAMETER)
+public @interface RequestParam {
+    String value();
 }
