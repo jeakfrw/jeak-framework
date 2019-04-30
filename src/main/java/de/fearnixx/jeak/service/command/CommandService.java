@@ -134,7 +134,16 @@ public class CommandService implements ICommandService {
             if (receiver != null)
                 message += "\nRejected by: " + receiver.getClass().getName();
         } else {
-            message = "There was an error processing your command!\n" + exception.getClass().getSimpleName() + ": " + exception.getMessage();
+            StringBuilder msgBuilder = new StringBuilder("There was an error processing your command");
+
+            if(!(exception instanceof CommandException)) {
+                msgBuilder.append("!\n");
+                msgBuilder.append(exception.getClass().getSimpleName());
+            }
+
+            msgBuilder.append(": ").append(exception.getMessage());
+
+            message = msgBuilder.toString();
         }
         if (message.length() > 1024) {
             logger.info("Cropped error feedback!");
