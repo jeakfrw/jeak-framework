@@ -7,7 +7,7 @@ public enum Urgency {
 
     DISMISSABLE(100),
     BASIC(1000),
-
+    WARN(500000),
     ALERT(1000000);
 
     private int level;

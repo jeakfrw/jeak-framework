@@ -1,6 +1,9 @@
 package de.fearnixx.jeak.service.notification;
 
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import org.slf4j.Logger;
@@ -18,6 +21,9 @@ public class NotificationService implements INotificationService {
 
     @Inject
     public ITaskService taskService;
+
+    @Inject
+    public IInjectionService injectionService;
 
     @Override
     public void dispatch(INotification notification) {
@@ -55,5 +61,16 @@ public class NotificationService implements INotificationService {
                     .filter(c -> lifespan >= c.lowestLifespan() && lifespan <= c.highestLifespan())
                     .forEach(c -> c.sendNotification(notification));
         }
+    }
+
+    @Listener
+    public void onInitialize(IBotStateEvent.IInitializeEvent event) {
+        internalInitChannel(new SendTextMessageChannel());
+        internalInitChannel(new PokeClientChannel());
+    }
+
+    private void internalInitChannel(INotificationChannel channel) {
+        injectionService.injectInto(channel);
+        registerChannel(channel);
     }
 }

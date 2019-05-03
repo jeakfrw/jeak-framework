@@ -14,6 +14,8 @@ import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.notification.NotificationService;
+import de.fearnixx.jeak.service.notification.INotificationService;
 import de.fearnixx.jeak.service.locale.ILocalizationService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
 import de.fearnixx.jeak.service.mail.IMailService;
@@ -82,6 +84,7 @@ public class JeakBot implements Runnable, IBot {
     private EventService eventService;
     private TaskService taskService;
     private CommandService commandService;
+    private NotificationService notificationService;
 
     private ExecutorService shutdownExecutor = Executors.newSingleThreadExecutor();
 
@@ -119,6 +122,7 @@ public class JeakBot implements Runnable, IBot {
         PermissionService permissionService = new PermissionService();
         TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
         DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
+        notificationService = new NotificationService();
         MailService mailService = new MailService(new File(confDir, "mail"));
         LocalizationService localizationService = new LocalizationService();
         ProfileService profileService = new ProfileService(new File(confDir, "profiles"));
@@ -148,6 +152,7 @@ public class JeakBot implements Runnable, IBot {
         serviceManager.registerService(IPermissionService.class, permissionService);
         serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
         serviceManager.registerService(DatabaseService.class, databaseService);
+        serviceManager.registerService(INotificationService.class, notificationService);
         serviceManager.registerService(IMailService.class, mailService);
         serviceManager.registerService(IProfileService.class, profileService);
 
@@ -164,6 +169,7 @@ public class JeakBot implements Runnable, IBot {
         injectionService.injectInto(dataCache);
         injectionService.injectInto(mailService);
         injectionService.injectInto(profileService);
+        injectionManager.injectInto(notificationService);
 
         taskService.start();
         eventService.registerListener(connectionTask);
