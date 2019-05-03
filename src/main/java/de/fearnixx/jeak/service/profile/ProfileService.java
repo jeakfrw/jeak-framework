@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.profile;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.IProfileService;
+import de.fearnixx.jeak.profile.IUserIdentity;
 import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
@@ -141,7 +142,7 @@ public class ProfileService implements IProfileService {
         synchronized (indexConfig) {
             IConfigNode listEntry = indexConfig.getRoot().createNewInstance();
             listEntry.setString(ts3Identity);
-            indexConfig.getRoot().getNode(uuid.toString(), "ts3").append(listEntry);
+            indexConfig.getRoot().getNode(uuid.toString(), IUserIdentity.SERVICE_TEAMSPEAK).append(listEntry);
             indexModified = true;
         }
     }
@@ -161,7 +162,7 @@ public class ProfileService implements IProfileService {
                     .entrySet()
                     .stream()
                     .filter(e -> e.getValue()
-                            .getNode("ts3")
+                            .getNode(IUserIdentity.SERVICE_TEAMSPEAK)
                             .optList()
                             .orElseGet(() -> {
                                 logger.warn("UUID index is not a list! [{}]", e.getKey());
