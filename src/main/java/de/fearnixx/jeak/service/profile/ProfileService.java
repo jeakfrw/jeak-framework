@@ -76,8 +76,8 @@ public class ProfileService implements IProfileService {
     }
 
     private void saveIndex() {
-        if (indexModified) {
-            synchronized (indexConfig) {
+        synchronized (indexConfig) {
+            if (indexModified) {
                 try {
                     logger.debug("Saving index.");
                     indexConfig.save();
