@@ -7,8 +7,6 @@ import java.util.List;
 /**
  * In order to unify one-way communication with clients, notifications can be invoked.
  * Notifications will be delivered over different registered {@link INotificationChannel}s.
- *
- * A notification
  */
 public interface INotification {
 
