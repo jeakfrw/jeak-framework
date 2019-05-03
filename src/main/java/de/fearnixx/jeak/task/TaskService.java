@@ -1,6 +1,5 @@
 package de.fearnixx.jeak.task;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Inject;

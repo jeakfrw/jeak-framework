@@ -1,10 +1,11 @@
 package de.fearnixx.jeak.event;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
+import de.fearnixx.jeak.util.NamePatternThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,8 @@ public class EventService implements IEventService {
     private boolean terminated;
 
     public EventService() {
+        eventExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.eventmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
+        ThreadFactory threadFactory = new NamePatternThreadFactory("event-scheduler-%d");
         ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
         eventExecutor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
                 0L, TimeUnit.MILLISECONDS,
