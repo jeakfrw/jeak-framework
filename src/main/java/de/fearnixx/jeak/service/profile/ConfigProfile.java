@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class ConfigProfile implements IUserProfile {
@@ -18,6 +19,7 @@ public class ConfigProfile implements IUserProfile {
 
     private final IConfig configRef;
     private final UUID uuid;
+    private Consumer<ConfigProfile> modificationListener;
 
     public ConfigProfile(IConfig configRef, UUID uuid) {
         this.configRef = configRef;
@@ -85,6 +87,7 @@ public class ConfigProfile implements IUserProfile {
             removeOption(optionId);
         } else {
             configRef.getRoot().getNode("options", optionId).setString(value);
+            notifyModification();
         }
     }
 
@@ -95,7 +98,7 @@ public class ConfigProfile implements IUserProfile {
                 .remove(optionId);
 
         if (!element.isVirtual()) {
-            save();
+            notifyModification();
         }
     }
 
@@ -106,6 +109,16 @@ public class ConfigProfile implements IUserProfile {
             } catch (IOException e) {
                 logger.warn("Failed to save profile \"{}\"", uuid, e);
             }
+        }
+    }
+
+    public void setModificationListener(Consumer<ConfigProfile> modificationListener) {
+        this.modificationListener = modificationListener;
+    }
+
+    private void notifyModification() {
+        if (this.modificationListener != null) {
+            this.modificationListener.accept(this);
         }
     }
 }

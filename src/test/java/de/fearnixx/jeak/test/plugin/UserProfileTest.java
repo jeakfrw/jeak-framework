@@ -15,6 +15,7 @@ import java.util.UUID;
 public class UserProfileTest extends AbstractTestPlugin {
 
     private static final String TEST_TS3_UID = "GANC6dTbew+a3A2h/8c5CGJXzsE=";
+    private static final String TEST_TS3_UID2 = "cZS9nRtgsAhaIVMbOwFxLmTeEvE=";
 
     @Inject
     private IProfileService profileService;
@@ -25,6 +26,7 @@ public class UserProfileTest extends AbstractTestPlugin {
         addTest("test_profileSvc_getProfile_byTS3");
         addTest("test_profileSvc_getProfile_byUUID");
         addTest("test_profileSvc_deleteProfile");
+        addTest("test_profileSvc_persistentProfile");
     }
 
     @Listener(order = Listener.Orders.LATE)
@@ -55,6 +57,12 @@ public class UserProfileTest extends AbstractTestPlugin {
         optProfile = profileService.getProfile(assocUUID);
         if (!optProfile.isPresent()) {
             success("test_profileSvc_deleteProfile");
+        }
+
+        optProfile = profileService.getOrCreateProfile(TEST_TS3_UID2);
+        if (optProfile.isPresent()) {
+            IUserProfile persistentProfile = optProfile.get();
+            persistentProfile.setOption("test_plugin", "true");
         }
     }
 }

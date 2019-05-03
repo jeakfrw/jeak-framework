@@ -6,6 +6,7 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.PluginContainer;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.plugin.persistent.PluginRegistry;
+import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
@@ -21,6 +22,7 @@ import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionProvider;
+import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -119,6 +121,7 @@ public class JeakBot implements Runnable, IBot {
         DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
         MailService mailService = new MailService(new File(confDir, "mail"));
         LocalizationService localizationService = new LocalizationService();
+        ProfileService profileService = new ProfileService(new File(confDir, "profiles"));
 
         eventService = new EventService();
         taskService = new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
@@ -146,6 +149,7 @@ public class JeakBot implements Runnable, IBot {
         serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
         serviceManager.registerService(DatabaseService.class, databaseService);
         serviceManager.registerService(IMailService.class, mailService);
+        serviceManager.registerService(IProfileService.class, profileService);
 
         injectionService.injectInto(serviceManager);
         injectionService.injectInto(eventService);
@@ -159,6 +163,7 @@ public class JeakBot implements Runnable, IBot {
         injectionService.injectInto(databaseService);
         injectionService.injectInto(dataCache);
         injectionService.injectInto(mailService);
+        injectionService.injectInto(profileService);
 
         taskService.start();
         eventService.registerListener(connectionTask);
@@ -166,6 +171,7 @@ public class JeakBot implements Runnable, IBot {
         eventService.registerListeners(commandService);
         eventService.registerListener(dataCache);
         eventService.registerListener(mailService);
+        eventService.registerListener(profileService);
 
         pMgr.setIncludeCP(true);
         pMgr.load();
