@@ -37,7 +37,7 @@ public class ConfigProfile implements IUserProfile {
     }
 
     @Override
-    public List<IUserIdentity> getLinkedIdentities(String serviceId) {
+    public synchronized List<IUserIdentity> getLinkedIdentities(String serviceId) {
         return Collections.unmodifiableList(configRef.getRoot()
                 .getNode("identities", serviceId)
                 .optList()
@@ -50,7 +50,7 @@ public class ConfigProfile implements IUserProfile {
     }
 
     @Override
-    public List<IUserIdentity> getLinkedIdentities() {
+    public synchronized List<IUserIdentity> getLinkedIdentities() {
         List<IUserIdentity> results = new LinkedList<>();
 
         configRef.getRoot().getNode("identities")
@@ -80,7 +80,7 @@ public class ConfigProfile implements IUserProfile {
     }
 
     @Override
-    public void setOption(String optionId, String value) {
+    public synchronized void setOption(String optionId, String value) {
         Objects.requireNonNull(optionId, "Option id may not be null!");
 
         if (value == null) {
@@ -92,7 +92,7 @@ public class ConfigProfile implements IUserProfile {
     }
 
     @Override
-    public void removeOption(String optionId) {
+    public synchronized void removeOption(String optionId) {
         final IConfigNode element = configRef.getRoot()
                 .getNode("options")
                 .remove(optionId);
@@ -102,7 +102,23 @@ public class ConfigProfile implements IUserProfile {
         }
     }
 
-    protected void save() {
+    @Override
+    public synchronized Map<String, String> getOptions() {
+        Map<String, String> copy = new HashMap<>();
+
+        configRef.getRoot()
+                .getNode("options")
+                .optMap()
+                .orElseGet(Collections::emptyMap)
+                .forEach((k, v) -> {
+                    String value = v.asString();
+                    copy.put(k, value);
+                });
+
+        return Collections.unmodifiableMap(copy);
+    }
+
+    protected synchronized void save() {
         synchronized (configRef) {
             try {
                 configRef.save();
@@ -120,5 +136,28 @@ public class ConfigProfile implements IUserProfile {
         if (this.modificationListener != null) {
             this.modificationListener.accept(this);
         }
+    }
+
+    synchronized void unsafeAddIdentity(IUserIdentity id) {
+        IConfigNode serviceNode = configRef.getRoot().getNode("identities", id.serviceId());
+        boolean containsId = serviceNode.optList().orElseGet(Collections::emptyList)
+                .stream()
+                .map(IValueHolder::asString)
+                .noneMatch(identity -> identity.equals(id.identity()));
+        if (containsId) {
+            IConfigNode listEntry = configRef.getRoot().createNewInstance();
+            listEntry.setString(id.identity());
+            serviceNode.append(listEntry);
+        }
+
+        // No modification notification.
+        // This is an internal modification and only allowed to the service itself.
+    }
+
+    synchronized void unsafeSetOption(String optionId, String optionValue) {
+        configRef.getRoot().getNode("options", optionId).setString(optionValue);
+
+        // No modification notification.
+        // This is an internal modification and only allowed to the service itself.
     }
 }

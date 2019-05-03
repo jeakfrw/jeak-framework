@@ -9,7 +9,7 @@ import java.sql.*;
 import java.util.*;
 
 @SuppressWarnings("squid:S2095")
-public class DBProfile implements IUserProfile {
+public abstract class DBProfile implements IUserProfile {
 
     private static final Logger logger = LoggerFactory.getLogger(DBProfile.class);
 

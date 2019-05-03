@@ -6,6 +6,8 @@ import de.fearnixx.jeak.profile.IUserIdentity;
 import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.profile.event.ProfileEvent;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.mlessmann.confort.LoaderFactory;
@@ -41,6 +43,8 @@ public class ProfileService implements IProfileService {
             .runnable(this::saveProfiles)
             .build();
 
+    @Inject
+    private IEventService eventService;
 
     public ProfileService(File profileDirectory) {
         Objects.requireNonNull(profileDirectory, "Profile directory may not be null!");
@@ -111,17 +115,13 @@ public class ProfileService implements IProfileService {
     @Override
     public Optional<IUserProfile> getProfile(UUID uuid) {
         Objects.requireNonNull(uuid, "Lookup UUID may not be null!");
-        return lookupProfileFromFS(uuid);
+        return Optional.ofNullable(lookupProfileFromFS(uuid).orElse(null));
     }
 
     @Override
     public Optional<IUserProfile> getProfile(String ts3Identity) {
         final Optional<UUID> optUUID = lookupUUIDFromFS(ts3Identity);
-        if (optUUID.isPresent()) {
-            return lookupProfileFromFS(optUUID.get());
-        } else {
-            return Optional.empty();
-        }
+        return optUUID.map(uuid -> lookupProfileFromFS(uuid).orElse(null));
     }
 
     @Override
@@ -135,7 +135,7 @@ public class ProfileService implements IProfileService {
             addToIndex(ts3Identity, uuid);
         }
 
-        return makeUserProfile(uuid);
+        return Optional.ofNullable(makeUserProfile(uuid).orElse(null));
     }
 
     private void addToIndex(String ts3Identity, UUID uuid) {
@@ -187,7 +187,7 @@ public class ProfileService implements IProfileService {
     }
 
 
-    private Optional<IUserProfile> lookupProfileFromFS(UUID uuid) {
+    private Optional<ConfigProfile> lookupProfileFromFS(UUID uuid) {
         final File profileFile = getProfileFSRef(uuid);
 
         if (profileFile.isFile() && profileFile.exists()) {
@@ -197,7 +197,7 @@ public class ProfileService implements IProfileService {
         }
     }
 
-    private Optional<IUserProfile> makeUserProfile(UUID uuid) {
+    private Optional<ConfigProfile> makeUserProfile(UUID uuid) {
         final File profileFile = getProfileFSRef(uuid);
         final FileConfig profileConfig = new FileConfig(configLoader, profileFile);
         final boolean isNew = !profileFile.isFile();
@@ -218,6 +218,9 @@ public class ProfileService implements IProfileService {
 
         if (isNew) {
             onProfileModified(profile);
+            ProfileEvent.ProfileCreatedEvent createdEvent = new ProfileEvent.ProfileCreatedEvent();
+            createdEvent.setTargetProfile(profile);
+            eventService.fireEvent(createdEvent);
         }
 
         return Optional.ofNullable(profile);
@@ -230,7 +233,26 @@ public class ProfileService implements IProfileService {
 
     @Override
     public void mergeProfiles(UUID into, UUID other) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        ConfigProfile intoProfile = lookupProfileFromFS(into).orElseThrow(
+                () -> new IllegalArgumentException("No profile for target UUID: " + into));
+        ConfigProfile fromProfile = lookupProfileFromFS(other).orElseThrow(
+                () -> new IllegalArgumentException("No profile for source UUID: " + other));
+
+        fromProfile.getLinkedIdentities()
+                .forEach(intoProfile::unsafeAddIdentity);
+        fromProfile.getOptions()
+                .forEach(intoProfile::unsafeSetOption);
+        onProfileModified(intoProfile);
+
+        ProfileEvent.ProfileMergeEvent mergeEvent = new ProfileEvent.ProfileMergeEvent();
+        mergeEvent.setTargetProfile(intoProfile);
+        mergeEvent.setMergeSource(fromProfile);
+        eventService.fireEvent(mergeEvent);
+
+        // De-register modification listener to prevent inconsistencies
+        // when somebody sill manipulates that profile in the async event!
+        fromProfile.setModificationListener(null);
+        deleteProfile(other);
     }
 
     @Override
@@ -248,6 +270,9 @@ public class ProfileService implements IProfileService {
 
             try {
                 Files.delete(profileFile.toPath());
+                ProfileEvent.ProfileDeletedEvent deletedEvent = new ProfileEvent.ProfileDeletedEvent();
+                deletedEvent.setProfileUUID(uuid);
+                eventService.fireEvent(deletedEvent);
             } catch (IOException e) {
                 logger.error("Failed to delete profile {} !", profileFile.getPath(), e);
             }
