@@ -3,6 +3,7 @@ package de.fearnixx.jeak.profile;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,4 +57,9 @@ public interface IUserProfile {
      * Removes an option from this profile.
      */
     void removeOption(String optionId);
+
+    /**
+     * Returns a mapping of all options available.
+     */
+    Map<String, String> getOptions();
 }
