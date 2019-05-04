@@ -6,23 +6,16 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.PluginContainer;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.plugin.persistent.PluginRegistry;
-import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
-import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.service.locale.ILocalizationService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
-import de.fearnixx.jeak.service.mail.IMailService;
 import de.fearnixx.jeak.service.mail.MailService;
-import de.fearnixx.jeak.service.notification.INotificationService;
 import de.fearnixx.jeak.service.notification.NotificationService;
-import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
-import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionProvider;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
@@ -74,17 +67,13 @@ public class JeakBot implements Runnable, IBot {
     private IConfigNode config;
 
     private PluginManager pMgr;
+    private ServiceManager serviceManager;
+    private EventService eventService;
     private InjectionService injectionService;
     private Map<String, PluginContainer> plugins;
 
     private TS3ConnectionTask connectionTask = new TS3ConnectionTask();
     private Server server;
-    private DataCache dataCache;
-
-    private EventService eventService;
-    private TaskService taskService;
-    private CommandService commandService;
-    private NotificationService notificationService;
 
     private ExecutorService shutdownExecutor = Executors.newSingleThreadExecutor();
 
@@ -115,83 +104,9 @@ public class JeakBot implements Runnable, IBot {
         // Bot Pre-Initialization
         initCalled = true;
         plugins = new HashMap<>();
+        doServiceStartup();
 
-        // Create services and register them
-        logger.debug("Constructing services");
-        ServiceManager serviceManager = new ServiceManager();
-        PermissionService permissionService = new PermissionService();
-        TS3PermissionProvider ts3permissionProvider = new TS3PermissionProvider();
-        DatabaseService databaseService = new DatabaseService(new File(confDir, "databases"));
-        notificationService = new NotificationService();
-        MailService mailService = new MailService(new File(confDir, "mail"));
-        LocalizationService localizationService = new LocalizationService();
-        ProfileService profileService = new ProfileService(new File(confDir, "profiles"));
-
-        eventService = new EventService();
-        taskService = new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10);
-        commandService = new CommandService();
-
-        injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
-        injectionService.addProvider(new ConfigProvider(confDir));
-        injectionService.addProvider(new DataSourceProvider());
-        injectionService.addProvider(new TransportProvider());
-        injectionService.addProvider(new LocalizationProvider(localizationService));
-        server = new Server();
-        dataCache = new DataCache(eventService);
-
-        serviceManager.registerService(PluginManager.class, pMgr);
-        serviceManager.registerService(IBot.class, this);
-        serviceManager.registerService(IServiceManager.class, serviceManager);
-        serviceManager.registerService(IEventService.class, eventService);
-        serviceManager.registerService(ITaskService.class, taskService);
-        serviceManager.registerService(ILocalizationService.class, localizationService);
-        serviceManager.registerService(ICommandService.class, commandService);
-        serviceManager.registerService(IInjectionService.class, injectionService);
-        serviceManager.registerService(IServer.class, server);
-        serviceManager.registerService(IDataCache.class, dataCache);
-        serviceManager.registerService(IPermissionService.class, permissionService);
-        serviceManager.registerService(ITS3PermissionProvider.class, ts3permissionProvider);
-        serviceManager.registerService(DatabaseService.class, databaseService);
-        serviceManager.registerService(INotificationService.class, notificationService);
-        serviceManager.registerService(IMailService.class, mailService);
-        serviceManager.registerService(IProfileService.class, profileService);
-
-        injectionService.injectInto(serviceManager);
-        injectionService.injectInto(eventService);
-        injectionService.injectInto(taskService);
-        injectionService.injectInto(localizationService);
-        injectionService.injectInto(commandService);
-        injectionService.injectInto(server);
-        injectionService.injectInto(connectionTask);
-        injectionService.injectInto(permissionService);
-        injectionService.injectInto(ts3permissionProvider);
-        injectionService.injectInto(databaseService);
-        injectionService.injectInto(dataCache);
-        injectionService.injectInto(mailService);
-        injectionService.injectInto(profileService);
-        injectionService.injectInto(notificationService);
-
-        taskService.start();
-        eventService.registerListener(connectionTask);
-        eventService.registerListeners(localizationService);
-        eventService.registerListeners(commandService);
-        eventService.registerListener(dataCache);
-        eventService.registerListener(mailService);
-        eventService.registerListener(notificationService);
-        eventService.registerListener(profileService);
-
-        pMgr.setIncludeCP(true);
-        pMgr.load();
-        databaseService.onLoad();
-        mailService.onLoad();
-
-        Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
-        // Load all plugins - This is where dependencies are being enforced
-        regMap.forEach((n, pr) -> loadPlugin(regMap, n, pr));
-        StringBuilder b = new StringBuilder();
-        plugins.forEach((k, v) -> b.append(k).append(", "));
-        logger.info("Loaded {} plugin(s): {}", plugins.size(), b);
-        eventService.fireEvent(new BotStateEvent.PluginsLoaded().setBot(this));
+        discoverAndLoadPlugins();
         eventService.fireEvent(new BotStateEvent.PreInitializeEvent().setBot(this));
 
         // Initialize Bot configuration and Plugins
@@ -210,21 +125,60 @@ public class JeakBot implements Runnable, IBot {
             return;
         }
 
-        String host = config.getNode("host").asString();
-        Integer port = config.getNode("port").asInteger();
-        String user = config.getNode("user").asString();
-        String pass = config.getNode("pass").asString();
-        Integer ts3InstID = config.getNode("instance").asInteger();
-        Boolean useSSL = config.getNode("ssl").optBoolean(false);
-        String nickName = config.getNode("nick").optString("JeakBot");
-        server.setCredentials(host, port, user, pass, ts3InstID, useSSL, nickName);
+        scheduleConnect();
+    }
 
-        Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
-        if (doNetDump) {
-            logger.info("Dedicated net-dumping is currently not implemented. The option will have no effect atm.");
-        }
+    /**
+     * Initially creates and registers all services provided by the framework.
+     * Generic services can be initialized via. {@link #initializeService(Object)}.
+     * Crucial services that are required to be available in the initialization method must be initialized and registered first and manually.
+     */
+    protected void doServiceStartup() {
+        // Initialize crucial services
+        logger.debug("Constructing services");
+        eventService = new EventService();
+        serviceManager = new ServiceManager();
+        serviceManager.registerService(IServiceManager.class, serviceManager);
+        injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
+        injectionService.addProvider(new ConfigProvider(confDir));
+        injectionService.addProvider(new DataSourceProvider());
+        injectionService.addProvider(new TransportProvider());
+        injectionService.addProvider(new LocalizationProvider());
 
-        taskService.runTask(connectionTask);
+        serviceManager.registerService(PluginManager.class, pMgr);
+        serviceManager.registerService(IBot.class, this);
+        serviceManager.registerService(IServiceManager.class, serviceManager);
+        serviceManager.registerService(IEventService.class, eventService);
+        serviceManager.registerService(IInjectionService.class, injectionService);
+
+        // Initialize utility & convenience services.
+        initializeService(new DataCache(eventService));
+        initializeService(new LocalizationService());
+        initializeService(new CommandService());
+        initializeService(new NotificationService());
+        initializeService(new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10));
+        initializeService(new PermissionService());
+        initializeService(new TS3PermissionProvider());
+        initializeService(new DatabaseService(new File(confDir, "databases")));
+        initializeService(new MailService(new File(confDir, "mail")));
+        initializeService(new ProfileService(new File(confDir, "profiles")));
+        server = initializeService(new Server());
+
+        injectionService.injectInto(connectionTask);
+        eventService.registerListener(connectionTask);
+    }
+
+    protected void discoverAndLoadPlugins() {
+        pMgr.setIncludeCP(true);
+        pMgr.load();
+
+        // Load all plugins - This is where dependencies are being enforced
+        Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
+        regMap.forEach((n, pr) -> loadPlugin(regMap, n, pr));
+        StringBuilder b = new StringBuilder();
+        plugins.forEach((k, v) -> b.append(k).append(", "));
+        logger.info("Loaded {} plugin(s): {}", plugins.size(), b);
+        eventService.fireEvent(new BotStateEvent.PluginsLoaded().setBot(this));
     }
 
     private boolean loadPlugin(Map<String, PluginRegistry> reg, String id, PluginRegistry pr) {
@@ -259,7 +213,7 @@ public class JeakBot implements Runnable, IBot {
         try {
             c.construct();
         } catch (Exception e) {
-            logger.error("Failed to construct plugin: ", id, e);
+            logger.error("Failed to construct plugin: {}", id, e);
             c.setState(PluginContainer.State.FAILED);
             return false;
         }
@@ -271,7 +225,49 @@ public class JeakBot implements Runnable, IBot {
         return true;
     }
 
+    /**
+     * Reads connection credentials and schedules the task used to connect to the TS3 server.
+     */
+    protected void scheduleConnect() {
+        String host = config.getNode("host").asString();
+        Integer port = config.getNode("port").asInteger();
+        String user = config.getNode("user").asString();
+        String pass = config.getNode("pass").asString();
+        Integer ts3InstID = config.getNode("instance").asInteger();
+        Boolean useSSL = config.getNode("ssl").optBoolean(false);
+        String nickName = config.getNode("nick").optString("JeakBot");
+        server.setCredentials(host, port, user, pass, ts3InstID, useSSL, nickName);
+
+        Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
+        if (doNetDump) {
+            logger.info("Dedicated net-dumping is currently not implemented. The option will have no effect atm.");
+        }
+
+        serviceManager.provideUnchecked(ITaskService.class).runTask(connectionTask);
+    }
+
     // * * * Configuration * * * //
+
+    protected <S> S initializeService(S serviceInstance) {
+        FrameworkService serviceInfo = serviceInstance.getClass().getAnnotation(FrameworkService.class);
+
+        String className = serviceInstance.getClass().getName();
+        if (serviceInfo == null) {
+            logger.warn("Service is not annotated properly! Class: {}", className);
+            return serviceInstance;
+        }
+        Class<?> serviceInterface = serviceInfo.serviceInterface();
+        if (!serviceInterface.isAssignableFrom(serviceInstance.getClass())) {
+            logger.error("Service interface not compatible with service class: {} vs. {}", serviceInterface.getName(), className);
+            return serviceInstance;
+        }
+
+        //noinspection unchecked - Checked above.
+        serviceManager.registerService(((Class<S>) serviceInterface), serviceInstance);
+        injectionService.injectInto(serviceInstance);
+        eventService.registerListener(serviceInstance);
+        return serviceInstance;
+    }
 
     /**
      * Initializes the bots configuration
@@ -354,7 +350,7 @@ public class JeakBot implements Runnable, IBot {
 
     @Override
     public IDataCache getDataCache() {
-        return dataCache;
+        return serviceManager.provideUnchecked(IDataCache.class);
     }
 
 

@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.mail;
 
-import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.event.bot.BotStateEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Listener;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfigNode;
@@ -16,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@FrameworkService(serviceInterface = IMailService.class)
 public class MailService implements IMailService {
 
     private static final Logger logger = LoggerFactory.getLogger(MailService.class);
@@ -29,7 +31,8 @@ public class MailService implements IMailService {
         this.confDir = confDir;
     }
 
-    public void onLoad() {
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onLoad(BotStateEvent.PreInitializeEvent event) {
         List<File> configCandidates = new LinkedList<>();
 
         if (confDir.isDirectory()) {

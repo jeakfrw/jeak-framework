@@ -1,12 +1,12 @@
 package de.fearnixx.jeak.service.permission.base;
 
+import de.fearnixx.jeak.reflect.FrameworkService;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Created by MarkL4YG on 07-Feb-18
- */
+@FrameworkService(serviceInterface = IPermissionService.class)
 public class PermissionService implements IPermissionService {
 
     private Map<String, IPermissionProvider> providers = new ConcurrentHashMap<String, IPermissionProvider>();

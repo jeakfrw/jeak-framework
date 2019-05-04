@@ -4,9 +4,9 @@ import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.EventAbortException;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
-import de.fearnixx.jeak.event.ITargetClient;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
  * * enterview uses "ctid" instead of "cid"
  * * TS3 query sending invalid icon IDs. More info: https://twitter.com/MarkL4YG/status/965174407701385216
  */
+@FrameworkService(serviceInterface = IDataCache.class)
 public class DataCache implements IDataCache {
 
     private static final int CLIENT_REFRESH_INVERVAL = Main.getProperty("jeak.cache.clientRefresh", 60);

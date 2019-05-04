@@ -1,7 +1,9 @@
 package de.fearnixx.jeak.service.database;
 
+import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.mlessmann.confort.LoaderFactory;
@@ -22,7 +24,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * Created by MarkL4YG on 09-Feb-18
  */
-public class DatabaseService {
+@FrameworkService(serviceInterface = IDatabaseService.class)
+public class DatabaseService implements IDatabaseService {
 
     private static final Object CLASS_LOCK = new Object();
     private static final List<Class<?>> ENTITIES = new CopyOnWriteArrayList<>();
@@ -58,7 +61,8 @@ public class DatabaseService {
         return list;
     }
 
-    public void onLoad() {
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onLoad(BotStateEvent.PreInitializeEvent event) {
         List<File> dataSourceFiles = getDatabaseConfigurations();
 
         if (!dataSourceFiles.isEmpty()) {

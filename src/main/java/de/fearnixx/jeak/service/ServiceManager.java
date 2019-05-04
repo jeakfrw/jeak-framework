@@ -1,12 +1,12 @@
 package de.fearnixx.jeak.service;
 
+import de.fearnixx.jeak.reflect.FrameworkService;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Created by MarkL4YG on 20.06.17.
- */
+@FrameworkService(serviceInterface = IServiceManager.class)
 public class ServiceManager implements IServiceManager {
 
     private final Map<Class<?>, Object> services;
