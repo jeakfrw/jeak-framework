@@ -198,6 +198,11 @@ public class ProfileService implements IProfileService {
     }
 
     private Optional<ConfigProfile> makeUserProfile(UUID uuid) {
+        Optional<ConfigProfile> optCached = getProfileFromModificationCache(uuid);
+        if (optCached.isPresent()) {
+            return optCached;
+        }
+
         final File profileFile = getProfileFSRef(uuid);
         final FileConfig profileConfig = new FileConfig(configLoader, profileFile);
         final boolean isNew = !profileFile.isFile();
@@ -224,6 +229,14 @@ public class ProfileService implements IProfileService {
         }
 
         return Optional.ofNullable(profile);
+    }
+
+    private Optional<ConfigProfile> getProfileFromModificationCache(UUID uuid) {
+        synchronized (profileSaveQueue) {
+            return profileSaveQueue.stream()
+                    .filter(profile -> profile.getUniqueId().equals(uuid))
+                    .findFirst();
+        }
     }
 
     private File getProfileFSRef(UUID uuid) {
