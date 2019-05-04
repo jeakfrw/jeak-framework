@@ -1,10 +1,10 @@
 package de.fearnixx.jeak.event;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.util.NamePatternThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,17 +29,16 @@ public class EventService implements IEventService {
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
     private final Object LOCK = new Object();
-    private final List<EventListenerContainer> registeredListeners =  new LinkedList<>();
+    private final List<EventListenerContainer> registeredListeners = new LinkedList<>();
     private final List<EventContainer> runningEvents = new ArrayList<>();
     private final ThreadPoolExecutor eventExecutor;
-    private final ExecutorService deadCheckExecutor = Executors.newSingleThreadExecutor(
-            new ThreadFactoryBuilder().setNameFormat("tasksvc-deadcheck-%d").build()
-    );
+    private final ExecutorService deadCheckExecutor =
+            Executors.newSingleThreadExecutor(new NamePatternThreadFactory("tasksvc-deadcheck-%d"));
 
     private boolean terminated;
 
     public EventService() {
-        ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("event-scheduler-%d").build();
+        ThreadFactory threadFactory = new NamePatternThreadFactory("event-scheduler-%d");
         eventExecutor = new ThreadPoolExecutor(THREAD_POOL_SIZE, THREAD_POOL_SIZE,
                 0L, TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>(),
