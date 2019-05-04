@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.locale;
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Config;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
@@ -21,6 +22,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
+@FrameworkService(serviceInterface = ILocalizationService.class)
 public class LocalizationService extends Configurable implements ILocalizationService {
 
     private static final String DEFAULT_CONFIG = "/localization/defaultConfig.json";

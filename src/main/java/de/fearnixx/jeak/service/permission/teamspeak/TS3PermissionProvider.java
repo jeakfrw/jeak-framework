@@ -2,17 +2,18 @@ package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.permission.base.IPermission;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission.PriorityType;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.except.QueryException;
 import de.fearnixx.jeak.teamspeak.query.IQueryPromise;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.except.QueryException;
-import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission.PriorityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
  * Helpful documentation if you want to understand TS3 perms a little better:
  * * http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Permissions%20Guide.txt
  */
+@FrameworkService(serviceInterface = ITS3PermissionProvider.class)
 public class TS3PermissionProvider implements ITS3PermissionProvider {
 
     public static final Integer CACHE_TIMEOUT_SECONDS = 90;

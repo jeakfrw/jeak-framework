@@ -3,6 +3,7 @@ package de.fearnixx.jeak.teamspeak;
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
@@ -29,6 +30,7 @@ import java.util.function.Consumer;
 /**
  * Created by MarkL4YG on 28-Jan-18
  */
+@FrameworkService(serviceInterface = IServer.class)
 public class Server implements IServer {
 
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
@@ -53,7 +55,6 @@ public class Server implements IServer {
     private boolean useSSL;
     private String nickname;
 
-    private Thread connectionThread;
     private QueryConnectionAccessor mainConnection;
 
     public void setCredentials(String host, Integer port, String user, String pass, Integer instanceId, Boolean useSSL, String nickname) {
@@ -95,7 +96,7 @@ public class Server implements IServer {
                 tcpConnectAndInitialize();
 
                 // Dispatch connection thread.
-                connectionThread = new Thread(mainConnection);
+                Thread connectionThread = new Thread(mainConnection);
                 connectionThread.setName("connection-" + connectionCounter.getAndIncrement());
                 connectionThread.start();
             } catch (IOException e) {

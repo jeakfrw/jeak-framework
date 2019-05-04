@@ -12,12 +12,6 @@ public class LocalizationProvider extends AbstractSpecialProvider<LocaleUnit> {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalizationProvider.class);
 
-    private ILocalizationService localizationService;
-
-    public LocalizationProvider(ILocalizationService localizationService) {
-        this.localizationService = localizationService;
-    }
-
     @Override
     public Class<LocaleUnit> getAnnotationClass() {
         return LocaleUnit.class;
@@ -33,7 +27,9 @@ public class LocalizationProvider extends AbstractSpecialProvider<LocaleUnit> {
             throw new IllegalArgumentException("Cannot inject localization unit without id!");
         }
 
-        ILocalizationUnit unit = localizationService.registerUnit(unitId);
+        ILocalizationUnit unit = ctx.getServiceManager()
+                .provideUnchecked(ILocalizationService.class)
+                .registerUnit(unitId);
 
         if (!resourceURI.isEmpty()) {
             logger.debug("Eagerly loading defaults for injected localization unit: {}", unitId);
