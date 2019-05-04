@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.test.plugin;
 
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.profile.IUserProfile;
@@ -7,6 +8,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.notification.*;
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
 
 import java.util.Optional;
@@ -26,6 +28,7 @@ public class NotificationTestPlugin extends AbstractTestPlugin {
         super();
         addTest("notficiationTest_profileRetrieved");
         addTest("notficiationTest_messageDispatched");
+        addTest("notificationTest_liveMessageDispatched");
     }
 
     @Listener
@@ -46,5 +49,24 @@ public class NotificationTestPlugin extends AbstractTestPlugin {
                 .build();
         notificationService.dispatch(notification);
         success("notficiationTest_messageDispatched");
+    }
+
+    @Listener
+    public void onUserJoined(IQueryEvent.INotification.IClientEnter event) {
+        Optional<String> optUUID = event.getProperty(PropertyKeys.Client.UID);
+
+        optUUID.ifPresent(uid ->  {
+            if (uid.equals(RECIPIENT_UID)) {
+                INotification notification = INotification.builder()
+                        .addRecipient(RECIPIENT_UID)
+                        .urgency(Urgency.BASIC)
+                        .lifespan(Lifespan.BASIC)
+                        .summary("[TESTSYSTEM] TS3 notification test.")
+                        .shortText("This is a test notification.")
+                        .build();
+                notificationService.dispatch(notification);
+                success("notificationTest_liveMessageDispatched");
+            }
+        });
     }
 }
