@@ -38,6 +38,12 @@ public class NotificationBuilder {
         return this;
     }
 
+    public NotificationBuilder summary(String shortSummary) {
+        Objects.requireNonNull(shortText, "Summary may not be null!");
+        this.summary = shortSummary;
+        return this;
+    }
+
     public NotificationBuilder shortText(String shortText) {
         Objects.requireNonNull(shortText, "Short text may not be null!");
 

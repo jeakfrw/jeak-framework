@@ -14,12 +14,12 @@ import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.service.notification.NotificationService;
-import de.fearnixx.jeak.service.notification.INotificationService;
 import de.fearnixx.jeak.service.locale.ILocalizationService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
 import de.fearnixx.jeak.service.mail.IMailService;
 import de.fearnixx.jeak.service.mail.MailService;
+import de.fearnixx.jeak.service.notification.INotificationService;
+import de.fearnixx.jeak.service.notification.NotificationService;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
@@ -169,7 +169,7 @@ public class JeakBot implements Runnable, IBot {
         injectionService.injectInto(dataCache);
         injectionService.injectInto(mailService);
         injectionService.injectInto(profileService);
-        injectionManager.injectInto(notificationService);
+        injectionService.injectInto(notificationService);
 
         taskService.start();
         eventService.registerListener(connectionTask);
@@ -177,6 +177,7 @@ public class JeakBot implements Runnable, IBot {
         eventService.registerListeners(commandService);
         eventService.registerListener(dataCache);
         eventService.registerListener(mailService);
+        eventService.registerListener(notificationService);
         eventService.registerListener(profileService);
 
         pMgr.setIncludeCP(true);

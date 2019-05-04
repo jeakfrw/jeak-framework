@@ -10,6 +10,10 @@ import java.util.List;
  */
 public interface INotification {
 
+    static NotificationBuilder builder() {
+        return new NotificationBuilder();
+    }
+
     /**
      * List of unique IDs to which the notification should be sent.
      * Retrieve from: {@link IClient#getClientUniqueID()}
