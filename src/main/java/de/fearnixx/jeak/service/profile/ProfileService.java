@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.profile;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.profile.IUserIdentity;
@@ -22,10 +23,14 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class ProfileService implements IProfileService {
+
+    private static final Integer PROFILE_CACHE_MINUTES = Main.getProperty("jeak.profileCache.minutesTTL", 10);
 
     private static final Logger logger = LoggerFactory.getLogger(ProfileService.class);
 
@@ -33,6 +38,7 @@ public class ProfileService implements IProfileService {
     private final IConfig indexConfig;
     private final IConfigLoader configLoader = LoaderFactory.getLoader("application/json");
     private final List<ConfigProfile> profileSaveQueue = new LinkedList<>();
+    private final Map<UUID, ConfigProfile> profileCache = new ConcurrentHashMap<>();
     private boolean indexModified = false;
 
     @Inject
@@ -79,130 +85,140 @@ public class ProfileService implements IProfileService {
         saveIndex();
     }
 
-    private void saveIndex() {
-        synchronized (indexConfig) {
-            if (indexModified) {
-                try {
-                    logger.debug("Saving index.");
-                    indexConfig.save();
-                    indexModified = false;
-                } catch (IOException e) {
-                    logger.warn("Failed to save profile index!", e);
-                }
+    private synchronized void saveIndex() {
+        if (indexModified) {
+            try {
+                logger.debug("Saving index.");
+                indexConfig.save();
+                indexModified = false;
+            } catch (IOException e) {
+                logger.warn("Failed to save profile index!", e);
             }
         }
     }
 
-    private void saveProfiles() {
-        synchronized (profileSaveQueue) {
-            if (!profileSaveQueue.isEmpty()) {
-                logger.debug("Flushing profiles and index.");
-                profileSaveQueue.forEach(ConfigProfile::save);
-                profileSaveQueue.clear();
-            }
-            saveIndex();
+    private synchronized void saveProfiles() {
+        if (!profileSaveQueue.isEmpty()) {
+            logger.debug("Flushing profiles and index.");
+            profileSaveQueue.forEach(ConfigProfile::save);
+            profileSaveQueue.clear();
         }
+
+        LocalDateTime cacheRemovalThreshold = LocalDateTime.now().plusMinutes(-PROFILE_CACHE_MINUTES);
+        profileCache.entrySet()
+                .removeIf(e -> e.getValue().getLastAccess().isBefore(cacheRemovalThreshold));
+
+        saveIndex();
     }
 
-    private void onProfileModified(ConfigProfile configProfile) {
-        synchronized (profileSaveQueue) {
-            if (!profileSaveQueue.contains(configProfile)) {
-                profileSaveQueue.add(configProfile);
-            }
+    private synchronized void onProfileModified(ConfigProfile configProfile) {
+        if (!profileSaveQueue.contains(configProfile)) {
+            profileSaveQueue.add(configProfile);
         }
     }
 
     @Override
-    public Optional<IUserProfile> getProfile(UUID uuid) {
+    public synchronized Optional<IUserProfile> getProfile(UUID uuid) {
         Objects.requireNonNull(uuid, "Lookup UUID may not be null!");
-        return Optional.ofNullable(lookupProfileFromFS(uuid).orElse(null));
+
+        if (!indexConfig.getRoot().getNode(uuid.toString()).isVirtual()) {
+            return Optional.ofNullable(retrieveUserProfile(uuid).orElse(null));
+        } else {
+            return Optional.empty();
+        }
     }
 
     @Override
     public Optional<IUserProfile> getProfile(String ts3Identity) {
-        final Optional<UUID> optUUID = lookupUUIDFromFS(ts3Identity);
-        return optUUID.map(uuid -> lookupProfileFromFS(uuid).orElse(null));
+        final Optional<UUID> optUUID = lookupUUID(ts3Identity);
+        return optUUID.map(uuid -> retrieveUserProfile(uuid).orElse(null));
     }
 
     @Override
     public Optional<IUserProfile> getOrCreateProfile(String ts3Identity) {
         Objects.requireNonNull(ts3Identity, "Lookup identity may not be null!");
 
-        final Optional<UUID> optUUID = lookupUUIDFromFS(ts3Identity);
+        final Optional<UUID> optUUID = lookupUUID(ts3Identity);
         UUID uuid = optUUID.orElseGet(UUID::randomUUID);
 
         if (!optUUID.isPresent()) {
             addToIndex(ts3Identity, uuid);
         }
 
-        return Optional.ofNullable(makeUserProfile(uuid).orElse(null));
+        return Optional.ofNullable(retrieveUserProfile(uuid).orElse(null));
     }
 
-    private void addToIndex(String ts3Identity, UUID uuid) {
-        synchronized (indexConfig) {
-            IConfigNode listEntry = indexConfig.getRoot().createNewInstance();
-            listEntry.setString(ts3Identity);
-            indexConfig.getRoot().getNode(uuid.toString(), IUserIdentity.SERVICE_TEAMSPEAK).append(listEntry);
-            indexModified = true;
-        }
+    private synchronized void addToIndex(String ts3Identity, UUID uuid) {
+        IConfigNode listEntry = indexConfig.getRoot().createNewInstance();
+        listEntry.setString(ts3Identity);
+        indexConfig.getRoot().getNode(uuid.toString(), IUserIdentity.SERVICE_TEAMSPEAK).append(listEntry);
+        indexModified = true;
     }
 
-    private Optional<UUID> lookupUUIDFromFS(String ts3identity) {
+    private synchronized Optional<UUID> lookupUUID(String ts3identity) {
         Objects.requireNonNull(ts3identity, "Cannot look up null identity!");
+        final IConfigNode index = indexConfig.getRoot();
+        // Index: Map<UUID, List<TS3Identity>>
+        final Optional<String> optUUIDStr = index.optMap()
+                .orElseGet(() -> {
+                    logger.debug("No UUIDs have been indexed yet.");
+                    return Collections.emptyMap();
+                })
+                .entrySet()
+                .stream()
+                .filter(e -> e.getValue()
+                        .getNode(IUserIdentity.SERVICE_TEAMSPEAK)
+                        .optList()
+                        .orElseGet(() -> {
+                            logger.warn("UUID index is not a list! [{}]", e.getKey());
+                            return Collections.emptyList();
+                        })
+                        .stream()
+                        .map(n -> n.optString(null))
+                        .anyMatch(ts3identity::equals))
+                .map(Map.Entry::getKey)
+                .findAny();
 
-        synchronized (indexConfig) {
-            final IConfigNode index = indexConfig.getRoot();
-
-            // Index: Map<UUID, List<TS3Identity>>
-            final Optional<String> optUUIDStr = index.optMap()
-                    .orElseGet(() -> {
-                        logger.debug("No UUIDs have been indexed yet.");
-                        return Collections.emptyMap();
-                    })
-                    .entrySet()
-                    .stream()
-                    .filter(e -> e.getValue()
-                            .getNode(IUserIdentity.SERVICE_TEAMSPEAK)
-                            .optList()
-                            .orElseGet(() -> {
-                                logger.warn("UUID index is not a list! [{}]", e.getKey());
-                                return Collections.emptyList();
-                            })
-                            .stream()
-                            .map(n -> n.optString(null))
-                            .anyMatch(ts3identity::equals))
-                    .map(Map.Entry::getKey)
-                    .findAny();
-
-            if (optUUIDStr.isPresent()) {
-                try {
-                    return Optional.of(UUID.fromString(optUUIDStr.get()));
-                } catch (IllegalArgumentException e) {
-                    logger.warn("Index lookup returned an invalid UUID! Index corrupted?", e);
-                }
+        if (optUUIDStr.isPresent()) {
+            try {
+                return Optional.of(UUID.fromString(optUUIDStr.get()));
+            } catch (IllegalArgumentException e) {
+                logger.warn("Index lookup returned an invalid UUID! Index corrupted?", e);
             }
         }
 
         return Optional.empty();
     }
 
+    /**
+     * Returns the profile associated with the provided {@link UUID}.
+     * Only creates new profiles when {@code createIfAbsent} is set.
+     * The cached profile is returned, when available.
+     */
+    private Optional<ConfigProfile> retrieveUserProfile(UUID uuid) {
+        ConfigProfile profile;
+        profile = getProfileFromCache(uuid);
 
-    private Optional<ConfigProfile> lookupProfileFromFS(UUID uuid) {
-        final File profileFile = getProfileFSRef(uuid);
+        if (profile != null) {
+            profile.updateAccessTimestamp();
+            return Optional.of(profile);
 
-        if (profileFile.isFile() && profileFile.exists()) {
-            return makeUserProfile(uuid);
         } else {
-            return Optional.empty();
+            Optional<ConfigProfile> optProfile = makeUserProfile(uuid);
+            optProfile.ifPresent(this::cacheProfile);
+            return optProfile;
         }
     }
 
-    private Optional<ConfigProfile> makeUserProfile(UUID uuid) {
-        Optional<ConfigProfile> optCached = getProfileFromModificationCache(uuid);
-        if (optCached.isPresent()) {
-            return optCached;
-        }
+    private synchronized ConfigProfile getProfileFromCache(UUID uuid) {
+        return profileCache.getOrDefault(uuid, null);
+    }
 
+    private synchronized void cacheProfile(ConfigProfile profile) {
+        profileCache.put(profile.getUniqueId(), profile);
+    }
+
+    private Optional<ConfigProfile> makeUserProfile(UUID uuid) {
         final File profileFile = getProfileFSRef(uuid);
         final FileConfig profileConfig = new FileConfig(configLoader, profileFile);
         final boolean isNew = !profileFile.isFile();
@@ -231,12 +247,10 @@ public class ProfileService implements IProfileService {
         return Optional.ofNullable(profile);
     }
 
-    private Optional<ConfigProfile> getProfileFromModificationCache(UUID uuid) {
-        synchronized (profileSaveQueue) {
-            return profileSaveQueue.stream()
-                    .filter(profile -> profile.getUniqueId().equals(uuid))
-                    .findFirst();
-        }
+    private synchronized Optional<ConfigProfile> getProfileFromModificationCache(UUID uuid) {
+        return profileSaveQueue.stream()
+                .filter(profile -> profile.getUniqueId().equals(uuid))
+                .findFirst();
     }
 
     private File getProfileFSRef(UUID uuid) {
@@ -246,10 +260,10 @@ public class ProfileService implements IProfileService {
 
     @Override
     public void mergeProfiles(UUID into, UUID other) {
-        ConfigProfile intoProfile = lookupProfileFromFS(into).orElseThrow(
-                () -> new IllegalArgumentException("No profile for target UUID: " + into));
-        ConfigProfile fromProfile = lookupProfileFromFS(other).orElseThrow(
-                () -> new IllegalArgumentException("No profile for source UUID: " + other));
+        ConfigProfile intoProfile = retrieveUserProfile(into)
+                .orElseThrow(() -> new IllegalArgumentException("No profile for target UUID: " + into));
+        ConfigProfile fromProfile = retrieveUserProfile(other)
+                .orElseThrow(() -> new IllegalArgumentException("No profile for source UUID: " + other));
 
         fromProfile.getLinkedIdentities()
                 .forEach(intoProfile::unsafeAddIdentity);
@@ -269,26 +283,22 @@ public class ProfileService implements IProfileService {
     }
 
     @Override
-    public void deleteProfile(UUID uuid) {
+    public synchronized void deleteProfile(UUID uuid) {
         Objects.requireNonNull(uuid, "Cannot delete null profile!");
 
-        synchronized (indexConfig) {
-            final File profileFile = getProfileFSRef(uuid);
+        indexConfig.getRoot().remove(uuid.toString());
+        indexModified = true;
+        profileCache.remove(uuid);
+        profileSaveQueue.removeIf(profile -> profile.getUniqueId().equals(uuid));
 
-            synchronized (profileSaveQueue) {
-                profileSaveQueue.removeIf(profile -> profile.getUniqueId().equals(uuid));
-            }
-            indexConfig.getRoot().remove(uuid.toString());
-            indexModified = true;
-
-            try {
-                Files.delete(profileFile.toPath());
-                ProfileEvent.ProfileDeletedEvent deletedEvent = new ProfileEvent.ProfileDeletedEvent();
-                deletedEvent.setProfileUUID(uuid);
-                eventService.fireEvent(deletedEvent);
-            } catch (IOException e) {
-                logger.error("Failed to delete profile {} !", profileFile.getPath(), e);
-            }
+        final File profileFile = getProfileFSRef(uuid);
+        try {
+            Files.delete(profileFile.toPath());
+            ProfileEvent.ProfileDeletedEvent deletedEvent = new ProfileEvent.ProfileDeletedEvent();
+            deletedEvent.setProfileUUID(uuid);
+            eventService.fireEvent(deletedEvent);
+        } catch (IOException e) {
+            logger.error("Failed to delete profile {} !", profileFile.getPath(), e);
         }
     }
 }
