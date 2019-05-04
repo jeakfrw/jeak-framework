@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @JeakBotPlugin(id = "userprofiletest")
-public class UserProfileTest extends AbstractTestPlugin {
+public class UserProfileTestPlugin extends AbstractTestPlugin {
 
     private static final String TEST_TS3_UID = "GANC6dTbew+a3A2h/8c5CGJXzsE=";
     private static final String TEST_TS3_UID2 = "cZS9nRtgsAhaIVMbOwFxLmTeEvE=";
@@ -20,7 +20,7 @@ public class UserProfileTest extends AbstractTestPlugin {
     @Inject
     private IProfileService profileService;
 
-    public UserProfileTest() {
+    public UserProfileTestPlugin() {
         addTest("test_profileSvc_injected");
         addTest("test_profileSvc_nonExistent");
         addTest("test_profileSvc_getProfile_byTS3");
@@ -63,6 +63,7 @@ public class UserProfileTest extends AbstractTestPlugin {
         if (optProfile.isPresent()) {
             IUserProfile persistentProfile = optProfile.get();
             persistentProfile.setOption("test_plugin", "true");
+            success("test_profileSvc_persistentProfile");
         }
     }
 }

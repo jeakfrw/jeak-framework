@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ public class ConfigProfile implements IUserProfile {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigProfile.class);
 
+    private LocalDateTime lastAccess = LocalDateTime.now();
     private final IConfig configRef;
     private final UUID uuid;
     private Consumer<ConfigProfile> modificationListener;
@@ -159,5 +161,13 @@ public class ConfigProfile implements IUserProfile {
 
         // No modification notification.
         // This is an internal modification and only allowed to the service itself.
+    }
+
+    synchronized void updateAccessTimestamp() {
+        lastAccess = LocalDateTime.now();
+    }
+
+    synchronized LocalDateTime getLastAccess() {
+        return lastAccess;
     }
 }
