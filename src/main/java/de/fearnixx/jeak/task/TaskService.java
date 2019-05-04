@@ -7,6 +7,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
+import de.fearnixx.jeak.util.NamePatternThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +32,6 @@ public class TaskService extends Thread implements ITaskService {
     private final Map<ITask, Long> tasks;
     private boolean terminated = false;
 
-    private ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("task-scheduler-%d").build();
     private ExecutorService taskExecutor;
 
     @Inject
@@ -39,6 +39,7 @@ public class TaskService extends Thread implements ITaskService {
 
     public TaskService(int capacity) {
         tasks = new HashMap<>(capacity, 0.8f);
+        ThreadFactory threadFactory = new NamePatternThreadFactory("task-scheduler-%d");
         taskExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.taskmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
         AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
     }

@@ -56,10 +56,18 @@ public class NotificationService implements INotificationService {
         logger.debug("Dispatching notification: U[{}], L[{}], S[{}]", urgency, lifespan, summary);
 
         synchronized (channels) {
+            boolean[] gotOne = new boolean[]{false};
             channels.stream()
                     .filter(c -> urgency >= c.lowestUrgency() && urgency <= c.highestUrgency())
                     .filter(c -> lifespan >= c.lowestLifespan() && lifespan <= c.highestLifespan())
-                    .forEach(c -> c.sendNotification(notification));
+                    .forEach(c -> {
+                        gotOne[0] = true;
+                        c.sendNotification(notification);
+                    });
+
+            if (!gotOne[0]) {
+                logger.warn("No notification channel available for notification.");
+            }
         }
     }
 
@@ -67,6 +75,7 @@ public class NotificationService implements INotificationService {
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {
         internalInitChannel(new SendTextMessageChannel());
         internalInitChannel(new PokeClientChannel());
+        internalInitChannel(new SendMailChannel());
     }
 
     private void internalInitChannel(INotificationChannel channel) {

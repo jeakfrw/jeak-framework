@@ -102,14 +102,14 @@ public class SmtpTransportUnit implements ITransportUnit {
             logger.debug("[{}] Adding recipients.", unitName);
             message.getRecipientsTO().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.TO));
+            logger.debug("To: {}", message.getRecipientsTO());
             message.getRecipientsCC().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.CC));
+            logger.debug("CC: {}", message.getRecipientsCC());
             message.getRecipientsBCC().forEach(rec ->
                     addRecipient(mimeMessage, rec, MimeMessage.RecipientType.BCC));
-
-
+            logger.debug("BCC: {}", message.getRecipientsBCC());
             mimeMessage.setSubject(message.getSubject(), CHARSET.toString());
-
 
             logger.debug("[{}] Adding attachments.", unitName);
             if (!message.getAttachments().isEmpty()) {
