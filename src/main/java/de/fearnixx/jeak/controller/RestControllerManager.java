@@ -1,6 +1,10 @@
 package de.fearnixx.jeak.controller;
 
+import de.fearnixx.jeak.controller.events.ControllerEvent;
 import de.fearnixx.jeak.controller.interfaces.IRestControllerManager;
+import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.service.event.IEventService;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -11,9 +15,13 @@ public class RestControllerManager implements IRestControllerManager {
         this.controllers = controllers;
     }
 
+    @Inject
+    private IEventService eventService;
+
     @Override
     public <T> void registerController(Class<T> cntrlrClass, T restController) {
         controllers.put(cntrlrClass, restController);
+        eventService.fireEvent(new ControllerEvent.ControllerRegisteredEvent<>(restController));
     }
 
     @Override

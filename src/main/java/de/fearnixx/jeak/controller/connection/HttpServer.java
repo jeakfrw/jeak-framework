@@ -21,6 +21,7 @@ import static spark.Spark.*;
  */
 public class HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
+    private static final String API_ENDPOINT = "/api";
     private int port = 8723;
 
     public HttpServer() {
@@ -36,20 +37,30 @@ public class HttpServer {
         port(port);
     }
 
+    /**
+     * A wrapper for the {@code registerMethod()} method utilizing Sparks ability to build hierarchical endpoints.
+     *
+     * @param controllerContainer
+     */
     public void registerController(ControllerContainer controllerContainer) {
-        path("/api", () -> {
-            before("/*", (request, response) -> logger.debug("Received api call"));
-            path(controllerContainer.getControllerEndpoint(), () -> {
-                controllerContainer.getControllerMethodList().forEach(controllerMethod -> {
-                    registerMethod(
-                            controllerMethod.getRequestMethod(),
-                            controllerMethod.getPath(),
-                            generateRoute(controllerContainer, controllerMethod));
-                });
+        controllerContainer.getControllerMethodList().forEach(controllerMethod -> {
+            path(API_ENDPOINT.concat(controllerContainer.getControllerEndpoint()), () -> {
+                registerMethod(
+                        controllerMethod.getRequestMethod(),
+                        controllerMethod.getPath(),
+                        generateRoute(controllerContainer, controllerMethod));
             });
         });
     }
 
+    /**
+     * Registers a method to Spark.
+     *
+     * @param httpMethod The {@link RequestMethod} to map the method to.
+     * @param path       The api path as {@link String}for the given method.
+     * @param route      The {@link Route} which is supposed to be invoked when a call to the specified
+     *                   {@code path} and {@code httpMethod} is made.
+     */
     public void registerMethod(RequestMethod httpMethod, String path, Route route) {
         switch (httpMethod) {
             case GET:
@@ -73,6 +84,13 @@ public class HttpServer {
         }
     }
 
+    /**
+     * Generate a Spark specific {@link Route} for the provided controller and method.
+     *
+     * @param controllerContainer The {@link ControllerContainer} of the controller.
+     * @param controllerMethod    The {@link ControllerMethod} of the method.
+     * @return A {@link Route} containing the actions of the {@link ControllerMethod}.
+     */
     private Route generateRoute(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
         return (request, response) -> {

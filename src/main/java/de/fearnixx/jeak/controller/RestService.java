@@ -2,35 +2,28 @@ package de.fearnixx.jeak.controller;
 
 import de.fearnixx.jeak.controller.connection.HttpServer;
 import de.fearnixx.jeak.controller.controller.ControllerContainer;
+import de.fearnixx.jeak.controller.events.IControllerEvent;
 import de.fearnixx.jeak.controller.interfaces.IRestService;
+import de.fearnixx.jeak.reflect.Listener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 public class RestService implements IRestService {
     private static final Logger logger = LoggerFactory.getLogger(RestService.class);
-    private static final String REST_API_ENDPOINT = "/api";
     private HttpServer httpServer;
 
-    private RestControllerManager restControllerManager;
 
-    public RestService(RestControllerManager restControllerManager) {
+    public RestService() {
         this.httpServer = new HttpServer();
-        this.restControllerManager = restControllerManager;
     }
 
-    public void someStuff() {
-        Map<Class<?>, Object> restControllers = restControllerManager.provideAll();
-        List<ControllerContainer> controllers = restControllers.values().stream()
-                .map(ControllerContainer::new)
-                .collect(Collectors.toList());
-        controllers.forEach(this::registerMethods);
-    }
-
-    private void registerMethods(ControllerContainer controllerContainer) {
-        httpServer.registerController(controllerContainer);
+    @Listener
+    public void methodRegistered(IControllerEvent.IControllerRegistered controllerRegisteredEvent) {
+        ControllerContainer controllerContainer = new ControllerContainer(controllerRegisteredEvent.getController());
+        try {
+            httpServer.registerController(controllerContainer);
+        } catch (Exception e) {
+            logger.error("there was an error while registering the controller", e);
+        }
     }
 }
