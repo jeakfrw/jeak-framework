@@ -16,6 +16,15 @@ public class ControllerContainer {
 
     public ControllerContainer(Object o) {
         Objects.requireNonNull(o);
+        initControllerContainer(o);
+    }
+
+    /**
+     * Initialize the attributes of the controller container.
+     *
+     * @param o The controler {@link Object}.
+     */
+    private void initControllerContainer(Object o) {
         this.controllerObject = o;
         this.controllerEndpoint = extractControllerRoute(o);
         this.controllerMethodList = Arrays.stream(o.getClass().getDeclaredMethods())
@@ -26,6 +35,9 @@ public class ControllerContainer {
                 .collect(Collectors.toList());
     }
 
+    private String extractControllerRoute(Object o) {
+        return o.getClass().getAnnotation(RestController.class).endpoint();
+    }
 
     /**
      * Invoke one of the controllers {@link ControllerMethod}.
@@ -52,7 +64,4 @@ public class ControllerContainer {
         return controllerMethodList;
     }
 
-    private String extractControllerRoute(Object o) {
-        return o.getClass().getAnnotation(RestController.class).endpoint();
-    }
 }

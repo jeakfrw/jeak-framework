@@ -6,9 +6,6 @@ For the service to work, you need to include it in the ``JeakBot`` class:
 RestControllerManager restControllerManager = new RestControllerManager(new HashMap<>());
 injectionService.injectInto(restControllerManager);
 
-// Necessary for the service to know if all controllers are registered or a new one was registered.
-RestService restService = new RestService();
-eventService.registerListener(restService);
 ```
 
 ## the webserver
@@ -21,8 +18,7 @@ To write a controller, you need to use some annotations:
 corresponding HTTP-Method and the endpoint for this specific method.
 * The endpoints have to start with a leading `/` and end without a `/`.
 
-```
-java
+```java
 @RestController(endpoint = "/test")
 public class TestController {
 
