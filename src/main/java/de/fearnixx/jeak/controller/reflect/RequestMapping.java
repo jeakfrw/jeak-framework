@@ -15,4 +15,5 @@ import java.lang.annotation.Target;
 public @interface RequestMapping {
     RequestMethod method();
     String endpoint() default "";
+    boolean isSecured() default false;
 }
