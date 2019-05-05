@@ -14,7 +14,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Optional;
 
-import static spark.Spark.*;
+import static spark.Spark.port;
 
 /**
  * A wrapper for the http server.
@@ -44,13 +44,27 @@ public class HttpServer {
      */
     public void registerController(ControllerContainer controllerContainer) {
         controllerContainer.getControllerMethodList().forEach(controllerMethod -> {
-            path(API_ENDPOINT.concat(controllerContainer.getControllerEndpoint()), () -> {
-                registerMethod(
-                        controllerMethod.getRequestMethod(),
-                        controllerMethod.getPath(),
-                        generateRoute(controllerContainer, controllerMethod));
-            });
+            registerMethod(controllerMethod.getRequestMethod(),
+                    buildEndpoint(controllerContainer, controllerMethod),
+                    generateRoute(controllerContainer, controllerMethod));
         });
+    }
+
+    private String buildEndpoint(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
+        char DELIMITER = '/';
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append(API_ENDPOINT);
+        String controllerEndpoint = controllerContainer.getControllerEndpoint();
+        if (controllerEndpoint.charAt(0) != DELIMITER) {
+            stringBuilder.append(DELIMITER);
+        }
+        stringBuilder.append(controllerEndpoint);
+        String methodEndpoint = controllerMethod.getPath();
+        if (methodEndpoint.charAt(0) != DELIMITER) {
+            stringBuilder.append(DELIMITER);
+        }
+        stringBuilder.append(methodEndpoint);
+        return stringBuilder.toString().replaceAll("//", "/");
     }
 
     /**
