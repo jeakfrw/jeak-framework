@@ -3,6 +3,7 @@ package de.fearnixx.jeak.controller;
 import de.fearnixx.jeak.controller.connection.HttpServer;
 import de.fearnixx.jeak.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.controller.interfaces.IRestControllerManager;
+import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +14,11 @@ public class RestControllerManager implements IRestControllerManager {
     private static final Logger logger = LoggerFactory.getLogger(RestControllerManager.class);
     private final Map<Class<?>, Object> controllers;
     private HttpServer httpServer;
+
+    public RestControllerManager() {
+        this.controllers = new HashMap<>();
+        this.httpServer = new HttpServer();
+    }
 
     public RestControllerManager(Map<Class<?>, Object> controllers) {
         this.controllers = controllers;
