@@ -1,9 +1,12 @@
 package de.fearnixx.jeak.controller.connection;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fearnixx.jeak.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.controller.controller.ControllerMethod;
 import de.fearnixx.jeak.controller.controller.MethodParameter;
 import de.fearnixx.jeak.controller.reflect.RequestBody;
+import de.fearnixx.jeak.controller.reflect.RequestMapping;
 import de.fearnixx.jeak.controller.reflect.RequestParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,7 +119,13 @@ public class HttpServer {
                     methodParameters[methodParameter.getPosition()] = request.body();
                 }
             }
-            return controllerContainer.invoke(controllerMethod, methodParameters);
+            Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
+            String contentType = controllerMethod.getAnnotation(RequestMapping.class).contentType();
+            if (contentType.contains("json")) {
+                response.type(contentType);
+                returnValue = toJson(returnValue);
+            }
+            return returnValue;
         };
     }
 
@@ -133,6 +142,23 @@ public class HttpServer {
             annotatedName = ((RequestParam) optionalAnnotation.get()).name();
         }
         return annotatedName;
+    }
+
+    /**
+     * Generate a json representation of the provided object.
+     *
+     * @param o
+     * @return A {@link String} with the object as json if o =! null,
+     * an empty {@link String} otherwise.
+     * @throws JsonProcessingException
+     */
+    private String toJson(Object o) throws JsonProcessingException {
+        if (o == null) {
+            return "";
+        }
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(o);
+        return json;
     }
 
 }

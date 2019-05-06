@@ -16,4 +16,5 @@ public @interface RequestMapping {
     RequestMethod method();
     String endpoint() default "";
     boolean isSecured() default false;
+    String contentType() default "application/json";
 }

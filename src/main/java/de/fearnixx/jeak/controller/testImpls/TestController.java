@@ -10,8 +10,8 @@ import de.fearnixx.jeak.controller.reflect.RestController;
 public class TestController {
 
     @RequestMapping(method = RequestMethod.GET, endpoint = "/hello")
-    public String hello() {
-        return "hallo";
+    public DummyObject hello() {
+        return new DummyObject("Finn", 20);
     }
 
     @RequestMapping(method =  RequestMethod.GET, endpoint = "/info/:name")

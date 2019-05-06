@@ -1,14 +1,11 @@
 package de.fearnixx.jeak.controller.controller;
 
 import de.fearnixx.jeak.controller.connection.RequestMethod;
-
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ControllerMethod {
     private final Method method;
@@ -62,5 +59,15 @@ public class ControllerMethod {
             );
         }
         return methodParameterList;
+    }
+
+    /**
+     *
+     * @param annotationClass
+     * @param <T>
+     * @return
+     */
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return method.getAnnotation(annotationClass);
     }
 }
