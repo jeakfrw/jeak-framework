@@ -6,7 +6,7 @@ import java.util.Optional;
 /**
  * The controller manager allows plugins to register services to a specified REST method.
  */
-public interface IRestControllerManager {
+public interface IRestControllerService {
 
     /**
      * Registers a new REST controller to the controller manager.
