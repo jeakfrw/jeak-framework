@@ -28,6 +28,7 @@ public class InjectionService implements IInjectionService {
     }
 
     public void addProvider(AbstractSpecialProvider<?> provider) {
+        this.injectInto(provider);
         if (!providers.contains(provider)) {
             providers.add(provider);
         }

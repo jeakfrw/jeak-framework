@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.command;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -22,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by MarkL4YG on 08-Nov-17
  */
+@FrameworkService(serviceInterface = ICommandService.class)
 public class CommandService implements ICommandService {
 
     public static final String COMMAND_PREFIX = "!";

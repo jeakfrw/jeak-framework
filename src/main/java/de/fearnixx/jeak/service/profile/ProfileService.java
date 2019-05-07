@@ -5,6 +5,7 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.profile.IUserIdentity;
 import de.fearnixx.jeak.profile.IUserProfile;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
@@ -28,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+@FrameworkService(serviceInterface = IProfileService.class)
 public class ProfileService implements IProfileService {
 
     private static final Integer PROFILE_CACHE_MINUTES = Main.getProperty("jeak.profileCache.minutesTTL", 10);

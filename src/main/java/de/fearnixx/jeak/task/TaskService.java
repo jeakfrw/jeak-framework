@@ -2,6 +2,7 @@ package de.fearnixx.jeak.task;
 
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
@@ -22,6 +23,7 @@ import java.util.concurrent.ThreadFactory;
 /**
  * Created by MarkL4YG on 11.06.17.
  */
+@FrameworkService(serviceInterface = ITaskService.class)
 public class TaskService extends Thread implements ITaskService {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
@@ -130,6 +132,12 @@ public class TaskService extends Thread implements ITaskService {
                 // IF interrupted - automatically checks for termination
             }
         }
+    }
+
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onPreInit(IBotStateEvent.IPreInitializeEvent event) {
+        logger.info("Self-starting on initialization.");
+        this.start();
     }
 
     @Listener

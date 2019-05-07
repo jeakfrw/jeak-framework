@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.notification;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
@@ -13,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
+@FrameworkService(serviceInterface = INotificationService.class)
 public class NotificationService implements INotificationService {
 
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);

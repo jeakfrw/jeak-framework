@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.reflect;
 
 
-import de.fearnixx.jeak.service.database.DatabaseService;
+import de.fearnixx.jeak.service.database.IDatabaseService;
 import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +30,7 @@ public class DataSourceProvider extends AbstractSpecialProvider<PersistenceUnit>
             throw new IllegalArgumentException("Cannot inject EntityManager without unit ID!");
         }
 
-        DatabaseService service = ctx.getServiceManager().provideUnchecked(DatabaseService.class);
+        IDatabaseService service = ctx.getServiceManager().provideUnchecked(IDatabaseService.class);
         Optional<IPersistenceUnit> unit = service.getPersistenceUnit(unitName);
         Object value = null;
 
