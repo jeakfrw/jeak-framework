@@ -4,6 +4,7 @@ package de.fearnixx.jeak.controller.controller;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class MethodParameter {
     private final int position;
@@ -47,4 +48,12 @@ public class MethodParameter {
                 .findFirst();
     }
 
+    public Optional<Object> callAnnotationFunction(Function<Annotation, Object> function, Class<? extends Annotation> annotation) {
+        Optional<? extends Annotation> optionalAnnotation = getAnnotation(annotation);
+        Object returnValue = null;
+        if (optionalAnnotation.isPresent()) {
+            returnValue = function.apply(optionalAnnotation.get());
+        }
+        return Optional.ofNullable(returnValue);
+    }
 }

@@ -8,14 +8,13 @@ import de.fearnixx.jeak.controller.controller.MethodParameter;
 import de.fearnixx.jeak.controller.reflect.RequestBody;
 import de.fearnixx.jeak.controller.reflect.RequestMapping;
 import de.fearnixx.jeak.controller.reflect.RequestParam;
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Route;
 import spark.Spark;
-
-import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Optional;
 
 import static spark.Spark.port;
 
@@ -136,12 +135,8 @@ public class HttpServer {
      * @return The name of the annotated variable.
      */
     private String getRequestParamName(MethodParameter methodParameter) {
-        Optional<? extends Annotation> optionalAnnotation = methodParameter.getAnnotation(RequestParam.class);
-        String annotatedName = null;
-        if (optionalAnnotation.isPresent()) {
-            annotatedName = ((RequestParam) optionalAnnotation.get()).name();
-        }
-        return annotatedName;
+        Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).name();
+        return (String) methodParameter.callAnnotationFunction(function, RequestParam.class).get();
     }
 
     /**
