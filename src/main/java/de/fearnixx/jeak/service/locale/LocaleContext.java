@@ -31,13 +31,17 @@ public class LocaleContext implements ILocaleContext {
 
     private void preExplodeMessages() {
         if (!languageNode.isVirtual()) {
-            languageNode.optMap()
-                    .orElseThrow(() -> new IllegalStateException("Language context nodes may only be maps!"))
-                    .forEach((msgId, template) -> {
-                        String templateString = template.optString()
-                                .orElseThrow(() -> new IllegalStateException("Message templates may only be strings!"));
-                        preExploded.put(msgId, new MessageRep(templateString));
-                    });
+            synchronized (preExploded) {
+                languageNode.optMap()
+                        .orElseThrow(() -> new IllegalStateException("Language context nodes may only be maps!"))
+                        .forEach((msgId, template) -> {
+                            String templateString = template.optString()
+                                    .orElseThrow(() -> new IllegalStateException("Message templates may only be strings!"));
+
+                            logger.debug("[{}] Exploding message: {}.{}", unitId, locale, msgId);
+                            preExploded.put(msgId, new MessageRep(templateString));
+                        });
+            }
         }
     }
 
@@ -72,11 +76,14 @@ public class LocaleContext implements ILocaleContext {
      */
     @Override
     public String uncheckedGetMessage(String messageId, Map<String, String> messageParams) {
-        MessageRep message = preExploded.getOrDefault(messageId, null);
+        MessageRep message;
+        synchronized (preExploded) {
+            message = preExploded.getOrDefault(messageId, null);
+        }
 
         if (message != null) {
             try {
-                message.getWithParams(messageParams);
+                return message.getWithParams(messageParams);
             } catch (MissingParameterException e) {
                 logger.error("Cannot build message \"{}\" with missing parameter: {}", messageId, e.getParameterName());
                 return message.getRawTemplate();
@@ -91,7 +98,10 @@ public class LocaleContext implements ILocaleContext {
      */
     @Override
     public String uncheckedGetMessage(String messageId) {
-        MessageRep message = preExploded.getOrDefault(messageId, null);
+        MessageRep message;
+        synchronized (preExploded) {
+            message = preExploded.getOrDefault(messageId, null);
+        }
         return message != null ? message.getRawTemplate() : null;
     }
 }

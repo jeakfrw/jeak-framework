@@ -102,6 +102,7 @@ public class InjectionService implements IInjectionService {
         if (!id.equals(injectionContext.getContextId())) {
             logger.debug("Proxying injection context: {}", id);
             final InjectionContext childCtx = injectionContext.getChild(id);
+            childCtx.setClassLoader(victim.getClass().getClassLoader());
             final InjectionService child = new InjectionService(childCtx);
             providers.forEach(child::addProvider);
             return child.injectInto(victim);

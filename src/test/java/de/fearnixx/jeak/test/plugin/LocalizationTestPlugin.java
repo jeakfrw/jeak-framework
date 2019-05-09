@@ -38,7 +38,7 @@ public class LocalizationTestPlugin extends AbstractTestPlugin implements IComma
 
         if (testUnit != null && testUnit.getUnitId().equals("testlocale")) {
             success("unit_injected");
-            testUnit.loadDefaultsFromResource("localization/testUnit.json");
+            testUnit.loadDefaultsFromResource(this.getClass().getClassLoader(), "localization/testUnit.json");
         }
     }
 

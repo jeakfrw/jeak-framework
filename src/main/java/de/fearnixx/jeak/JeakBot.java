@@ -139,7 +139,7 @@ public class JeakBot implements Runnable, IBot {
         eventService = new EventService();
         serviceManager = new ServiceManager();
         serviceManager.registerService(IServiceManager.class, serviceManager);
-        injectionService = new InjectionService(new InjectionContext(serviceManager, "frw"));
+        injectionService = new InjectionService(new InjectionContext(serviceManager, "frw", getClass().getClassLoader()));
         injectionService.addProvider(new ConfigProvider(confDir));
         injectionService.addProvider(new DataSourceProvider());
         injectionService.addProvider(new TransportProvider());

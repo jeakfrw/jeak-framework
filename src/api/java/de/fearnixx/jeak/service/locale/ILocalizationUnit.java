@@ -35,7 +35,7 @@ public interface ILocalizationUnit {
      *
      * Fails silently when the resource could not be loaded. (Errors will be logged)
      */
-    void loadDefaultsFromResource(String resourceURI);
+    void loadDefaultsFromResource(ClassLoader loader, String resourceURI);
 
     /**
      * Instructs the unit to load the specified {@link File} and merge the values with already configured ones.
