@@ -41,9 +41,13 @@ public class TestController {
 
 ## Register a controller
 In order to register a REST-controller, you need to inject the RestControllerManager
-and register your Controller.
+and register your Controller at some point.
 ```java
 @inject
 private RestControllerManager restControllerService;
-restControllerService.registerController(TestController.class, testController);
+
+@Listener(order = Listener.Orders.LATE)
+public void onInitialize(IBotStateEvent.IInitializeEvent event) {
+        restControllerService.registerController(TestController.class, testController);
+}
 ```
