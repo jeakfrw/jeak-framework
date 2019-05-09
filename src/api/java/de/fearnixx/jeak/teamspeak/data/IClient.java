@@ -70,6 +70,12 @@ public interface IClient extends IDataHolder {
     ClientType getClientType();
 
     /**
+     * Country code provided by TS3. Corresponds to the flag displayed in the client.
+     * @implNote if TS3 does not provide this for whatever reason, this will default to "en"!
+     */
+    String getCountryCode();
+
+    /**
      * ID of the channel, the client is currently joined.
      *
      * @implNote This is updated dynamically outside of the usual cache-refresh after a move-event.
@@ -79,7 +85,7 @@ public interface IClient extends IDataHolder {
     /**
      * ID of the channel group that is currently associated with the client.
      *
-     * @implNote Contary to the channel id, this is NOT dynamically updated at the moment.
+     * @implNote Contrary to the channel id, this is NOT dynamically updated at the moment.
      */
     Integer getChannelGroupID();
 
