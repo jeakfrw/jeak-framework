@@ -3,8 +3,8 @@ For the service to work, you need to include it in the ``JeakBot`` class:
 
 
 ```java
-RestControllerManager restControllerManager = new RestControllerManager(new HashMap<>());
-injectionService.injectInto(restControllerManager);
+RestControllerManager restControllerService = new RestControllerManager(new HashMap<>());
+injectionService.injectInto(restControllerService);
 
 ```
 
@@ -44,6 +44,6 @@ In order to register a REST-controller, you need to inject the RestControllerMan
 and register your Controller.
 ```java
 @inject
-private RestControllerManager restControllerManager;
-restControllerManager.registerController(TestController.class, testController);
+private RestControllerManager restControllerService;
+restControllerService.registerController(TestController.class, testController);
 ```

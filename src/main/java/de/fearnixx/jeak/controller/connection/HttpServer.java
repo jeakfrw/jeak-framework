@@ -8,11 +8,13 @@ import de.fearnixx.jeak.controller.controller.MethodParameter;
 import de.fearnixx.jeak.controller.reflect.RequestBody;
 import de.fearnixx.jeak.controller.reflect.RequestMapping;
 import de.fearnixx.jeak.controller.reflect.RequestParam;
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Request;
 import spark.Route;
 import spark.Spark;
 
@@ -112,11 +114,13 @@ public class HttpServer {
         return (request, response) -> {
             Object[] methodParameters = new Object[methodParameterList.size()];
             for (MethodParameter methodParameter : methodParameterList) {
+                Object retrievedParameter = null;
                 if (methodParameter.hasAnnotation(RequestParam.class)) {
-                    methodParameters[methodParameter.getPosition()] = request.params(getRequestParamName(methodParameter));
+                    retrievedParameter = transformRequestOption(request.params(getRequestParamName(methodParameter)), request, methodParameter);
                 } else if (methodParameter.hasAnnotation(RequestBody.class)) {
-                    methodParameters[methodParameter.getPosition()] = request.body();
+                    retrievedParameter = transformRequestOption(request.body(), request, methodParameter);
                 }
+                methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
             Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
             String contentType = controllerMethod.getAnnotation(RequestMapping.class).contentType();
@@ -126,6 +130,16 @@ public class HttpServer {
             }
             return returnValue;
         };
+    }
+
+    private Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
+        Object retrievedParameter;
+        if (request.contentType().equals("application/json")) {
+            retrievedParameter = fromJson(string, methodParameter.getType());
+        } else {
+            retrievedParameter = string;
+        }
+        return retrievedParameter;
     }
 
     /**
@@ -154,6 +168,21 @@ public class HttpServer {
         ObjectMapper objectMapper = new ObjectMapper();
         String json = objectMapper.writeValueAsString(o);
         return json;
+    }
+
+    private Object fromJson(String json, Class<?> clazz) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Object deserializedObject = null;
+        try {
+            deserializedObject = objectMapper.readValue(json, clazz);
+        } catch (IOException e) {
+            logger.error("There was an error while trying to deserialize json",e);
+        }
+        return deserializedObject;
+    }
+
+    interface requestTranslator {
+
     }
 
 }

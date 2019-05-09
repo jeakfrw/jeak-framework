@@ -5,8 +5,11 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MethodParameter {
+    private static final Logger logger = LoggerFactory.getLogger(MethodParameter.class);
     private final int position;
     private final Class<?> type;
     private final String name;
