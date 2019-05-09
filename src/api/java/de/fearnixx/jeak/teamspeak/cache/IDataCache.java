@@ -42,4 +42,14 @@ public interface IDataCache {
      * Name will match case-insensitive and partially.
      */
     Optional<IChannel> findChannelByName(String name);
+
+    /**
+     * Returns the configured refresh period for clients in seconds.
+     */
+    int getClientRefreshTime();
+
+    /**
+     * Returns the configured refresh period for channels in seconds.
+     */
+    int getChannelRefreshTime();
 }

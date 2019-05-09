@@ -92,6 +92,11 @@ public abstract class TS3ClientHolder extends RawQueryEvent.Message implements I
     }
 
     @Override
+    public String getCountryCode() {
+        return getProperty(PropertyKeys.Client.COUNTRY).orElse("en");
+    }
+
+    @Override
     public Integer getChannelID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_ID);
         if (!optProperty.isPresent())

@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @FrameworkService(serviceInterface = IDataCache.class)
 public class DataCache implements IDataCache {
 
-    private static final int CLIENT_REFRESH_INVERVAL = Main.getProperty("jeak.cache.clientRefresh", 60);
+    private static final int CLIENT_REFRESH_INTERVAL = Main.getProperty("jeak.cache.clientRefresh", 60);
     private static final int CHANNEL_REFRESH_INTERVAL = Main.getProperty("jeak.cache.channelRefresh", 180);
     private static final Logger logger = LoggerFactory.getLogger(DataCache.class);
 
@@ -69,7 +69,7 @@ public class DataCache implements IDataCache {
             .build();
     private final ITask clientListTask = ITask.builder()
             .name("cache.clientRefresh")
-            .interval(CLIENT_REFRESH_INVERVAL, TimeUnit.SECONDS)
+            .interval(CLIENT_REFRESH_INTERVAL, TimeUnit.SECONDS)
             .runnable(() -> server.optConnection().ifPresent(conn -> conn.sendRequest(clientListRequest)))
             .build();
 
@@ -505,5 +505,15 @@ public class DataCache implements IDataCache {
     public void onDisconnected(IBotStateEvent.IConnectStateEvent.IDisconnect event) {
         taskService.removeTask(clientListTask);
         taskService.removeTask(channelListTask);
+    }
+
+    @Override
+    public int getClientRefreshTime() {
+        return CLIENT_REFRESH_INTERVAL;
+    }
+
+    @Override
+    public int getChannelRefreshTime() {
+        return CHANNEL_REFRESH_INTERVAL;
     }
 }
