@@ -70,10 +70,10 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
     }
 
     @Override
-    public void loadDefaultsFromResource(String resourceURI) {
+    public void loadDefaultsFromResource(ClassLoader classLoader, String resourceURI) {
         Objects.requireNonNull(resourceURI, "Defaults definition resource must not be null!");
 
-        InputStream inputStream = LocalizationUnit.class.getClassLoader().getResourceAsStream(resourceURI);
+        InputStream inputStream = classLoader.getResourceAsStream(resourceURI);
         if (inputStream != null) {
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
                 logger.debug("[{}] Loading language definition defaults from: {}", unitId, resourceURI);
@@ -127,6 +127,8 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
                         });
                     }
                 });
+
+        save();
     }
 
     private void loadDefaultsFromStream(Reader reader) throws IOException, ParseException {

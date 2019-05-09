@@ -33,7 +33,7 @@ public class LocalizationProvider extends AbstractSpecialProvider<LocaleUnit> {
 
         if (!resourceURI.isEmpty()) {
             logger.debug("Eagerly loading defaults for injected localization unit: {}", unitId);
-            unit.loadDefaultsFromResource(resourceURI);
+            unit.loadDefaultsFromResource(ctx.getClassLoader(), resourceURI);
         }
 
         return Optional.of(unit);
