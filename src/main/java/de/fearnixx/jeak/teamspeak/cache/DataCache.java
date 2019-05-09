@@ -18,6 +18,7 @@ import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.data.*;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,11 +26,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Deployed work-arounds:
- * * enterview uses "ctid" instead of "cid"
- * * TS3 query sending invalid icon IDs. More info: https://twitter.com/MarkL4YG/status/965174407701385216
- */
 @FrameworkService(serviceInterface = IDataCache.class)
 public class DataCache implements IDataCache {
 
@@ -176,6 +172,8 @@ public class DataCache implements IDataCache {
         if (event instanceof QueryEvent.Notification.TargetClient.ClientEnter) {
             TS3Client client = new TS3Client();
             client.copyFrom(event);
+
+            // Client-Enter events use "ctid" and not "cid".
             client.setProperty("cid", client.getProperty("ctid").orElse(null));
             clientCache.put(client.getClientID(), client);
         }
@@ -368,6 +366,8 @@ public class DataCache implements IDataCache {
                             client.merge(message);
                         }
 
+                        // Fix client icon ID in case it got misread by TS3
+                        TS3DataFixes.ICONS_INVALID_CRC32(client, PropertyKeys.Client.ICON_ID);
                         mapping.put(cid, client);
                     } catch (Exception e) {
                         logger.warn("Failed to parse a client", e);
@@ -485,34 +485,14 @@ public class DataCache implements IDataCache {
                     }
                 }
 
-                fixChannelIconId(channel);
+                // Fix channel icon ID in case it got misread by TS3
+                TS3DataFixes.ICONS_INVALID_CRC32(channel, PropertyKeys.Channel.ICON_ID);
                 channelMap.put(cid, channel);
             } catch (Exception e) {
                 logger.warn("Failed to parse a channel", e);
             }
         });
         return channelMap;
-    }
-
-    /**
-     * Dirtiest work-around I've ever committed...
-     * TeamSpeak appears to read their integers wrongly and sends back an invalid ID.
-     *
-     * If the channel icon id is negative it has erroneously been read as signed integer.
-     */
-    private void fixChannelIconId(TS3Channel channel) {
-        Optional<String> optIconId = channel.getProperty("channel_icon_id");
-        if (optIconId.isPresent()) {
-            Integer idFromTS = Integer.valueOf(optIconId.get());
-
-            if (idFromTS < 0) {
-                long realID = Integer.toUnsignedLong(idFromTS);
-                channel.setProperty(
-                        PropertyKeys.Channel.ICON_ID,
-                        Long.toString(realID)
-                );
-            }
-        }
     }
 
     @Listener(order = Listener.Orders.SYSTEM)
