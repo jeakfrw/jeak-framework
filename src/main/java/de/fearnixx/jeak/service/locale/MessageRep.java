@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
 public class MessageRep {
 
     private static final Logger logger = LoggerFactory.getLogger(MessageRep.class);
-    private static final Pattern PARAM_PATTERN = Pattern.compile("%\\[([a-zA-Z.0-9\\-]+)]");
+    private static final Pattern PARAM_PATTERN = Pattern.compile("%\\[([a-zA-Z.0-9\\-_]+)]");
 
     private final String rawTemplate;
     private final List<String> splitMessageParts = new LinkedList<>();
