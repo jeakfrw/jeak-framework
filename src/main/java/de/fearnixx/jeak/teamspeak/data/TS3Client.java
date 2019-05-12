@@ -65,7 +65,7 @@ public class TS3Client extends TS3ClientHolder {
     public IQueryRequest addServerGroup(Integer... serverGroupIds) {
         QueryBuilder queryBuilder = IQueryRequest.builder()
                 .command(QueryCommands.SERVER_GROUP.SERVERGROUP_ADD_CLIENT)
-                .addKey(PropertyKeys.Client.ID, this.getClientID());
+                .addKey("cldbid", this.getClientDBID());
         Arrays.stream(serverGroupIds).forEach(id -> {
             queryBuilder.addKey("sgid", id).commitChainElement();
         });
@@ -76,7 +76,7 @@ public class TS3Client extends TS3ClientHolder {
     public IQueryRequest removeServerGroup(Integer... serverGroupIds) {
         QueryBuilder queryBuilder = IQueryRequest.builder()
                 .command(QueryCommands.SERVER_GROUP.SERVERGROUP_DEL_CLIENT)
-                .addKey(PropertyKeys.Client.ID, this.getClientID());
+                .addKey("cldbid", this.getClientDBID());
         Arrays.stream(serverGroupIds).forEach(id -> {
             queryBuilder.addKey("sgid", id).commitChainElement();
         });
@@ -87,7 +87,7 @@ public class TS3Client extends TS3ClientHolder {
     public IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId) {
         return IQueryRequest.builder()
                 .command(QueryCommands.CLIENT.CLIENT_SET_CHANNEL_GROUP)
-                .addKey(PropertyKeys.Client.ID, this.getClientID())
+                .addKey("cldbid", this.getClientDBID())
                 .addKey(PropertyKeys.Channel.ID, channelId)
                 .addKey("cgid", channelGroupId)
                 .build();
