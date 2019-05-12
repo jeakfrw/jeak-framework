@@ -104,9 +104,9 @@ public class JeakBot implements Runnable, IBot {
         // Bot Pre-Initialization
         initCalled = true;
         plugins = new HashMap<>();
+        discoverPlugins();
         doServiceStartup();
-
-        discoverAndLoadPlugins();
+        loadPlugins();
         eventService.fireEvent(new BotStateEvent.PreInitializeEvent().setBot(this));
 
         // Initialize Bot configuration and Plugins
@@ -126,6 +126,11 @@ public class JeakBot implements Runnable, IBot {
         }
 
         scheduleConnect();
+    }
+
+    protected void discoverPlugins() {
+        pMgr.setIncludeCP(true);
+        pMgr.load();
     }
 
     /**
@@ -174,9 +179,7 @@ public class JeakBot implements Runnable, IBot {
         eventService.registerListener(connectionTask);
     }
 
-    protected void discoverAndLoadPlugins() {
-        pMgr.setIncludeCP(true);
-        pMgr.load();
+    protected void loadPlugins() {
 
         // Load all plugins - This is where dependencies are being enforced
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
