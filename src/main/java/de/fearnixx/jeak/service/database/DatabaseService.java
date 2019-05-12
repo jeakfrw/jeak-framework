@@ -61,7 +61,7 @@ public class DatabaseService implements IDatabaseService {
         return list;
     }
 
-    @Listener(order = Listener.Orders.SYSTEM)
+    //@Listener(order = Listener.Orders.SYSTEM)
     public void onLoad(BotStateEvent.PreInitializeEvent event) {
         List<File> dataSourceFiles = getDatabaseConfigurations();
 
