@@ -31,7 +31,7 @@ public class MailService implements IMailService {
         this.confDir = confDir;
     }
 
-    @Listener(order = Listener.Orders.SYSTEM)
+    //@Listener(order = Listener.Orders.SYSTEM)
     public void onLoad(BotStateEvent.PreInitializeEvent event) {
         List<File> configCandidates = new LinkedList<>();
 

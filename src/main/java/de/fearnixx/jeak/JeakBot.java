@@ -160,9 +160,15 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new LocalizationService());
         initializeService(new CommandService());
         initializeService(new NotificationService());
-        initializeService(new DatabaseService(new File(confDir, "databases")));
-        initializeService(new MailService(new File(confDir, "mail")));
+        DatabaseService dbSvc = new DatabaseService(new File(confDir, "databases"));
+        initializeService(dbSvc);
+        MailService mailSvc = new MailService(new File(confDir, "mail"));
+        initializeService(mailSvc);
         initializeService(new ProfileService(new File(confDir, "profiles")));
+
+        // TODO: Remove eagerly loading by a better solution
+        dbSvc.onLoad(null);
+        mailSvc.onLoad(null);
 
         injectionService.injectInto(connectionTask);
         eventService.registerListener(connectionTask);
