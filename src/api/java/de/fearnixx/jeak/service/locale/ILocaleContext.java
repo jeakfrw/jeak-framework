@@ -24,6 +24,18 @@ public interface ILocaleContext {
 
     /**
      * Returns the registered message with its parameters replaced by the values stored in the given params.
+     * @throws IllegalStateException when the message is not present.
+     */
+    String getMessage(String messageId, Map<String, String> messageParams);
+
+    /**
+     * Returns the registered message with its parameters untouched.
+     * @throws IllegalStateException when the message is not present.
+     */
+    String getMessage(String messageId);
+
+    /**
+     * Returns the registered message with its parameters replaced by the values stored in the given params.
      * Returns {@link Optional#empty()} for unregistered messages.
      */
     Optional<String> optMessage(String messageId, Map<String, String> messageParams);
