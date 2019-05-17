@@ -92,6 +92,16 @@ public interface IQueryEvent extends IEvent {
          * The error response returned by TS3.
          */
         IRawQueryEvent.IMessage.IErrorMessage getError();
+
+        /**
+         * Shorthand to error code.
+         */
+        Integer getErrorCode();
+
+        /**
+         * Shorthand to error message.
+         */
+        String getErrorMessage();
     }
 
     /**
@@ -119,6 +129,8 @@ public interface IQueryEvent extends IEvent {
         }
 
         interface ITextMessage extends INotification {
+
+            String getMessage();
 
             Integer getInvokerId();
 

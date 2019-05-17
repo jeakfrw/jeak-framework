@@ -4,6 +4,7 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.ITargetChannel;
 import de.fearnixx.jeak.event.ITargetClient;
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
@@ -122,6 +123,16 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         public IRawQueryEvent.IMessage.IErrorMessage getError() {
             return error;
         }
+
+        @Override
+        public Integer getErrorCode() {
+            return getError().getCode();
+        }
+
+        @Override
+        public String getErrorMessage() {
+            return getError().getMessage();
+        }
     }
 
     public abstract static class Notification extends QueryEvent implements IQueryEvent.INotification {
@@ -175,6 +186,12 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {
+
+        @Override
+        public String getMessage() {
+            return getProperty(PropertyKeys.TextMessage.MESSAGE)
+                    .orElseThrow(() -> new ConsistencyViolationException("Text message without message!"));
+        }
 
         @Override
         public Integer getInvokerId() {
@@ -237,6 +254,12 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     public static class ChannelTextMessage extends TargetChannel implements IQueryEvent.INotification.IChannelTextMessage {
 
         @Override
+        public String getMessage() {
+            return getProperty(PropertyKeys.TextMessage.MESSAGE)
+                    .orElseThrow(() -> new ConsistencyViolationException("Text message without message!"));
+        }
+
+        @Override
         public Integer getInvokerId() {
             return this.getProperty("invokerid")
                     .map(Integer::parseInt)
@@ -254,6 +277,12 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ServerTextMessage extends TargetServer implements IQueryEvent.INotification.IServerTextMessage {
+
+        @Override
+        public String getMessage() {
+            return getProperty(PropertyKeys.TextMessage.MESSAGE)
+                    .orElseThrow(() -> new ConsistencyViolationException("Text message without message!"));
+        }
 
         @Override
         public Integer getInvokerId() {
