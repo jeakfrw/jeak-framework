@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.event;
 
+import de.fearnixx.jeak.teamspeak.data.IChannel;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
@@ -27,6 +29,20 @@ public interface IQueryEvent extends IEvent {
          * By default this happens around once every 60 seconds.
          */
         interface IRefreshClients extends IDataEvent {
+
+            /**
+             * The current state of the cache as a flat list.
+             * @implNote collection is unmodifiable!
+             */
+            List<IClient> getClients();
+
+
+            /**
+             * The current state of the cache as a map.
+             * {@link IClient#getClientID()} -> {@link IClient}
+             * @implNote collection is unmodifiable!
+             */
+            Map<Integer, IClient> getClientMap();
         }
 
         /**
@@ -34,6 +50,19 @@ public interface IQueryEvent extends IEvent {
          * By default this happens around once every 3 Minutes.
          */
         interface IRefreshChannels extends IDataEvent {
+
+            /**
+             * The current state of the cache as a flat list.
+             * @implNote collection is unmodifiable!
+             */
+            List<IChannel> getChannels();
+
+            /**
+             * The current state of the cache as a map.
+             * {@link IChannel#getID()} -> {@link IChannel}
+             * @implNote collection is unmodifiable!
+             */
+            Map<Integer, IChannel> getChannelMap();
         }
     }
 
