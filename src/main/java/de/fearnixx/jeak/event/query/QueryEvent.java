@@ -8,6 +8,7 @@ import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
+import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
@@ -123,9 +124,36 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ClientMoved extends TargetClient implements IQueryEvent.INotification.IClientMoved {
+
+        @Override
+        public Integer getTargetChannelId() {
+            return this.getProperty("ctid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientMoved-Event has no ctid!"));
+        }
+
+        @Override
+        public Integer getReasonId() {
+            return this.getProperty("reasonid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientMoved-Event has no reasonid!"));
+        }
     }
 
     public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {
+
+        @Override
+        public Integer getInvokerId() {
+            return this.getProperty("invokerid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerid!"));
+        }
+
+        @Override
+        public String getInvokerUID() {
+            return this.getProperty("invokeruid")
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerUID!"));
+        }
     }
 
     public abstract static class TargetChannel extends Notification implements ITargetChannel {

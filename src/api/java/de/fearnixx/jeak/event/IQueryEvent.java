@@ -83,9 +83,17 @@ public interface IQueryEvent extends IEvent {
         }
 
         interface IClientMoved extends ITargetClient, IQueryEvent.INotification {
+
+            Integer getTargetChannelId();
+
+            Integer getReasonId();
         }
 
         interface ITextMessage extends INotification {
+
+            Integer getInvokerId();
+
+            String getInvokerUID();
         }
 
         interface IClientTextMessage extends ITextMessage,ITargetClient {
