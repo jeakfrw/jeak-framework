@@ -185,26 +185,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
     }
 
-    public static class ClientTextMessage extends TargetClient implements IQueryEvent.INotification.IClientTextMessage {
-
-        @Override
-        public String getMessage() {
-            return getProperty(PropertyKeys.TextMessage.MESSAGE)
-                    .orElseThrow(() -> new ConsistencyViolationException("Text message without message!"));
-        }
-
-        @Override
-        public Integer getInvokerId() {
-            return this.getProperty("invokerid")
-                    .map(Integer::parseInt)
-                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerid!"));
-        }
-
-        @Override
-        public String getInvokerUID() {
-            return this.getProperty("invokeruid")
-                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerUID!"));
-        }
+    public static class ClientTextMessage extends TargetClient implements TextMessageEvent {
     }
 
     public abstract static class TargetChannel extends Notification implements ITargetChannel {
@@ -251,51 +232,41 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     public static class ChannelCreate extends TargetChannel implements INotification.IChannelCreated {
     }
 
-    public static class ChannelTextMessage extends TargetChannel implements IQueryEvent.INotification.IChannelTextMessage {
+    public interface TextMessageEvent extends INotification.ITextMessage {
 
         @Override
-        public String getMessage() {
+        default String getMessage() {
             return getProperty(PropertyKeys.TextMessage.MESSAGE)
                     .orElseThrow(() -> new ConsistencyViolationException("Text message without message!"));
         }
 
         @Override
-        public Integer getInvokerId() {
+        default Integer getInvokerId() {
             return this.getProperty("invokerid")
                     .map(Integer::parseInt)
                     .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerid!"));
         }
 
         @Override
-        public String getInvokerUID() {
+        default String getInvokerUID() {
             return this.getProperty("invokeruid")
                     .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerUID!"));
         }
+
+        @Override
+        default String getInvokerName() {
+            return this.getProperty("invokername")
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokername!"));
+        }
+    }
+
+    public static class ChannelTextMessage extends TargetChannel implements TextMessageEvent {
     }
 
     public abstract static class TargetServer extends Notification {
     }
 
-    public static class ServerTextMessage extends TargetServer implements IQueryEvent.INotification.IServerTextMessage {
-
-        @Override
-        public String getMessage() {
-            return getProperty(PropertyKeys.TextMessage.MESSAGE)
-                    .orElseThrow(() -> new ConsistencyViolationException("Text message without message!"));
-        }
-
-        @Override
-        public Integer getInvokerId() {
-            return this.getProperty("invokerid")
-                    .map(Integer::parseInt)
-                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerid!"));
-        }
-
-        @Override
-        public String getInvokerUID() {
-            return this.getProperty("invokeruid")
-                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerUID!"));
-        }
+    public static class ServerTextMessage extends TargetServer implements TextMessageEvent {
     }
 
     public static class ChannelMoved extends ChannelEdit implements INotification.IChannelMoved {
