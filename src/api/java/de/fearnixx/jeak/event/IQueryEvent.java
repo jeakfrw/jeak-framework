@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.event;
 
+import de.fearnixx.jeak.teamspeak.NotificationReason;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
@@ -116,6 +117,28 @@ public interface IQueryEvent extends IEvent {
         String getCaption();
 
         interface IClientEnter extends ITargetClient, IQueryEvent.INotification {
+
+            /**
+             * ReasonId provided by TS3.
+             */
+            Integer getReasonId();
+
+            /**
+             * Reason as enum by {@link #getReasonId()}
+             */
+            NotificationReason getReason();
+
+            /**
+             * When a client comes back from being invisible to the query client,
+             * this will be set to the origin channel id.
+             * {@code 0} will be used if the client just connected to the server.
+             */
+            Integer getOriginChannelId();
+
+            /**
+             * The target channel the client moved/connected to.
+             */
+            Integer getTargetChannelId();
         }
 
         interface IClientLeave extends ITargetClient, IQueryEvent.INotification {

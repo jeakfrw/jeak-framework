@@ -4,6 +4,7 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.ITargetChannel;
 import de.fearnixx.jeak.event.ITargetClient;
+import de.fearnixx.jeak.teamspeak.NotificationReason;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
@@ -166,6 +167,32 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ClientEnter extends TargetClient implements IQueryEvent.INotification.IClientEnter {
+
+        @Override
+        public Integer getReasonId() {
+            return getProperty("reasonid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientEnter-Event without reasonid!"));
+        }
+
+        @Override
+        public NotificationReason getReason() {
+            return NotificationReason.forReasonId(getReasonId());
+        }
+
+        @Override
+        public Integer getOriginChannelId() {
+            return getProperty("cfid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientEnter-Event without original channel id!"));
+        }
+
+        @Override
+        public Integer getTargetChannelId() {
+            return getProperty("ctid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientEnter-Event without target channel id!"));
+        }
     }
 
     public static class ClientMoved extends TargetClient implements IQueryEvent.INotification.IClientMoved {
