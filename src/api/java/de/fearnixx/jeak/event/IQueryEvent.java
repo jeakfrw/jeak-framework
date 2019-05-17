@@ -135,6 +135,8 @@ public interface IQueryEvent extends IEvent {
             Integer getInvokerId();
 
             String getInvokerUID();
+
+            String getInvokerName();
         }
 
         interface IClientTextMessage extends ITextMessage,ITargetClient {
