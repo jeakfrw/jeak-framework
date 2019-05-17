@@ -45,9 +45,43 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     public abstract static class BasicDataEvent extends QueryEvent implements IDataEvent {
 
         public static class RefreshClients extends BasicDataEvent implements IRefreshClients {
+
+            private List<IClient> clients;
+            private Map<Integer, IClient> clientMap;
+
+            public RefreshClients(List<IClient> clients, Map<Integer, IClient> clientMap) {
+                this.clients = clients;
+                this.clientMap = clientMap;
+            }
+
+            public List<IClient> getClients() {
+                return clients;
+            }
+
+            public Map<Integer, IClient> getClientMap() {
+                return clientMap;
+            }
         }
 
         public static class RefreshChannels extends BasicDataEvent implements IRefreshChannels {
+
+            private List<IChannel> channels;
+            private Map<Integer, IChannel> channelMap;
+
+            public RefreshChannels(List<IChannel> channels, Map<Integer, IChannel> channelMap) {
+                this.channels = channels;
+                this.channelMap = channelMap;
+            }
+
+            @Override
+            public List<IChannel> getChannels() {
+                return channels;
+            }
+
+            @Override
+            public Map<Integer, IChannel> getChannelMap() {
+                return channelMap;
+            }
         }
     }
 

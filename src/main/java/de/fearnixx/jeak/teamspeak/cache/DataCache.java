@@ -324,7 +324,8 @@ public class DataCache implements IDataCache {
         }
 
         logger.debug("Clientlist updated");
-        QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshClients();
+        QueryEvent refresh = new QueryEvent.BasicDataEvent
+                .RefreshClients(getClients(), getClientMap());
         refresh.setConnection(event.getConnection());
         refresh.setRawReference(event);
         eventService.fireEvent(refresh);
@@ -333,7 +334,7 @@ public class DataCache implements IDataCache {
     /**
      * Creates a Map of all available clients from a `clientlist` answer event.
      * Helper method for {@link #refreshClients(IRawQueryEvent.IMessage.IAnswer)}.
-     *
+     * <p>
      * Handles update existing and creating clients
      */
     private Map<Integer, TS3Client> generateClientMapping(List<IRawQueryEvent.IMessage> messageObjects) {
@@ -431,7 +432,8 @@ public class DataCache implements IDataCache {
         }
 
         logger.debug("Channellist updated");
-        QueryEvent refresh = new QueryEvent.BasicDataEvent.RefreshChannels();
+        QueryEvent refresh = new QueryEvent.BasicDataEvent
+                .RefreshChannels(getChannels(), getChannelMap());
         refresh.setConnection(event.getConnection());
         refresh.setRawReference(event);
         eventService.fireEvent(refresh);
@@ -440,7 +442,7 @@ public class DataCache implements IDataCache {
     /**
      * Creates a Map of all available clients from a `channellist` answer event.
      * Helper method for {@link #refreshChannels(IRawQueryEvent.IMessage.IAnswer)}.
-     *
+     * <p>
      * Handles update existing and creating channels.
      */
     private Map<Integer, TS3Channel> generateChannelMapping(List<IRawQueryEvent.IMessage> messageObjects) {
@@ -449,49 +451,49 @@ public class DataCache implements IDataCache {
                 .stream()
                 .parallel()
                 .forEach(o -> {
-            try {
-                int cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
-                if (cid == -1) {
-                    logger.warn("Skipping a channel due to invalid channel ID");
-                    return;
-                }
+                    try {
+                        int cid = Integer.parseInt(o.getProperty(PropertyKeys.Channel.ID).orElse("-1"));
+                        if (cid == -1) {
+                            logger.warn("Skipping a channel due to invalid channel ID");
+                            return;
+                        }
 
-                TS3Channel channel = channelCache.getOrDefault(cid, null);
+                        TS3Channel channel = channelCache.getOrDefault(cid, null);
 
-                if (channel == null) {
-                    // Channel is new - New reference
-                    channel = new TS3Channel();
-                    channel.copyFrom(o);
+                        if (channel == null) {
+                            // Channel is new - New reference
+                            channel = new TS3Channel();
+                            channel.copyFrom(o);
 
-                } else {
-                    String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
+                        } else {
+                            String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
 
-                    if (nName == null) {
-                        logger.warn("Skipping a channel due to missing name");
-                        return;
+                            if (nName == null) {
+                                logger.warn("Skipping a channel due to missing name");
+                                return;
+                            }
+
+                            boolean wasSpacer = channel.isSpacer();
+                            boolean isSpacer = TS3Spacer.spacerPattern.matcher(nName).matches();
+
+                            if (isSpacer != wasSpacer) {
+                                // Spacer state changed - Update reference
+                                channel = isSpacer ? new TS3Spacer() : new TS3Channel();
+                                channel.copyFrom(o);
+
+                            } else {
+                                // Channel not new - Update values
+                                channel.copyFrom(o);
+                            }
+                        }
+
+                        // Fix channel icon ID in case it got misread by TS3
+                        TS3DataFixes.ICONS_INVALID_CRC32(channel, PropertyKeys.Channel.ICON_ID);
+                        channelMap.put(cid, channel);
+                    } catch (Exception e) {
+                        logger.warn("Failed to parse a channel", e);
                     }
-
-                    boolean wasSpacer = channel.isSpacer();
-                    boolean isSpacer = TS3Spacer.spacerPattern.matcher(nName).matches();
-
-                    if (isSpacer != wasSpacer) {
-                        // Spacer state changed - Update reference
-                        channel = isSpacer ? new TS3Spacer() : new TS3Channel();
-                        channel.copyFrom(o);
-
-                    } else {
-                        // Channel not new - Update values
-                        channel.copyFrom(o);
-                    }
-                }
-
-                // Fix channel icon ID in case it got misread by TS3
-                TS3DataFixes.ICONS_INVALID_CRC32(channel, PropertyKeys.Channel.ICON_ID);
-                channelMap.put(cid, channel);
-            } catch (Exception e) {
-                logger.warn("Failed to parse a channel", e);
-            }
-        });
+                });
         return channelMap;
     }
 
