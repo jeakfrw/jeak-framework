@@ -16,6 +16,7 @@ import java.util.Optional;
 public class LocaleContext implements ILocaleContext {
 
     private static final Logger logger = LoggerFactory.getLogger(LocaleContext.class);
+    private static final String MISSING_TPL_MESSAGE = "Missing message template %s in localization unit: %s/%s";
 
     private final String unitId;
     private final Locale locale;
@@ -53,6 +54,24 @@ public class LocaleContext implements ILocaleContext {
     @Override
     public Locale getLocale() {
         return locale;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getMessage(String messageId, Map<String, String> messageParams) {
+        return optMessage(messageId, messageParams)
+                .orElseThrow(() -> new IllegalStateException(String.format(MISSING_TPL_MESSAGE, messageId, getUnitId(), getLocale())));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getMessage(String messageId) {
+        return optMessage(messageId)
+                .orElseThrow(() -> new IllegalStateException(String.format(MISSING_TPL_MESSAGE, messageId, getUnitId(), getLocale())));
     }
 
     /**
