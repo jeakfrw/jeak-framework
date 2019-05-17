@@ -201,12 +201,38 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ChannelTextMessage extends TargetChannel implements IQueryEvent.INotification.IChannelTextMessage {
+
+        @Override
+        public Integer getInvokerId() {
+            return this.getProperty("invokerid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerid!"));
+        }
+
+        @Override
+        public String getInvokerUID() {
+            return this.getProperty("invokeruid")
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerUID!"));
+        }
     }
 
     public abstract static class TargetServer extends Notification {
     }
 
     public static class ServerTextMessage extends TargetServer implements IQueryEvent.INotification.IServerTextMessage {
+
+        @Override
+        public Integer getInvokerId() {
+            return this.getProperty("invokerid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerid!"));
+        }
+
+        @Override
+        public String getInvokerUID() {
+            return this.getProperty("invokeruid")
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokerUID!"));
+        }
     }
 
     public static class ChannelMoved extends ChannelEdit implements INotification.IChannelMoved {
