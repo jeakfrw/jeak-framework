@@ -120,12 +120,13 @@ public interface IQueryEvent extends IEvent {
         interface IClientEnter extends ITargetClient, IQueryEvent.INotification {
 
             /**
-             * ReasonId provided by TS3.
+             * Numerical reason id provided by TS3.
+             * It is recommended
              */
             Integer getReasonId();
 
             /**
-             * Reason as enum by {@link #getReasonId()}
+             * Typed representation of {@link #getReasonId()}.
              */
             NotificationReason getReason();
 
@@ -143,6 +144,21 @@ public interface IQueryEvent extends IEvent {
         }
 
         interface IClientLeave extends ITargetClient, IQueryEvent.INotification {
+
+            /**
+             * Numerical reason id provided by TS3.
+             * It is recommended to use {@link #getReason()} instead.
+             */
+            Integer getReasonId();
+
+            /**
+             * Typed representation of {@link #getReasonId()}.
+             */
+            NotificationReason getReason();
+
+            Integer getOriginChannelId();
+
+            Integer getTargetChannelId();
         }
 
         interface IClientMoved extends ITargetClient, IQueryEvent.INotification {

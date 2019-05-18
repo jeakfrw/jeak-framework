@@ -165,6 +165,32 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ClientLeave extends TargetClient implements IQueryEvent.INotification.IClientLeave {
+
+        @Override
+        public Integer getReasonId() {
+            return getProperty("reasonid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientLeave-Event without reasonid!"));
+        }
+
+        @Override
+        public NotificationReason getReason() {
+            return NotificationReason.forReasonId(getReasonId());
+        }
+
+        @Override
+        public Integer getOriginChannelId() {
+            return getProperty("cfid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientLeave-Event without original channel id!"));
+        }
+
+        @Override
+        public Integer getTargetChannelId() {
+            return getProperty("ctid")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("ClientLeave-Event without target channel id!"));
+        }
     }
 
     public static class ClientEnter extends TargetClient implements IQueryEvent.INotification.IClientEnter {
