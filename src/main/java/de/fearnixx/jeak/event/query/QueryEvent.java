@@ -6,6 +6,7 @@ import de.fearnixx.jeak.event.ITargetChannel;
 import de.fearnixx.jeak.event.ITargetClient;
 import de.fearnixx.jeak.teamspeak.NotificationReason;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
@@ -284,6 +285,18 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         default String getInvokerName() {
             return this.getProperty("invokername")
                     .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no invokername!"));
+        }
+
+        @Override
+        default Integer getTargetModeId() {
+            return this.getProperty("targetmode")
+                    .map(Integer::parseInt)
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event has no targetmode!"));
+        }
+
+        @Override
+        default TargetType getTargetMode() {
+            return TargetType.fromQueryNum(getTargetModeId());
         }
     }
 

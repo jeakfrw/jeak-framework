@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.event;
 
 import de.fearnixx.jeak.teamspeak.NotificationReason;
+import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
@@ -153,13 +154,37 @@ public interface IQueryEvent extends IEvent {
 
         interface ITextMessage extends INotification {
 
+            /**
+             * The message that has been sent.
+             */
             String getMessage();
 
+            /**
+             * The {@link IClient#getClientID()} of the sender.
+             */
             Integer getInvokerId();
 
+            /**
+             * The {@link IClient#getClientUniqueID()} of the sender.
+             */
             String getInvokerUID();
 
+            /**
+             * The {@link IClient#getNickName()} of the sender.
+             */
             String getInvokerName();
+
+            /**
+             * Numerical representation of the target mode (client, channel, server)
+             * It is recommended to use {@link #getTargetMode()} instead.
+             */
+            Integer getTargetModeId();
+
+            /**
+             * The typed representation of {@link #getTargetModeId()}.
+             * Whether or not the text message was private (client), channel or server scoped.
+             */
+            TargetType getTargetMode();
         }
 
         interface IClientTextMessage extends ITextMessage,ITargetClient {
