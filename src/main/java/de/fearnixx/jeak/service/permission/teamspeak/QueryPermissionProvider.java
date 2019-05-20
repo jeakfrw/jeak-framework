@@ -35,7 +35,6 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
 
     private static final Logger logger = LoggerFactory.getLogger(QueryPermissionProvider.class);
 
-    private Map<String, Integer> permIDCache = new HashMap<>();
     private Map<Integer, TS3PermCache> clientPerms = new HashMap<>();
     private Map<Integer, TS3PermCache> channelPerms = new HashMap<>();
     private Map<Integer, TS3PermCache> channelGroupPerms = new HashMap<>();
@@ -273,25 +272,5 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
         }
         logger.debug("Permission {} not found in list", permSID);
         return Optional.empty();
-    }
-
-    protected Optional<Integer> retrievePermIntID(String permSID) {
-        Integer intID = permIDCache.getOrDefault(permSID, -1);
-        if (intID == -1) {
-            IQueryRequest request = IQueryRequest.builder()
-                                                 .command(QueryCommands.PERMISSION.PERMISSION_GET_ID_BYNAME)
-                                                 .addKey("permsid", permSID)
-                                                 .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(request);
-            try {
-                IRawQueryEvent.IMessage.IAnswer answer = promise.get(3, TimeUnit.SECONDS);
-                intID = Integer.parseInt(answer.getProperty("permid").get());
-                if (intID >= 0)
-                    permIDCache.put(permSID, intID);
-            } catch (Exception e) {
-                return Optional.empty();
-            }
-        }
-        return Optional.of(intID);
     }
 }
