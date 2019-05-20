@@ -36,12 +36,12 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
 
     @Override
     public Optional<ITS3Permission> getChannelGroupPermission(Integer channelGroupID, String permSID) {
-        return selectFromTable(channelGroupID, permSID, "perm_channel_group", null);
+        return selectFromTable(channelGroupID, permSID, "perm_channel_groups", null);
     }
 
     @Override
     public Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
-        return selectFromTable(channelID, permSID, "perm_channel_client", clientDBID);
+        return selectFromTable(channelID, permSID, "perm_channel_clients", clientDBID);
     }
 
     @Override
