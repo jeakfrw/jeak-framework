@@ -239,7 +239,7 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
     }
 
-    public static class ClientTextMessage extends TargetClient implements TextMessageEvent {
+    public static class ClientTextMessage extends TargetClient implements TextMessageEvent, INotification.IClientTextMessage {
     }
 
     public abstract static class TargetChannel extends Notification implements ITargetChannel {
@@ -326,13 +326,13 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
     }
 
-    public static class ChannelTextMessage extends TargetChannel implements TextMessageEvent {
+    public static class ChannelTextMessage extends TargetChannel implements TextMessageEvent, INotification.IChannelTextMessage {
     }
 
     public abstract static class TargetServer extends Notification {
     }
 
-    public static class ServerTextMessage extends TargetServer implements TextMessageEvent {
+    public static class ServerTextMessage extends TargetServer implements TextMessageEvent, INotification.IServerTextMessage {
     }
 
     public static class ChannelMoved extends ChannelEdit implements INotification.IChannelMoved {

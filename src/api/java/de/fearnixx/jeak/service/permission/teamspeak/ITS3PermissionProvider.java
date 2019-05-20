@@ -22,4 +22,6 @@ public interface ITS3PermissionProvider extends IPermissionProvider {
     Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID);
 
     Optional<ITS3Permission> getChannelPermission(Integer channelID, String permSID);
+
+    Integer translateSID(String permSID);
 }

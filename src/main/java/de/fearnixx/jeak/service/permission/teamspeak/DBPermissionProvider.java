@@ -5,6 +5,7 @@ import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.PersistenceUnit;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,6 +16,7 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
     private static final Logger logger = LoggerFactory.getLogger(DBPermissionProvider.class);
 
     @Inject
+    @PersistenceUnit(name = "ts3perms")
     private IPersistenceUnit persistenceUnit;
 
     @Override

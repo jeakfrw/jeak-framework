@@ -1,16 +1,26 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
+import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.query.IQueryPromise;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractTS3PermissionProvider implements ITS3PermissionProvider {
+
+    private static final Logger logger = LoggerFactory.getLogger(AbstractTS3PermissionProvider.class);
+
+    private final Map<String, Integer> permIDCache = new ConcurrentHashMap<>();
 
     @Inject
     private IDataCache dataCache;
@@ -97,5 +107,32 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
         final IPermission[] perm = new IPermission[]{null};
         optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
         return Optional.ofNullable(perm[0]);
+    }
+
+    protected Optional<Integer> retrievePermIntID(String permSID) {
+        Integer intID = permIDCache.getOrDefault(permSID, -1);
+        if (intID == -1) {
+            IQueryRequest request = IQueryRequest.builder()
+                    .command(QueryCommands.PERMISSION.PERMISSION_GET_ID_BYNAME)
+                    .addKey("permsid", permSID)
+                    .build();
+            IQueryPromise promise = getServer().getConnection().promiseRequest(request);
+            try {
+                IRawQueryEvent.IMessage.IAnswer answer = promise.get(3, TimeUnit.SECONDS);
+                intID = Integer.parseInt(answer.getProperty("permid").get());
+                if (intID >= 0)
+                    permIDCache.put(permSID, intID);
+            } catch (Exception e) {
+                logger.error("Failed to translate permSID!", e);
+                return Optional.empty();
+            }
+        }
+        return Optional.of(intID);
+    }
+
+    @Override
+    public Integer translateSID(String permSID) {
+        return retrievePermIntID(permSID)
+                .orElseThrow(() -> new IllegalArgumentException("Untranslatable permSID: " + permSID));
     }
 }
