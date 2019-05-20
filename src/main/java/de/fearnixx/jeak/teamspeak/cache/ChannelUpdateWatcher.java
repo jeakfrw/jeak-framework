@@ -10,26 +10,31 @@ public class ChannelUpdateWatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(ChannelUpdateWatcher.class);
 
+    private final Object LOCK;
     private DataCache cache;
 
-    public ChannelUpdateWatcher(DataCache cache) {
+    public ChannelUpdateWatcher(Object lock, DataCache cache) {
+        this.LOCK = lock;
         this.cache = cache;
     }
 
     @Listener(order = Listener.Orders.LATEST)
     public void afterChannelEdited(IQueryEvent.INotification.IChannelEdited event) {
         Integer channelId = event.getTarget().getID();
-        TS3Channel target = cache.getUnsafeChannelMap().getOrDefault(channelId, null);
 
-        if (target == null) {
-            logger.info("Cannot update channel after edit: Not yet cached.");
-            return;
+        synchronized (LOCK) {
+            TS3Channel target = cache.unsafeGetChannels().getOrDefault(channelId, null);
+
+            if (target == null) {
+                logger.info("Cannot update channel after edit: Not yet cached.");
+                return;
+            }
+
+            event.getChanges().forEach((key, value) -> {
+                String oldValue = target.getProperty(key).orElse(null);
+                logger.debug("Updating property \"{}\": \"{}\" -> \"{}\"", key, oldValue, value);
+                target.setProperty(key, value);
+            });
         }
-
-        event.getChanges().forEach((key, value) -> {
-            String oldValue = target.getProperty(key).orElse(null);
-            logger.debug("Updating property \"{}\": \"{}\" -> \"{}\"", key, oldValue, value);
-            target.setProperty(key, value);
-        });
     }
 }
