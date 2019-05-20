@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
+import de.fearnixx.jeak.profile.IUserIdentity;
 import de.fearnixx.jeak.service.permission.base.Permission;
 
 /**
@@ -11,7 +12,7 @@ public class TS3Permission extends Permission implements ITS3Permission {
     private String sid;
 
     public TS3Permission(PriorityType type, String sid) {
-        super("teamspeak", sid);
+        super(IUserIdentity.SERVICE_TEAMSPEAK, sid);
         this.type = type;
         this.sid = sid;
     }
