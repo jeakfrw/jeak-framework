@@ -1,7 +1,11 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -20,13 +24,19 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractTS3PermissionProvider.class);
 
-    private final Map<String, Integer> permIDCache = new ConcurrentHashMap<>();
+    private final PermIdCache permIdCache = new PermIdCache();
 
     @Inject
     private IDataCache dataCache;
 
     @Inject
     private IServer server;
+
+    @Inject
+    private IInjectionService injectionService;
+
+    @Inject
+    private IEventService eventService;
 
     protected int getServerId() {
         return server.getInstanceId();
@@ -109,30 +119,14 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
         return Optional.ofNullable(perm[0]);
     }
 
-    protected Optional<Integer> retrievePermIntID(String permSID) {
-        Integer intID = permIDCache.getOrDefault(permSID, -1);
-        if (intID == -1) {
-            IQueryRequest request = IQueryRequest.builder()
-                    .command(QueryCommands.PERMISSION.PERMISSION_GET_ID_BYNAME)
-                    .addKey("permsid", permSID)
-                    .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(request);
-            try {
-                IRawQueryEvent.IMessage.IAnswer answer = promise.get(3, TimeUnit.SECONDS);
-                intID = Integer.parseInt(answer.getProperty("permid").get());
-                if (intID >= 0)
-                    permIDCache.put(permSID, intID);
-            } catch (Exception e) {
-                logger.error("Failed to translate permSID!", e);
-                return Optional.empty();
-            }
-        }
-        return Optional.of(intID);
-    }
-
     @Override
     public Integer translateSID(String permSID) {
-        return retrievePermIntID(permSID)
-                .orElseThrow(() -> new IllegalArgumentException("Untranslatable permSID: " + permSID));
+        return permIdCache.getPermIdFor(permSID);
+    }
+
+    @Listener
+    public void onInitialize(IBotStateEvent.IInitializeEvent event) {
+        injectionService.injectInto(permIdCache);
+        eventService.registerListener(permIdCache);
     }
 }

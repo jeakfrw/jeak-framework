@@ -9,6 +9,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.database.IDatabaseService;
 import de.fearnixx.jeak.service.database.IPersistenceUnit;
+import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.teamspeak.AbstractTS3PermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.DBPermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
@@ -36,7 +37,10 @@ public class PermissionService implements IPermissionService {
     @Inject
     private IServiceManager serviceManager;
 
-    @Listener
+    @Inject
+    private IEventService eventService;
+
+    @Listener(order = Listener.Orders.SYSTEM)
     public void onPreInitialize(IBotStateEvent.IPreInitializeEvent event) {
         AbstractTS3PermissionProvider provider;
 
@@ -52,6 +56,7 @@ public class PermissionService implements IPermissionService {
         }
 
         injectionService.injectInto(provider);
+        eventService.registerListener(provider);
         serviceManager.registerService(ITS3PermissionProvider.class, provider);
         registerProvider(IUserIdentity.SERVICE_TEAMSPEAK, provider);
     }
