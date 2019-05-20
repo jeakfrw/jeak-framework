@@ -7,6 +7,7 @@ import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.scanners.TypeElementsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,9 +95,27 @@ public class PluginManager {
 
     public Reflections getPluginScanner(ClassLoader classLoader) {
         ConfigurationBuilder builder = new ConfigurationBuilder()
-                .addUrls(urlList)
-                .addClassLoader(classLoader)
-                .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner());
+                .setUrls(ClasspathHelper.forClassLoader(classLoader))
+                .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner())
+                .filterInputsBy(new FilterBuilder()
+                        .excludePackage("sun.")
+                        .excludePackage("java.")
+                        .excludePackage("com.google")
+                        .excludePackage("com.fasterxml")
+                        .excludePackage("com.oracle")
+                        .excludePackage("com.sun")
+                        .excludePackage("net.bytebuddy")
+                        .excludePackage("net.jcip")
+                        .excludePackage("org.jboss")
+                        .excludePackage("org.classpath")
+                        .excludePackage("org.dom4j")
+                        .excludePackage("org.ietf")
+                        .excludePackage("org.reflections")
+                        .excludePackage("org.slf4j")
+                        .excludePackage("org.w3c")
+                        .excludePackage("org.xml")
+                        .excludePackage("org.omg")
+                );
 
         if (includeCP) {
             logger.info("Including classpath");
