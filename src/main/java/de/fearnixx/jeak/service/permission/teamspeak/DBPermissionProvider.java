@@ -50,7 +50,7 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
     }
 
     private Optional<ITS3Permission> selectFromTable(Integer idOne, String permSID, String tableName, Integer idTwo) {
-        String sql = "SELECT perm_value, perm_negated, perm_skip FROM ? WHERE server_id = ? AND id1 = ?";
+        String sql = "SELECT perm_value, perm_negated, perm_skip FROM " + tableName + " WHERE server_id = ? AND id1 = ?";
 
         if (idTwo != null) {
             sql += " AND id2 = ?";
@@ -59,11 +59,10 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
         try (PreparedStatement statement = persistenceUnit.getDataSource()
                 .getConnection()
                 .prepareStatement(sql)) {
-            statement.setString(1, tableName);
-            statement.setInt(2, getServerId());
-            statement.setInt(3, idOne);
+            statement.setInt(1, getServerId());
+            statement.setInt(2, idOne);
             if (idTwo != null) {
-                statement.setInt(4, idTwo);
+                statement.setInt(3, idTwo);
             }
 
             ResultSet res = statement.executeQuery();
