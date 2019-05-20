@@ -260,6 +260,30 @@ public class Server implements IServer {
         return mainConnection != null && !mainConnection.isClosed();
     }
 
+    @Override
+    public String getHost() {
+        return host;
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public int getInstanceId() {
+        return instanceId;
+    }
+
+    public boolean isUseSSL() {
+        return useSSL;
+    }
+
+    @Override
+    public String getNickname() {
+        return nickname;
+    }
+
     @Listener
     public void onShutdown(IBotStateEvent.IPreShutdown event) {
         if (isConnected()) {

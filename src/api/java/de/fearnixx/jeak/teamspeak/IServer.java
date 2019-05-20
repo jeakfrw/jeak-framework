@@ -37,4 +37,25 @@ public interface IServer {
      * Returns a {@link IQueryRequest} that can be used to send a server-wide message
      */
     IQueryRequest sendMessage(String message);
+
+    /**
+     * The hostname used to connect to the server.
+     */
+    String getHost();
+
+    /**
+     * The query port of the server.
+     */
+    int getPort();
+
+    /**
+     * The server instance ID.
+     */
+    int getInstanceId();
+
+    /**
+     * The desired nickname for "clientupdate".
+     * @apiNote This may be different from {@link IQueryConnection#getWhoAmI()}s "client_nickname" which is the actual nickname.
+     */
+    String getNickname();
 }

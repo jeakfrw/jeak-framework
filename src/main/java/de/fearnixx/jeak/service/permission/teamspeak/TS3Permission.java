@@ -35,4 +35,16 @@ public class TS3Permission extends Permission implements ITS3Permission {
     public Boolean getSkip() {
         return "1".equals(getProperty("permskip").orElse(null));
     }
+
+    public void setValue(Integer value) {
+        setProperty("permvalue", value.toString());
+    }
+
+    public void setNegated(boolean negated) {
+        setProperty("permnegated", negated ? "1" : "0");
+    }
+
+    public void setSkipped(boolean skipped) {
+        setProperty("permskip", skipped ? "1" : "0");
+    }
 }
