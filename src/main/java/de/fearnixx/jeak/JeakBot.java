@@ -159,7 +159,7 @@ public class JeakBot implements Runnable, IBot {
         // Initialize utility & convenience services.
         server = initializeService(new Server());
         initializeService(new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10));
-        initializeService(new DataCache(eventService));
+        initializeService(new DataCache());
         initializeService(new PermissionService());
         initializeService(new TS3PermissionProvider());
         initializeService(new LocalizationService());
