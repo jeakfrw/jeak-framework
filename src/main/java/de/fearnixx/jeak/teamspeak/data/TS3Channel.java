@@ -37,9 +37,15 @@ public class TS3Channel extends TS3ChannelHolder {
 
     @Override
     public IQueryRequest delete() {
+        return delete(false);
+    }
+
+    @Override
+    public IQueryRequest delete(boolean forced) {
         return IQueryRequest.builder()
                 .command(QueryCommands.CHANNEL.CHANNEL_DELETE)
                 .addKey(Channel.ID, this.getID())
+                .addKey("force", forced ? "1" : "0")
                 .build();
     }
 

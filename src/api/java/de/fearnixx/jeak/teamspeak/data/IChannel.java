@@ -135,9 +135,15 @@ public interface IChannel extends IDataHolder {
     IQueryRequest sendMessage(String message);
 
     /**
-     * Returns a {@link IQueryRequest} that can be used to delete this channel.
+     * @see #delete(boolean) with forced = {@code false}
      */
     IQueryRequest delete();
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to delete this channel.
+     * The channel may not be deleted when forced is {@code false}.
+     */
+    IQueryRequest delete(boolean forced);
 
     /**
      * Returns a {@link IQueryRequest} that can be used to rename this channel.
