@@ -95,7 +95,8 @@ public class PluginManager {
 
     public Reflections getPluginScanner(ClassLoader classLoader) {
         ConfigurationBuilder builder = new ConfigurationBuilder()
-                .setUrls(ClasspathHelper.forClassLoader(classLoader))
+                .setUrls(urlList)
+                .addClassLoader(classLoader)
                 .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner())
                 .filterInputsBy(new FilterBuilder()
                         .excludePackage("sun.")
