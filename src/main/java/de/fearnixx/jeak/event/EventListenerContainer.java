@@ -1,41 +1,87 @@
 package de.fearnixx.jeak.event;
 
+import de.fearnixx.jeak.event.except.EventAbortException;
+import de.fearnixx.jeak.event.except.EventInvocationException;
+import de.fearnixx.jeak.event.except.ListenerConstructionException;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.invoke.*;
 import java.lang.reflect.Method;
+import java.text.MessageFormat;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 /**
+ *
  */
 public class EventListenerContainer {
 
     private static final Logger logger = LoggerFactory.getLogger(EventListenerContainer.class);
+    private static final MethodType LISTENER_LAMBDA_TYPE = MethodType.methodType(BiConsumer.class);
+    private static final MethodType LISTENER_METHOD_TYPE = MethodType.methodType(Void.class, IEvent.class);
 
+    private static final Map<String, BiConsumer<Object, IEvent>> lambdaCache = new ConcurrentHashMap<>();
+
+    private String listenerFQN;
     private Listener annotation;
     private Object victim;
-    private Method method;
+    private BiConsumer<Object, IEvent> eventConsumer;
     private Class<IEvent> listensTo;
 
     public EventListenerContainer(Object victim, Method method) {
-
         Class<?>[] paramTypes = method.getParameterTypes();
         if (paramTypes.length != 1) {
             throw new IllegalArgumentException("Cannot register listener " + victim.getClass() + '#'
-                                               + method.getName() + ": Wrong number of parameters");
+                    + method.getName() + ": Wrong number of parameters");
         }
 
         if (!IEvent.class.isAssignableFrom(paramTypes[0]))
             throw new IllegalArgumentException("Cannot register listener " + victim.getClass() + "#"
-                                                + method.getName() + ": Wrong parameter type!");
+                    + method.getName() + ": Wrong parameter type!");
 
         //noinspection unchecked - Assignable check is done above
         listensTo = (Class<IEvent>) paramTypes[0];
-        this.method = method;
         this.annotation = method.getAnnotation(Listener.class);
         this.victim = victim;
+        this.listenerFQN = method.getDeclaringClass().getName() + '#' + method.getName();
+
+        eventConsumer = constructIfNotCached(listenerFQN, () -> constructLambda(method));
+    }
+
+    private BiConsumer<Object, IEvent> constructLambda(Method method) {
+        try {
+            MethodHandles.Lookup lookupHandle = MethodHandles.lookup();
+            MethodHandle listenerHandle = lookupHandle.unreflect(method);
+            if (logger.isDebugEnabled()) {
+                logger.debug("Trying to construct listener-lambda with: ");
+            }
+            Object lambda = LambdaMetafactory.metafactory(lookupHandle,
+                    "accept",
+                    LISTENER_LAMBDA_TYPE,
+                    LISTENER_METHOD_TYPE,
+                    listenerHandle,
+                    listenerHandle.type())
+                    .getTarget()
+                    .invoke();
+
+            // Lambda will match the provided signature.
+            //noinspection unchecked
+            return (BiConsumer<Object, IEvent>) lambda;
+        } catch (IllegalAccessError e) {
+            String msg = MessageFormat.format("Failed to get method handle for listener: {0}", listenerFQN);
+            throw new ListenerConstructionException(msg, e);
+        } catch (LambdaConversionException e) {
+            String msg = MessageFormat.format("Failed to construct lambda for event listener: {0}", listenerFQN);
+            throw new ListenerConstructionException(msg, e);
+        } catch (Throwable e) {
+            String msg = MessageFormat.format("Failed to get lambda for event listener: {0}", listenerFQN);
+            throw new ListenerConstructionException(msg, e);
+        }
     }
 
     public Short getOrder() {
@@ -52,28 +98,24 @@ public class EventListenerContainer {
 
     public void accept(IEvent event) {
         if (logger.isDebugEnabled()) {
-            logger.debug("Sending event \"{}\" to listener of class \"{}\": {}", event.getClass(), victim.getClass(), method.getName());
+            logger.debug("Sending event \"{}\" to listener: {}", event.getClass().getName(), listenerFQN);
         }
         try {
-            try {
-                method.invoke(victim, event);
-            } catch (InvocationTargetException e) {
-                if (e.getCause() instanceof Exception) {
-                    throw ((Exception) e.getCause());
-                } else {
-                    throw new RuntimeException(e);
-                }
-            }
-
-        } catch (EventAbortException|ConsistencyViolationException e) {
+            eventConsumer.accept(victim, event);
+        } catch (EventAbortException | ConsistencyViolationException e) {
             throw e;
-
         } catch (Exception e) {
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + method.toGenericString(), e);
+            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e);
         }
     }
 
-    public String getName() {
-        return getVictim().getClass().getName() + '#' + method.getName();
+    public String getListenerFQN() {
+        return listenerFQN;
+    }
+
+    private static BiConsumer<Object, IEvent> constructIfNotCached(String methodFQN, Supplier<BiConsumer<Object, IEvent>> supplier) {
+        synchronized (lambdaCache) {
+            return lambdaCache.computeIfAbsent(methodFQN, fqn -> supplier.get());
+        }
     }
 }
