@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.controller.connection;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fearnixx.jeak.controller.controller.ControllerContainer;
@@ -27,14 +29,20 @@ public class HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
     private static final String API_ENDPOINT = "/api";
     private int port = 8723;
+    private ObjectMapper objectMapper;
 
     public HttpServer() {
-        init();
+        this(8723);
     }
 
     public HttpServer(int port) {
         this.port = port;
         init();
+        objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
+        objectMapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.NONE);
+
     }
 
     public void init() {
@@ -165,13 +173,10 @@ public class HttpServer {
         if (o == null) {
             return "";
         }
-        ObjectMapper objectMapper = new ObjectMapper();
-        String json = objectMapper.writeValueAsString(o);
-        return json;
+        return objectMapper.writeValueAsString(o);
     }
 
     private Object fromJson(String json, Class<?> clazz) {
-        ObjectMapper objectMapper = new ObjectMapper();
         Object deserializedObject = null;
         try {
             deserializedObject = objectMapper.readValue(json, clazz);
@@ -179,10 +184,6 @@ public class HttpServer {
             logger.error("There was an error while trying to deserialize json",e);
         }
         return deserializedObject;
-    }
-
-    interface requestTranslator {
-
     }
 
 }

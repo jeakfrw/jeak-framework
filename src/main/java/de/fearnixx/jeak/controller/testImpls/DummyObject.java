@@ -1,6 +1,9 @@
 package de.fearnixx.jeak.controller.testImpls;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class DummyObject {
+    @JsonProperty
     private String name;
     private int age;
 
