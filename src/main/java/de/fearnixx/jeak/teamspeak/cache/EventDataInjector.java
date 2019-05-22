@@ -1,6 +1,6 @@
 package de.fearnixx.jeak.teamspeak.cache;
 
-import de.fearnixx.jeak.event.EventAbortException;
+import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.reflect.Listener;

@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.event;
+package de.fearnixx.jeak.event.except;
 
 /**
  * Created by MarkL4YG on 01-Feb-18
