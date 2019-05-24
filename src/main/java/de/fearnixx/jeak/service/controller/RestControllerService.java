@@ -1,8 +1,8 @@
-package de.fearnixx.jeak.controller;
+package de.fearnixx.jeak.service.controller;
 
-import de.fearnixx.jeak.controller.connection.HttpServer;
-import de.fearnixx.jeak.controller.controller.ControllerContainer;
-import de.fearnixx.jeak.controller.interfaces.IRestControllerService;
+import de.fearnixx.jeak.service.controller.connection.HttpServer;
+import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
+import de.fearnixx.jeak.service.controller.interfaces.IRestControllerService;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import java.util.HashMap;
 import org.slf4j.Logger;

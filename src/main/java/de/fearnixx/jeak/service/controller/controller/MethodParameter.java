@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.controller.controller;
+package de.fearnixx.jeak.service.controller.controller;
 
 
 import java.lang.annotation.Annotation;

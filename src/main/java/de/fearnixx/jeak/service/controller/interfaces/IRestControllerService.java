@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.controller.interfaces;
+package de.fearnixx.jeak.service.controller.interfaces;
 
 import java.util.Map;
 import java.util.Optional;

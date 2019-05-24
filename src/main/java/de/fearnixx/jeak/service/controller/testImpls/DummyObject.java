@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.controller.testImpls;
+package de.fearnixx.jeak.service.controller.testImpls;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

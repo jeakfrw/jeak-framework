@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.controller.connection;
+package de.fearnixx.jeak.service.controller.connection;
 
 public class ControllerRequestVerifier implements IConnectionVerifier {
     @Override

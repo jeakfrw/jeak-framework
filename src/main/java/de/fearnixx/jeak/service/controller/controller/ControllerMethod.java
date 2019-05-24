@@ -1,6 +1,6 @@
-package de.fearnixx.jeak.controller.controller;
+package de.fearnixx.jeak.service.controller.controller;
 
-import de.fearnixx.jeak.controller.connection.RequestMethod;
+import de.fearnixx.jeak.service.controller.connection.RequestMethod;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

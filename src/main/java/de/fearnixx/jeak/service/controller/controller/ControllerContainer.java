@@ -1,7 +1,7 @@
-package de.fearnixx.jeak.controller.controller;
+package de.fearnixx.jeak.service.controller.controller;
 
-import de.fearnixx.jeak.controller.reflect.RequestMapping;
-import de.fearnixx.jeak.controller.reflect.RestController;
+import de.fearnixx.jeak.service.controller.reflect.RequestMapping;
+import de.fearnixx.jeak.service.controller.reflect.RestController;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;

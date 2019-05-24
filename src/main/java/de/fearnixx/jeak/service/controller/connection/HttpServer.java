@@ -1,15 +1,15 @@
-package de.fearnixx.jeak.controller.connection;
+package de.fearnixx.jeak.service.controller.connection;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fearnixx.jeak.controller.controller.ControllerContainer;
-import de.fearnixx.jeak.controller.controller.ControllerMethod;
-import de.fearnixx.jeak.controller.controller.MethodParameter;
-import de.fearnixx.jeak.controller.reflect.RequestBody;
-import de.fearnixx.jeak.controller.reflect.RequestMapping;
-import de.fearnixx.jeak.controller.reflect.RequestParam;
+import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
+import de.fearnixx.jeak.service.controller.controller.ControllerMethod;
+import de.fearnixx.jeak.service.controller.controller.MethodParameter;
+import de.fearnixx.jeak.service.controller.reflect.RequestBody;
+import de.fearnixx.jeak.service.controller.reflect.RequestMapping;
+import de.fearnixx.jeak.service.controller.reflect.RequestParam;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.List;
