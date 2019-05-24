@@ -4,6 +4,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.IInjectionService;
+import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.InjectionService;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.service.controller.controller.ControllerMethod;
 import de.fearnixx.jeak.service.controller.controller.MethodParameter;
@@ -32,21 +37,17 @@ public class HttpServer {
     private ObjectMapper objectMapper;
     private IConnectionVerifier connectionVerifier;
 
-    public HttpServer() {
-        this(8723);
+    public HttpServer(IConnectionVerifier connectionVerifier) {
+        this.connectionVerifier = connectionVerifier;
+        this.objectMapper = new ObjectMapper();
+        this.objectMapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
+        this.objectMapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
+        this.objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.NONE);
+        init(8723);
     }
 
-    public HttpServer(int port) {
+    public void init(int port) {
         this.port = port;
-        init();
-        objectMapper = new ObjectMapper();
-        objectMapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
-        objectMapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.NONE);
-        connectionVerifier = new ControllerRequestVerifier();
-    }
-
-    public void init() {
         port(port);
     }
 
