@@ -20,7 +20,7 @@ import spark.Request;
 import spark.Route;
 import spark.Spark;
 
-import static spark.Spark.port;
+import static spark.Spark.*;
 
 /**
  * A wrapper for the http server.
@@ -30,6 +30,7 @@ public class HttpServer {
     private static final String API_ENDPOINT = "/api";
     private int port = 8723;
     private ObjectMapper objectMapper;
+    private IConnectionVerifier connectionVerifier;
 
     public HttpServer() {
         this(8723);
@@ -42,7 +43,7 @@ public class HttpServer {
         objectMapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
         objectMapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.NONE);
-
+        connectionVerifier = new ControllerRequestVerifier();
     }
 
     public void init() {
@@ -119,6 +120,12 @@ public class HttpServer {
      */
     private Route generateRoute(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
+        before((request, response) -> {
+            boolean isAuthorized = connectionVerifier.verifyRequest(controllerContainer.getClass(), request.headers("Authorization"));
+            if (!isAuthorized) {
+                halt(401);
+            }
+        });
         return (request, response) -> {
             Object[] methodParameters = new Object[methodParameterList.size()];
             for (MethodParameter methodParameter : methodParameterList) {
