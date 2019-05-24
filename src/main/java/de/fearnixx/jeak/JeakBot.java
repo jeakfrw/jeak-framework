@@ -12,6 +12,7 @@ import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.controller.RestControllerService;
 import de.fearnixx.jeak.service.token.TokenService;
+import de.fearnixx.jeak.service.controller.connection.TokenService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
@@ -30,6 +31,9 @@ import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -172,6 +176,8 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new RestControllerService());
         initializeService(new UserService());
         initializeService(new QueryUserService());
+        initializeService(new TokenService());
+        initializeService(new RestControllerService());
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
