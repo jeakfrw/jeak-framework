@@ -10,13 +10,18 @@ import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
+import de.fearnixx.jeak.service.controller.RestControllerService;
+import de.fearnixx.jeak.service.controller.connection.ITokenService;
+import de.fearnixx.jeak.service.controller.connection.TokenService;
+import de.fearnixx.jeak.service.controller.interfaces.IRestControllerService;
+import de.fearnixx.jeak.service.controller.testImpls.TestController;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
 import de.fearnixx.jeak.service.mail.MailService;
 import de.fearnixx.jeak.service.notification.NotificationService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
-import de.fearnixx.jeak.service.permission.teamspeak.QueryPermissionProvider;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.task.TaskService;
@@ -28,9 +33,6 @@ import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,6 +41,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Life4YourGames on 22.05.17.
@@ -125,7 +129,6 @@ public class JeakBot implements Runnable, IBot {
             return;
         }
 
-        scheduleConnect();
     }
 
     protected void discoverPlugins() {
@@ -155,7 +158,6 @@ public class JeakBot implements Runnable, IBot {
         serviceManager.registerService(IServiceManager.class, serviceManager);
         serviceManager.registerService(IEventService.class, eventService);
         serviceManager.registerService(IInjectionService.class, injectionService);
-
         // Initialize utility & convenience services.
         server = initializeService(new Server());
         initializeService(new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10));
@@ -169,6 +171,8 @@ public class JeakBot implements Runnable, IBot {
         initializeService(mailSvc);
         initializeService(new ProfileService(new File(confDir, "profiles")));
         initializeService(new PermissionService());
+        initializeService(new TokenService());
+        initializeService(new RestControllerService());
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
