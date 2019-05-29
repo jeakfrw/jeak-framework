@@ -37,6 +37,15 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
         return optProperty.get();
     }
 
+    @Override
+    public String getDescription() {
+        Optional<String> optProperty = getProperty(PropertyKeys.Client.DESCRIPTION);
+        if (!optProperty.isPresent()) {
+            throw new ConsistencyViolationException("Client is missing description!"),
+        }
+        return optProperty.get();
+    }
+
     public String getIconID() {
         return getProperty(PropertyKeys.Client.ICON_ID).orElse("0");
     }
