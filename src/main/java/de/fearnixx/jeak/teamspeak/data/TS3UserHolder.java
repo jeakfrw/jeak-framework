@@ -41,7 +41,7 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
     public String getDescription() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.DESCRIPTION);
         if (!optProperty.isPresent()) {
-            throw new ConsistencyViolationException("Client is missing description!"),
+            throw new ConsistencyViolationException("Client is missing description!");
         }
         return optProperty.get();
     }
