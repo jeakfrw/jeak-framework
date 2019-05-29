@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.teamspeak;
 
 import de.fearnixx.jeak.event.IQueryEvent;
+import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@FrameworkService(serviceInterface = IUserService.class)
 public class UserService implements IUserService {
 
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);

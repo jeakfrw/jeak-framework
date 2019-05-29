@@ -19,6 +19,7 @@ import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.QueryPermissionProvider;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
+import de.fearnixx.jeak.service.teamspeak.UserService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
@@ -169,6 +170,7 @@ public class JeakBot implements Runnable, IBot {
         initializeService(mailSvc);
         initializeService(new ProfileService(new File(confDir, "profiles")));
         initializeService(new PermissionService());
+        initializeService(new UserService());
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
