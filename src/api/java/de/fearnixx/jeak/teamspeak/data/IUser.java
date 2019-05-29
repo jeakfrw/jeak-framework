@@ -29,6 +29,11 @@ public interface IUser {
     String getNickName();
 
     /**
+     * @return The clients custom description.
+     */
+    String getDescription();
+
+    /**
      * CRC32 checksum of the icon associated with the client.
      * Empty if none is set.
      *
