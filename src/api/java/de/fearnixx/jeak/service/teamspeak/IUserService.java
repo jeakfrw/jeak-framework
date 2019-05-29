@@ -29,11 +29,27 @@ public interface IUserService {
      */
     List<IUser> findUserByDBID(int ts3dbID);
 
+    /**
+     * Searches a user based on their nickname.
+     * @apiNote please note the class-level javadoc.
+     */
     List<IUser> findUserByNickname(String ts3nickname);
 
+    /**
+     * Searches a client based on their unique ID.
+     * @apiNote please note the class-level javadoc.
+     */
     List<IClient> findClientByUniqueID(String ts3uniqueID);
 
+    /**
+     * Searches a client based on their database ID.
+     * @apiNote please note the class-level javadoc.
+     */
     List<IClient> findClientByDBID(int ts3dbID);
 
+    /**
+     * Searches a client based on their nickname.
+     * @apiNote please note the class-level javadoc.
+     */
     List<IClient> findClientByNickname(String ts3nickname);
 }
