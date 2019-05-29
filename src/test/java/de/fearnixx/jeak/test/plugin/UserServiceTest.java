@@ -19,8 +19,8 @@ public class UserServiceTest extends AbstractTestPlugin {
 
     private static final String LOOKUP_NICKNAME = "MarkL4YG";
     private static final String LOOKUP_UNIQUE_ID = "NKLz7mUMAqrv07j1CZJ5OcDfj6I=";
-    private static final String LOOKUP_NICKNAME_OFF = "Pr0c3dur4l1mp4ct";
-    private static final String LOOKUP_UNIQUE_ID_OFF = "cZS9nRtgsAhaIVMbOwFxLmTeEvE=";
+    private static final String LOOKUP_NICKNAME_OFF = "[Testificate] Mark";
+    private static final String LOOKUP_UNIQUE_ID_OFF = "GANC6dTbew+a3A2h/8c5CGJXzsE=";
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceTest.class);
 

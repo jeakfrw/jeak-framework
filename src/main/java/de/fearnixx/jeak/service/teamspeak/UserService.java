@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.teamspeak;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
@@ -26,6 +27,9 @@ public class UserService implements IUserService {
     @Inject
     private IDataCache dataCache;
 
+    @Inject
+    private IServer server;
+
     @Override
     public List<IUser> findUserByUniqueID(String ts3uniqueID) {
         List<IClient> onlineClients = findClientByUniqueID(ts3uniqueID);
@@ -36,10 +40,11 @@ public class UserService implements IUserService {
         IQueryRequest request = IQueryRequest.builder()
                 .command("clientdbfind")
                 .addKey("pattern", ts3uniqueID)
-                .addOption("uid")
+                .addOption("-uid")
                 .build();
 
         BlockingRequest blockingRequest = new BlockingRequest(request);
+        server.getConnection().sendRequest(request);
         if (!blockingRequest.waitForCompletion()) {
             logger.warn("Failed to get client DB ID (by uid) from blocking request.");
             return Collections.emptyList();
@@ -67,6 +72,7 @@ public class UserService implements IUserService {
                 .build();
 
         BlockingRequest blockingRequest = new BlockingRequest(request);
+        server.getConnection().sendRequest(request);
         if (!blockingRequest.waitForCompletion()) {
             logger.warn("Failed to get user from blocking request.");
             return Collections.emptyList();
@@ -99,6 +105,7 @@ public class UserService implements IUserService {
                 .build();
 
         BlockingRequest blockingRequest = new BlockingRequest(request);
+        server.getConnection().sendRequest(request);
         if (!blockingRequest.waitForCompletion()) {
             logger.warn("Failed to get client DB ID (by nickname) from blocking request.");
             return Collections.emptyList();
