@@ -20,6 +20,7 @@ import de.fearnixx.jeak.service.notification.NotificationService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
+import de.fearnixx.jeak.service.teamspeak.UserService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
@@ -169,6 +170,9 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new PermissionService());
         initializeService(new TokenService());
         initializeService(new RestControllerService());
+=======
+        initializeService(new UserService());
+>>>>>>> Register userservice
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
