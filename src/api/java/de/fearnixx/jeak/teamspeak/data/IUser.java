@@ -77,14 +77,4 @@ public interface IUser {
      * @apiNote There is no method for "the current channel" as we want plugins to explicitly specify the channel.
      */
     IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId);
-
-    /**
-     * Convenience method for {@link IProfileService#getProfile(String)}.
-     */
-    Optional<IUserProfile> getProfile();
-
-    /**
-     * Convenience method for {@link IProfileService#getOrCreateProfile(String)}
-     */
-    IUserProfile getOrCreateProfile();
 }
