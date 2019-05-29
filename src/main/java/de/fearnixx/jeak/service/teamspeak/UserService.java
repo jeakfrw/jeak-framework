@@ -5,6 +5,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
+import de.fearnixx.jeak.teamspeak.data.TS3User;
 import de.fearnixx.jeak.teamspeak.query.BlockingRequest;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
@@ -25,6 +26,11 @@ public class UserService implements IUserService {
 
     @Override
     public List<IUser> findUserByUniqueID(String ts3uniqueID) {
+        List<IClient> onlineClients = findClientByUniqueID(ts3uniqueID);
+        if (!onlineClients.isEmpty()) {
+            return new LinkedList<>(onlineClients);
+        }
+
         IQueryRequest request = IQueryRequest.builder()
                 .command("clientdbfind")
                 .addKey("pattern", ts3uniqueID)
@@ -48,6 +54,11 @@ public class UserService implements IUserService {
 
     @Override
     public List<IUser> findUserByDBID(int ts3dbID) {
+        List<IClient> onlineClients = findClientByDBID(ts3dbID);
+        if (!onlineClients.isEmpty()) {
+            return new LinkedList<>(onlineClients);
+        }
+
         IQueryRequest request = IQueryRequest.builder()
                 .command("clientdbinfo")
                 .addKey("cldbid", ts3dbID)
@@ -65,11 +76,21 @@ public class UserService implements IUserService {
             return Collections.emptyList();
         }
 
-        
+        List<IUser> result = new LinkedList<>();
+        answer.getDataChain()
+                .stream()
+                .map(data -> (TS3User) new TS3User().copyFrom(data))
+                .forEach(result::add);
+        return result;
     }
 
     @Override
     public List<IUser> findUserByNickname(String ts3nickname) {
+        List<IClient> onlineClients = findClientByNickname(ts3nickname);
+        if (!onlineClients.isEmpty()) {
+            return new LinkedList<>(onlineClients);
+        }
+
         IQueryRequest request = IQueryRequest.builder()
                 .command("clientdbfind")
                 .addKey("pattern", ts3nickname)

@@ -14,6 +14,10 @@ import java.util.List;
  * In addition, as {@link IClient} extends {@link IUser} the DBID-searching methods can also return multiple instances for each connection a client has.
  * This is why all search methods return lists.
  * </p>
+ * <p>
+ * For any operations returning offline representations, online representations {@link IClient} may be returned.
+ * This is due to {@link IUser} being a super interface of {@link IClient}.
+ * </p>
  */
 public interface IUserService {
 
