@@ -1,0 +1,7 @@
+{
+  "default": {
+    "TestController": {
+      "token": "Hallo"
+    }
+  }
+}

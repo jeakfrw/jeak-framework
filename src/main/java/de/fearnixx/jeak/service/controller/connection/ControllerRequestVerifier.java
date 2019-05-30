@@ -12,7 +12,7 @@ public class ControllerRequestVerifier implements IConnectionVerifier {
     public boolean verifyRequest(Class<?> controllerClass, String authorizationText) {
         boolean isAuthorized = false;
         if (isToken(authorizationText)) {
-            isAuthorized = tokenService.verifyToken(extractToken(authorizationText));
+            isAuthorized = tokenService.verifyToken(controllerClass, extractToken(authorizationText));
         }
         return isAuthorized;
     }

@@ -12,4 +12,5 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface RestController {
     String endpoint() default "";
+    String pluginId() default "default";
 }
