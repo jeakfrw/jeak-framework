@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.controller.connection;
 
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.service.controller.token.ITokenService;
 
 public class ControllerRequestVerifier implements IConnectionVerifier {
     private static final String TOKEN_TEXT = "Token ";

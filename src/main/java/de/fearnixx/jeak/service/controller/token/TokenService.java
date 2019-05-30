@@ -1,11 +1,10 @@
-package de.fearnixx.jeak.service.controller.connection;
+package de.fearnixx.jeak.service.controller.token;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.controller.TokenConfiguration;
 
 import java.util.Optional;
 

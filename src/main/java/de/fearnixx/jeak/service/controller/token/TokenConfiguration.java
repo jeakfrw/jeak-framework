@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller;
+package de.fearnixx.jeak.service.controller.token;
 
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
