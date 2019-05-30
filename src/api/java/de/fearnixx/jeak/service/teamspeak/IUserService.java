@@ -4,6 +4,7 @@ import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service to provide access to online (client) and offline (user) instances for plugins to work with.
@@ -36,6 +37,7 @@ public interface IUserService {
     /**
      * Searches a user based on their nickname.
      * @apiNote please note the class-level javadoc.
+     * @implNote the nickname is searched using case-insensitive "contains".
      */
     List<IUser> findUserByNickname(String ts3nickname);
 
@@ -56,4 +58,10 @@ public interface IUserService {
      * @apiNote please note the class-level javadoc.
      */
     List<IClient> findClientByNickname(String ts3nickname);
+
+    /**
+     * Returns a client by their client ID.
+     * As the client ID is unique for each connection to the TS3 server, this can only be one client, if any.
+     */
+    Optional<IClient> getClientByID(int clientId);
 }
