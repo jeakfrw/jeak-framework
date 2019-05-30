@@ -11,6 +11,8 @@ import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +24,7 @@ import java.util.Optional;
 public class UserService implements IUserService {
 
     public static final String PERSISTENCE_UNIT_NAME = "teamspeak";
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Inject
     private IDatabaseService databaseService;
@@ -38,8 +41,11 @@ public class UserService implements IUserService {
     public void onPreInitialize(IBotStateEvent.IPreInitializeEvent event) {
         Optional<IPersistenceUnit> optUnit = databaseService.getPersistenceUnit(PERSISTENCE_UNIT_NAME);
         if (optUnit.isPresent()) {
+            logger.info("Persistence unit available! Using faster db-supported algorithm.");
             serviceImplementation = new DBUserService(optUnit.get());
         } else {
+            logger.warn("Persistence unit not available. Expect degraded performance in offline user retrieval.");
+            logger.info("Please consider registering persistence unit \"{}\" to enable direct database access.", PERSISTENCE_UNIT_NAME);
             serviceImplementation = new QueryUserService();
         }
 
