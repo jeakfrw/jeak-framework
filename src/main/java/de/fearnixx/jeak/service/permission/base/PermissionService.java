@@ -27,6 +27,7 @@ public class PermissionService implements IPermissionService {
     private static final Logger logger = LoggerFactory.getLogger(PermissionService.class);
 
     private final Map<String, IPermissionProvider> providers = new ConcurrentHashMap<>();
+    public static final String PERSISTENCE_UNIT_NAME = "teamspeak";
 
     @Inject
     private IDatabaseService databaseService;
@@ -44,14 +45,14 @@ public class PermissionService implements IPermissionService {
     public void onPreInitialize(IBotStateEvent.IPreInitializeEvent event) {
         AbstractTS3PermissionProvider provider;
 
-        Optional<IPersistenceUnit> optPersistenceUnit = databaseService.getPersistenceUnit("ts3perms");
+        Optional<IPersistenceUnit> optPersistenceUnit = databaseService.getPersistenceUnit(PERSISTENCE_UNIT_NAME);
         if (optPersistenceUnit.isPresent()) {
             logger.info("Persistence unit available! Using faster db-supported algorithm.");
             provider = new DBPermissionProvider();
 
         } else  {
             logger.warn("Persistence unit not available. Expect degraded performance in permission-checks.");
-            logger.info("Please consider registering persistence unit \"ts3perms\" to enable direct database access.");
+            logger.info("Please consider registering persistence unit \"{}\" to enable direct database access.", PERSISTENCE_UNIT_NAME);
             provider = new QueryPermissionProvider();
         }
 
