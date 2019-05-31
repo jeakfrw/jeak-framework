@@ -118,7 +118,7 @@ public class HttpServer {
     private Route generateRoute(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
         before((request, response) -> {
-            boolean isAuthorized = connectionVerifier.verifyRequest(controllerContainer.getClass(), request.headers("Authorization"));
+            boolean isAuthorized = connectionVerifier.verifyRequest(controllerContainer.getControllerClass(), request.headers("Authorization"));
             if (!isAuthorized) {
                 halt(401);
             }

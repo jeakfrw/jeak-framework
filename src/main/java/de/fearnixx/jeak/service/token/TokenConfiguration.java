@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller.token;
+package de.fearnixx.jeak.service.token;
 
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
@@ -56,6 +56,6 @@ public class TokenConfiguration extends Configurable {
      */
     public Optional<String> readToken(Class<?> clazz) {
         logger.debug(MessageFormat.format("reading token for {0}", clazz.getName()));
-        return getConfig().getNode(clazz.getAnnotation(RestController.class).pluginId()).getNode(clazz.getName()).getNode("restService/token").optString();
+        return getConfig().getNode(clazz.getAnnotation(RestController.class).pluginId()).getNode(clazz.getName()).getNode("token").optString();
     }
 }

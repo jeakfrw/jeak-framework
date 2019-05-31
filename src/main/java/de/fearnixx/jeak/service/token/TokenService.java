@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller.token;
+package de.fearnixx.jeak.service.token;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
@@ -18,9 +18,13 @@ public class TokenService implements ITokenService {
 
     @Override
     public boolean verifyToken(Class<?> controllerClass, String token) {
+        boolean isVerified = false;
         tokenConfiguration.readToken(controllerClass);
         Optional<String> configToken = tokenConfiguration.readToken(controllerClass);
-        return configToken.get().equals(token);
+        if (configToken.isPresent() && configToken.get().equals(token)) {
+            isVerified = true;
+        }
+        return isVerified;
     }
 
     @Listener

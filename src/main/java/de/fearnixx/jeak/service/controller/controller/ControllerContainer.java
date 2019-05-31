@@ -64,4 +64,7 @@ public class ControllerContainer {
         return controllerMethodList;
     }
 
+    public Class<?> getControllerClass() {
+        return controllerObject.getClass();
+    }
 }
