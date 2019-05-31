@@ -1,10 +1,10 @@
 package de.fearnixx.jeak.event;
 
+import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
 import java.util.List;
 
 public class EventContainer implements Runnable {
@@ -58,7 +58,7 @@ public class EventContainer implements Runnable {
                         final long duration = getListenerRuntime() / 1000;
                         resetStartedOn();
                         receiverInterrupt = false;
-                        logger.warn("Receiver interrupted forcefully after {} seconds. Listener: {}", duration, currentReceiver.getName());
+                        logger.warn("Receiver interrupted forcefully after {} seconds. Listener: {}", duration, currentReceiver.getListenerFQN());
                     }
                 }
 
@@ -97,7 +97,7 @@ public class EventContainer implements Runnable {
 
     private void logExceptionCause(Exception e) {
         Throwable cause = e.getCause() != null ? e.getCause() : e;
-        logger.warn("Failed to pass event {} to {}", event.getClass().getSimpleName(), currentReceiver.getName(), cause);
+        logger.warn("Failed to pass event {} to {}", event.getClass().getSimpleName(), currentReceiver.getListenerFQN(), cause);
     }
 
     protected void resetStartedOn() {

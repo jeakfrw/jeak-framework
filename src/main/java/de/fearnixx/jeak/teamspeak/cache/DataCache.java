@@ -1,31 +1,17 @@
 package de.fearnixx.jeak.teamspeak.cache;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.event.EventAbortException;
-import de.fearnixx.jeak.event.IQueryEvent;
-import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
-import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.service.task.ITask;
-import de.fearnixx.jeak.service.task.ITaskService;
-import de.fearnixx.jeak.task.TaskService;
-import de.fearnixx.jeak.teamspeak.IServer;
-import de.fearnixx.jeak.teamspeak.PropertyKeys;
-import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.data.*;
-import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 @FrameworkService(serviceInterface = IDataCache.class)
 public class DataCache implements IDataCache {
