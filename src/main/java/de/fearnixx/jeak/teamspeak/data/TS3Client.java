@@ -62,38 +62,6 @@ public class TS3Client extends TS3ClientHolder {
     }
 
     @Override
-    public IQueryRequest addServerGroup(Integer... serverGroupIds) {
-        QueryBuilder queryBuilder = IQueryRequest.builder()
-                .command(QueryCommands.SERVER_GROUP.SERVERGROUP_ADD_CLIENT)
-                .addKey("cldbid", this.getClientDBID());
-        Arrays.stream(serverGroupIds).forEach(id -> {
-            queryBuilder.addKey("sgid", id).commitChainElement();
-        });
-        return queryBuilder.build();
-    }
-
-    @Override
-    public IQueryRequest removeServerGroup(Integer... serverGroupIds) {
-        QueryBuilder queryBuilder = IQueryRequest.builder()
-                .command(QueryCommands.SERVER_GROUP.SERVERGROUP_DEL_CLIENT)
-                .addKey("cldbid", this.getClientDBID());
-        Arrays.stream(serverGroupIds).forEach(id -> {
-            queryBuilder.addKey("sgid", id).commitChainElement();
-        });
-        return queryBuilder.build();
-    }
-
-    @Override
-    public IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId) {
-        return IQueryRequest.builder()
-                .command(QueryCommands.CLIENT.CLIENT_SET_CHANNEL_GROUP)
-                .addKey("cldbid", this.getClientDBID())
-                .addKey(PropertyKeys.Channel.ID, channelId)
-                .addKey("cgid", channelGroupId)
-                .build();
-    }
-
-    @Override
     public IQueryRequest kickFromServer(String reasonMessage) {
         return kick(KickType.FROM_SERVER, reasonMessage);
     }

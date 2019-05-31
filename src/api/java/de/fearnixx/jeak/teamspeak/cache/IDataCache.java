@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.cache;
 
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
@@ -8,7 +9,15 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Cache accessor.
+ * <p>
+ * Access provider to the internal cache for online clients and channels.
+ * Caches are refreshed using the {@code clientlist} and {@code channellist} commands regularly.
+ * See {@link #getChannelRefreshTime()} and ¬{@link #getClientRefreshTime()} for the refresh intervals.
+ * </p>
+ * <p>
+ * This interface and its methods should be used for working with channels and bulk-processing of clients who are currently online.
+ * For getting specific clients or offline representations {@link IUserService} should be used.
+ * </p>
  */
 public interface IDataCache {
 
