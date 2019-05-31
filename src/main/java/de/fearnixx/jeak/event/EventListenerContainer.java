@@ -22,8 +22,8 @@ import java.util.function.Supplier;
 public class EventListenerContainer {
 
     private static final Logger logger = LoggerFactory.getLogger(EventListenerContainer.class);
-    private static final MethodType LISTENER_LAMBDA_TYPE = MethodType.methodType(BiConsumer.class);
-    private static final MethodType LISTENER_METHOD_TYPE = MethodType.methodType(Void.class, IEvent.class);
+    private static final MethodType LISTENER_INTERFACE_TYPE = MethodType.methodType(BiConsumer.class);
+    private static final MethodType LISTENER_LAMBDA_METHOD_TYPE = MethodType.methodType(void.class, Object.class, Object.class);
 
     private static final Map<String, BiConsumer<Object, IEvent>> lambdaCache = new ConcurrentHashMap<>();
 
@@ -56,22 +56,24 @@ public class EventListenerContainer {
     private BiConsumer<Object, IEvent> constructLambda(Method method) {
         try {
             MethodHandles.Lookup lookupHandle = MethodHandles.lookup();
-            MethodHandle listenerHandle = lookupHandle.unreflect(method);
-            if (logger.isDebugEnabled()) {
-                logger.debug("Trying to construct listener-lambda with: ");
-            }
-            Object lambda = LambdaMetafactory.metafactory(lookupHandle,
-                    "accept",
-                    LISTENER_LAMBDA_TYPE,
-                    LISTENER_METHOD_TYPE,
-                    listenerHandle,
-                    listenerHandle.type())
-                    .getTarget()
-                    .invoke();
+            MethodHandle listenerMethod = lookupHandle.unreflect(method);
 
+            if (logger.isDebugEnabled()) {
+                logger.debug("Trying to construct listener-lambda for: {}", listenerMethod.type().toMethodDescriptorString());
+            }
+
+            CallSite callSite = LambdaMetafactory.metafactory(
+                    lookupHandle,
+                    "accept",
+                    LISTENER_INTERFACE_TYPE,
+                    LISTENER_LAMBDA_METHOD_TYPE,
+                    listenerMethod,
+                    listenerMethod.type());
+            MethodHandle factory = callSite.getTarget();
             // Lambda will match the provided signature.
             //noinspection unchecked
-            return (BiConsumer<Object, IEvent>) lambda;
+            return (BiConsumer<Object, IEvent>) factory.invoke();
+
         } catch (IllegalAccessError e) {
             String msg = MessageFormat.format("Failed to get method handle for listener: {0}", listenerFQN);
             throw new ListenerConstructionException(msg, e);
