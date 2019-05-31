@@ -1,21 +1,18 @@
 package de.fearnixx.jeak.teamspeak.data;
 
-import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class TS3ClientHolder extends RawQueryEvent.Message implements IClient {
+public abstract class TS3ClientHolder extends TS3User implements IClient {
 
     private boolean invalidated = false;
 
-    public TS3ClientHolder(){
+    public TS3ClientHolder() {
         super();
     }
 
@@ -29,15 +26,6 @@ public abstract class TS3ClientHolder extends RawQueryEvent.Message implements I
     }
 
     @Override
-    public String getClientUniqueID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.UID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing unique ID")
-                    .setSourceObject(this);
-        return optProperty.get();
-    }
-
-    @Override
     public Integer getClientID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.ID);
         if (!optProperty.isPresent())
@@ -47,37 +35,20 @@ public abstract class TS3ClientHolder extends RawQueryEvent.Message implements I
     }
 
     @Override
-    public Integer getClientDBID() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.DBID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing database ID")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
-    }
-
-    @Override
-    public String getNickName() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.NICKNAME);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing nickname")
-                    .setSourceObject(this);
-        return optProperty.get();
-    }
-
-    @Override
-    public String getIconID() {
-        return getProperty(PropertyKeys.Client.ICON_ID).orElse("0");
-    }
-
-    @Override
     public PlatformType getPlatform() {
         switch (getProperty(PropertyKeys.Client.PLATFORM).orElse("unknown").toLowerCase()) {
-            case "windows": return PlatformType.WINDOWS;
-            case "android": return PlatformType.ANDROID;
-            case "linux": return PlatformType.LINUX;
-            case "ios": return PlatformType.IOS;
-            case "os: x": return PlatformType.OSX;
-            default: return PlatformType.UNKNOWN;
+            case "windows":
+                return PlatformType.WINDOWS;
+            case "android":
+                return PlatformType.ANDROID;
+            case "linux":
+                return PlatformType.LINUX;
+            case "ios":
+                return PlatformType.IOS;
+            case "os: x":
+                return PlatformType.OSX;
+            default:
+                return PlatformType.UNKNOWN;
         }
     }
 
@@ -184,48 +155,8 @@ public abstract class TS3ClientHolder extends RawQueryEvent.Message implements I
     }
 
     @Override
-    public List<Integer> getGroupIDs() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.GROUPS);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client has no server groups")
-                    .setSourceObject(this);
-
-        String s = optProperty.get();
-        String[] sIDs = s.split(",");
-        Integer[] ids = new Integer[sIDs.length];
-        for (int i = 0; i < sIDs.length; i++) {
-            ids[i] = Integer.parseInt(sIDs[i]);
-        }
-        return Collections.unmodifiableList(Arrays.asList(ids));
-    }
-
-    @Override
     public Integer getIdleTime() {
         return Integer.parseInt(getProperty(PropertyKeys.Client.IDLE_TIME).orElse("0"));
-    }
-
-    @Override
-    public Long getCreated() {
-        Optional<String> optProperty = getProperty(PropertyKeys.Client.CREATED_TIME);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing creation timestamp")
-                    .setSourceObject(this);
-        return Long.parseLong(optProperty.get());
-    }
-
-    @Override
-    public LocalDateTime getCreatedTime() {
-        return LocalDateTime.ofEpochSecond(getCreated(), 0, ZoneOffset.UTC);
-    }
-
-    @Override
-    public Long getLastJoin() {
-        return Long.parseLong(getProperty(PropertyKeys.Client.LAST_JOIN_TIME).orElse("0"));
-    }
-
-    @Override
-    public LocalDateTime getLastJoinTime() {
-        return LocalDateTime.ofEpochSecond(getLastJoin(), 0, ZoneOffset.UTC);
     }
 
     @Override

@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Abstract representation of online clients
  */
-public interface IClient extends IDataHolder {
+public interface IClient extends IDataHolder, IUser {
 
     Boolean isValid();
 
@@ -22,29 +22,6 @@ public interface IClient extends IDataHolder {
      * @apiNote This is only valid while the client is online. Refer to {@link #getClientDBID()}
      */
     Integer getClientID();
-
-    /**
-     * @return The database ID of this client
-     */
-    Integer getClientDBID();
-
-    /**
-     * @return The unique client identifier
-     */
-    String getClientUniqueID();
-
-    /**
-     * @return The clients nick name
-     */
-    String getNickName();
-
-    /**
-     * CRC32 checksum of the icon associated with the client.
-     * Empty if none is set.
-     *
-     * @implNote The fix applied to {@link IChannel#}
-     */
-    String getIconID();
 
     enum PlatformType {
         UNKNOWN,
@@ -161,36 +138,11 @@ public interface IClient extends IDataHolder {
     Boolean hasOutputMuted();
 
     /**
-     * IDs for the clients server groups.
-     */
-    List<Integer> getGroupIDs();
-
-    /**
      * For how long the client has been idle.
      *
      * @implNote the value is provided by TeamSpeak.
      */
     Integer getIdleTime();
-
-    /**
-     * The time, the clients uuid has been registered the first time.
-     */
-    Long getCreated();
-
-    /**
-     * Translation of {@link #getCreated()}.
-     */
-    LocalDateTime getCreatedTime();
-
-    /**
-     * The time, the clients uuid has joined the last time.
-     */
-    Long getLastJoin();
-
-    /**
-     * Translation of {@link #getLastJoin()}.
-     */
-    LocalDateTime getLastJoinTime();
 
     /**
      * Returns a {@link IQueryRequest} that can be used to send a message to this client.
@@ -217,23 +169,6 @@ public interface IClient extends IDataHolder {
      * Returns a {@link IQueryRequest} that can be used to move the client to another channel.
      */
     IQueryRequest moveToChannel(Integer channelId);
-
-    /**
-     * Returns a {@link IQueryRequest} that can be used to add the client to server groups.
-     */
-    IQueryRequest addServerGroup(Integer... serverGroupIds);
-
-    /**
-     * Returns a {@link IQueryRequest} that can be used to remove the client from server groups.
-     */
-    IQueryRequest removeServerGroup(Integer... serverGroupIds);
-
-    /**
-     * Returns a {@link IQueryRequest} that can be used to set the clients channel group.
-     *
-     * @apiNote There is no method for "the current channel" as we want plugins to explicitly specify the channel.
-     */
-    IQueryRequest setChannelGroup(Integer channelId, Integer channelGroupId);
 
     /**
      * Returns a {@link IQueryRequest} that can be used to kick the client form the server.
