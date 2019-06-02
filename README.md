@@ -7,20 +7,20 @@ Java plugins can use the API to interact with the TeamSpeak server using the Jea
 Plugins can be programmed in a way that developers may be familiar from [the Sponge plugin API for Minecraft](https://spongepowered.org) as the projects idea is inspired by Sponge.  
 
 ## Badges
-|Type/Name|Badge|
-|---|---|
-|License            |![ShieldsIO](https://img.shields.io/github/license/jeakfrw/core-framework.svg?color=success&style=flat-square)|
+|Type/Name|Badge|URL|
+|---|---|---|
+|License            |![ShieldsIO](https://img.shields.io/github/license/jeakfrw/core-framework.svg?color=success&style=flat-square)|[bleeding-1.X.X/LICENSE](https://github.com/jeakfrw/core-framework/blob/bleeding-1.X.X/LICENSE)
 |Language           |![ShieldsIO](https://img.shields.io/github/languages/top/jeakfrw/core-framework.svg?style=flat-square)|
-|Latest (stable)    |\<tbd\> |
-|Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |
-|CI (1.X.X-stable)  |\<tbd\> |
-|CI (1.X.X-bleeding)|[![CircleCI](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X.svg?style=svg)](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X)   |
-|Automated Code Rev |[![CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework/badge)](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|
-|Security (Snyk)    |![ShieldsIO](https://img.shields.io/snyk/vulnerabilities/github/jeakfrw/core-framework.svg?style=flat-square)|
-|Security (WhiteSrc)|See "Security" tab
+|Latest (stable)    |\<tbd\> |[/releases](https://github.com/jeakfrw/core-framework/releases)
+|Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |[/releases](https://github.com/jeakfrw/core-framework/releases)
+|CI (1.X.X-stable)  |\<tbd\> |[View on CircleCI](https://circleci.com/gh/jeakfrw/core-framework)
+|CI (1.X.X-bleeding)|[![CircleCI](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X.svg?style=svg)](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X)   |[View on CircleCI](https://circleci.com/gh/jeakfrw/core-framework)
+|Automated Code Rev |[![CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework/badge)](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|[View on CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework)
+|Security (Snyk)    |![ShieldsIO](https://img.shields.io/snyk/vulnerabilities/github/jeakfrw/core-framework.svg?style=flat-square)|[View on Snyk](https://app.snyk.io/org/markl4yg/project/e353f8ff-d5b9-4599-bfb9-79701ee1c82a)
+|Security (WhiteSrc)|See "Security" tab|[/network/alerts](https://github.com/jeakfrw/core-framework/network/alerts)
 |OS-Support         |![ShieldsIO](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-informational.svg?style=flat-square)    |
 |Status             |![ShieldsIO](https://img.shields.io/maintenance/yes/2019.svg?style=flat-square)
-|Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|
+|Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|[Discord Invite](https://discord.gg/DPYR5aB)
 
   
 # Links
