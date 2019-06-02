@@ -8,6 +8,11 @@ workflows:
           reports_path: build/test-reports
           test_results_path: build/test-results
           context: fng-gradle-snapshot
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /.*/
       - gradle/run:
           command: publish
           filters:
