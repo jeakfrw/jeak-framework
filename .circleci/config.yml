@@ -17,7 +17,7 @@ workflows:
           command: publish
           filters:
             branches:
-              only: bleeding
+              only: /bleeding-\d+\.X\.X/
             tags:
               ignore: /.*/
           context: fng-gradle-snapshot
