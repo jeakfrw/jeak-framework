@@ -7,8 +7,9 @@ apply plugin: 'maven-publish'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-
-if (!project.hasProperty('release')) {
+if (project.hasProperty("preRelease")) {
+    projectVersion += "-rc" + project.property("preRelease")
+} else if (!project.hasProperty('release')) {
     projectVersion += '-SNAPSHOT'
 }
 version projectVersion
@@ -89,18 +90,18 @@ dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
-build {
-    dependsOn publishToMavenLocal
-    
-    if (!project.version.endsWith('SNAPSHOT')) {
-        dependsOn zipDistribution
-        dependsOn tarDistribution
-    }
-}
-
 apply from: './artifacts.gradle'
 apply from: './distribution.gradle'
 apply from: './publication.gradle'
+
+build {
+    dependsOn publishToMavenLocal
+
+    if (!project.version.endsWith('SNAPSHOT')) {
+        dependsOn tasks.zipDistribution
+        dependsOn tasks.tarDistribution
+    }
+}
 
 wrapper {
     gradleVersion '4.2.1'
