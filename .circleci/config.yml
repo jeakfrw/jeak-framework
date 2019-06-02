@@ -21,7 +21,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /^\d+\.\d+\.\d+-rc\.\d+$/
-            context: fng-gradle-preRelease
+          context: fng-gradle-preRelease
       - gradle/run:
           command: publish
           filters:
