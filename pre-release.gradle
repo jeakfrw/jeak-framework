@@ -10,8 +10,14 @@ project.ext.getPreReleaseTag = { ->
         throw new InvalidUserDataException("Failed to get git ref-log")
     }
 
-    def gitLog = logOut.toString().substring(1, logOut.length() - 2)
+    def gitLog = logOut.toString()
     println "Ref-log says: " + gitLog
+    def logPattern = ~/'([a-z0-9])+'/
+    def logMatcher = logPattern.matcher(gitLog)
+    if (!logMatcher.find()) {
+        throw new InvalidUserDataException("Failed to find commit-ref in log!")
+    }
+    gitLog = logMatcher.group(1)
 
     def describeOut = new StringBuilder(), describeErr = new StringBuilder()
     def describeProc = "git describe --exact-match --tags $gitLog".execute()
