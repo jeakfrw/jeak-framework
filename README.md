@@ -11,16 +11,13 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |---|---|
 |License            |![ShieldsIO](https://img.shields.io/github/license/jeakfrw/core-framework.svg?color=success&style=flat-square)|
 |Language           |![ShieldsIO](https://img.shields.io/github/languages/top/jeakfrw/core-framework.svg?style=flat-square)|
-|||
 |Latest (stable)    |\<tbd\> |
 |Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |
 |CI (1.X.X-stable)  |\<tbd\> |
 |CI (1.X.X-bleeding)|[![CircleCI](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X.svg?style=svg)](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X)   |
-|||
 |OS-Support         |![ShieldsIO](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-informational.svg?style=flat-square)    |
 |Security (Snyk)    |![ShieldsIO](https://img.shields.io/snyk/vulnerabilities/github/jeakfrw/core-framework.svg?style=flat-square)|
 |Security (WhiteSrc)|See "Security" tab
-|||
 |Status             |![ShieldsIO](https://img.shields.io/maintenance/yes/2019.svg?style=flat-square)
 |Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|
 
