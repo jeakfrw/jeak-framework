@@ -1,0 +1,35 @@
+project.ext.getPreReleaseTag = { ->
+    println "Getting git tag for pre-release version."
+
+    def logOut = new StringBuilder(), logErr = new StringBuilder()
+    def logProc = "git log -n1 --pretty='%h'".execute()
+    logProc.consumeProcessOutput(logOut, logErr);
+    logProc.waitForOrKill(1000)
+
+    if (logProc.exitValue() != 0 || logErr.length() > 0) {
+        throw new InvalidUserDataException("Failed to get git ref-log")
+    }
+
+    def gitLog = logOut.toString().substring(1, logOut.length() - 2)
+    println "Ref-log says: " + gitLog
+
+    def describeOut = new StringBuilder(), describeErr = new StringBuilder()
+    def describeProc = "git describe --exact-match --tags $gitLog".execute()
+    describeProc.consumeProcessOutput(describeOut, describeErr)
+    describeProc.waitForOrKill(1000)
+
+    if (describeProc.exitValue() != 0 || describeErr.length() > 0) {
+        println "Failed to get git tag: " + describeErr.toString()
+        throw new InvalidUserDataException("Current revision has no tag!")
+    }
+    def tagName = describeOut.toString()
+    def rcPattern = ~/(\d+\.\d+\.\d+-rc\.\d+)/
+    def matcher = rcPattern.matcher(tagName)
+    if (!matcher.find()) {
+        throw new InvalidUserDataException("Current revision is not a release candidate tag! Found: $tagName")
+    }
+
+    def tag = matcher.group(1)
+    println "Found tag: " + tag
+    return tag
+}

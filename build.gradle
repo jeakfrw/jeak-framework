@@ -8,10 +8,18 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 if (project.hasProperty("preRelease")) {
-    projectVersion += "-rc" + project.property("preRelease")
+    apply from: './pre-release.gradle'
+    def tag = project.ext.getPreReleaseTag()
+    def i = tag.substring(tag.lastIndexOf('.') + 1)
+
+    projectVersion += "-rc." + i
+
+
 } else if (!project.hasProperty('release')) {
     projectVersion += '-SNAPSHOT'
 }
+
+println "Using project version: $projectVersion"
 version projectVersion
 
 project.ext {
