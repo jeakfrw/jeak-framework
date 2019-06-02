@@ -26,9 +26,9 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 * [Project license](./LICENSE)
 * [Contribution guidelines](./CONTRIBUTING.md)
 * [Changelog](./CHANGELOG)
-* [Releases](https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/tags)
+* [Releases](https://github.com/jeakfrw/core-framework/releases)
 * [Documentation](https://jeakbot.readme.io/)
-* [Current logo](https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/blob/bleeding/assets/JeakBot-Beta.png)
+* [Current logo](https://github.com/jeakfrw/core-framework/blob/bleeding-1.X.X/assets/JeakBot-Beta.png)
 # Contact
 If you want to engage with the developers/community, feel free to join us:
 
@@ -38,7 +38,7 @@ If you want to engage with the developers/community, feel free to join us:
 For details about the issue section of the GitLab project. See [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 # Help the project
-If you want to help the project without directly contributing on GitLab, you can donate.  
+If you want to help the project without directly contributing on GitHub, you can donate.  
 Every donor who donated at least 5 € in the past 12 months will be granted the ``Donor`` role on our Discord.
 So make sure to include your Discord name in your donation message :).
 
