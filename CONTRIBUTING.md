@@ -35,4 +35,19 @@
 * Questions
   * For questions, please use the Discord server (issues will be closed)
 
-  
+# Release workflow
+
+## Steps for a new release
+ 1. Merge request from ``bleeding-<major>.X.X`` to ``release-<major>.X.X``
+ 2. CI checks __must__ be green (including tests)
+ 3. Plugin-tests __must__ be successful (manual running required - TS3 is not mocked!)
+ 4. (Pre-Releases can now be tagged onto the bleeding branch)
+ 5. Actual merge onto the release branch.
+
+## Notes
+* CI publishes artifacts to Nexus, manual publishing is not allowed.
+* Snapshot artifacts are published to ``jeakbot-snapshots``.
+* (Pre-)Release artifacts are published to ``jeakbot-releases``.
+* (Pre-)Releases may not be re-published! (Enforced by Nexus)
+* Snapshot artifacts are automatically deleted when unused for longer periods. (Auto-clean by Nexus)
+* (Pre-)Releases may only be deleted (de-published) for security concerns.
