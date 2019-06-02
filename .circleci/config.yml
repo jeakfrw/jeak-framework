@@ -2,7 +2,7 @@ version: 2.1
 orbs:
   gradle: circleci/gradle@1.0.11
 workflows:
-  build-and-publish-snapshot:
+  build-and-publish:
     jobs:
       - gradle/test:
           reports_path: build/test-reports
@@ -13,7 +13,11 @@ workflows:
           filters:
             branches:
               only: bleeding
+            tags:
+              ignore: /.*/
           context: fng-gradle-snapshot
+          requires:
+            - gradle/test
       - gradle/run:
           command: publish
           filters:
@@ -22,6 +26,8 @@ workflows:
             tags:
               only: /^\d+\.\d+\.\d+-rc\.\d+$/
           context: fng-gradle-preRelease
+          requires:
+            - gradle/test
       - gradle/run:
           command: publish
           filters:
@@ -30,3 +36,5 @@ workflows:
             tags:
               only: /^\d+\.\d+\.\d+$/
           context: fng-gradle-release
+          requires:
+            - gradle/test
