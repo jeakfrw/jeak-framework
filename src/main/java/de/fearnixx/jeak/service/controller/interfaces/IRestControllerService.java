@@ -18,7 +18,7 @@ public interface IRestControllerService {
     <T> void registerController(Class<T> cntrlrClass, T restController);
 
     /**
-     * Optionally get a controller.
+     * Optionally get a controller of the specified class.
      *
      * @param cntrlrClass The desired controller class.
      * @param <T> The desired controller type.
@@ -39,7 +39,7 @@ public interface IRestControllerService {
     <T> T provideUnchecked(Class<T> cntrlrClass);
 
     /**
-     * Provide all the registered controller.
+     * Provide all the registered controllers.
      *
      * @return A {@link Map<Class<?>, Object>} representing the controller.
      */

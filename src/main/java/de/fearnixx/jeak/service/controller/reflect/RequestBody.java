@@ -6,7 +6,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks the type the expected request body.
+ * Mark a parameter to be filled by the request body of a call.
+ *
+ * type(): REQUIRED Specify the class of the used variable.
+ *
+ * name(): REQUIRED Specify the name of the used variable.
  *
  */
 @Retention(RetentionPolicy.RUNTIME)

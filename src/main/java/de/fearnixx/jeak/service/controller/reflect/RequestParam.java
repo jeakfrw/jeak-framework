@@ -6,11 +6,16 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Contains the endpoint of the expected request parameter.
+ * Mark a parameter to be filled by a request parameter from a call.
+ *
+ * type(): REQUIRED if its something else than a {@link String} Specify the type of the expected variable.
+ *
+ * name(): REQUIRED Specify the name of the expected variable.
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface RequestParam {
+    Class<?> type() default String.class;
     String name();
 }

@@ -144,6 +144,14 @@ public class HttpServer {
         };
     }
 
+    /**
+     * Convert a request option from json.
+     *
+     * @param string
+     * @param request
+     * @param methodParameter
+     * @return The generated Object.
+     */
     private Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
         Object retrievedParameter;
         if (request.contentType().equals("application/json")) {
@@ -155,7 +163,8 @@ public class HttpServer {
     }
 
     /**
-     * Retrieve the name from a {@link RequestParam} annotated value.
+     * Retrieve the name from a {@link RequestParam} annotated value. Only call the method, if you are sure the used
+     * {@link MethodParameter} is annotated with an {@link RequestParam}.
      *
      * @param methodParameter
      * @return The name of the annotated variable.
