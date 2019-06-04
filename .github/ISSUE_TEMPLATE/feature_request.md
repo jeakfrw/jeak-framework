@@ -1,7 +1,7 @@
 ---
-name: Feature request
+name: Feature request 🚀
 about: Have an idea on how we can improve the framework?
-title: "[Suggestion] <Please provide a brief concept name for your idea>"
+title: "[🚀] <Please provide a brief concept name for your idea>"
 labels: enhancement, feedback wanted
 assignees: ''
 
