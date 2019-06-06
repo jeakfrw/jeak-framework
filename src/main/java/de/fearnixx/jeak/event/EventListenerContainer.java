@@ -1,14 +1,17 @@
 package de.fearnixx.jeak.event;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.event.except.EventInvocationException;
 import de.fearnixx.jeak.event.except.ListenerConstructionException;
+import de.fearnixx.jeak.event.except.RelayedInvokationException;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.invoke.*;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.MessageFormat;
 import java.util.Map;
@@ -24,6 +27,7 @@ public class EventListenerContainer {
     private static final Logger logger = LoggerFactory.getLogger(EventListenerContainer.class);
     private static final MethodType LISTENER_INTERFACE_TYPE = MethodType.methodType(BiConsumer.class);
     private static final MethodType LISTENER_LAMBDA_METHOD_TYPE = MethodType.methodType(void.class, Object.class, Object.class);
+    public static final Boolean FAST_LAMBDAS_ENABLED = Main.getProperty("jeak.frw.enableLambdaEvents", false);
 
     private static final Map<String, BiConsumer<Object, IEvent>> lambdaCache = new ConcurrentHashMap<>();
 
@@ -54,35 +58,45 @@ public class EventListenerContainer {
     }
 
     private BiConsumer<Object, IEvent> constructLambda(Method method) {
-        try {
-            MethodHandles.Lookup lookupHandle = MethodHandles.lookup();
-            MethodHandle listenerMethod = lookupHandle.unreflect(method);
+        if (FAST_LAMBDAS_ENABLED) {
+            try {
+                MethodHandles.Lookup lookupHandle = MethodHandles.lookup();
+                MethodHandle listenerMethod = lookupHandle.unreflect(method);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Trying to construct listener-lambda for: {}", listenerMethod.type().toMethodDescriptorString());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Trying to construct listener-lambda for: {}", listenerMethod.type().toMethodDescriptorString());
+                }
+
+                CallSite callSite = LambdaMetafactory.metafactory(
+                        lookupHandle,
+                        "accept",
+                        LISTENER_INTERFACE_TYPE,
+                        LISTENER_LAMBDA_METHOD_TYPE,
+                        listenerMethod,
+                        listenerMethod.type());
+                MethodHandle factory = callSite.getTarget();
+                // Lambda will match the provided signature.
+                //noinspection unchecked
+                return (BiConsumer<Object, IEvent>) factory.invoke();
+
+            } catch (IllegalAccessError e) {
+                String msg = MessageFormat.format("Failed to get method handle for listener: {0}", listenerFQN);
+                throw new ListenerConstructionException(msg, e);
+            } catch (LambdaConversionException e) {
+                String msg = MessageFormat.format("Failed to construct lambda for event listener: {0}", listenerFQN);
+                throw new ListenerConstructionException(msg, e);
+            } catch (Throwable e) {
+                String msg = MessageFormat.format("Failed to get lambda for event listener: {0}", listenerFQN);
+                throw new ListenerConstructionException(msg, e);
             }
-
-            CallSite callSite = LambdaMetafactory.metafactory(
-                    lookupHandle,
-                    "accept",
-                    LISTENER_INTERFACE_TYPE,
-                    LISTENER_LAMBDA_METHOD_TYPE,
-                    listenerMethod,
-                    listenerMethod.type());
-            MethodHandle factory = callSite.getTarget();
-            // Lambda will match the provided signature.
-            //noinspection unchecked
-            return (BiConsumer<Object, IEvent>) factory.invoke();
-
-        } catch (IllegalAccessError e) {
-            String msg = MessageFormat.format("Failed to get method handle for listener: {0}", listenerFQN);
-            throw new ListenerConstructionException(msg, e);
-        } catch (LambdaConversionException e) {
-            String msg = MessageFormat.format("Failed to construct lambda for event listener: {0}", listenerFQN);
-            throw new ListenerConstructionException(msg, e);
-        } catch (Throwable e) {
-            String msg = MessageFormat.format("Failed to get lambda for event listener: {0}", listenerFQN);
-            throw new ListenerConstructionException(msg, e);
+        } else {
+            return (lambdaVictim, event) -> {
+                try {
+                    method.invoke(lambdaVictim, event);
+                } catch (IllegalAccessException | InvocationTargetException e) {
+                    throw new RelayedInvokationException(e);
+                }
+            };
         }
     }
 
@@ -106,6 +120,8 @@ public class EventListenerContainer {
             eventConsumer.accept(victim, event);
         } catch (EventAbortException | ConsistencyViolationException e) {
             throw e;
+        } catch (RelayedInvokationException e) {
+            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e.getCause());
         } catch (Exception e) {
             throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e);
         }
