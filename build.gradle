@@ -24,17 +24,6 @@ version projectVersion
 
 project.ext {
     artifact = 'jeakbot'
-    
-    confortVersion = '0.3.5-SNAPSHOT'
-    log4jVersion = '2.11.1'
-    hibernateVersion =  '5.3.6.Final'
-    hikariCPVersion = '3.3.1'
-    jakartaMailVersion = '1.6.3'
-
-    connectors = [
-        mysql: '8.0.13',
-        mariadb: '2.1.2'
-    ]
 }
 
 repositories {
@@ -80,7 +69,7 @@ dependencies {
 
     compile sourceSets.api.output
     compile 'de.mlessmann:confort:0.3.5-SNAPSHOT'
-    compile 'org.reflections:reflections:0.9.11'
+    compile 'org.reflections:reflections:0.9.10'
     compile 'org.hibernate:hibernate-core:5.4.3.Final'
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'com.zaxxer:HikariCP:3.3.1'
