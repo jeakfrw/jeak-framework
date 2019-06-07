@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -69,12 +70,24 @@ public class PermissionService implements IPermissionService {
 
     @Override
     public void registerProvider(String systemID, IPermissionProvider provider) {
-        providers.put(systemID, provider);
+        Objects.requireNonNull(provider, "Permission provider may not be null!");
+
+        IPermissionProvider existing = providers.put(systemID, provider);;
+        if (existing != null) {
+            logger.info("Replaced permission provider for sID \"{}\": {} with {}",
+                    systemID, existing.getClass().getName(), provider.getClass().getName());
+        }
     }
 
     @Override
     public ITS3PermissionProvider getTS3Provider() {
         return (ITS3PermissionProvider) provide(IUserIdentity.SERVICE_TEAMSPEAK)
                 .orElseThrow(() -> new IllegalStateException("TeamSpeak permission provider not registered!"));
+    }
+
+    @Override
+    public IPermissionProvider getFrameworkProvider() {
+        return provide("jeak")
+                .orElseThrow(() -> new IllegalStateException("Framework permission provider not registered!"));
     }
 }

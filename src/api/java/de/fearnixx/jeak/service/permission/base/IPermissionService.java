@@ -23,4 +23,10 @@ public interface IPermissionService {
      * @implNote exactly the same as using {@link #provide(String)} with {@link de.fearnixx.jeak.profile.IUserIdentity#SERVICE_TEAMSPEAK}.
      */
     ITS3PermissionProvider getTS3Provider();
+
+    /**
+     * Shorthand-getter for the common case: Framework & Plugin permission checks.
+     * @implNote exactly the same as using {@link #provide(String)} with {@code "jeak"}.
+     */
+    IPermissionProvider getFrameworkProvider();
 }
