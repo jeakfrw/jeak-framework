@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class TokenConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfiguration.class);
-    private static final String DEFAULT_TOKEN_CONFIG = "restService/token/defaultToken.json";
+    private static final String DEFAULT_TOKEN_CONFIG = "/restService/token/defaultToken.json";
 
     @Inject
     @Config(id = "tokens")
@@ -57,6 +57,11 @@ public class TokenConfiguration extends Configurable {
      */
     public Optional<String> readToken(Class<?> clazz) {
         logger.debug(MessageFormat.format("reading token for {0}", clazz.getName()));
-        return getConfig().getNode(clazz.getAnnotation(RestController.class).pluginId()).getNode(clazz.getName()).getNode("token").optString();
+        return getConfig().getNode(clazz.getAnnotation(RestController.class).pluginId(), extractClassName(clazz), "token").optString();
+    }
+
+    private String extractClassName(Class<?> clazz) {
+        String[] split = clazz.getName().split("[.]");
+        return split[split.length - 1];
     }
 }
