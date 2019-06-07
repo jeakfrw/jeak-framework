@@ -1,10 +1,11 @@
-package de.fearnixx.jeak.service.controller.interfaces;
+package de.fearnixx.jeak.service.controller;
 
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * The controller manager allows plugins to register services to a specified REST method.
+ *
  */
 public interface IRestControllerService {
 

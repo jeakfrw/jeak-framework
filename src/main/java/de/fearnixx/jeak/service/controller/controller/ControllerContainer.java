@@ -36,7 +36,8 @@ public class ControllerContainer {
     }
 
     private String extractControllerRoute(Object o) {
-        return o.getClass().getAnnotation(RestController.class).endpoint();
+        RestController annotation = o.getClass().getAnnotation(RestController.class);
+        return annotation.pluginId().concat(annotation.endpoint());
     }
 
     /**

@@ -8,7 +8,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.controller.connection.ControllerRequestVerifier;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
-import de.fearnixx.jeak.service.controller.interfaces.IRestControllerService;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;

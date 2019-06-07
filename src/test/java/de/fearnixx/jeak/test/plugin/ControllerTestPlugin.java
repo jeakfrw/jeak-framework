@@ -5,7 +5,7 @@ import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.controller.interfaces.IRestControllerService;
+import de.fearnixx.jeak.service.controller.IRestControllerService;
 import de.fearnixx.jeak.service.controller.testImpls.TestController;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.test.AbstractTestPlugin;

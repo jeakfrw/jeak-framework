@@ -22,6 +22,12 @@ public class ControllerRequestVerifier implements IConnectionVerifier {
         return authorizationText.contains(TOKEN_TEXT);
     }
 
+    /**
+     * Extract the token from a given String. This requires that it actually is a token.
+     *
+     * @param authorizationText The text as {@links String}.
+     * @return The token as {@link String}
+     */
     private String extractToken(String authorizationText) {
         return authorizationText.replace(TOKEN_TEXT, "");
     }

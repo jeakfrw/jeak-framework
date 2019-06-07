@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class TokenConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfiguration.class);
-    private static final String DEFAULT_TOKEN_CONFIG ="restService/token/defaultToken.json";
+    private static final String DEFAULT_TOKEN_CONFIG = "restService/token/defaultToken.json";
 
     @Inject
     @Config(id = "tokens")
@@ -50,8 +50,9 @@ public class TokenConfiguration extends Configurable {
     }
 
     /**
-     * The token path is defined as : pluginId -> controllerName -> token
-     * @param clazz The class of the controller.
+     * The token path is defined as: ${pluginId} -> ${controllerName} -> ${token}
+     *
+     * @param clazz The class of the controller. It identifies the token.
      * @return The token as {@link Optional<String>} if the path was resolved. Otherwise an empty {@link Optional<String>}.
      */
     public Optional<String> readToken(Class<?> clazz) {
