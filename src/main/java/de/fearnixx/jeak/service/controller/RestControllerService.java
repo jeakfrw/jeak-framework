@@ -8,16 +8,14 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.controller.connection.ControllerRequestVerifier;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
+import de.fearnixx.jeak.service.controller.reflect.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @FrameworkService(serviceInterface = IRestControllerService.class)
 public class RestControllerService implements IRestControllerService {
-    private static final Logger logger = LoggerFactory.getLogger(RestControllerService.class);
     private final Map<Class<?>, Object> controllers;
     private HttpServer httpServer;
     private ControllerRequestVerifier connectionVerifier;
@@ -43,11 +41,12 @@ public class RestControllerService implements IRestControllerService {
 
     @Override
     public <T> void registerController(Class<T> cntrlrClass, T restController) {
-        controllers.put(cntrlrClass, restController);
-        try {
-            httpServer.registerController(new ControllerContainer(restController));
-        } catch (Exception e) {
-            logger.error("there was an error while registering the controller", e);
+        ControllerContainer controllerContainer = new ControllerContainer(restController);
+        if (!doesControllerAlreadyExist(restController)) {
+            controllers.put(cntrlrClass, restController);
+            httpServer.registerController(controllerContainer);
+        } else {
+            throw new RegisterControllerException("There is already a controller with the same endpoint");
         }
     }
 
@@ -67,4 +66,21 @@ public class RestControllerService implements IRestControllerService {
         return controllers;
     }
 
+    private <T> boolean doesControllerAlreadyExist(T restController) {
+        Class<?> controllerClass = restController.getClass();
+        if (controllers.containsKey(controllerClass)) {
+            return false;
+        }
+        return controllers.keySet().stream()
+                .filter(aClass -> extractPluginId(aClass).equals(extractPluginId(controllerClass)))
+                .anyMatch(aClass -> extractControllerName(aClass).equals(extractControllerName(controllerClass)));
+    }
+
+    private String extractControllerName(Class<?> clazz) {
+        return clazz.getAnnotation(RestController.class).endpoint();
+    }
+
+    private String extractPluginId(Class<?> clazz) {
+        return clazz.getAnnotation(RestController.class).pluginId();
+    }
 }

@@ -17,6 +17,6 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RestController {
-    String endpoint() default "";
-    String pluginId() default "default";
+    String pluginId();
+    String endpoint();
 }

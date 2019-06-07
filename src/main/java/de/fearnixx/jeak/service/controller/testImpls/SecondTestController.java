@@ -6,21 +6,21 @@ import de.fearnixx.jeak.service.controller.reflect.RequestMapping;
 import de.fearnixx.jeak.service.controller.reflect.RequestParam;
 import de.fearnixx.jeak.service.controller.reflect.RestController;
 
-@RestController(pluginId = "pid", endpoint = "/test")
-public class TestController {
+@RestController(endpoint = "/test", pluginId = "pid")
+public class SecondTestController {
 
     @RequestMapping(method = RequestMethod.GET, endpoint = "/hello")
     public DummyObject hello() {
-        return new DummyObject("Finn", 20);
+        return new DummyObject("second", 20);
     }
 
     @RequestMapping(method =  RequestMethod.GET, endpoint = "/info/:name")
     public String returnSentInfo(@RequestParam(name = "name") String name) {
-        return "received " + name;
+        return "second" + name;
     }
 
     @RequestMapping(method = RequestMethod.POST, endpoint = "/body")
     public String sendBody(@RequestBody(type = String.class, name = "string") String string) {
-        return "this is the body " + string;
+        return "second body " + string;
     }
 }
