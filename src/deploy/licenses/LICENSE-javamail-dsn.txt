@@ -4,6 +4,13 @@ The Java mail DSN library is licensed under the Eclipse Public license 2.0.
 See: https://projects.eclipse.org/projects/ee4j.javamail
 and: https://www.eclipse.org/legal/epl-2.0/
 
+Java mail DSN requires the Jakarta artifact of the Java-Mail API which is also licensed under the EPL 2.0 license.
+See: https://mvnrepository.com/artifact/com.sun.mail/jakarta.mail/1.6.3
+
+The Jakarta artifact of the Java-Mail API requires the Jakarta activation artifact which is licensed under the EDL 1.0 license.
+See: https://mvnrepository.com/artifact/com.sun.activation/jakarta.activation/1.2.1
+
+
 Eclipse Public License - v 2.0
 
     THE ACCOMPANYING PROGRAM IS PROVIDED UNDER THE TERMS OF THIS ECLIPSE
