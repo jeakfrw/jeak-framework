@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller.reflect;
+package de.fearnixx.jeak.reflect;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

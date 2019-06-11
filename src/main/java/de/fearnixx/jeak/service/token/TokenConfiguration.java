@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.token;
 
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.controller.reflect.RestController;
+import de.fearnixx.jeak.reflect.RestController;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
