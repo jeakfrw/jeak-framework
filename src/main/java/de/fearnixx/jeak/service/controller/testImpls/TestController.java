@@ -1,10 +1,10 @@
 package de.fearnixx.jeak.service.controller.testImpls;
 
-import de.fearnixx.jeak.service.controller.connection.RequestMethod;
-import de.fearnixx.jeak.service.controller.reflect.RequestBody;
-import de.fearnixx.jeak.service.controller.reflect.RequestMapping;
-import de.fearnixx.jeak.service.controller.reflect.RequestParam;
-import de.fearnixx.jeak.service.controller.reflect.RestController;
+import de.fearnixx.jeak.service.controller.RequestMethod;
+import de.fearnixx.jeak.reflect.RequestBody;
+import de.fearnixx.jeak.reflect.RequestMapping;
+import de.fearnixx.jeak.reflect.RequestParam;
+import de.fearnixx.jeak.reflect.RestController;
 
 @RestController(pluginId = "testPluginId", endpoint = "/test")
 public class TestController {

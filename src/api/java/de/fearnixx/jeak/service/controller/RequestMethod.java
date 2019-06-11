@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller.connection;
+package de.fearnixx.jeak.service.controller;
 
 public enum RequestMethod {
     POST,
