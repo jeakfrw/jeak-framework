@@ -19,7 +19,6 @@ public class TokenService implements ITokenService {
     @Override
     public boolean verifyToken(Class<?> controllerClass, String token) {
         boolean isVerified = false;
-        tokenConfiguration.readToken(controllerClass);
         Optional<String> configToken = tokenConfiguration.readToken(controllerClass);
         if (configToken.isPresent() && configToken.get().equals(token)) {
             isVerified = true;

@@ -3,5 +3,10 @@
     "TestController": {
       "token": "Hallo"
     }
+  },
+  "pid": {
+    "SecondTestController": {
+      "token": "Second"
+    }
   }
 }

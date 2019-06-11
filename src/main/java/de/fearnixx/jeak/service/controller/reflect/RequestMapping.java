@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.controller.reflect;
 
 import de.fearnixx.jeak.service.controller.connection.RequestMethod;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -24,6 +25,6 @@ import java.lang.annotation.Target;
 public @interface RequestMapping {
     RequestMethod method();
     String endpoint();
-    boolean isSecured() default false;
+    boolean isSecured() default true;
     String contentType() default "application/json";
 }

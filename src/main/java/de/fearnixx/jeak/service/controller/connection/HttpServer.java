@@ -54,9 +54,10 @@ public class HttpServer {
      */
     public void registerController(ControllerContainer controllerContainer) {
         controllerContainer.getControllerMethodList().forEach(controllerMethod -> {
+            String path = buildEndpoint(controllerContainer, controllerMethod);
             registerMethod(controllerMethod.getRequestMethod(),
-                    buildEndpoint(controllerContainer, controllerMethod),
-                    generateRoute(controllerContainer, controllerMethod));
+                    path,
+                    generateRoute(path, controllerContainer, controllerMethod));
         });
     }
 
@@ -114,16 +115,19 @@ public class HttpServer {
     /**
      * Generate a Spark specific {@link Route} for the provided controller and method.
      *
+     * @param path The path for the specified route
      * @param controllerContainer The {@link ControllerContainer} of the controller.
      * @param controllerMethod    The {@link ControllerMethod} of the method.
      * @return A {@link Route} containing the actions of the {@link ControllerMethod}.
      */
-    private Route generateRoute(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
+    private Route generateRoute(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
-        before((request, response) -> {
-            boolean isAuthorized = connectionVerifier.verifyRequest(controllerContainer.getControllerClass(), request.headers("Authorization"));
-            if (!isAuthorized) {
-                halt(401);
+        before(path, (request, response) -> {
+            if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
+                boolean isAuthorized = connectionVerifier.verifyRequest(controllerContainer.getControllerClass(), request.headers("Authorization"));
+                if (!isAuthorized) {
+                    halt(401);
+                }
             }
         });
         return (request, response) -> {
