@@ -158,6 +158,7 @@ public class JeakBot implements Runnable, IBot {
         serviceManager.registerService(IServiceManager.class, serviceManager);
         serviceManager.registerService(IEventService.class, eventService);
         serviceManager.registerService(IInjectionService.class, injectionService);
+
         // Initialize utility & convenience services.
         server = initializeService(new Server());
         initializeService(new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10));
@@ -171,13 +172,10 @@ public class JeakBot implements Runnable, IBot {
         initializeService(mailSvc);
         initializeService(new ProfileService(new File(confDir, "profiles")));
         initializeService(new PermissionService());
-        initializeService(new TokenService());
-        initializeService(new RestControllerService());
-        initializeService(new UserService());
         initializeService(new QueryUserService());
         initializeService(new TokenService());
         initializeService(new RestControllerService());
-
+      
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
         mailSvc.onLoad(null);
