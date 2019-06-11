@@ -11,8 +11,6 @@ import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.controller.RestControllerService;
-import de.fearnixx.jeak.service.teamspeak.UserService;
-import de.fearnixx.jeak.service.token.TokenService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
@@ -22,6 +20,8 @@ import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.service.teamspeak.QueryUserService;
+import de.fearnixx.jeak.service.teamspeak.UserService;
+import de.fearnixx.jeak.service.token.TokenService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
@@ -42,8 +42,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by Life4YourGames on 22.05.17.
@@ -130,6 +128,7 @@ public class JeakBot implements Runnable, IBot {
             return;
         }
 
+        scheduleConnect();
     }
 
     protected void discoverPlugins() {
