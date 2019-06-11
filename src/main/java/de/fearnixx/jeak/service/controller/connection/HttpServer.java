@@ -105,6 +105,9 @@ public class HttpServer {
             case HEAD:
                 Spark.head(path, route);
                 break;
+            default:
+                logger.warn("Failed to register the route to " + path);
+                break;
         }
     }
 
