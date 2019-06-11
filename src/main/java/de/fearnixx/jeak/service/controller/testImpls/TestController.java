@@ -6,7 +6,7 @@ import de.fearnixx.jeak.service.controller.reflect.RequestMapping;
 import de.fearnixx.jeak.service.controller.reflect.RequestParam;
 import de.fearnixx.jeak.service.controller.reflect.RestController;
 
-@RestController(pluginId = "default", endpoint = "/test")
+@RestController(pluginId = "testPluginId", endpoint = "/test")
 public class TestController {
 
     @RequestMapping(method = RequestMethod.GET, endpoint = "/hello")
