@@ -1,6 +1,6 @@
 package de.fearnixx.jeak.service.controller.testImpls;
 
-import de.fearnixx.jeak.service.controller.connection.RequestMethod;
+import de.fearnixx.jeak.service.controller.RequestMethod;
 import de.fearnixx.jeak.reflect.RequestBody;
 import de.fearnixx.jeak.reflect.RequestMapping;
 import de.fearnixx.jeak.reflect.RequestParam;
