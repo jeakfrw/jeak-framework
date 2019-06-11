@@ -1,0 +1,7 @@
+{
+  "testPluginId": {
+    "TestController": {
+      "token": "Hallo"
+    }
+  }
+}

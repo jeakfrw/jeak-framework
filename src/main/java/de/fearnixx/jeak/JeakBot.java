@@ -10,6 +10,7 @@ import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
+import de.fearnixx.jeak.service.controller.RestControllerService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
@@ -19,6 +20,8 @@ import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.service.teamspeak.QueryUserService;
+import de.fearnixx.jeak.service.teamspeak.UserService;
+import de.fearnixx.jeak.service.token.TokenService;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
@@ -170,7 +173,9 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new ProfileService(new File(confDir, "profiles")));
         initializeService(new PermissionService());
         initializeService(new QueryUserService());
-
+        initializeService(new TokenService());
+        initializeService(new RestControllerService());
+      
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
         mailSvc.onLoad(null);
