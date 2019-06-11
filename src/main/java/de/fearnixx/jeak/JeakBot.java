@@ -128,6 +128,7 @@ public class JeakBot implements Runnable, IBot {
             return;
         }
 
+        scheduleConnect();
     }
 
     protected void discoverPlugins() {
