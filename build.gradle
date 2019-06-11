@@ -79,7 +79,7 @@ dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: '2.9.1'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.9'
     compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.9'
-    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotation', version: '2.9.9'
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.9.9'
 
     runtime group: 'org.antlr', name: 'antlr4-runtime', version: '4.7.1'
     runtime group: 'org.apache.logging.log4j', name: 'log4j-api', version: project.ext.log4jVersion
