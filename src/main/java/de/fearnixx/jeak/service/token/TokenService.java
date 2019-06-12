@@ -6,8 +6,6 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 
-import java.util.Optional;
-
 @FrameworkService(serviceInterface = ITokenService.class)
 public class TokenService implements ITokenService {
 
@@ -17,10 +15,10 @@ public class TokenService implements ITokenService {
     private TokenConfiguration tokenConfiguration;
 
     @Override
-    public boolean verifyToken(Class<?> controllerClass, String token) {
+    public boolean verifyToken(String endpoint, String token) {
         boolean isVerified = false;
-        Optional<String> configToken = tokenConfiguration.readToken(controllerClass);
-        if (configToken.isPresent() && configToken.get().equals(token)) {
+        TokenScope tokenScopes = tokenConfiguration.getTokenScopes(token);
+        if (tokenScopes.isInScope(endpoint)) {
             isVerified = true;
         }
         return isVerified;
@@ -32,5 +30,4 @@ public class TokenService implements ITokenService {
         injectionService.injectInto(tokenConfiguration);
         tokenConfiguration.loadConfig();
     }
-
 }

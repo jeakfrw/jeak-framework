@@ -24,6 +24,11 @@ public class TokenScope {
         return scopeSet;
     }
 
+    /**
+     *
+     * @param scope
+     * @return
+     */
     public boolean isInScope(String scope) {
         String[] splittedStrings = splitScope(scope);
         for (int i = 0; i < splittedStrings.length; i++) {

@@ -10,7 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.MessageFormat;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class TokenConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(TokenConfiguration.class);
@@ -58,6 +59,23 @@ public class TokenConfiguration extends Configurable {
     public Optional<String> readToken(Class<?> clazz) {
         logger.debug(MessageFormat.format("reading token for {0}", clazz.getName()));
         return getConfig().getNode(clazz.getAnnotation(RestController.class).pluginId(), extractClassName(clazz), "token").optString();
+    }
+
+    public TokenScope getTokenScopes(String token) {
+        logger.debug(MessageFormat.format("reading token {0}", token));
+        IConfigNode tokenNode = getConfig().getNode(token);
+        Set<String> tokenScopes = new HashSet<>();
+        if (!tokenNode.isVirtual()) {
+            Optional<List<IConfigNode>> iConfigNodes = tokenNode.optList();
+            iConfigNodes.ifPresent(localIConfigNodes -> tokenScopes.addAll(
+                    localIConfigNodes.stream()
+                            .map(IConfigNode::optString)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .collect(Collectors.toSet()))
+            );
+        }
+        return new TokenScope(tokenScopes);
     }
 
     private String extractClassName(Class<?> clazz) {
