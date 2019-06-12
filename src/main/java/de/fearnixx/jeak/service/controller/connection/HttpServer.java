@@ -162,7 +162,7 @@ public class HttpServer {
      */
     private Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
         Object retrievedParameter;
-        if (request.contentType().equals("application/json")) {
+        if (request.contentType() != null && request.contentType().equals("application/json")) {
             retrievedParameter = fromJson(string, methodParameter.getType());
         } else {
             retrievedParameter = string;
