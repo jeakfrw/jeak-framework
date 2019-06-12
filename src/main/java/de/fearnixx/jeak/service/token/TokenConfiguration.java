@@ -64,12 +64,12 @@ public class TokenConfiguration extends Configurable {
         Set<String> tokenScopes = new HashSet<>();
         if (!tokenNode.isVirtual()) {
             Optional<List<IConfigNode>> iConfigNodes = tokenNode.optList();
-            iConfigNodes.ifPresent(localIConfigNodes -> tokenScopes.addAll(
+            iConfigNodes.ifPresent(localIConfigNodes ->
                     localIConfigNodes.stream()
                             .map(IConfigNode::optString)
                             .filter(Optional::isPresent)
                             .map(Optional::get)
-                            .collect(Collectors.toSet()))
+                            .forEach(tokenScopes::add)
             );
         }
         return new TokenScope(tokenScopes);
