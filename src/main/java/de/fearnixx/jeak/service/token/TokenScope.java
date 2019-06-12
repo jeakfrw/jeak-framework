@@ -16,14 +16,6 @@ public class TokenScope {
         this.scopeSet = scopeSet;
     }
 
-    public void addScope(String scope) {
-        this.scopeSet.add(scope);
-    }
-
-    public Set<String> getScopeSet() {
-        return scopeSet;
-    }
-
     /**
      *
      * @param scope
