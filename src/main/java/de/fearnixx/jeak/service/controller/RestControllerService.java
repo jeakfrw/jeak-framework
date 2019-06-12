@@ -1,14 +1,11 @@
 package de.fearnixx.jeak.service.controller;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
-import de.fearnixx.jeak.reflect.FrameworkService;
-import de.fearnixx.jeak.reflect.IInjectionService;
-import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.controller.connection.ControllerRequestVerifier;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
-import de.fearnixx.jeak.reflect.RestController;
+import de.fearnixx.jeak.service.controller.controller.SparkAdapter;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +27,7 @@ public class RestControllerService implements IRestControllerService {
     public RestControllerService(Map<Class<?>, Object> controllers) {
         connectionVerifier = new ControllerRequestVerifier();
         this.controllers = controllers;
-        this.httpServer = new HttpServer(connectionVerifier);
+        this.httpServer = new SparkAdapter(connectionVerifier);
     }
 
     @Listener
