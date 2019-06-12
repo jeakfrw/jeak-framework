@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.fearnixx.jeak.reflect.PathParam;
 import de.fearnixx.jeak.service.controller.RequestMethod;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.service.controller.controller.ControllerMethod;
@@ -135,8 +136,10 @@ public class HttpServer {
             Object[] methodParameters = new Object[methodParameterList.size()];
             for (MethodParameter methodParameter : methodParameterList) {
                 Object retrievedParameter = null;
-                if (methodParameter.hasAnnotation(RequestParam.class)) {
-                    retrievedParameter = transformRequestOption(request.params(getRequestParamName(methodParameter)), request, methodParameter);
+                if (methodParameter.hasAnnotation(PathParam.class)) {
+                    retrievedParameter = transformRequestOption(request.params(getPathParamName(methodParameter)), request, methodParameter);
+                } else if (methodParameter.hasAnnotation(RequestParam.class)) {
+                    retrievedParameter = transformRequestOption(request.queryMap(getRequestParamName(methodParameter)).value(), request, methodParameter);
                 } else if (methodParameter.hasAnnotation(RequestBody.class)) {
                     retrievedParameter = transformRequestOption(request.body(), request, methodParameter);
                 }
@@ -162,7 +165,7 @@ public class HttpServer {
      */
     private Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
         Object retrievedParameter;
-        if (request.contentType().equals("application/json")) {
+        if (request.contentType() != null && request.contentType().equals("application/json")) {
             retrievedParameter = fromJson(string, methodParameter.getType());
         } else {
             retrievedParameter = string;
@@ -180,6 +183,11 @@ public class HttpServer {
     private String getRequestParamName(MethodParameter methodParameter) {
         Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).name();
         return (String) methodParameter.callAnnotationFunction(function, RequestParam.class).get();
+    }
+
+    private String getPathParamName(MethodParameter methodParameter) {
+        Function<Annotation, Object> function = annotation -> ((PathParam) annotation).name();
+        return (String) methodParameter.callAnnotationFunction(function, PathParam.class).get();
     }
 
     /**
