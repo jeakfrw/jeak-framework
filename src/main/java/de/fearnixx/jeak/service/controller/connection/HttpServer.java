@@ -151,6 +151,7 @@ public class HttpServer {
                 response.type(contentType);
                 returnValue = toJson(returnValue);
             }
+            response.header("Access-Control-Allow-Origin", "*");
             return returnValue;
         };
     }
