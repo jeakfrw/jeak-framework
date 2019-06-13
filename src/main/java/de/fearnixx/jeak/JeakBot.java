@@ -332,7 +332,7 @@ public class JeakBot implements Runnable, IBot {
             rewrite = true;
         }
 
-        if (config.getNode("nick").isPrimitive()) {
+        if (!config.getNode("nick").isPrimitive()) {
             config.getNode("nick").setString("JeakBot");
             rewrite = true;
         }
