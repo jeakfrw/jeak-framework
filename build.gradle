@@ -4,8 +4,8 @@ def projectVersion = '1.0.0'
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_1_8
 
 if (project.hasProperty("preRelease")) {
     apply from: './pre-release.gradle'
