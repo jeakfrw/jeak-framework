@@ -106,5 +106,5 @@ build {
 }
 
 wrapper {
-    gradleVersion '4.2.1'
+    gradleVersion '5.4.1'
 }
