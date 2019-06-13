@@ -21,7 +21,7 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |OS-Support         |![ShieldsIO](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-informational.svg?style=flat-square)    |
 |Status             |![ShieldsIO](https://img.shields.io/maintenance/yes/2019.svg?style=flat-square)
 |Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|[Discord Invite](https://discord.gg/DPYR5aB)|  
-[1]: [CWE-502](https://cwe.mitre.org/data/definitions/502.html) has been ignored as we do not use Guava for data deserialization. If you are worried about this anyways, replace the Guava library with a fixed version - the current version is introduced by org.reflections which we use for classpath scanning.
+[1]: [CVE-2018-10237](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10237) has been ignored as we do not use Guava for data deserialization. The vulnerability is introduced by org.reflections which we use for classpath scanning. (The attack vector is over the network where Reflections is not used.
   
 # Links
 * [Project license](./LICENSE)
