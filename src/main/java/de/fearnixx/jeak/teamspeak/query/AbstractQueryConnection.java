@@ -32,20 +32,4 @@ public abstract class AbstractQueryConnection implements IQueryConnection {
 
         sendRequest(request);
     }
-
-    @Override
-    public void sendRequest(IQueryRequest req, Consumer<IRawQueryEvent.IMessage.IAnswer> onDone) {
-        Consumer<IQueryEvent.IAnswer> rDone = answer ->
-                onDone.accept(((IRawQueryEvent.IMessage.IAnswer) answer.getRawReference()));
-
-        req.onDone(rDone);
-        sendRequest(req);
-    }
-
-    @Override
-    public IQueryPromise promiseRequest(IQueryRequest request) {
-        final PromisedRequest promise = new PromisedRequest(request);
-        sendRequest(request, promise::setAnswer);
-        return promise;
-    }
 }

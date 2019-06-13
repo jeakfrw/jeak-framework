@@ -162,13 +162,6 @@ public class QueryBuilder {
             }
 
             @Override
-            public List<Map<String, String>> getChain() {
-                return fChain.stream()
-                        .map(IDataHolder::getValues)
-                        .collect(Collectors.toList());
-            }
-
-            @Override
             public List<IDataHolder> getDataChain() {
                 return fChain;
             }

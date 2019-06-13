@@ -1,16 +1,11 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
-import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
 import de.fearnixx.jeak.reflect.FrameworkService;
-import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission.PriorityType;
-import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
-import de.fearnixx.jeak.teamspeak.except.QueryException;
-import de.fearnixx.jeak.teamspeak.query.IQueryPromise;
+import de.fearnixx.jeak.teamspeak.query.BlockingRequest;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 04-Feb-18
@@ -97,16 +91,16 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                                              .addKey("cldbid", clientDBID)
                                              .addOption("-permsid")
                                              .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(req);
-            try {
-                answer = promise.get(3, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new QueryException("Failed to lookup client permission " + permSID, e);
-            }
-            if (answer != null) {
+            BlockingRequest request = new BlockingRequest(req);
+            getServer().getConnection().sendRequest(req);
+            if (request.waitForCompletion()) {
+                answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
                 cache = new TS3PermCache(clientDBID, null, ITS3Permission.PriorityType.CLIENT);
                 cache.setResponse(answer);
                 clientPerms.put(clientDBID, cache);
+            } else {
+                logger.warn("Permission lookup for \"{}\" on client \"{}\" did not complete.", permSID, clientDBID);
+                return Optional.empty();
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CLIENT);
@@ -130,16 +124,16 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                                              .addKey("sgid", serverGroupID)
                                              .addOption("-permsid")
                                              .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(req);
-            try {
-                answer = promise.get(3, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new QueryException("Failed to lookup server group permission " + permSID, e);
-            }
-            if (answer != null) {
+            BlockingRequest request = new BlockingRequest(req);
+            getServer().getConnection().sendRequest(req);
+            if (request.waitForCompletion()) {
+                answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
                 cache = new TS3PermCache(serverGroupID, null, ITS3Permission.PriorityType.SERVER_GROUP);
                 cache.setResponse(answer);
                 serverGroupPerms.put(serverGroupID, cache);
+            } else {
+                logger.warn("Permission lookup for \"{}\" on server group \"{}\" did not complete.", permSID, serverGroupID);
+                return Optional.empty();
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.SERVER_GROUP);
@@ -163,16 +157,17 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                                              .addKey("cgid", channelGroupID)
                                              .addOption("-permsid")
                                              .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(req);
-            try {
-                answer = promise.get(3, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new QueryException("Failed to lookup channel group permission " + permSID, e);
-            }
-            if (answer != null) {
+            BlockingRequest request = new BlockingRequest(req);
+            getServer().getConnection().sendRequest(req);
+            if (request.waitForCompletion()) {
+                answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
                 cache = new TS3PermCache(channelGroupID, null, ITS3Permission.PriorityType.CHANNEL_GROUP);
                 cache.setResponse(answer);
                 channelGroupPerms.put(channelGroupID, cache);
+
+            } else {
+                logger.warn("Permission lookup for \"{}\" on channel group \"{}\" did not complete.", permSID, channelGroupID);
+                return Optional.empty();
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_GROUP);
@@ -201,13 +196,10 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                                              .addKey("cldbid", clientDBID)
                                              .addOption("-permsid")
                                              .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(req);
-            try {
-                answer = promise.get(3, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new QueryException("Failed to lookup client permission " + permSID, e);
-            }
-            if (answer != null) {
+            BlockingRequest request = new BlockingRequest(req);
+            getServer().getConnection().sendRequest(req);
+            if (request.waitForCompletion()) {
+                answer = ((IMessage.IAnswer) request.getAnswer());
                 cache = new TS3PermCache(clientDBID, null, ITS3Permission.PriorityType.CHANNEL_CLIENT);
                 cache.setResponse(answer);
                 if (channelClientMap == null) {
@@ -215,6 +207,9 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                     channelClientPerms.put(channelID, channelClientMap);
                 }
                 channelClientMap.put(clientDBID, cache);
+            } else {
+                logger.warn("Permission lookup for \"{}\" on channel \"{}\" for client \"{}\" did not complete.", permSID, channelID, clientDBID);
+                return Optional.empty();
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_CLIENT);
@@ -238,16 +233,16 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                                              .addKey("cid", channelID)
                                              .addOption("-permsid")
                                              .build();
-            IQueryPromise promise = getServer().getConnection().promiseRequest(req);
-            try {
-                answer = promise.get(3, TimeUnit.SECONDS);
-            } catch (Exception e) {
-                throw new QueryException("Failed to lookup channel permission " + permSID, e);
-            }
-            if (answer != null) {
+            BlockingRequest request = new BlockingRequest(req);
+            getServer().getConnection().sendRequest(req);
+            if (request.waitForCompletion()) {
+                answer = ((IMessage.IAnswer) request.getAnswer());
                 cache = new TS3PermCache(channelID, null, ITS3Permission.PriorityType.CHANNEL);
                 cache.setResponse(answer);
                 channelPerms.put(channelID, cache);
+            } else {
+                logger.warn("Permission lookup for \"{}\" on channel \"{}\" did not complete.", permSID, channelID);
+                return Optional.empty();
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL);

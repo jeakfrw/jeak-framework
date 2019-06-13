@@ -29,13 +29,6 @@ public interface IBot {
     IServer getServer();
 
     /**
-     * Returns the cache currently associated with the server.
-     * @deprecated Will be entirely moved to {@link IServer} as it conveys the direct relation better.
-     */
-    @Deprecated
-    IDataCache getDataCache();
-
-    /**
      * Request the framework to shut down.
      * Will attempt to close connections and call shut down events.
      */

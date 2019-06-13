@@ -34,10 +34,7 @@ public class PluginRegistry {
     private String id;
     private String version;
     private String buildAgainst;
-    private String breaksBefore;
-    private String breaksAfter;
     private List<String> HARD_depends;
-    private List<String> SOFT_depends;
 
     private List<Method> listeners;
     private Map<Class<?>, List<Field>> injections;
@@ -56,7 +53,7 @@ public class PluginRegistry {
             return false;
         }
         id = tag.id();
-        if (!id.matches("^[a-z0-9.]+$")) {
+        if (!id.matches("^[a-zA-Z.][a-zA-Z.]+$")) {
             logger.error("Plugin ID: {} is invalid!",  this.id);
             return false;
         }
@@ -68,18 +65,11 @@ public class PluginRegistry {
 
         // TODO: Bot version verification implementation
         buildAgainst = tag.builtAgainst();
-        breaksAfter = tag.breaksAfter();
-        breaksBefore = tag.breaksBefore();
 
         if (tag.depends().length == 0) {
             HARD_depends = Collections.emptyList();
         } else {
             HARD_depends = Collections.unmodifiableList(Arrays.asList(tag.depends()));
-        }
-        if (tag.requireAfter().length == 0) {
-            SOFT_depends = Collections.emptyList();
-        } else {
-            SOFT_depends = Collections.unmodifiableList(Arrays.asList(tag.requireAfter()));
         }
 
 
@@ -124,7 +114,7 @@ public class PluginRegistry {
         }
 
         logger.debug("Plugin class {} analysed", pluginClass.toGenericString());
-        final String logMessage = String.format("ID: %s Version: %s HDependencies: %d SDependencies: %d Build-INFO:[%s,%s,%s]", this.id, this.version, HARD_depends.size(), SOFT_depends.size(), breaksBefore, buildAgainst, breaksAfter);
+        final String logMessage = String.format("ID: %s Version: %s HDependencies: %d Against: %s", this.id, this.version, HARD_depends.size(), buildAgainst);
         logger.debug(logMessage);
         return true;
     }
@@ -139,10 +129,6 @@ public class PluginRegistry {
 
     public List<String> getHARD_depends() {
         return HARD_depends;
-    }
-
-    public List<String> getSOFT_depends() {
-        return SOFT_depends;
     }
 
     public List<Method> getListeners() {

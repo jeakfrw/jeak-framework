@@ -1,6 +1,5 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
-import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
@@ -8,17 +7,12 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.teamspeak.IServer;
-import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
-import de.fearnixx.jeak.teamspeak.query.IQueryPromise;
-import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractTS3PermissionProvider implements ITS3PermissionProvider {
 
