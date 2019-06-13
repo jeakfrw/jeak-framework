@@ -5,38 +5,30 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.fearnixx.jeak.reflect.PathParam;
-import de.fearnixx.jeak.service.controller.RequestMethod;
+import de.fearnixx.jeak.reflect.RequestParam;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.service.controller.controller.ControllerMethod;
 import de.fearnixx.jeak.service.controller.controller.MethodParameter;
-import de.fearnixx.jeak.reflect.RequestBody;
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RequestParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
-import spark.Route;
-import spark.Spark;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.List;
 import java.util.function.Function;
 
-import static spark.Spark.*;
+import static spark.Spark.port;
 
 /**
  * A wrapper for the http server.
  */
-public class HttpServer {
+public abstract class HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
     private static final String API_ENDPOINT = "/api";
     private int port = 8723;
     private ObjectMapper objectMapper;
-    private IConnectionVerifier connectionVerifier;
 
-    public HttpServer(IConnectionVerifier connectionVerifier) {
-        this.connectionVerifier = connectionVerifier;
+    public HttpServer() {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
         this.objectMapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
@@ -50,20 +42,20 @@ public class HttpServer {
     }
 
     /**
-     * A wrapper for the {@code registerMethod()} method utilizing Sparks ability to build hierarchical endpoints.
+     * Register a provided controller at the Server.
      *
-     * @param controllerContainer
+     * @param controllerContainer A {@link ControllerContainer}.
      */
-    public void registerController(ControllerContainer controllerContainer) {
-        controllerContainer.getControllerMethodList().forEach(controllerMethod -> {
-            String path = buildEndpoint(controllerContainer, controllerMethod);
-            registerMethod(controllerMethod.getRequestMethod(),
-                    path,
-                    generateRoute(path, controllerContainer, controllerMethod));
-        });
-    }
+    public abstract void registerController(ControllerContainer controllerContainer);
 
-    private String buildEndpoint(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
+    /**
+     * Build the endpoint.
+     *
+     * @param controllerContainer The controller as {@link ControllerContainer}.
+     * @param controllerMethod The method as {@link ControllerMethod}.
+     * @return The endpoint as {@link String} created from the {@link ControllerContainer} and {@link ControllerMethod}.
+     */
+    protected String buildEndpoint(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         char DELIMITER = '/';
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(API_ENDPOINT);
@@ -81,82 +73,6 @@ public class HttpServer {
     }
 
     /**
-     * Registers a method to Spark.
-     *
-     * @param httpMethod The {@link RequestMethod} to map the method to.
-     * @param path       The api path as {@link String}for the given method.
-     * @param route      The {@link Route} which is supposed to be invoked when a call to the specified
-     *                   {@code path} and {@code httpMethod} is made.
-     */
-    public void registerMethod(RequestMethod httpMethod, String path, Route route) {
-        switch (httpMethod) {
-            case GET:
-                Spark.get(path, route);
-                break;
-            case PUT:
-                Spark.put(path, route);
-                break;
-            case POST:
-                Spark.post(path, route);
-                break;
-            case PATCH:
-                Spark.patch(path, route);
-                break;
-            case DELETE:
-                Spark.delete(path, route);
-                break;
-            case HEAD:
-                Spark.head(path, route);
-                break;
-            default:
-                logger.warn("Failed to register the route to " + path);
-                break;
-        }
-    }
-
-    /**
-     * Generate a Spark specific {@link Route} for the provided controller and method.
-     *
-     * @param path The path for the specified route
-     * @param controllerContainer The {@link ControllerContainer} of the controller.
-     * @param controllerMethod    The {@link ControllerMethod} of the method.
-     * @return A {@link Route} containing the actions of the {@link ControllerMethod}.
-     */
-    private Route generateRoute(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
-        List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
-        before(path, (request, response) -> {
-            if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
-                boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
-                if (!isAuthorized) {
-                    halt(401);
-                }
-            }
-        });
-        return (request, response) -> {
-            Object[] methodParameters = new Object[methodParameterList.size()];
-            for (MethodParameter methodParameter : methodParameterList) {
-                Object retrievedParameter = null;
-                if (methodParameter.hasAnnotation(PathParam.class)) {
-                    retrievedParameter = transformRequestOption(request.params(getPathParamName(methodParameter)), request, methodParameter);
-                } else if (methodParameter.hasAnnotation(RequestParam.class)) {
-                    retrievedParameter = transformRequestOption(request.queryMap(getRequestParamName(methodParameter)).value(), request, methodParameter);
-                } else if (methodParameter.hasAnnotation(RequestBody.class)) {
-                    retrievedParameter = transformRequestOption(request.body(), request, methodParameter);
-                }
-                methodParameters[methodParameter.getPosition()] = retrievedParameter;
-            }
-            Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
-            String contentType = controllerMethod.getAnnotation(RequestMapping.class).contentType();
-            if (contentType.contains("json")) {
-                response.type(contentType);
-                returnValue = toJson(returnValue);
-            }
-            response.header("Access-Control-Allow-Origin", "*");
-            return returnValue;
-        };
-    }
-
-    /**
      * Convert a request option from json.
      *
      * @param string
@@ -164,9 +80,9 @@ public class HttpServer {
      * @param methodParameter
      * @return The generated Object.
      */
-    private Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
+    protected Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
         Object retrievedParameter;
-        if (request.contentType() != null && request.contentType().equals("application/json")) {
+        if ("application/json".equals(request.contentType())) {
             retrievedParameter = fromJson(string, methodParameter.getType());
         } else {
             retrievedParameter = string;
@@ -181,12 +97,12 @@ public class HttpServer {
      * @param methodParameter
      * @return The name of the annotated variable.
      */
-    private String getRequestParamName(MethodParameter methodParameter) {
+    protected String getRequestParamName(MethodParameter methodParameter) {
         Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).name();
         return (String) methodParameter.callAnnotationFunction(function, RequestParam.class).get();
     }
 
-    private String getPathParamName(MethodParameter methodParameter) {
+    protected String getPathParamName(MethodParameter methodParameter) {
         Function<Annotation, Object> function = annotation -> ((PathParam) annotation).name();
         return (String) methodParameter.callAnnotationFunction(function, PathParam.class).get();
     }
@@ -199,7 +115,7 @@ public class HttpServer {
      * an empty {@link String} otherwise.
      * @throws JsonProcessingException
      */
-    private String toJson(Object o) throws JsonProcessingException {
+    protected String toJson(Object o) throws JsonProcessingException {
         if (o == null) {
             return "";
         }
