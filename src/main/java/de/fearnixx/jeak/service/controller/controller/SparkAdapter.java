@@ -84,7 +84,7 @@ public class SparkAdapter extends HttpServer {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
         before(path, (request, response) -> {
             if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
-                boolean isAuthorized = connectionVerifier.verifyRequest(controllerContainer.getControllerClass(), request.headers("Authorization"));
+                boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
                 if (!isAuthorized) {
                     halt(401);
                 }
