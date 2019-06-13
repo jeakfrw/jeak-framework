@@ -13,29 +13,22 @@ import java.lang.annotation.Target;
 public @interface JeakBotPlugin {
     /**
      * The plugin ID
-     * Must match "^[a-z.]+$"
+     * Must match "^[a-zA-Z.][a-zA-Z0-9.]+$".
+     * Plugin IDs should always be handled case-insensitive where user input is processed!
      */
     String id();
 
     /**
-     * The plugin version will be used to determine improperly satisfied dependencies
+     * The plugin version will be used to determine improperly satisfied dependencies.
+     * The framework assumes semver to be used for version identifiers: https://semver.org/
      */
     String version() default "0.0.0";
 
     /**
      * Hard dependencies
-     * Bot will refuse to start if unresolved
-     * Bot will refuse to start if circular! You will need to avoid that.
+     * The framework will refuse to start if unresolved and when circularity is detected! You will need to avoid that.
      */
     String[] depends() default {};
-
-    /**
-     * Soft dependencies - Bot will try to load this plugin AFTER all of these
-     * This cannot be 100% guaranteed though.
-     * @deprecated Will be removed without replacement. There is currently no safe plan for handling soft dependencies.
-     */
-    @Deprecated
-    String[] requireAfter() default {};
 
     /**
      * Bot version revisions!
@@ -48,17 +41,4 @@ public @interface JeakBotPlugin {
      * - Note: Currently unused. Will be added later
      */
     String builtAgainst() default "";
-
-    /**
-     * @deprecated use {@link #builtAgainst()}. Values will be inferred by semver rules.
-     */
-    @Deprecated
-    String breaksBefore() default "";
-
-    /**
-     *
-     * @deprecated use {@link #builtAgainst()}. Values will be inferred by semver rules.
-     */
-    @Deprecated
-    String breaksAfter() default "";
 }

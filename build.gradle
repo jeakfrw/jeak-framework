@@ -96,6 +96,10 @@ apply from: './artifacts.gradle'
 apply from: './distribution.gradle'
 apply from: './publication.gradle'
 
+compileJava {
+    options.compilerArgs << "-Xlint:deprecation"
+}
+
 build {
     dependsOn publishToMavenLocal
 

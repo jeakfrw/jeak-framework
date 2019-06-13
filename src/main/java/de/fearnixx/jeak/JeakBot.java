@@ -305,15 +305,37 @@ public class JeakBot implements Runnable, IBot {
             return;
         }
         config = configRep.getRoot();
+        boolean rewrite = false;
 
-        boolean rewrite;
+        if (!config.getNode("host").isPrimitive()) {
+            config.getNode("host").setString("localhost");
+            rewrite = true;
+        }
 
-        rewrite = config.getNode("host").defaultValue("localhost");
-        rewrite = rewrite | config.getNode("port").defaultValue(10011);
-        rewrite = rewrite | config.getNode("user").defaultValue("serveradmin");
-        rewrite = rewrite | config.getNode("pass").defaultValue("password");
-        rewrite = rewrite | config.getNode("instance").defaultValue(1);
-        rewrite = rewrite | config.getNode("nick").defaultValue("JeakBot");
+        if (!config.getNode("port").isPrimitive()) {
+            config.getNode("port").setInteger(10011);
+            rewrite = true;
+        }
+
+        if (!config.getNode("user").isPrimitive()) {
+            config.getNode("user").setString("serveradmin");
+            rewrite = true;
+        }
+
+        if (!config.getNode("pass").isPrimitive()) {
+            config.getNode("pass").setString("password");
+            rewrite = true;
+        }
+
+        if (!config.getNode("instance").isPrimitive()) {
+            config.getNode("instance").setInteger(1);
+            rewrite = true;
+        }
+
+        if (config.getNode("nick").isPrimitive()) {
+            config.getNode("nick").setString("JeakBot");
+            rewrite = true;
+        }
 
         if (rewrite) {
             if (!saveConfig()) {
@@ -361,12 +383,6 @@ public class JeakBot implements Runnable, IBot {
     public IServer getServer() {
         return server;
     }
-
-    @Override
-    public IDataCache getDataCache() {
-        return serviceManager.provideUnchecked(IDataCache.class);
-    }
-
 
     // * * * RUNTIME * * * //
 

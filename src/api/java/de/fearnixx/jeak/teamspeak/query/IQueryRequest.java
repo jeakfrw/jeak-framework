@@ -26,13 +26,6 @@ public interface IQueryRequest {
     String getCommand();
 
     /**
-     * @see #getDataChain()
-     * @deprecated replaced by {@link #getDataChain()}.
-     */
-    @Deprecated
-    List<Map<String, String>> getChain();
-
-    /**
      * TS3 allows chaining for most commands to run one command with multiple properties at once.
      * We will support that by making this a list.
      * Check if chaining is supported for your requested command during development.

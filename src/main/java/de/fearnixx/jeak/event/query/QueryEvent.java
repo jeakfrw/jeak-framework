@@ -104,11 +104,6 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
 
         @Override
-        public List<IDataHolder> getChain() {
-            return getDataChain();
-        }
-
-        @Override
         public List<IDataHolder> getDataChain() {
             return chain;
         }

@@ -80,13 +80,6 @@ public interface IQueryEvent extends IEvent {
 
         /**
          * The KV chain that has been received.
-         * @deprecated to comply with the deprecation of {@link IQueryRequest#getChain()}
-         */
-        @Deprecated
-        List<IDataHolder> getChain();
-
-        /**
-         * The KV chain that has been received.
          */
         List<IDataHolder> getDataChain();
 
