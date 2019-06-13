@@ -15,13 +15,13 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |[/releases](https://github.com/jeakfrw/core-framework/releases)
 |CI (1.X.X-stable)  |\<tbd\> |[View on CircleCI](https://circleci.com/gh/jeakfrw/core-framework)
 |CI (1.X.X-bleeding)|[![CircleCI](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X.svg?style=svg)](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X)   |[View on CircleCI](https://circleci.com/gh/jeakfrw/core-framework)
-|Automated Code Rev |[![CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework/badge)](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|[View on CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework)
-|Security (Snyk)    |![ShieldsIO](https://img.shields.io/snyk/vulnerabilities/github/jeakfrw/core-framework.svg?style=flat-square)|[View on Snyk](https://app.snyk.io/org/markl4yg/project/e353f8ff-d5b9-4599-bfb9-79701ee1c82a)
+|Automated Code Rev |[![CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework/badge)](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|[View on CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|
+|Security (Snyk)    |[![Known Vulnerabilities](https://snyk.io/test/github/jeakfrw/core-framework/badge.svg)](https://snyk.io/test/github/jeakfrw/core-framework) [1]
 |Security (WhiteSrc)|See "Security" tab|[/network/alerts](https://github.com/jeakfrw/core-framework/network/alerts)
 |OS-Support         |![ShieldsIO](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-informational.svg?style=flat-square)    |
 |Status             |![ShieldsIO](https://img.shields.io/maintenance/yes/2019.svg?style=flat-square)
-|Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|[Discord Invite](https://discord.gg/DPYR5aB)
-
+|Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|[Discord Invite](https://discord.gg/DPYR5aB)|  
+[1]: [CVE-2018-10237](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10237) has been ignored as we do not use Guava for data deserialization. The vulnerability is introduced by org.reflections which we use for classpath scanning. (The attack vector is over the network where Reflections and thus Guava is not used.)
   
 # Links
 * [Project license](./LICENSE)

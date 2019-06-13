@@ -10,10 +10,10 @@ public class ControllerRequestVerifier implements IConnectionVerifier {
     private ITokenService tokenService;
 
     @Override
-    public boolean verifyRequest(Class<?> controllerClass, String authorizationText) {
+    public boolean verifyRequest(String endpoint, String authorizationText) {
         boolean isAuthorized = false;
         if (isToken(authorizationText)) {
-            isAuthorized = tokenService.verifyToken(controllerClass, extractToken(authorizationText));
+            isAuthorized = tokenService.verifyToken(endpoint, extractToken(authorizationText));
         }
         return isAuthorized;
     }

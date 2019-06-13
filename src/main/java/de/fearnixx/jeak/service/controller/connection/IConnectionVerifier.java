@@ -8,10 +8,10 @@ public interface IConnectionVerifier {
     /**
      * Verify an HTTP-Authorization text.
      *
-     * @param controllerClass The class of the controller, used to identify the necessary authorization information.
+     * @param endpoint The endpoint to verify the token for.
      * @param authorizationText The text from the HTTP-Authorization header.
      * @return true if the request could be verified,
      * false otherwise.
      */
-    boolean verifyRequest(Class<?> controllerClass, String authorizationText);
+    boolean verifyRequest(String endpoint, String authorizationText);
 }
