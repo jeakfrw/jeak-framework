@@ -56,6 +56,11 @@ public class SparkAdapter extends HttpServer {
                 break;
             case POST:
                 Spark.post(path, route);
+                Spark.options(path, (request, response) -> {
+                    response.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+                    response.header("Access-Control-Allow-Headers", "Content-Type");
+                    return "";
+                });
                 break;
             case PATCH:
                 Spark.patch(path, route);
