@@ -1,7 +1,5 @@
 package de.fearnixx.jeak.service.permission.base;
 
-import de.fearnixx.jeak.service.permission.base.ISubject;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

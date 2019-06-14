@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.service.permission.base.ISubject;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
 import java.util.Optional;
 
@@ -21,4 +22,19 @@ public interface ITS3Subject extends ISubject {
      * @implNote This will only differ from its counterpart for clients as other TS3 subjects do not inherit context.
      */
     Optional<ITS3Permission> getActiveTS3Permission(String permSID);
+
+    /**
+     * Returns a query request that will tell the TeamSpeak server to assign this permission to this subject.
+     */
+    IQueryRequest assignPermission(String permSID, int value, boolean permSkip, boolean permNegated);
+
+    /**
+     * @see #assignPermission(String, int, boolean, boolean) with {@code permNegated} set to false.
+     */
+    IQueryRequest assignPermission(String permSID, int value, boolean permSkip);
+
+    /**
+     * @see #assignPermission(String, int, boolean) with {@code permSkip} set to false.
+     */
+    IQueryRequest assignPermission(String permSID, int value);
 }
