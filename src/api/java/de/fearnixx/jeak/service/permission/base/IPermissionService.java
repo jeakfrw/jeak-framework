@@ -1,12 +1,13 @@
 package de.fearnixx.jeak.service.permission.base;
 
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
 
 import java.util.Optional;
 
 /**
- *
- * @auth MarkL4YG
+ * General entrypoint for permission checks in the framework.
+ * This can be used for plugins that require more specialized checks where {@link ISubject}, {@link IGroup} and {@link ITS3Subject} are not sufficient.
  */
 public interface IPermissionService {
 
@@ -16,6 +17,10 @@ public interface IPermissionService {
      */
     Optional<IPermissionProvider> provide(String systemID);
 
+    /**
+     * Registers a new provider for other possible systems.
+     * This allows external services to be connected into the framework and connector plugins to perform permission checks against them.
+     */
     void registerProvider(String systemID, IPermissionProvider provider);
 
     /**
