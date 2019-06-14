@@ -51,6 +51,7 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
     task uploadZipDistribution(type: Exec) {
         def file = zipDistribution.archivePath.getCanonicalPath()
         def repoPath = "${distributionRepo}/${zipDistribution.archiveName}"
+        println "Distribution: ${file} => ${repoPath}"
         commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
 
         environment = [
@@ -62,6 +63,7 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
     task uploadTarDistribution(type: Exec) {
         def file = tarDistribution.archivePath.getCanonicalPath()
         def repoPath = "${distributionRepo}/${tarDistribution.archiveName}"
+        println "Distribution: ${file} => ${repoPath}"
         commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
 
         environment = [
