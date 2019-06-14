@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.service.task;
 
+import de.fearnixx.jeak.service.task.ITask.TaskType;
+
 /**
  * Created by MarkL4YG on 11.06.17.
  *
@@ -10,9 +12,9 @@ package de.fearnixx.jeak.service.task;
 public interface ITaskService {
 
     /**
-     * Checks if a task is already registered - By {@link java.util.Map#containsKey(Object)}
+     * Checks if a task is already registered.
+     * @implNote by {@link java.util.Map#containsKey(Object)}
      * @param task The task
-     * @return
      */
     boolean hasTask(ITask task);
 
@@ -32,7 +34,7 @@ public interface ITaskService {
 
     /**
      * Asynchronously runs a task.
-     * Also calls {@link #scheduleTask(ITask)} if the {@link de.fearnixx.jeak.service.task.ITask.TaskType} is {@link de.fearnixx.jeak.task.ITask.TaskType#REPEAT}
+     * Also calls {@link #scheduleTask(ITask)} if the {@link TaskType} is {@link TaskType#REPEAT}
      * @param task The task
      */
     void runTask(ITask task);
