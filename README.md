@@ -13,8 +13,8 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |Language           |![ShieldsIO](https://img.shields.io/github/languages/top/jeakfrw/core-framework.svg?style=flat-square)|
 |Latest (stable)    |\<tbd\> |[/releases](https://github.com/jeakfrw/core-framework/releases)
 |Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |[/releases](https://github.com/jeakfrw/core-framework/releases)
-|CI (1.X.X-stable)  |\<tbd\> |[View on CircleCI](https://circleci.com/gh/jeakfrw/core-framework)
-|CI (1.X.X-bleeding)|[![CircleCI](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X.svg?style=svg)](https://circleci.com/gh/jeakfrw/core-framework/tree/bleeding-1.X.X)   |[View on CircleCI](https://circleci.com/gh/jeakfrw/core-framework)
+|CI (1.X.X-stable)  |[![buddy pipeline](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192846/badge.svg?token=22548d502f11240ea437ccc14a4348c352915b0cf82518920be9d2c98bdcb9dd "buddy pipeline")](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192846) |[View on Buddy](https://app.buddy.works/m-lessmann/core-framework/pipelines)|
+|CI (1.X.X-bleeding)|[![buddy pipeline](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192314/badge.svg?token=22548d502f11240ea437ccc14a4348c352915b0cf82518920be9d2c98bdcb9dd "buddy pipeline")](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192314) |[View on Buddy](https://app.buddy.works/m-lessmann/core-framework/pipelines)
 |Automated Code Rev |[![CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework/badge)](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|[View on CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/core-framework)|
 |Security (Snyk)    |[![Known Vulnerabilities](https://snyk.io/test/github/jeakfrw/core-framework/badge.svg)](https://snyk.io/test/github/jeakfrw/core-framework) [1]
 |Security (WhiteSrc)|See "Security" tab|[/network/alerts](https://github.com/jeakfrw/core-framework/network/alerts)
