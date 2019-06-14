@@ -16,6 +16,10 @@ public class FrameworkPermission implements IPermission {
         this.value = value;
     }
 
+    public UUID getSubjectUUID() {
+        return subjectUUID;
+    }
+
     @Override
     public String getSID() {
         return permSID;

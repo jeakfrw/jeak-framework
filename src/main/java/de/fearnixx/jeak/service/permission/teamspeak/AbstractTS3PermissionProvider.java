@@ -103,10 +103,10 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     }
 
     @Override
-    public Optional<IPermission> getPermission(String permSID, String clientUID) {
+    public Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID) {
         Optional<IClient> optClient = dataCache.getClients()
                 .stream()
-                .filter(c -> c.getClientUniqueID().equals(clientUID))
+                .filter(c -> c.getClientUniqueID().equals(clientTS3UniqueID))
                 .findFirst();
         final IPermission[] perm = new IPermission[]{null};
         optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));

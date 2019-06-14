@@ -23,8 +23,8 @@ public class FrameworkPermissionService implements IPermissionProvider {
     private File permissionDirectory;
 
     @Override
-    public Optional<IPermission> getPermission(String permSID, String clientUID) {
-        Optional<IUserProfile> optProfile = profileSvc.getProfile(clientUID);
+    public Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID) {
+        Optional<IUserProfile> optProfile = profileSvc.getProfile(clientTS3UniqueID);
         if (!optProfile.isPresent()) {
             return Optional.empty();
         }
