@@ -52,7 +52,7 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
         def file = zipDistribution.archivePath.getCanonicalPath()
         def repoPath = "${distributionRepo}/${zipDistribution.archiveName}"
         commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
-        
+
         environment = [
                 "DIST_NEXUS_USER": fngNexusUser, "DIST_NEXUS_PASS": fngNexusPass
         ]
@@ -69,11 +69,6 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
         ]
         dependsOn tarDistribution
     }
-
-    task uploadDistribution() {
-        dependsOn uploadZipDistribution
-        dependsOn uploadTarDistribution
-    }
-    
-    publish.dependsOn(uploadDistribution)
+} else {
+    println "Not registering upload tasks - not a UNIX environment."
 }

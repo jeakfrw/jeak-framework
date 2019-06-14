@@ -102,11 +102,6 @@ compileJava {
 
 build {
     dependsOn publishToMavenLocal
-
-    if (!project.version.endsWith('SNAPSHOT')) {
-        dependsOn tasks.zipDistribution
-        dependsOn tasks.tarDistribution
-    }
 }
 
 wrapper {
