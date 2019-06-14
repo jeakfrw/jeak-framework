@@ -13,33 +13,3 @@ workflows:
               only: /.*/
             tags:
               only: /.*/
-      - gradle/run:
-          command: publish
-          filters:
-            branches:
-              only: /bleeding-\d+\.X\.X/
-            tags:
-              ignore: /.*/
-          context: fng-gradle-snapshot
-          requires:
-            - gradle/test
-      - gradle/run:
-          command: publish
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+-rc\.\d+$/
-          context: fng-gradle-preRelease
-          requires:
-            - gradle/test
-      - gradle/run:
-          command: publish
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /^\d+\.\d+\.\d+$/
-          context: fng-gradle-release
-          requires:
-            - gradle/test
