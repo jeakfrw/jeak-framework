@@ -6,7 +6,7 @@ import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
 import java.util.Optional;
 
 /**
- * General entrypoint for permission checks in the framework.
+ * General entry point for permission checks in the framework.
  * This can be used for plugins that require more specialized checks where {@link ISubject}, {@link IGroup} and {@link ITS3Subject} are not sufficient.
  */
 public interface IPermissionService {

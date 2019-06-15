@@ -25,6 +25,7 @@ public interface ITS3Subject extends ISubject {
 
     /**
      * Returns a query request that will tell the TeamSpeak server to assign this permission to this subject.
+     * @apiNote Just like with framework permissions, setting a permission to 0 is not the same as removing it in TS3.
      */
     IQueryRequest assignPermission(String permSID, int value, boolean permSkip, boolean permNegated);
 
@@ -37,4 +38,9 @@ public interface ITS3Subject extends ISubject {
      * @see #assignPermission(String, int, boolean) with {@code permSkip} set to false.
      */
     IQueryRequest assignPermission(String permSID, int value);
+
+    /**
+     * Returns a query request that will tell the TeamSpeak server to remove the permission from this subject.
+     */
+    IQueryRequest unassignPermission(String permSID);
 }

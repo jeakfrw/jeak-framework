@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.permission.base;
 
 import de.fearnixx.jeak.profile.IUserProfile;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,4 +36,19 @@ public interface ISubject {
      * @see #hasPermission(String) but with more control over whether or not the permission is set and what exact value is defined.
      */
     Optional<IPermission> getPermission(String permission);
+
+    /**
+     * Sets the given permission on this subject to the given value.
+     * @apiNote it's advised to use {@link ITS3Subject#assignPermission(String, int)} and its overloaded signatures for TeamSpeak 3 permissions.
+     * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
+     *          Otherwise {@link IPermissionService#getFrameworkProvider()} is used.     */
+    void setPermission(String permission, int value);
+
+    /**
+     * Removes the given permission from this subject.
+     * @apiNote This is not the same as setting the permission to 0 as a 0-value can override other values.
+     * @apiNote it's advised to use {@link ITS3Subject#unassignPermission(String)} for TeamSpeak 3 permissions.
+     * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
+     *          Otherwise {@link IPermissionService#getFrameworkProvider()} is used.     */
+    void removePermission(String permission);
 }

@@ -2,8 +2,9 @@ package de.fearnixx.jeak.service.permission.framework;
 
 import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.profile.IUserProfile;
+import de.fearnixx.jeak.profile.event.IProfileEvent;
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.permission.base.IGroup;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.mlessmann.confort.LoaderFactory;
@@ -11,10 +12,12 @@ import de.mlessmann.confort.api.lang.IConfigLoader;
 import de.mlessmann.confort.config.FileConfig;
 
 import java.io.File;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class FrameworkPermissionService implements IPermissionProvider {
+public class InternalPermissionProvider implements IPermissionProvider {
 
     public static final String SYSTEM_ID = "jeak";
 
@@ -23,31 +26,32 @@ public class FrameworkPermissionService implements IPermissionProvider {
 
     private File permissionDirectory;
 
+    private SubjectCache subjectCache = new SubjectCache(permissionDirectory);
+
     @Override
     public Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID) {
         Optional<IUserProfile> optProfile = profileSvc.getProfile(clientTS3UniqueID);
 
         return optProfile.map(profile -> {
             UUID profileUUID = profile.getUniqueId();
-            StoredSubject subject = makeSubject(profileUUID);
-
-            return subject.getPermission(permSID).orElse(null);
+            SubjectAccessor store = subjectCache.getSubject(profileUUID);
+            return store.getPermission(permSID).orElse(null);
         });
     }
 
     @Override
     public Optional<IPermission> getPermission(String permSID, UUID subjectUniqueID) {
-        StoredSubject subject = makeSubject(subjectUniqueID);
-        return subject.getPermission(permSID);
+        SubjectAccessor store = subjectCache.getSubject(subjectUniqueID);
+        return store.getPermission(permSID);
     }
 
-    private StoredSubject makeSubject(UUID uuid) {
-        IConfigLoader loader = LoaderFactory.getLoader("application/json");
-        File subjectFile = new File(permissionDirectory, uuid.toString() + ".json");
-        FileConfig config = new FileConfig(loader, subjectFile);
-        return new ConfigSubject(uuid, config, this::makeGroup);
+    @Override
+    public void setPermission(String permSID, UUID subjectUniqueID, int value) {
+
     }
 
-    private IGroup makeGroup(UUID uuid) {
+    @Override
+    public void removePermission(String permSID, UUID subjectUniqueID) {
+
     }
 }

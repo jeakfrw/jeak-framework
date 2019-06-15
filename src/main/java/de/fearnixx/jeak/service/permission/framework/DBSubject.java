@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.permission.framework;
 
+import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
-import de.fearnixx.jeak.service.permission.base.Permission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,17 +9,18 @@ import javax.sql.DataSource;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class DBSubject extends PermissionSubject {
+public class DBSubject extends SubjectAccessor {
 
     private static final Logger logger = LoggerFactory.getLogger(DBSubject.class);
 
     private DataSource dataSource;
 
-    public DBSubject(UUID subjectUUID, DataSource dataSource) {
-        super(subjectUUID);
+    public DBSubject(UUID subjectUUID, SubjectCache permissionSvc, DataSource dataSource) {
+        super(subjectUUID, permissionSvc);
         this.dataSource = dataSource;
     }
 
@@ -33,7 +34,7 @@ public class DBSubject extends PermissionSubject {
 
             if (result.next()) {
                 int permValue = result.getInt(1);
-                IPermission perm = new FrameworkPermission(getUniqueID(), permSID, permValue);
+                IPermission perm = new FrameworkPermission(permSID, permValue);
                 return Optional.of(perm);
             }
         } catch (SQLException e) {
@@ -43,7 +44,42 @@ public class DBSubject extends PermissionSubject {
     }
 
     @Override
-    public SubjectType getType() {
-        return SubjectType.USER;
+    public Optional<Integer> getLinkedServerGroup() {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public List<UUID> getMemberSubjects() {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public List<IGroup> getParents() {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public boolean hasPermission(String permission) {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public void setPermission(String permission, int value) {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public void removePermission(String permission) {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public void saveIfModified() {
+        // not needed for database operations.
+    }
+
+    @Override
+    public void mergeInto(UUID into) {
+        throw new UnsupportedOperationException("Not implemented!");
     }
 }
