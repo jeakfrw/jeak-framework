@@ -10,6 +10,7 @@ import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.database.IDatabaseService;
 import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.permission.framework.InternalPermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.AbstractTS3PermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.DBPermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
@@ -42,25 +43,40 @@ public class PermissionService implements IPermissionService {
     @Inject
     private IEventService eventService;
 
+    private ITS3PermissionProvider ts3PermProvider;
+
     @Listener(order = Listener.Orders.SYSTEM)
     public void onPreInitialize(IBotStateEvent.IPreInitializeEvent event) {
-        AbstractTS3PermissionProvider provider;
+        makeInternalProvider();
+        makeTS3Provider();
+    }
+
+    private void makeInternalProvider() {
+        InternalPermissionProvider permissionProvider = new InternalPermissionProvider();
+
+        injectionService.injectInto(permissionProvider);
+        eventService.registerListener(permissionProvider);
+        registerProvider(InternalPermissionProvider.SYSTEM_ID, permissionProvider);
+    }
+
+    private void makeTS3Provider() {
+        AbstractTS3PermissionProvider permissionProvider;
 
         Optional<IPersistenceUnit> optPersistenceUnit = databaseService.getPersistenceUnit(PERSISTENCE_UNIT_NAME);
         if (optPersistenceUnit.isPresent()) {
             logger.info("Persistence unit available! Using faster db-supported algorithm.");
-            provider = new DBPermissionProvider();
+            permissionProvider = new DBPermissionProvider();
 
         } else  {
             logger.warn("Persistence unit not available. Expect degraded performance in permission-checks.");
             logger.info("Please consider registering persistence unit \"{}\" to enable direct database access.", PERSISTENCE_UNIT_NAME);
-            provider = new QueryPermissionProvider();
+            permissionProvider = new QueryPermissionProvider();
         }
 
-        injectionService.injectInto(provider);
-        eventService.registerListener(provider);
-        serviceManager.registerService(ITS3PermissionProvider.class, provider);
-        registerProvider(IUserIdentity.SERVICE_TEAMSPEAK, provider);
+        injectionService.injectInto(permissionProvider);
+        eventService.registerListener(permissionProvider);
+        serviceManager.registerService(ITS3PermissionProvider.class, permissionProvider);
+        ts3PermProvider = permissionProvider;
     }
 
     @Override
@@ -72,7 +88,7 @@ public class PermissionService implements IPermissionService {
     public void registerProvider(String systemID, IPermissionProvider provider) {
         Objects.requireNonNull(provider, "Permission provider may not be null!");
 
-        IPermissionProvider existing = providers.put(systemID, provider);;
+        IPermissionProvider existing = providers.put(systemID, provider);
         if (existing != null) {
             logger.info("Replaced permission provider for sID \"{}\": {} with {}",
                     systemID, existing.getClass().getName(), provider.getClass().getName());
@@ -81,8 +97,7 @@ public class PermissionService implements IPermissionService {
 
     @Override
     public ITS3PermissionProvider getTS3Provider() {
-        return (ITS3PermissionProvider) provide(IUserIdentity.SERVICE_TEAMSPEAK)
-                .orElseThrow(() -> new IllegalStateException("TeamSpeak permission provider not registered!"));
+        return ts3PermProvider;
     }
 
     @Override

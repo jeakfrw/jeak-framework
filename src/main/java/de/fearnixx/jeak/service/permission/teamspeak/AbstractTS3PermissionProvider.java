@@ -5,14 +5,15 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public abstract class AbstractTS3PermissionProvider implements ITS3PermissionProvider {
 
@@ -42,6 +43,17 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
 
     @Override
     public abstract void clearCache(ITS3Permission.PriorityType type, Integer optClientOrGroupID, Integer optChannelID);
+
+    @Override
+    public Optional<ITS3Permission> getPermission(String permSID, String clientTS3UniqueID) {
+        Optional<IClient> optClient = dataCache.getClients()
+                .stream()
+                .filter(c -> c.getClientUniqueID().equals(clientTS3UniqueID))
+                .findFirst();
+        final ITS3Permission[] perm = new ITS3Permission[]{null};
+        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
+        return Optional.ofNullable(perm[0]);
+    }
 
     @Override
     public Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID) {
@@ -78,7 +90,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
                 continue;
             }
 
-            if ((value >= maxValue|| negateFlag)
+            if ((value >= maxValue || negateFlag)
                     && type.getWeight() > maxWeight) {
                 effective = perm;
                 maxValue = value;
@@ -100,17 +112,6 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
         getChannelPermission(client.getChannelID(), permSID).ifPresent(result::add);
 
         return result;
-    }
-
-    @Override
-    public Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID) {
-        Optional<IClient> optClient = dataCache.getClients()
-                .stream()
-                .filter(c -> c.getClientUniqueID().equals(clientTS3UniqueID))
-                .findFirst();
-        final IPermission[] perm = new IPermission[]{null};
-        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
-        return Optional.ofNullable(perm[0]);
     }
 
     @Override

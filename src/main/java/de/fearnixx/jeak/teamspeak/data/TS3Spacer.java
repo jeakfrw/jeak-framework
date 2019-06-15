@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +17,6 @@ public class TS3Spacer extends TS3Channel implements ISpacer {
     public static final Pattern repeatedPattern = Pattern.compile("^\\[\\*c?spacer(\\d*\\.*\\d*)\\].+$");
 
     public TS3Spacer() {
-        super();
     }
 
     @Override

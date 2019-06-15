@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
 import de.fearnixx.jeak.reflect.FrameworkService;
+import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission.PriorityType;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by MarkL4YG on 04-Feb-18

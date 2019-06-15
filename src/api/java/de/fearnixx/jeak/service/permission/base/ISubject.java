@@ -29,6 +29,7 @@ public interface ISubject {
      * Whether or not the subject has a positive value set for the provided permission.
      * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
      *          Otherwise {@link IPermissionService#getFrameworkProvider()} is used.
+     * @implNote It is <strong>not possible</strong> to check TS3 permissions with this. Use {@link ITS3Subject} for that.
      */
     boolean hasPermission(String permission);
 
@@ -39,7 +40,7 @@ public interface ISubject {
 
     /**
      * Sets the given permission on this subject to the given value.
-     * @apiNote it's advised to use {@link ITS3Subject#assignPermission(String, int)} and its overloaded signatures for TeamSpeak 3 permissions.
+     * @apiNote Use {@link ITS3Subject#assignPermission(String, int)} and its overloaded signatures for TeamSpeak 3 permissions.
      * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
      *          Otherwise {@link IPermissionService#getFrameworkProvider()} is used.     */
     void setPermission(String permission, int value);
@@ -47,7 +48,7 @@ public interface ISubject {
     /**
      * Removes the given permission from this subject.
      * @apiNote This is not the same as setting the permission to 0 as a 0-value can override other values.
-     * @apiNote it's advised to use {@link ITS3Subject#unassignPermission(String)} for TeamSpeak 3 permissions.
+     * @apiNote Use {@link ITS3Subject#unassignPermission(String)} for TeamSpeak 3 permissions.
      * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
      *          Otherwise {@link IPermissionService#getFrameworkProvider()} is used.     */
     void removePermission(String permission);
