@@ -6,18 +6,12 @@ import java.util.UUID;
 
 public class FrameworkPermission implements IPermission {
 
-    private final UUID subjectUUID;
     private final String permSID;
     private final int value;
 
-    public FrameworkPermission(UUID subjectUUID, String permSID, int value) {
-        this.subjectUUID = subjectUUID;
+    public FrameworkPermission(String permSID, int value) {
         this.permSID = permSID;
         this.value = value;
-    }
-
-    public UUID getSubjectUUID() {
-        return subjectUUID;
     }
 
     @Override

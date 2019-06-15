@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.permission.framework;
 import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.mlessmann.confort.LoaderFactory;
@@ -25,20 +26,28 @@ public class FrameworkPermissionService implements IPermissionProvider {
     @Override
     public Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID) {
         Optional<IUserProfile> optProfile = profileSvc.getProfile(clientTS3UniqueID);
-        if (!optProfile.isPresent()) {
-            return Optional.empty();
-        }
 
-        UUID profileUUID = optProfile.get().getUniqueId();
-        PermissionSubject subject = makeSubject(profileUUID);
+        return optProfile.map(profile -> {
+            UUID profileUUID = profile.getUniqueId();
+            StoredSubject subject = makeSubject(profileUUID);
 
+            return subject.getPermission(permSID).orElse(null);
+        });
+    }
+
+    @Override
+    public Optional<IPermission> getPermission(String permSID, UUID subjectUniqueID) {
+        StoredSubject subject = makeSubject(subjectUniqueID);
         return subject.getPermission(permSID);
     }
 
-    private PermissionSubject makeSubject(UUID uuid) {
+    private StoredSubject makeSubject(UUID uuid) {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
         File subjectFile = new File(permissionDirectory, uuid.toString() + ".json");
         FileConfig config = new FileConfig(loader, subjectFile);
-        return new ConfigSubject(uuid, config);
+        return new ConfigSubject(uuid, config, this::makeGroup);
+    }
+
+    private IGroup makeGroup(UUID uuid) {
     }
 }
