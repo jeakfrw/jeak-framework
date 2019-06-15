@@ -151,6 +151,11 @@ public class PluginManager {
                     logger.warn("Failed to construct plugin URL. HOW DID YOU DO THIS???", e);
                 }
             });
+
+            if (includeCP) {
+                // This is required for Java versions where the system classloader is not an URLClassLoader.
+                urlList.addAll(ClasspathHelper.forJavaClassPath());
+            }
         }
     }
 
