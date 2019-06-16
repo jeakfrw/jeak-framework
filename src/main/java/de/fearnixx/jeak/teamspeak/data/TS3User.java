@@ -33,8 +33,8 @@ public class TS3User extends TS3UserHolder {
     }
 
     @Override
-    public List<IGroup> getParents() {
-        return permSubject.getParents();
+    public List<IGroup> getServerGroups() {
+        return permSubject.getServerGroups();
     }
 
     @Override

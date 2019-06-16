@@ -71,8 +71,8 @@ public class SubjectCache {
         UUID from = mergeEvent.getMergeSource().getUniqueId();
         UUID into = mergeEvent.getTargetProfile().getUniqueId();
 
+        getSubject(from).mergeFrom(getSubject(into));
         profileMerges.put(from, into);
-        getSubject(from).mergeInto(into);
     }
 
     @Listener

@@ -25,9 +25,11 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
 
     public abstract void saveIfModified();
 
-    public abstract void mergeInto(UUID into);
-
     protected SubjectCache getCache() {
         return permissionSvc;
     }
+
+    public abstract void mergeFrom(SubjectAccessor fromSubject);
+
+    public abstract void invalidate();
 }

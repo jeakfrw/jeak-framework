@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.permission.framework;
 
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
+import de.fearnixx.jeak.service.permission.base.ISubject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,12 +45,32 @@ public class DBSubject extends SubjectAccessor {
     }
 
     @Override
+    public List<IPermission> getPermissions() {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public List<IPermission> getPermissions(String systemId) {
+        throw new UnsupportedOperationException("DBSubjects cannot list permissions from other system IDs");
+    }
+
+    @Override
     public Optional<Integer> getLinkedServerGroup() {
         throw new UnsupportedOperationException("Not implemented!");
     }
 
     @Override
-    public List<UUID> getMemberSubjects() {
+    public List<UUID> getMembers() {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public boolean addMember(UUID uuid) {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public boolean addMember(ISubject subject) {
         throw new UnsupportedOperationException("Not implemented!");
     }
 
@@ -79,7 +100,12 @@ public class DBSubject extends SubjectAccessor {
     }
 
     @Override
-    public void mergeInto(UUID into) {
+    public void mergeFrom(SubjectAccessor from) {
         throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
+    public void invalidate() {
+
     }
 }

@@ -94,8 +94,8 @@ public class TS3Channel extends TS3ChannelHolder {
     }
 
     @Override
-    public List<IGroup> getParents() {
-        return permSubject.getParents();
+    public List<IGroup> getServerGroups() {
+        return permSubject.getServerGroups();
     }
 
     @Override

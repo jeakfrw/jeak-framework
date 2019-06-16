@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.permission.base;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,13 +16,22 @@ public interface IPermissionProvider {
     /**
      * Returns the stored information about this permission for the specified client.
      * Shorthand to avoid uid -> uuid translation in invoker code.
+     * @see #getPermission(String, UUID)
      */
     Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID);
 
     /**
      * Returns the stored information about this permission for the specified user/profile.
+     * @implNote This should be the effective permission. This means that inherited and overwritten permissions shall be taken into account.
      */
     Optional<IPermission> getPermission(String permSID, UUID subjectUniqueID);
+
+    /**
+     * Returns all stored permissions of for the specified user.
+     * @implNote The list shall contain all permissions that are directly assigned to the specified user/profile.
+     *           Inherited or dynamically set permissions shall be excluded.
+     */
+    List<IPermission> listPermissions(UUID uniqueID);
 
     /**
      * If write-access is <strong>allowed</strong>: Sets the given permission for the given subject to the given value.

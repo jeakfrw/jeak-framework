@@ -29,8 +29,7 @@ public class PermissionSubject implements ISubject {
         return subjectUUID;
     }
 
-    @Override
-    public List<IGroup> getParents() {
+    public List<IGroup> getServerGroups() {
         return Collections.emptyList();
     }
 
@@ -59,6 +58,22 @@ public class PermissionSubject implements ISubject {
         } else {
             return provider.get().getPermission(permission, getUniqueID());
         }
+    }
+
+    @Override
+    public List<IPermission> getPermissions(String systemId) {
+        Optional<IPermissionProvider> provider = permissionService.provide(systemId);
+        if (provider.isEmpty()) {
+            logger.info("Provider was requested but is not present: {}", systemId);
+            return Collections.emptyList();
+        } else {
+            return provider.get().listPermissions(getUniqueID());
+        }
+    }
+
+    @Override
+    public List<IPermission> getPermissions() {
+        return getPermissions(InternalPermissionProvider.SYSTEM_ID);
     }
 
     @Override
