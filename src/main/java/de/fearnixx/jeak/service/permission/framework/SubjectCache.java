@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.permission.framework;
 
+import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.event.IProfileEvent;
 import de.fearnixx.jeak.reflect.Inject;
@@ -30,7 +31,6 @@ public class SubjectCache {
     // Map of all encountered profile merges during this runtime.
     // No persistence needed as their subjects will reflect the correct UUID on the next join.
     private final Map<UUID, UUID> profileMerges = new ConcurrentHashMap<>();
-    private final File permissionDirectory;
 
     private final Map<UUID, SubjectAccessor> cachedAccessors = new ConcurrentHashMap<>();
     private final Map<UUID, LocalDateTime> cacheTimings = new ConcurrentHashMap<>();
@@ -44,9 +44,8 @@ public class SubjectCache {
     @Inject
     private ITaskService taskService;
 
-    public SubjectCache(File permissionDirectory) {
-        this.permissionDirectory = permissionDirectory;
-    }
+    @Inject
+    private IBot bot;
 
     public synchronized SubjectAccessor getSubject(UUID uuid) {
         // When redirected, use that UUID. Otherwise, use the given one.
@@ -57,7 +56,7 @@ public class SubjectCache {
 
     private SubjectAccessor makeStoredSubject(UUID uuid) {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
-        File subjectFile = new File(permissionDirectory, uuid.toString() + ".json");
+        File subjectFile = new File(bot.getConfigDirectory(), "permissions/" + uuid.toString() + ".json");
         FileConfig config = new FileConfig(loader, subjectFile);
         return new ConfigSubject(uuid, config, this);
     }

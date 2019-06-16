@@ -105,12 +105,15 @@ public class ConfigSubject extends SubjectAccessor {
 
     @Override
     public synchronized void saveIfModified() {
-        if (isModified()) {
+        if (isModified() && !configRef.getRoot().isVirtual()) {
             try {
                 configRef.save();
+                logger.debug("Saved profile: {}", getUniqueID());
             } catch (IOException e) {
                 logger.warn("Failed to save permission subject configuration!", e);
             }
+        } else {
+            logger.debug("Not saving. Unmodified or virtual: {}", getUniqueID());
         }
     }
 
