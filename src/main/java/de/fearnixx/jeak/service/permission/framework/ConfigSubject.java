@@ -5,6 +5,7 @@ import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.IValueHolder;
+import de.mlessmann.confort.api.except.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,11 @@ public class ConfigSubject extends SubjectAccessor {
     public ConfigSubject(UUID subjectUUID, IConfig configRef, SubjectCache permissionSvc) {
         super(subjectUUID, permissionSvc);
         this.configRef = configRef;
+        try {
+            configRef.load();
+        } catch (IOException | ParseException e) {
+            throw new IllegalStateException("Cannot construct configuration subject due to an error!", e);
+        }
     }
 
     @Override
@@ -85,7 +91,7 @@ public class ConfigSubject extends SubjectAccessor {
 
     @Override
     public void setPermission(String permission, int value) {
-        configRef.getRoot().getNode("permissions", permission)
+        configRef.getRoot().getNode("permissions", permission, "value")
                 .setInteger(value);
         setModified();
     }

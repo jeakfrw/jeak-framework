@@ -86,7 +86,12 @@ public class QueryUserService extends AbstractUserService {
         List<IUser> result = new LinkedList<>();
         answer.getDataChain()
                 .stream()
-                .map(data -> (TS3User) new TS3User().copyFrom(data))
+                .map(data -> {
+                    TS3User user = new TS3User();
+                    user.copyFrom(data);
+                    applyPermissions(user);
+                    return user;
+                })
                 .forEach(result::add);
         return result;
     }

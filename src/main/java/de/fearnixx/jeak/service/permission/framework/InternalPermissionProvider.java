@@ -47,11 +47,13 @@ public class InternalPermissionProvider implements IPermissionProvider {
 
     @Override
     public void setPermission(String permSID, UUID subjectUniqueID, int value) {
-
+        SubjectAccessor accessor = subjectCache.getSubject(subjectUniqueID);
+        accessor.setPermission(permSID, value);
     }
 
     @Override
     public void removePermission(String permSID, UUID subjectUniqueID) {
-
+        SubjectAccessor accessor = subjectCache.getSubject(subjectUniqueID);
+        accessor.removePermission(permSID);
     }
 }
