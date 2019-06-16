@@ -4,7 +4,9 @@ import de.fearnixx.jeak.reflect.RequestBody;
 import de.fearnixx.jeak.reflect.RequestMapping;
 import de.fearnixx.jeak.reflect.RequestParam;
 import de.fearnixx.jeak.reflect.RestController;
+import de.fearnixx.jeak.service.controller.IResponseEntity;
 import de.fearnixx.jeak.service.controller.RequestMethod;
+import de.fearnixx.jeak.service.controller.ResponseEntity;
 
 @RestController(pluginId = "testPluginId", endpoint = "/test")
 public class TestController {
@@ -22,5 +24,10 @@ public class TestController {
     @RequestMapping(method = RequestMethod.POST, endpoint = "/body")
     public String sendBody(@RequestBody(type = String.class, name = "string") String string) {
         return "this is the body " + string;
+    }
+
+    public IResponseEntity<String> hallo() {
+        ResponseEntity<String> stringResponseEntity = new ResponseEntity<>("");
+        return stringResponseEntity;
     }
 }

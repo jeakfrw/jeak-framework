@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.PathParam;
 import de.fearnixx.jeak.reflect.RequestParam;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
@@ -15,6 +16,7 @@ import spark.Request;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.Map;
 import java.util.function.Function;
 
 import static spark.Spark.port;
@@ -27,6 +29,9 @@ public abstract class HttpServer {
     private static final String API_ENDPOINT = "/api";
     private int port = 8723;
     private ObjectMapper objectMapper;
+
+    @Inject
+    private RestConfiguration restConfiguration;
 
     public HttpServer() {
         this.objectMapper = new ObjectMapper();
@@ -105,6 +110,11 @@ public abstract class HttpServer {
     protected String getPathParamName(MethodParameter methodParameter) {
         Function<Annotation, Object> function = annotation -> ((PathParam) annotation).name();
         return (String) methodParameter.callAnnotationFunction(function, PathParam.class).get();
+    }
+
+    protected Map<String, String> loadHeaders() {
+        Map<String, String> headers = restConfiguration.getHeaders();
+        return headers;
     }
 
     /**
