@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.teamspeak.data;
 
-import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Group;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
@@ -33,7 +33,7 @@ public class TS3User extends TS3UserHolder {
     }
 
     @Override
-    public List<IGroup> getServerGroups() {
+    public List<ITS3Group> getServerGroups() {
         return permSubject.getServerGroups();
     }
 

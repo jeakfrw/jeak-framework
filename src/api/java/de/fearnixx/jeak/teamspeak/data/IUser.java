@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
@@ -10,7 +11,7 @@ import java.util.List;
  * Abstract representation of clients that are offline.
  * Base interface for all clients.
  */
-public interface IUser extends ITS3Subject {
+public interface IUser extends ITS3Subject, ISubject {
     /**
      * @return The database ID of this client
      */

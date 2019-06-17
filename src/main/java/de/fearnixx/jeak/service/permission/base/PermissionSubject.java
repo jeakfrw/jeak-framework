@@ -1,6 +1,10 @@
 package de.fearnixx.jeak.service.permission.base;
 
 import de.fearnixx.jeak.service.permission.framework.InternalPermissionProvider;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Group;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +17,7 @@ import java.util.UUID;
  * Main implementation of {@link ISubject}.
  * This implementation delegates the permission requests to their respective permission providers so they can apply their own logic.
  */
-public class PermissionSubject implements ISubject {
+public class PermissionSubject implements ISubject, ITS3Subject {
 
     private static final Logger logger = LoggerFactory.getLogger(PermissionSubject.class);
 
@@ -25,12 +29,30 @@ public class PermissionSubject implements ISubject {
         this.subjectUUID = subjectUUID;
     }
 
+    // == Abstract subject == //
+
     public UUID getUniqueID() {
         return subjectUUID;
     }
 
-    public List<IGroup> getServerGroups() {
+    public List<ITS3Group> getServerGroups() {
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<IGroup> getParents(String systemID) {
+        Optional<IPermissionProvider> provider = permissionService.provide(systemID;
+        if (provider.isEmpty()) {
+            logger.info("Provider was requested but is not present: {}", systemID);
+            return Collections.emptyList();
+        } else {
+            return provider.get().getParentsOf(getUniqueID());
+        }
+    }
+
+    @Override
+    public List<IGroup> getParents() {
+        return permissionService.getFrameworkProvider().getParentsOf(getUniqueID());
     }
 
     @Override
@@ -114,6 +136,45 @@ public class PermissionSubject implements ISubject {
         } else {
             provider.get().removePermission(permission, getUniqueID());
         }
+    }
+
+    // == TeamSpeak 3 subject == //
+
+
+    @Override
+    public Optional<ITS3Permission> getTS3Permission(String permSID) {
+        return permissionService.getTS3Provider()
+                .getActivePermission(getUniqueID(), permSID);
+    }
+
+    @Override
+    public Optional<ITS3Permission> getActiveTS3Permission(String permSID) {
+        return Optional.empty();
+    }
+
+    @Override
+    public IQueryRequest assignPermission(String permSID, int value, boolean permSkip, boolean permNegated) {
+        return null;
+    }
+
+    @Override
+    public IQueryRequest assignPermission(String permSID, int value, boolean permSkip) {
+        return null;
+    }
+
+    @Override
+    public IQueryRequest assignPermission(String permSID, int value) {
+        return null;
+    }
+
+    @Override
+    public IQueryRequest unassignPermission(String permSID) {
+        return null;
+    }
+
+    @Override
+    public ITS3Group getChannelGroup() {
+        return null;
     }
 }
 

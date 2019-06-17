@@ -34,6 +34,13 @@ public interface IPermissionProvider {
     List<IPermission> listPermissions(UUID uniqueID);
 
     /**
+     * Returns all groups the specified subject is member of.
+     * @implNote This should be all groups directly associated with this subject but exclude all transitive relations.
+     *           However, this should include groups linked via {@link IGroup#getLinkedServerGroup()}.
+     */
+    List<IGroup> getParentsOf(UUID subjectUniqueID);
+
+    /**
      * If write-access is <strong>allowed</strong>: Sets the given permission for the given subject to the given value.
      * If write-access is <strong>not allowed</strong>: Logs a warning for illegal access.
      * @apiNote Setting permissions to 0 is explicit and should not be interpreted as a method to remove permissions.

@@ -1,13 +1,16 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Specialized permission provider that is capable of reflecting the permission evaluation from TeamSpeak 3.
  */
 public interface ITS3PermissionProvider {
 
-    Optional<ITS3Permission> getPermission(String clientUniqueID, String permSID);
+    Optional<ITS3Permission> getActivePermission(UUID subjectUniqueID, String permSID);
+
+    Optional<ITS3Permission> getActivePermission(String clientUniqueID, String permSID);
 
     Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID);
 

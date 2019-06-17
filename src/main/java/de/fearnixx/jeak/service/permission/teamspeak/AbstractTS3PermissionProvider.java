@@ -45,7 +45,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     public abstract void clearCache(ITS3Permission.PriorityType type, Integer optClientOrGroupID, Integer optChannelID);
 
     @Override
-    public Optional<ITS3Permission> getPermission(String permSID, String clientTS3UniqueID) {
+    public Optional<ITS3Permission> getActivePermission(String permSID, String clientTS3UniqueID) {
         Optional<IClient> optClient = dataCache.getClients()
                 .stream()
                 .filter(c -> c.getClientUniqueID().equals(clientTS3UniqueID))
