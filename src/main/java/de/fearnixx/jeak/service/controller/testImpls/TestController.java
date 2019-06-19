@@ -12,8 +12,10 @@ import de.fearnixx.jeak.service.controller.ResponseEntity;
 public class TestController {
 
     @RequestMapping(method = RequestMethod.GET, endpoint = "/hello")
-    public DummyObject hello() {
-        return new DummyObject("Finn", 20);
+    public ResponseEntity<DummyObject> hello() {
+        ResponseEntity<DummyObject> responseEntity = new ResponseEntity<>(new DummyObject("Finn", 20));
+        responseEntity.addHeader("Cache-Control", "max-age=0");
+        return responseEntity;
     }
 
     @RequestMapping(method =  RequestMethod.GET, endpoint = "/info")
@@ -28,6 +30,7 @@ public class TestController {
 
     public IResponseEntity<String> hallo() {
         ResponseEntity<String> stringResponseEntity = new ResponseEntity<>("");
+        stringResponseEntity.addHeader("some-header", "GET");
         return stringResponseEntity;
     }
 }

@@ -5,14 +5,19 @@ import de.fearnixx.jeak.reflect.RequestBody;
 import de.fearnixx.jeak.reflect.RequestMapping;
 import de.fearnixx.jeak.reflect.RequestParam;
 import de.fearnixx.jeak.service.controller.RequestMethod;
+import de.fearnixx.jeak.service.controller.ResponseEntity;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.connection.IConnectionVerifier;
+import de.fearnixx.jeak.service.controller.connection.RestConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Response;
 import spark.Route;
 import spark.Spark;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static spark.Spark.before;
 import static spark.Spark.halt;
@@ -21,7 +26,8 @@ public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
     private IConnectionVerifier connectionVerifier;
 
-    public SparkAdapter(IConnectionVerifier connectionVerifier) {
+    public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
+        super(restConfiguration);
         this.connectionVerifier = connectionVerifier;
     }
 
@@ -38,6 +44,7 @@ public class SparkAdapter extends HttpServer {
                     generateRoute(path, controllerContainer, controllerMethod));
         });
     }
+
     /**
      * Registers a method to Spark.
      *
@@ -47,6 +54,7 @@ public class SparkAdapter extends HttpServer {
      *                   {@code path} and {@code httpMethod} is made.
      */
     private void registerMethod(RequestMethod httpMethod, String path, Route route) {
+        checkAndSetCors(path);
         switch (httpMethod) {
             case GET:
                 Spark.get(path, route);
@@ -56,12 +64,6 @@ public class SparkAdapter extends HttpServer {
                 break;
             case POST:
                 Spark.post(path, route);
-                Spark.options(path, (request, response) -> {
-                    response.header("Access-Control-Allow-Methods", "POST, OPTIONS");
-                    response.header("Access-Control-Allow-Headers", "Content-Type");
-                    response.header("Access-Control-Allow-Origin", "*");
-                    return "";
-                });
                 break;
             case PATCH:
                 Spark.patch(path, route);
@@ -73,8 +75,17 @@ public class SparkAdapter extends HttpServer {
                 Spark.head(path, route);
                 break;
             default:
-                logger.warn("Failed to register the route to " + path);
+                logger.warn("Failed to register the route for: " + path);
                 break;
+        }
+    }
+
+    private void checkAndSetCors(String path) {
+        if (isCorsEnabled()) {
+            Spark.options(path, (request, response) -> {
+                setHeaders(response, new HashMap<>());
+                return "";
+            });
         }
     }
 
@@ -111,12 +122,30 @@ public class SparkAdapter extends HttpServer {
             }
             Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
             String contentType = controllerMethod.getAnnotation(RequestMapping.class).contentType();
+
+            Map<String, String> additionalHeaders = new HashMap<>();
+            if (returnValue instanceof ResponseEntity) {
+                ResponseEntity responseEntity = (ResponseEntity) returnValue;
+                additionalHeaders.putAll(responseEntity.getHeaders());
+                returnValue = responseEntity.getResponseEntity();
+            }
+
             if (contentType.contains("json")) {
                 response.type(contentType);
                 returnValue = toJson(returnValue);
             }
-            response.header("Access-Control-Allow-Origin", "*");
+            setHeaders(response, additionalHeaders);
             return returnValue;
         };
+    }
+
+    private void setHeaders(Response response, Map<String, String> additionalHeaders) {
+        Map<String, String> headers = loadHeaders();
+        if (isCorsEnabled()) {
+            headers.putAll(loadCorsHeaders());
+        }
+        // Important to add the additional headers afterwards, so they can override the others
+        headers.putAll(additionalHeaders);
+        headers.forEach(response::header);
     }
 }

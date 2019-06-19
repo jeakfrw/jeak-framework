@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.PathParam;
 import de.fearnixx.jeak.reflect.RequestParam;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
@@ -13,13 +12,12 @@ import de.fearnixx.jeak.service.controller.controller.MethodParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
+import spark.Spark;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.function.Function;
-
-import static spark.Spark.port;
 
 /**
  * A wrapper for the http server.
@@ -27,23 +25,24 @@ import static spark.Spark.port;
 public abstract class HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
     private static final String API_ENDPOINT = "/api";
-    private int port = 8723;
     private ObjectMapper objectMapper;
 
-    @Inject
     private RestConfiguration restConfiguration;
 
-    public HttpServer() {
+    public HttpServer(RestConfiguration restConfiguration) {
         this.objectMapper = new ObjectMapper();
         this.objectMapper.setVisibility(PropertyAccessor.SETTER, JsonAutoDetect.Visibility.NONE);
         this.objectMapper.setVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.NONE);
         this.objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.NONE);
-        init(port);
+        this.restConfiguration = restConfiguration;
     }
 
-    public void init(int port) {
-        this.port = port;
-        port(port);
+    /**
+     * Start the http server.
+     *
+     */
+    public void start() {
+        restConfiguration.getPort().ifPresent(Spark::port);
     }
 
     /**
@@ -112,8 +111,17 @@ public abstract class HttpServer {
         return (String) methodParameter.callAnnotationFunction(function, PathParam.class).get();
     }
 
+    protected boolean isCorsEnabled() {
+        return restConfiguration.isCorsEnabled();
+    }
+
+    protected Map<String, String> loadCorsHeaders() {
+        return restConfiguration.getCorsHeaders();
+    }
+
     protected Map<String, String> loadHeaders() {
         Map<String, String> headers = restConfiguration.getHeaders();
+        headers.putAll(restConfiguration.getCorsHeaders());
         return headers;
     }
 

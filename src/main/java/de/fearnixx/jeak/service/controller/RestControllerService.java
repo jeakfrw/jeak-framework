@@ -30,7 +30,7 @@ public class RestControllerService implements IRestControllerService {
         this.connectionVerifier = new ControllerRequestVerifier();
         this.restConfiguration = new RestConfiguration();
         this.controllers = controllers;
-        this.httpServer = new SparkAdapter(connectionVerifier);
+        this.httpServer = new SparkAdapter(connectionVerifier, restConfiguration);
     }
 
     @Listener
@@ -39,6 +39,7 @@ public class RestControllerService implements IRestControllerService {
         injectionService.injectInto(restConfiguration);
         restConfiguration.loadConfig();
         injectionService.injectInto(httpServer);
+        httpServer.start();
     }
 
 
