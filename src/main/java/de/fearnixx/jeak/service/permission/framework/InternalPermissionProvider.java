@@ -7,8 +7,10 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
+import de.fearnixx.jeak.service.permission.base.ISubject;
 
 import java.io.File;
 import java.util.List;
@@ -25,19 +27,22 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Inject
     private IEventService eventService;
 
-    @Inject
-    private IProfileService profileSvc;
-
-    @Inject
-    @Config(category = "permissions", id = "dummy")
-    private File permissionDirectory;
-
     private SubjectCache subjectCache = new SubjectCache();
 
     @Listener
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
+    }
+
+    @Override
+    public Optional<ISubject> getSubject(UUID subjectUUID) {
+        return Optional.of(subjectCache.getSubject(subjectUUID));
+    }
+
+    @Override
+    public List<IGroup> getParentsOf(UUID subjectUniqueID) {
+        return subjectCache.getSubject(subjectUniqueID).getParents();
     }
 
     @Override
@@ -51,12 +56,14 @@ public class InternalPermissionProvider implements IPermissionProvider {
     }
 
     @Override
-    public void setPermission(String permSID, UUID subjectUniqueID, int value) {
+    public boolean setPermission(String permSID, UUID subjectUniqueID, int value) {
         subjectCache.getSubject(subjectUniqueID).setPermission(permSID, value);
+        return true;
     }
 
     @Override
-    public void removePermission(String permSID, UUID subjectUniqueID) {
+    public boolean removePermission(String permSID, UUID subjectUniqueID) {
         subjectCache.getSubject(subjectUniqueID).removePermission(permSID);
+        return true;
     }
 }
