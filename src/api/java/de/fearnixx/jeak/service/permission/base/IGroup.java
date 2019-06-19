@@ -14,6 +14,8 @@ public interface IGroup extends ISubject {
     /**
      * When set, this will cause all members of the TeamSpeak server group to become members of this group automatically.
      * They cannot be removed from the group unless they are removed from the server group or the link is removed.
+     *
+     * @apiNote For permission systems that do not support this type of connection, this will always be empty.
      */
     Optional<Integer> getLinkedServerGroup();
 
