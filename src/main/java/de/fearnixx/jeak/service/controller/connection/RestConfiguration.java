@@ -11,10 +11,14 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class RestConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(RestConfiguration.class);
     private static final String DEFAULT_TOKEN_CONFIG = "/restService/config.json";
+    private static final String HEADER_CONFIG = "headers";
+    private static final String CORS_CONFIG = "cors";
+    private static final String CORS_CONFIG_ENABLED = "enabled";
 
     @Inject
     @Config(id = "rest")
@@ -49,10 +53,32 @@ public class RestConfiguration extends Configurable {
         return false;
     }
 
+    public Optional<Integer> getPort() {
+        return getConfig().getNode("port").optInteger();
+    }
+
     public Map<String, String> getHeaders() {
         logger.debug("Loading headers");
         Map<String, String> header = new HashMap<>();
-        getConfig().getNode("headers")
+        getConfig().getNode(HEADER_CONFIG)
+                .optMap()
+                .orElseGet(Collections::emptyMap)
+                .forEach((s, iConfigNode) -> header.put(s, iConfigNode.asString()));
+        return header;
+    }
+
+    public boolean isCorsEnabled() {
+        Optional<Map<String, IConfigNode>> cors = getConfig().getNode(CORS_CONFIG)
+                .optMap();
+        if (!cors.isPresent()) {
+            return false;
+        }
+        return cors.get().get(CORS_CONFIG_ENABLED).asBoolean();
+    }
+
+    public Map<String, String> getCorsHeaders() {
+        Map<String, String> header = new HashMap<>();
+        getConfig().getNode(CORS_CONFIG, HEADER_CONFIG)
                 .optMap()
                 .orElseGet(Collections::emptyMap)
                 .forEach((s, iConfigNode) -> header.put(s, iConfigNode.asString()));
