@@ -14,6 +14,14 @@ import java.util.UUID;
 public interface IPermissionProvider {
 
     /**
+     * Returns the internal subject representation of this permission system.
+     * Only {@link Optional#empty()} if the permission system is read-only and the requested subject does not exist.
+     * If the permission system is writable and the subject does not exist, the subject should be created and reserved when this is called.
+     * It shall be persisted when any information is written.
+     */
+    Optional<ISubject> getSubject(UUID subjectUUID);
+
+    /**
      * Returns the stored information about this permission for the specified user/profile.
      * @implNote This should be the effective permission. This means that inherited and overwritten permissions shall be taken into account.
      */
@@ -35,18 +43,18 @@ public interface IPermissionProvider {
 
     /**
      * If write-access is <strong>allowed</strong>: Sets the given permission for the given subject to the given value.
-     * If write-access is <strong>not allowed</strong>: Logs a warning for illegal access.
+     * If write-access is <strong>not allowed</strong>: Logs a warning for illegal access and returns {@code false}.
      * @apiNote Setting permissions to 0 is explicit and should not be interpreted as a method to remove permissions.
      * @implNote <strong>DO NOT THROW</strong> an exception for when no write access is intended
      *           as this breaks the ability to replace the provider with one that has write access.
      */
-    void setPermission(String permSID, UUID subjectUniqueID, int value);
+    boolean setPermission(String permSID, UUID subjectUniqueID, int value);
 
     /**
      * If write-access is <strong>allowed</strong>: Removes the given permission from the given subject.
-     * If write-access is <strong>not allowed</strong>: Logs a warning for illegal access.
+     * If write-access is <strong>not allowed</strong>: Logs a warning for illegal access and returns {@code false}.
      * @implNote <strong>DO NOT THROW</strong> an exception for when no write access is intended
      *           as this breaks the ability to replace the provider with one that has write access.
      */
-    void removePermission(String permSID, UUID subjectUniqueID);
+    boolean removePermission(String permSID, UUID subjectUniqueID);
 }

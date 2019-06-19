@@ -10,6 +10,9 @@ import java.util.UUID;
 /**
  * Subjects are "things" that can have or lack permissions.
  * At the moment, these are users (and thus, clients) and groups.
+ *
+ * Subjects are always assigned with a specific permission system.
+ * Most of the time, this will be the internal framework permission system.
  */
 public interface ISubject {
 
@@ -23,23 +26,14 @@ public interface ISubject {
     UUID getUniqueID();
 
     /**
-     * Parents of this subject from which permissions are inherited for the given system.
-     *
-     * @apiNote TeamSpeak groups are not represented in this
-     */
-    List<IGroup> getParents(String systemID);
-
-    /**
-     * Short-hand for {@link #getParents(String)}.
+     * Returns parent groups directly assigned to this subject.
+     * This does not transitive parents.
      */
     List<IGroup> getParents();
 
     /**
      * Whether or not the subject has a positive value set for the provided permission.
-     *
-     * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
-     * Otherwise {@link IPermissionService#getFrameworkProvider()} is used.
-     * @implNote It is <strong>not possible</strong> to check TS3 permissions with this. Use {@link ITS3Subject} for that.
+     * @apiNote  It is <strong>not possible</strong> to check TS3 permissions with this. Use {@link ITS3Subject} for that.
      */
     boolean hasPermission(String permission);
 
@@ -49,13 +43,8 @@ public interface ISubject {
     Optional<IPermission> getPermission(String permission);
 
     /**
-     * Returns all permissions directly assigned to this subject for the given system ID.
-     */
-    List<IPermission> getPermissions(String systemId);
-
-    /**
-     * @see #getPermissions(String)
-     * Returns all permissions assigned to the subject at {@link IPermissionService#getFrameworkProvider()}.
+     * Returns all permissions directly assigned to this subject.
+     * This does not include transitive permissions.
      */
     List<IPermission> getPermissions();
 
@@ -63,20 +52,21 @@ public interface ISubject {
 
     /**
      * Sets the given permission on this subject to the given value.
+     * If the permission is not directly assigned to this subject, it is added to the subject.
      *
      * @apiNote Use {@link ITS3Subject#assignPermission(String, int)} and its overloaded signatures for TeamSpeak 3 permissions.
-     * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
-     * Otherwise {@link IPermissionService#getFrameworkProvider()} is used.
+     * @implNote If the permission system/provider is read-only, this will return {@code false}.
+     *           This may only be the case for third party permission providers as the internal provider allows rw-access.
      */
-    void setPermission(String permission, int value);
+    boolean setPermission(String permission, int value);
 
     /**
-     * Removes the given permission from this subject.
+     * Removes the given permission from this subject if directly assigned to it.
      *
      * @apiNote This is not the same as setting the permission to 0 as a 0-value can override other values.
      * @apiNote Use {@link ITS3Subject#unassignPermission(String)} for TeamSpeak 3 permissions.
-     * @apiNote If a prefix ("something:") is given, the corresponding permission provider will be used.
-     * Otherwise {@link IPermissionService#getFrameworkProvider()} is used.
+     * @implNote If the permission system/provider is read-only, this will return {@code false}.
+     *           This may only be the case for third party permission providers as the internal provider allows rw-access.
      */
-    void removePermission(String permission);
+    boolean removePermission(String permission);
 }
