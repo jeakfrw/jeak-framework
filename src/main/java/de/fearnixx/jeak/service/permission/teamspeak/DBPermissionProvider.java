@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.database.IPersistenceUnit;
+import de.fearnixx.jeak.service.permission.base.PermissionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +17,7 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
     private static final Logger logger = LoggerFactory.getLogger(DBPermissionProvider.class);
 
     @Inject
-    @PersistenceUnit(name = "ts3perms")
+    @PersistenceUnit(name = PermissionService.PERSISTENCE_UNIT_NAME)
     private IPersistenceUnit persistenceUnit;
 
     @Override
