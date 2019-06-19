@@ -8,8 +8,6 @@ import java.util.UUID;
  */
 public interface ITS3PermissionProvider {
 
-    Optional<ITS3Permission> getActivePermission(UUID subjectUniqueID, String permSID);
-
     Optional<ITS3Permission> getActivePermission(String clientUniqueID, String permSID);
 
     Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID);

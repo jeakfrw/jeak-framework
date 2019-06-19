@@ -5,9 +5,11 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +24,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     private final PermIdCache permIdCache = new PermIdCache();
 
     @Inject
-    private IDataCache dataCache;
+    private IUserService userService;
 
     @Inject
     private IServer server;
@@ -46,12 +48,11 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
 
     @Override
     public Optional<ITS3Permission> getActivePermission(String permSID, String clientTS3UniqueID) {
-        Optional<IClient> optClient = dataCache.getClients()
+        Optional<IClient> optClient = userService.findClientByUniqueID(clientTS3UniqueID)
                 .stream()
-                .filter(c -> c.getClientUniqueID().equals(clientTS3UniqueID))
                 .findFirst();
         final ITS3Permission[] perm = new ITS3Permission[]{null};
-        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
+        optClient.ifPresent(c -> getActivePermission(c.getClientID(), permSID).ifPresent(p -> perm[0] = p));
         return Optional.ofNullable(perm[0]);
     }
 
@@ -103,7 +104,8 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
 
     protected List<ITS3Permission> getActiveContext(Integer clientID, String permSID) {
         final List<ITS3Permission> result = new ArrayList<>();
-        IClient client = dataCache.getClientMap().get(clientID);
+        Optional<IClient> optClient = userService.getClientByID(clientID);
+        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Given client ID is not online: " + clientID));
 
         client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
         getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);
