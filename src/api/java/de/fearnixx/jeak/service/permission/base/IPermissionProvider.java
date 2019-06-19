@@ -14,13 +14,6 @@ import java.util.UUID;
 public interface IPermissionProvider {
 
     /**
-     * Returns the stored information about this permission for the specified client.
-     * Shorthand to avoid uid -> uuid translation in invoker code.
-     * @see #getPermission(String, UUID)
-     */
-    Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID);
-
-    /**
      * Returns the stored information about this permission for the specified user/profile.
      * @implNote This should be the effective permission. This means that inherited and overwritten permissions shall be taken into account.
      */

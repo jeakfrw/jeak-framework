@@ -2,7 +2,6 @@ package de.fearnixx.jeak.service.permission.framework;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.IProfileService;
-import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
@@ -39,16 +38,6 @@ public class InternalPermissionProvider implements IPermissionProvider {
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
-    }
-
-    @Override
-    public Optional<IPermission> getPermission(String permSID, String clientTS3UniqueID) {
-        Optional<IUserProfile> optProfile = profileSvc.getProfile(clientTS3UniqueID);
-
-        return optProfile.map(profile -> {
-            UUID profileUUID = profile.getUniqueId();
-            return subjectCache.getSubject(profileUUID).getPermission(permSID).orElse(null);
-        });
     }
 
     @Override
