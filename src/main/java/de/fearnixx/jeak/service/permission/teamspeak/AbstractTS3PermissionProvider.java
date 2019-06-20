@@ -52,7 +52,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
                 .stream()
                 .findFirst();
         final ITS3Permission[] perm = new ITS3Permission[]{null};
-        optClient.ifPresent(c -> getActivePermission(c.getClientID(), permSID).ifPresent(p -> perm[0] = p));
+        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
         return Optional.ofNullable(perm[0]);
     }
 

@@ -11,6 +11,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3UserSubject;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -201,7 +202,10 @@ public class ClientCache {
                 .map(IUserProfile::getUniqueId)
                 .orElseGet(UUID::randomUUID);
         logger.debug("Client {} got permission UUID: {}", client, uuid);
-        client.setPermSubject(new TS3PermissionSubject(permService, uuid));
+        final TS3UserSubject ts3Subject = new TS3UserSubject(permService.getTS3Provider(), client.getClientDBID());
+        client.setTs3PermSubject(ts3Subject);
+        client.setFrameworkSubjectUUID(uuid);
+        client.setFrwPermProvider(permService.getFrameworkProvider());
     }
 
     public Map<Integer, IClient> getClientMap() {

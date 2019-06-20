@@ -214,7 +214,7 @@ public class ChannelCache {
 
     private TS3Channel createChannel(boolean isSpacer) {
         TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
-        channel.setPermSubject(new TS3PermissionSubject(permService, UUID.randomUUID()));
+        channel.setPermSubject(new TS3PermissionSubject(UUID.randomUUID()));
         return channel;
     }
 

@@ -4,7 +4,7 @@ import de.fearnixx.jeak.profile.IProfileService;
 import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
-import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3UserSubject;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.TS3User;
@@ -64,6 +64,10 @@ public abstract class AbstractUserService implements IUserService {
                 .map(IUserProfile::getUniqueId)
                 .orElseGet(UUID::randomUUID);
         logger.debug("Client {} got permission UUID: {}", client, uuid);
-        client.setPermSubject(new TS3PermissionSubject(permService, uuid));
+
+        final Integer tsSubject = client.getClientDBID();
+        client.setTs3PermSubject(new TS3UserSubject(permService.getTS3Provider(), tsSubject));
+        client.setFrameworkSubjectUUID(uuid);
+        client.setFrwPermProvider(permService.getFrameworkProvider());
     }
 }

@@ -4,7 +4,7 @@ import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
-import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3ChannelSubject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.PropertyKeys.Channel;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -25,11 +25,11 @@ public class TS3Channel extends TS3ChannelHolder {
 
     public static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
 
-    private TS3PermissionSubject permSubject;
+    private TS3ChannelSubject permSubject;
 
-    public void setPermSubject(TS3PermissionSubject permSubject) {
+    public void setPermSubject(TS3ChannelSubject permSubject) {
         if (this.permSubject != null) {
-            throw new IllegalStateException("#setPermSubject is an unsafe operation and may not be repeated after init!");
+            throw new IllegalStateException("#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
         }
         this.permSubject = permSubject;
     }
@@ -86,39 +86,6 @@ public class TS3Channel extends TS3ChannelHolder {
         return queryBuilder.build();
     }
 
-    // == Permission Subject == //
-
-    @Override
-    public UUID getUniqueID() {
-        return permSubject.getUniqueID();
-    }
-
-    @Override
-    public List<IGroup> getServerGroups() {
-        return permSubject.getServerGroups();
-    }
-
-    @Override
-    public boolean hasPermission(String permission) {
-        return permSubject.hasPermission(permission);
-    }
-
-    @Override
-    public Optional<IPermission> getPermission(String permission) {
-        return permSubject.getPermission(permission);
-    }
-
-    @Override
-    public void setPermission(String permission, int value) {
-        permSubject.setPermission(permission, value);
-    }
-
-    @Override
-    public void removePermission(String permission) {
-        permSubject.removePermission(permission);
-    }
-
-
     // == TS3 Subject == //
 
     @Override
@@ -147,7 +114,7 @@ public class TS3Channel extends TS3ChannelHolder {
     }
 
     @Override
-    public IQueryRequest unassignPermission(String permSID) {
-        return permSubject.unassignPermission(permSID);
+    public IQueryRequest revokePermission(String permSID) {
+        return permSubject.revokePermission(permSID);
     }
 }

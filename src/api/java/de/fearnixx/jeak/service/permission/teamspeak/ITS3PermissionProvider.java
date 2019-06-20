@@ -10,7 +10,7 @@ public interface ITS3PermissionProvider {
 
     Optional<ITS3Permission> getActivePermission(String clientUniqueID, String permSID);
 
-    Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID);
+    Optional<ITS3Permission> getActivePermission(Integer clientDBID, String permSID);
 
     Optional<ITS3Permission> getClientPermission(Integer clientDBID, String permSID);
 

@@ -1,12 +1,13 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
+import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
-import java.util.List;
 import java.util.Optional;
 
 /**
  * Special subject class for TeamSpeak 3 permission system subjects.
+ * Related to {@link ISubject} but for TeamSpeak.
  */
 public interface ITS3Subject {
 
@@ -42,15 +43,5 @@ public interface ITS3Subject {
     /**
      * Returns a query request that will tell the TeamSpeak server to remove the permission from this subject.
      */
-    IQueryRequest unassignPermission(String permSID);
-
-    /**
-     * Specialized getter for TS3 server groups.
-     */
-    List<ITS3Group> getServerGroups();
-
-    /**
-     * Specialized getter for the TS3 channel group.
-     */
-    ITS3Group getChannelGroup();
+    IQueryRequest revokePermission(String permSID);
 }

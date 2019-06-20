@@ -1,9 +1,12 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
-import de.fearnixx.jeak.service.permission.teamspeak.ITS3Group;
+import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
+import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
-import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3ServerGroupSubject;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3UserSubject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
@@ -15,78 +18,108 @@ import java.util.Optional;
 import java.util.UUID;
 
 public class TS3User extends TS3UserHolder {
+    private TS3UserSubject ts3PermSubject;
 
-    private TS3PermissionSubject permSubject;
+    private UUID frameworkSubject;
+    private IPermissionProvider frwPermProvider;
 
-    public void setPermSubject(TS3PermissionSubject permSubject) {
-        if (this.permSubject != null) {
-            throw new IllegalStateException("#setPermSubject is an unsafe operation and may not be repeated after init!");
+    public void setTs3PermSubject(TS3UserSubject ts3PermSubject) {
+        if (this.ts3PermSubject != null) {
+            throw new IllegalStateException("#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
         }
-        this.permSubject = permSubject;
+        this.ts3PermSubject = ts3PermSubject;
     }
 
-    // == Permission subject == //
+    public void setFrameworkSubjectUUID(UUID frameworkSubject) {
+        if (this.frameworkSubject != null) {
+            throw new IllegalStateException("#setFrameworkSubject is an unsafe operation and may not be repeated after init!");
+        }
+        this.frameworkSubject = frameworkSubject;
+    }
+
+    public void setFrwPermProvider(IPermissionProvider frwPermProvider) {
+        this.frwPermProvider = frwPermProvider;
+    }
+
+    // == Framework subject == //
+
+
+    private ISubject getSubject() {
+        return frwPermProvider.getSubject(frameworkSubject)
+                .orElseThrow(() -> new IllegalStateException("Framework did not return subject for: " + frameworkSubject));
+    }
 
     @Override
     public UUID getUniqueID() {
-        return permSubject.getUniqueID();
+        return getSubject().getUniqueID();
     }
 
     @Override
-    public List<ITS3Group> getServerGroups() {
-        return permSubject.getServerGroups();
+    public List<IGroup> getParents() {
+        return getSubject().getParents();
+    }
+
+    @Override
+    public List<IPermission> getPermissions() {
+        return getSubject().getPermissions();
     }
 
     @Override
     public boolean hasPermission(String permission) {
-        return permSubject.hasPermission(permission);
+        return getSubject().hasPermission(permission);
     }
 
     @Override
     public Optional<IPermission> getPermission(String permission) {
-        return permSubject.getPermission(permission);
+        return getSubject().getPermission(permission);
     }
 
     @Override
-    public void setPermission(String permission, int value) {
-        permSubject.setPermission(permission, value);
+    public boolean setPermission(String permission, int value) {
+        return getSubject().setPermission(permission, value);
     }
 
     @Override
-    public void removePermission(String permission) {
-        permSubject.removePermission(permission);
+    public boolean removePermission(String permission) {
+        return getSubject().removePermission(permission);
     }
+
 
     // == TS3 Subject == //
 
     @Override
+    public List<ITS3ServerGroupSubject> getServerGroups() {
+        return ts3PermSubject.getServerGroups(getGroupIDs());
+    }
+
+    @Override
     public Optional<ITS3Permission> getTS3Permission(String permSID) {
-        return permSubject.getTS3Permission(permSID);
+        return ts3PermSubject.getTS3Permission(permSID);
     }
 
     @Override
     public Optional<ITS3Permission> getActiveTS3Permission(String permSID) {
-        return permSubject.getActiveTS3Permission(permSID);
+        return ts3PermSubject.getActiveTS3Permission(permSID);
     }
 
     @Override
     public IQueryRequest assignPermission(String permSID, int value, boolean permSkip, boolean permNegated) {
-        return permSubject.assignPermission(permSID, value, permSkip);
+        return ts3PermSubject.assignPermission(permSID, value, permSkip);
     }
 
     @Override
     public IQueryRequest assignPermission(String permSID, int value, boolean permSkip) {
-        return permSubject.assignPermission(permSID, value, permSkip);
+        return ts3PermSubject.assignPermission(permSID, value, permSkip);
     }
 
     @Override
     public IQueryRequest assignPermission(String permSID, int value) {
-        return permSubject.assignPermission(permSID, value);
+        return ts3PermSubject.assignPermission(permSID, value);
     }
 
     @Override
-    public IQueryRequest unassignPermission(String permSID) {
-        return permSubject.unassignPermission(permSID);
+    public IQueryRequest revokePermission(String permSID) {
+        return ts3PermSubject.revokePermission(permSID);
     }
 
     // == User == //

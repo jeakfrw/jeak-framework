@@ -64,7 +64,7 @@ public interface ISubject {
      * Removes the given permission from this subject if directly assigned to it.
      *
      * @apiNote This is not the same as setting the permission to 0 as a 0-value can override other values.
-     * @apiNote Use {@link ITS3Subject#unassignPermission(String)} for TeamSpeak 3 permissions.
+     * @apiNote Use {@link ITS3Subject#revokePermission(String)} for TeamSpeak 3 permissions.
      * @implNote If the permission system/provider is read-only, this will return {@code false}.
      *           This may only be the case for third party permission providers as the internal provider allows rw-access.
      */
