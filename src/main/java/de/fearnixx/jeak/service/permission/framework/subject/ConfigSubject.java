@@ -1,8 +1,10 @@
-package de.fearnixx.jeak.service.permission.framework;
+package de.fearnixx.jeak.service.permission.framework.subject;
 
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.ISubject;
+import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
+import de.fearnixx.jeak.service.permission.framework.SubjectCache;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.IValueHolder;
@@ -40,7 +42,7 @@ public class ConfigSubject extends SubjectAccessor {
     }
 
     @Override
-    public Optional<IPermission> getPermission(String permSID) {
+    protected Optional<IPermission> getPermissionFromSelf(String permSID) {
         IConfigNode valueNode = configRef.getRoot()
                 .getNode("permissions", permSID, "value");
 
@@ -89,19 +91,39 @@ public class ConfigSubject extends SubjectAccessor {
 
     @Override
     public boolean addMember(UUID uuid) {
-        IConfigNode entry = configRef.getRoot().createNewInstance();
-        entry.setString(uuid.toString());
-        configRef.getRoot()
-                .getNode("members")
-                .append(entry);
+        super.addMemberCircularityCheck(uuid);
+        final IConfigNode membersNode = configRef.getRoot().getNode("members");
 
-        modified = true;
+        final boolean alreadyPresent = membersNode.optList()
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .map(IValueHolder::asString)
+                .map(UUID::fromString)
+                .anyMatch(the -> the.equals(uuid));
+
+        if (!alreadyPresent) {
+            IConfigNode entry = configRef.getRoot().createNewInstance();
+            entry.setString(uuid.toString());
+            membersNode.append(entry);
+
+            getCache().getSubject(uuid)
+                    .addParent(getUniqueID());
+
+            modified = true;
+        } else {
+            logger.warn("{} is already member of {}", uuid, getUniqueID());
+        }
         return true;
     }
 
     @Override
     public boolean addMember(ISubject subject) {
         return addMember(subject.getUniqueID());
+    }
+
+    @Override
+    protected void addParent(UUID uniqueID) {
+
     }
 
     @Override
@@ -119,22 +141,19 @@ public class ConfigSubject extends SubjectAccessor {
     }
 
     @Override
-    public List<IPermission> getPermissions(String systemId) {
-        throw new UnsupportedOperationException("ConfigSubjects cannot look up other system IDs.");
-    }
-
-    @Override
-    public void setPermission(String permission, int value) {
+    public boolean setPermission(String permission, int value) {
         configRef.getRoot().getNode("permissions", permission, "value")
                 .setInteger(value);
         setModified();
+        return true;
     }
 
     @Override
-    public void removePermission(String permission) {
+    public boolean removePermission(String permission) {
         configRef.getRoot().getNode("permissions")
                 .remove(permission);
         setModified();
+        return true;
     }
 
     @Override
@@ -159,10 +178,8 @@ public class ConfigSubject extends SubjectAccessor {
 
     @Override
     public synchronized void mergeFrom(SubjectAccessor fromSubject) {
-        fromSubject.getPermissions()
-                .forEach(p -> setPermission(p.getSID(), p.getValue()));
-        fromSubject.getMembers()
-                .forEach(member -> addMember(member));
+        fromSubject.getPermissions().forEach(p -> setPermission(p.getSID(), p.getValue()));
+        fromSubject.getMembers().forEach(this::addMember);
         fromSubject.invalidate();
     }
 

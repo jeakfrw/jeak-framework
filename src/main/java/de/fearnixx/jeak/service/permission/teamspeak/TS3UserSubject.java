@@ -38,11 +38,6 @@ public class TS3UserSubject extends TS3PermissionSubject implements ITS3UserSubj
     }
 
     @Override
-    public ITS3Group getChannelGroup() {
-        return null;
-    }
-
-    @Override
     public Optional<ITS3Permission> getTS3Permission(String permSID) {
         return getPermissionProvider().getClientPermission(clientDBID, permSID);
     }

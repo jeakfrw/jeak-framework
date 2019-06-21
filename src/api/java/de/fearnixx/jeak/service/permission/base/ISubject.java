@@ -33,12 +33,14 @@ public interface ISubject {
 
     /**
      * Whether or not the subject has a positive value set for the provided permission.
+     * If the subject has parents, this should also evaluate the parent permissions when the permission is unset on the subject.
      * @apiNote  It is <strong>not possible</strong> to check TS3 permissions with this. Use {@link ITS3Subject} for that.
      */
     boolean hasPermission(String permission);
 
     /**
      * @see #hasPermission(String) but with more control over whether or not the permission is set and what exact value is defined.
+     * If the subject has parents, this should also evaluate the parent permissions when the permission is unset on the subject.
      */
     Optional<IPermission> getPermission(String permission);
 

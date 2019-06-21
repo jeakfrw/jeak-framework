@@ -5,6 +5,8 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.event.IProfileEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.permission.framework.subject.ConfigSubject;
+import de.fearnixx.jeak.service.permission.framework.subject.SubjectAccessor;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.mlessmann.confort.LoaderFactory;

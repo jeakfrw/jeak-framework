@@ -1,8 +1,10 @@
-package de.fearnixx.jeak.service.permission.framework;
+package de.fearnixx.jeak.service.permission.framework.subject;
 
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.ISubject;
+import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
+import de.fearnixx.jeak.service.permission.framework.SubjectCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +28,7 @@ public class DBSubject extends SubjectAccessor {
     }
 
     @Override
-    public Optional<IPermission> getPermission(String permSID) {
+    protected Optional<IPermission> getPermissionFromSelf(String permSID) {
         String query = "SELECT perm_value FROM permissions WHERE subject_uid = ? AND perm_sid = ?";
         try (PreparedStatement statement = dataSource.getConnection().prepareStatement(query)) {
             statement.setString(1, getUniqueID().toString());
@@ -47,11 +49,6 @@ public class DBSubject extends SubjectAccessor {
     @Override
     public List<IPermission> getPermissions() {
         throw new UnsupportedOperationException("Not implemented!");
-    }
-
-    @Override
-    public List<IPermission> getPermissions(String systemId) {
-        throw new UnsupportedOperationException("DBSubjects cannot list permissions from other system IDs");
     }
 
     @Override
@@ -85,12 +82,12 @@ public class DBSubject extends SubjectAccessor {
     }
 
     @Override
-    public void setPermission(String permission, int value) {
+    public boolean setPermission(String permission, int value) {
         throw new UnsupportedOperationException("Not implemented!");
     }
 
     @Override
-    public void removePermission(String permission) {
+    public boolean removePermission(String permission) {
         throw new UnsupportedOperationException("Not implemented!");
     }
 
@@ -106,6 +103,7 @@ public class DBSubject extends SubjectAccessor {
 
     @Override
     public void invalidate() {
-
+        // not needed for database operations.
+        // May be implemented for cleanup purposes.
     }
 }
