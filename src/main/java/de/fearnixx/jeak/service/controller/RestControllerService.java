@@ -4,6 +4,7 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.controller.connection.ControllerRequestVerifier;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
+import de.fearnixx.jeak.service.controller.connection.RestConfiguration;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.service.controller.controller.SparkAdapter;
 
@@ -16,6 +17,7 @@ public class RestControllerService implements IRestControllerService {
     private final Map<Class<?>, Object> controllers;
     private HttpServer httpServer;
     private ControllerRequestVerifier connectionVerifier;
+    private RestConfiguration restConfiguration;
 
     @Inject
     private IInjectionService injectionService;
@@ -25,14 +27,19 @@ public class RestControllerService implements IRestControllerService {
     }
 
     public RestControllerService(Map<Class<?>, Object> controllers) {
-        connectionVerifier = new ControllerRequestVerifier();
+        this.connectionVerifier = new ControllerRequestVerifier();
+        this.restConfiguration = new RestConfiguration();
         this.controllers = controllers;
-        this.httpServer = new SparkAdapter(connectionVerifier);
+        this.httpServer = new SparkAdapter(connectionVerifier, restConfiguration);
     }
 
     @Listener
     public void onPreInt(IBotStateEvent.IPreInitializeEvent preInitializeEvent) {
         injectionService.injectInto(connectionVerifier);
+        injectionService.injectInto(restConfiguration);
+        restConfiguration.loadConfig();
+        injectionService.injectInto(httpServer);
+        httpServer.start();
     }
 
 

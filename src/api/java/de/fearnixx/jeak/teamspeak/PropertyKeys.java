@@ -132,7 +132,10 @@ public abstract class PropertyKeys {
         public static final String FLAG_PASSWORD = "channel_flag_password";
         public static final String FLAG_PERMANENT = "channel_flag_permanent";
         public static final String FLAG_SEMI_PERMANENT = "channel_flag_semi_permanent";
+        public static final String FLAG_TEMPORARY = "channel_flag_temporary";
         public static final String FLAG_UNENCRYPTED = "channel_codec_is_unencrypted";
+
+        public static final String DELETE_DELAY = "channel_delete_delay";
     }
 
     public abstract static class Permission {
