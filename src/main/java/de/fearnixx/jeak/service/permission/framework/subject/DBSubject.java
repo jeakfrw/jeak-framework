@@ -77,6 +77,11 @@ public class DBSubject extends SubjectAccessor {
     }
 
     @Override
+    protected void addParent(UUID uniqueID) {
+        throw new UnsupportedOperationException("Not implemented!");
+    }
+
+    @Override
     public boolean hasPermission(String permission) {
         throw new UnsupportedOperationException("Not implemented!");
     }

@@ -8,6 +8,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3ChannelSubject;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
@@ -214,7 +215,8 @@ public class ChannelCache {
 
     private TS3Channel createChannel(boolean isSpacer) {
         TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
-        channel.setPermSubject(new TS3PermissionSubject(UUID.randomUUID()));
+        final TS3ChannelSubject channelSubject = new TS3ChannelSubject(permService.getTS3Provider(), channel.getID());
+        channel.setPermSubject(channelSubject);
         return channel;
     }
 
