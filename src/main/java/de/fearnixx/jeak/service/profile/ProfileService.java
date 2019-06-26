@@ -172,7 +172,9 @@ public class ProfileService implements IProfileService {
                         .getNode(IUserIdentity.SERVICE_TEAMSPEAK)
                         .optList()
                         .orElseGet(() -> {
-                            logger.warn("UUID index is not a list! [{}]", e.getKey());
+                            if (!e.getValue().isVirtual()) {
+                                logger.warn("UUID index is not a list! [{}]", e.getKey());
+                            }
                             return Collections.emptyList();
                         })
                         .stream()
