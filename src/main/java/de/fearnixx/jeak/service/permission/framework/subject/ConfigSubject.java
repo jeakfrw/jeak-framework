@@ -5,6 +5,7 @@ import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
 import de.fearnixx.jeak.service.permission.framework.SubjectCache;
+import de.fearnixx.jeak.service.permission.framework.membership.MembershipIndex;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.IValueHolder;
@@ -24,8 +25,8 @@ public class ConfigSubject extends SubjectAccessor {
     private boolean dead = false;
     private boolean modified;
 
-    public ConfigSubject(UUID subjectUUID, IConfig configRef, SubjectCache permissionSvc) {
-        super(subjectUUID, permissionSvc);
+    public ConfigSubject(UUID subjectUUID, IConfig configRef, SubjectCache permissionSvc, MembershipIndex membershipIndex) {
+        super(subjectUUID, permissionSvc, membershipIndex);
         this.configRef = configRef;
         try {
             configRef.load();
@@ -56,74 +57,12 @@ public class ConfigSubject extends SubjectAccessor {
     }
 
     @Override
-    public List<IGroup> getParents() {
-        return configRef.getRoot()
-                .getNode("parents")
-                .optList()
-                .orElseGet(Collections::emptyList)
-                .stream()
-                .map(IValueHolder::asString)
-                .map(UUID::fromString)
-                .map(this.getCache()::getSubject)
-                .collect(Collectors.toList());
-    }
-
-    @Override
     public Optional<Integer> getLinkedServerGroup() {
         return configRef.getRoot()
                 .getNode("link")
                 .optInteger()
                 // 0 or negative links are interpreted as: Not linked.
                 .map(i -> i > 0 ? i : null);
-    }
-
-    @Override
-    public List<UUID> getMembers() {
-        return configRef.getRoot()
-                .getNode("members")
-                .optList()
-                .orElseGet(Collections::emptyList)
-                .stream()
-                .map(IValueHolder::asString)
-                .map(UUID::fromString)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public boolean addMember(UUID uuid) {
-        super.addMemberCircularityCheck(uuid);
-        final IConfigNode membersNode = configRef.getRoot().getNode("members");
-
-        final boolean alreadyPresent = membersNode.optList()
-                .orElseGet(Collections::emptyList)
-                .stream()
-                .map(IValueHolder::asString)
-                .map(UUID::fromString)
-                .anyMatch(the -> the.equals(uuid));
-
-        if (!alreadyPresent) {
-            IConfigNode entry = configRef.getRoot().createNewInstance();
-            entry.setString(uuid.toString());
-            membersNode.append(entry);
-
-            getCache().getSubject(uuid)
-                    .addParent(getUniqueID());
-
-            modified = true;
-        } else {
-            logger.warn("{} is already member of {}", uuid, getUniqueID());
-        }
-        return true;
-    }
-
-    @Override
-    public boolean addMember(ISubject subject) {
-        return addMember(subject.getUniqueID());
-    }
-
-    @Override
-    protected void addParent(UUID uniqueID) {
-
     }
 
     @Override

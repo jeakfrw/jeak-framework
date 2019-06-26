@@ -1,10 +1,9 @@
 package de.fearnixx.jeak.service.permission.framework.subject;
 
-import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
-import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
 import de.fearnixx.jeak.service.permission.framework.SubjectCache;
+import de.fearnixx.jeak.service.permission.framework.membership.MembershipIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +21,8 @@ public class DBSubject extends SubjectAccessor {
 
     private DataSource dataSource;
 
-    public DBSubject(UUID subjectUUID, SubjectCache permissionSvc, DataSource dataSource) {
-        super(subjectUUID, permissionSvc);
+    public DBSubject(UUID subjectUUID, SubjectCache permissionSvc, DataSource dataSource, MembershipIndex membershipIndex) {
+        super(subjectUUID, permissionSvc, membershipIndex);
         this.dataSource = dataSource;
     }
 
@@ -53,31 +52,6 @@ public class DBSubject extends SubjectAccessor {
 
     @Override
     public Optional<Integer> getLinkedServerGroup() {
-        throw new UnsupportedOperationException("Not implemented!");
-    }
-
-    @Override
-    public List<UUID> getMembers() {
-        throw new UnsupportedOperationException("Not implemented!");
-    }
-
-    @Override
-    public boolean addMember(UUID uuid) {
-        throw new UnsupportedOperationException("Not implemented!");
-    }
-
-    @Override
-    public boolean addMember(ISubject subject) {
-        throw new UnsupportedOperationException("Not implemented!");
-    }
-
-    @Override
-    public List<IGroup> getParents() {
-        throw new UnsupportedOperationException("Not implemented!");
-    }
-
-    @Override
-    protected void addParent(UUID uniqueID) {
         throw new UnsupportedOperationException("Not implemented!");
     }
 

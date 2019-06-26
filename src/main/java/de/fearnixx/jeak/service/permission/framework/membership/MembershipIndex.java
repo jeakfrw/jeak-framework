@@ -27,4 +27,6 @@ public abstract class MembershipIndex {
         getParentsOf(forSubject).forEach(existing -> removeParent(existing, forSubject));
         addParent(parent, forSubject);
     }
+
+    public abstract void saveIfModified();
 }

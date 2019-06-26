@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ConfigMembershipIndex extends MembershipIndex {
 
@@ -36,7 +35,7 @@ public class ConfigMembershipIndex extends MembershipIndex {
     }
 
     @Override
-    public List<UUID> getMembersOf(UUID subjectUUID) {
+    public synchronized List<UUID> getMembersOf(UUID subjectUUID) {
         final String sUID = subjectUUID.toString();
         List<UUID> members = new LinkedList<>();
         config.getRoot()
@@ -58,7 +57,7 @@ public class ConfigMembershipIndex extends MembershipIndex {
     }
 
     @Override
-    public List<UUID> getParentsOf(UUID subjectUUID) {
+    public synchronized List<UUID> getParentsOf(UUID subjectUUID) {
         List<UUID> parents = new LinkedList<>();
         config.getRoot()
                 .getNode("parents", subjectUUID.toString())
@@ -72,7 +71,7 @@ public class ConfigMembershipIndex extends MembershipIndex {
     }
 
     @Override
-    public void addParent(UUID parent, UUID toSubject) {
+    public synchronized void addParent(UUID parent, UUID toSubject) {
         final String parentSUID = parent.toString();
         final IConfigNode subjectNode = config.getRoot().getNode("parents", parentSUID);
         final boolean alreadyAssigned = subjectNode.optList()
@@ -101,5 +100,17 @@ public class ConfigMembershipIndex extends MembershipIndex {
 
     private synchronized boolean isModified() {
         return modified;
+    }
+
+    @Override
+    public synchronized void saveIfModified() {
+        if (isModified()) {
+            try {
+                config.save();
+                modified = false;
+            } catch (IOException e) {
+                logger.warn("Failed to save configuration!", e);
+            }
+        }
     }
 }

@@ -5,6 +5,8 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.event.IProfileEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.permission.framework.membership.ConfigMembershipIndex;
+import de.fearnixx.jeak.service.permission.framework.membership.MembershipIndex;
 import de.fearnixx.jeak.service.permission.framework.subject.ConfigSubject;
 import de.fearnixx.jeak.service.permission.framework.subject.SubjectAccessor;
 import de.fearnixx.jeak.service.task.ITask;
@@ -28,14 +30,13 @@ public class SubjectCache {
 
     private static final Logger logger = LoggerFactory.getLogger(SubjectCache.class);
 
-    private final Object LOCK = new Object();
-
     // Map of all encountered profile merges during this runtime.
     // No persistence needed as their subjects will reflect the correct UUID on the next join.
     private final Map<UUID, UUID> profileMerges = new ConcurrentHashMap<>();
 
     private final Map<UUID, SubjectAccessor> cachedAccessors = new ConcurrentHashMap<>();
     private final Map<UUID, LocalDateTime> cacheTimings = new ConcurrentHashMap<>();
+    private final MembershipIndex membershipIndex = new ConfigMembershipIndex();
 
     private final ITask cacheBuster = ITask.builder()
             .name("perms-cache-buster")
@@ -102,5 +103,7 @@ public class SubjectCache {
                 accessor.saveIfModified();
             }
         });
+
+        membershipIndex.saveIfModified();
     }
 }
