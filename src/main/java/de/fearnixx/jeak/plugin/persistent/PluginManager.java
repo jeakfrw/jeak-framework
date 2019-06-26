@@ -120,7 +120,7 @@ public class PluginManager {
 
         if (includeCP) {
             logger.info("Including classpath");
-            builder.addUrls(ClasspathHelper.forClassLoader(ClassLoader.getSystemClassLoader()));
+            builder.addUrls(ClasspathHelper.forJavaClassPath());
         }
         return new Reflections(builder);
     }
