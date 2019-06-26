@@ -48,3 +48,38 @@ Every donor who donated at least 5 € in the past 12 months will be granted the
 So make sure to include your Discord name in your donation message :).
 
 [![ko-fi](https://www.ko-fi.com/img/donate_sm.png)](https://ko-fi.com/F1F0OL0V)
+  
+---
+# _Special thanks! / Credit_
+We would like to thank the companies and projects that help us develop, maintain, document, deploy and distribute the project.  
+They are really making work easier for us! :)  
+(Our distribution archives also include information of the libraries in use.)
+  
+### CI / CD: Buddy - _Build better apps faster_.
+Buddy allows us to use their Open Source project plan for both the framework and the [Confort](https://github.com/MarkL4YG/confort) library.  
+Their unique way of CI/CD configuration eliminates the need of unclear and verbose config files and we love the editor-approach.  
+See [https://buddy.works/](https://buddy.works/) for more!  
+
+### Docs: ReadMe.IO
+ReadMe.IO granted us their OSS project plan to enable us using nearly every feature of their documentation platform for free!  
+If you love documentation as much as we do, take a look over at: [https://readme.io/](https://readme.io/)
+
+### Nexus: Sonatype
+With Nexus 3 OSS, Sonatype allows us to easily maintain repositories of different types for FearNixx and Jeak which greatly improves our ability to develop and organize software.  
+See [https://www.sonatype.com/nexus-repository-oss](https://www.sonatype.com/nexus-repository-oss) for more information.
+
+### Repositories: GitHub & GitLab
+We're sure most of you know both platforms but we wanted to explicitly state our thanks to both platforms for allowing us to collaborate, organize and plan more than just software development! :)  
+While the framework is located on GitHub, plugins by FearNixx are hosted over at GitLab.  
+
+### IDE: JetBrains
+We use and love IntelliJ IDEA for development.  
+We want to thank JetBrains for making the community version free to use and allowing some of us to use educational licenses for our free projects! :)
+  
+### Git: GitKraken
+Some of us use GitKraken to interact with and manage Git.  
+GitKraken allows free use for open source projects and we thank them for that. :)  
+
+### Server administration: Pterodactyl  
+On our servers, we utilize the free application server management software [Pterodactyl](https://pterodactyl.io).  
+Managing our test systems and environments would be way harder without it!
