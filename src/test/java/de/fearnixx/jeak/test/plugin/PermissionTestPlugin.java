@@ -33,6 +33,24 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
         addTest("online_not_permitted");
         addTest("online_set_perm_permitted");
         addTest("online_del_perm_not_permitted");
+
+        addTest("parent_create");
+        addTest("parent_not_permitted");
+        addTest("parent_set_perm_permitted");
+
+        addTest("offline_add_parent");
+        addTest("offline_has_parent");
+        addTest("offline_transitive_has_perm");
+        addTest("offline_del_parent");
+        addTest("offline_not_has_parent");
+        addTest("online_add_parent");
+        addTest("online_has_parent");
+        addTest("online_transitive_has_perm");
+        addTest("online_del_parent");
+        addTest("online_not_has_parent");
+
+        addTest("user_has_perm_by_ts3");
+        addTest("parent_delete");
     }
 
     @Listener
