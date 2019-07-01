@@ -4,7 +4,6 @@ import de.fearnixx.jeak.service.permission.teamspeak.ITS3PermissionProvider;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * General entry point for permission checks in the framework.

@@ -40,4 +40,6 @@ public abstract class SubjectIndex {
     public abstract void saveIfModified();
 
     public abstract Optional<UUID> findGroupByName(String name);
+
+    public abstract List<UUID> getGroupsLinkedTo(Integer ts3GroupId);
 }

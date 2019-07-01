@@ -155,6 +155,19 @@ public class ConfigIndex extends SubjectIndex {
         }
     }
 
+    @Override
+    public List<UUID> getGroupsLinkedTo(Integer ts3GroupId) {
+        return config.getRoot().getNode("group")
+                .optMap()
+                .orElseGet(Collections::emptyMap)
+                .entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().getNode("linkedId").optInteger(-1).equals(ts3GroupId))
+                .map(Map.Entry::getKey)
+                .map(UUID::fromString)
+                .collect(Collectors.toList());
+    }
+
     private synchronized void setModified() {
         modified = true;
     }

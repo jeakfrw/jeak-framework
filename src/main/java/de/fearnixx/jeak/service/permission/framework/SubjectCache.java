@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.permission.framework;
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.event.IProfileEvent;
+import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.permission.base.IGroup;
@@ -52,6 +53,9 @@ public class SubjectCache {
     @Inject
     private IBot bot;
 
+    @Inject
+    private IInjectionService injectionService;
+
     public SubjectCache(SubjectIndex subjectIndex) {
         this.subjectIndex = subjectIndex;
     }
@@ -67,7 +71,9 @@ public class SubjectCache {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
         File subjectFile = new File(bot.getConfigDirectory(), "permissions/" + uuid.toString() + ".json");
         FileConfig config = new FileConfig(loader, subjectFile);
-        return new ConfigSubject(uuid, config, this, subjectIndex);
+        final ConfigSubject subject = new ConfigSubject(uuid, config, this, subjectIndex);
+        injectionService.injectInto(subject);
+        return subject;
     }
 
     @Listener
