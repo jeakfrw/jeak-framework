@@ -102,7 +102,7 @@ public class PermissionService implements IPermissionService {
 
     @Override
     public IPermissionProvider getFrameworkProvider() {
-        return provide("jeak")
+        return provide(InternalPermissionProvider.SYSTEM_ID)
                 .orElseThrow(() -> new IllegalStateException("Framework permission provider not registered!"));
     }
 }

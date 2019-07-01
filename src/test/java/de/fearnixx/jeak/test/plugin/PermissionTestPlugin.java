@@ -142,18 +142,13 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
 
                     if (!user.hasParent(group.getUniqueID())) {
                         success("offline_not_has_parent");
+                    } else {
+                        logger.warn("Offline user still has deleted group as parent!");
                     }
+                } else {
+                    logger.warn("Failed to delete offline-parent!");
                 }
             });
-
-            addTest("online_add_parent");
-            addTest("online_has_parent");
-            addTest("online_transitive_has_perm");
-            addTest("online_del_parent");
-            addTest("online_not_has_parent");
-
-            addTest("user_has_perm_by_ts3");
-            addTest("parent_delete");
         }
     }
 
@@ -181,7 +176,11 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
 
                     if (!client.hasParent(group.getUniqueID())) {
                         success("online_not_has_parent");
+                    } else {
+                        logger.warn("Online client still has deleted group as parent!");
                     }
+                } else {
+                    logger.warn("Failed to delete online-parent!");
                 }
 
                 group.linkServerGroup(client.getGroupIDs().get(0));
@@ -192,10 +191,12 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
                 if (!permissionService.getFrameworkProvider().deleteSubject(group.getUniqueID())) {
                     logger.warn("Failed to delete test subject group for online tests.");
                     fail("parent_delete");
+                } else {
+                    success("parent_delete");
                 }
             });
         } else {
-            logger.warn("Failed to create parent for online-user tests!");
+            logger.warn("Failed to create parent for online-client tests!");
             fail("parent_create");
         }
     }

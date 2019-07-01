@@ -87,7 +87,6 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
 
     @Override
     public List<IGroup> getParents() {
-        // FIXME: Create specialized checked getter for group subjects
         return subjectIndex.getParentsOf(getUniqueID())
                 .stream()
                 .map(getCache()::getSubject)

@@ -297,7 +297,9 @@ public class ProfileService implements IProfileService {
 
         final File profileFile = getProfileFSRef(uuid);
         try {
-            Files.delete(profileFile.toPath());
+            if (Files.exists(profileFile.toPath())) {
+                Files.delete(profileFile.toPath());
+            }
             ProfileEvent.ProfileDeletedEvent deletedEvent = new ProfileEvent.ProfileDeletedEvent();
             deletedEvent.setProfileUUID(uuid);
             eventService.fireEvent(deletedEvent);

@@ -101,9 +101,7 @@ public class ConfigIndex extends SubjectIndex {
         final String parentSUID = parent.toString();
         final String subjectSUID = fromSubject.toString();
         final IConfigNode subjectNode = config.getRoot().getNode("parents", subjectSUID);
-        final ArrayList<IConfigNode> parentsCopy = new ArrayList<>(subjectNode.optList().orElseGet(Collections::emptyList));
-        parentsCopy.removeIf(node -> node.asString().equals(parentSUID));
-        // FIXME: Actually re-set parents!
+        subjectNode.removeIf(node -> node.asString().equals(parentSUID));
     }
 
     @Override
@@ -115,10 +113,13 @@ public class ConfigIndex extends SubjectIndex {
 
     @Override
     public void deleteSubject(UUID uniqueId) {
-        final String groupSUID = uniqueId.toString();
-        config.getRoot().getNode("groups").remove(groupSUID);
-        // FIXME: Delete memberships too.
-
+        final String subjectSUID = uniqueId.toString();
+        config.getRoot().getNode("groups").remove(subjectSUID);
+        config.getRoot().getNode("parents")
+                .optMap()
+                .orElseGet(Collections::emptyMap)
+                .forEach((suid, parents) -> parents.removeIf(parent -> parent.asString().equals(subjectSUID)));
+        config.getRoot().getNode("parents").remove(subjectSUID);
         setModified();
     }
 

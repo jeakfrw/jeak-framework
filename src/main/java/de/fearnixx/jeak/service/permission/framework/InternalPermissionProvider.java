@@ -42,6 +42,7 @@ public class InternalPermissionProvider implements IPermissionProvider {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
         FileConfig config = new FileConfig(loader, new File(bot.getConfigDirectory(), "permissions/index.json"));
         ((ConfigIndex) subjectIndex).setConfig(config);
+        ((ConfigIndex) subjectIndex).load();
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
     }
