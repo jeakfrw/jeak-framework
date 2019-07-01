@@ -1,21 +1,20 @@
 package de.fearnixx.jeak.service.permission.framework.subject;
 
-import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
-import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
 import de.fearnixx.jeak.service.permission.framework.SubjectCache;
-import de.fearnixx.jeak.service.permission.framework.membership.MembershipIndex;
+import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
-import de.mlessmann.confort.api.IValueHolder;
 import de.mlessmann.confort.api.except.ParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class ConfigSubject extends SubjectAccessor {
 
@@ -25,14 +24,20 @@ public class ConfigSubject extends SubjectAccessor {
     private boolean dead = false;
     private boolean modified;
 
-    public ConfigSubject(UUID subjectUUID, IConfig configRef, SubjectCache permissionSvc, MembershipIndex membershipIndex) {
-        super(subjectUUID, permissionSvc, membershipIndex);
+    public ConfigSubject(UUID subjectUUID, IConfig configRef, SubjectCache permissionSvc, SubjectIndex subjectIndex) {
+        super(subjectUUID, permissionSvc, subjectIndex);
         this.configRef = configRef;
         try {
             configRef.load();
         } catch (IOException | ParseException e) {
             throw new IllegalStateException("Cannot construct configuration subject due to an error!", e);
         }
+    }
+
+    @Override
+    public String getName() {
+        return configRef.getRoot().getNode("name").optString()
+                .orElseGet(getUniqueID()::toString);
     }
 
     @Override

@@ -57,4 +57,22 @@ public interface IPermissionProvider {
      *           as this breaks the ability to replace the provider with one that has write access.
      */
     boolean removePermission(String permSID, UUID subjectUniqueID);
+
+    /**
+     * Finds a group subject by its name.
+     * This search is generally case-insensitive unless specified differently by the underlying system.
+     */
+    Optional<IGroup> findGroupByName(String name);
+
+    /**
+     * Requests the creation of a new group subject.
+     * If the underlying system is in <strong>read-only</strong> mode, this should always return {@link Optional#empty()}.
+     */
+    Optional<IGroup> createParent(String name);
+
+    /**
+     * Requests the deletion of a subject (group or user).
+     * If the underlying system is in <strong>read-only</strong> mode, this should always return {@code false}.
+     */
+    boolean deleteSubject(UUID subjectUUID);
 }

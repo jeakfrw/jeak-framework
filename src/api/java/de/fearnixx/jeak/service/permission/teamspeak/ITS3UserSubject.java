@@ -8,7 +8,6 @@ public interface ITS3UserSubject extends ITS3Subject {
 
     /**
      * Specialized getter for TS3 server groups.
-     * @return
      */
     List<ITS3ServerGroupSubject> getServerGroups();
 }

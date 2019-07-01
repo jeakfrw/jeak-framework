@@ -12,6 +12,12 @@ import java.util.UUID;
 public interface IGroup extends ISubject {
 
     /**
+     * User-friendly name of this group.
+     * If for some reason, the permission system does not support group names by any means, this can be the serialized UUID.
+     */
+    String getName();
+
+    /**
      * When set, this will cause all members of the TeamSpeak server group to become members of this group automatically.
      * They cannot be removed from the group unless they are removed from the server group or the link is removed.
      *
@@ -44,4 +50,18 @@ public interface IGroup extends ISubject {
      * Short-hand for {@link #addMember(UUID)}.
      */
     boolean addMember(ISubject subject);
+
+    /**
+     * <p>
+     *      Instructs the underlying system to link the specified server group ID to this group.
+     *      This will cause all clients of that server group to automatically inherit from this group as if it was a subject parent.
+     *      However, this does not actually add this group to their parents which means that individual users cannot be removed from linked groups
+     *      without being removed from the server group as well.
+     * </p>
+     * <p>
+     *     Returns {@code false} for systems/providers that do not support linking server groups.
+     *     Note: This is not the same as being a read-only system as this is not dependent on changes in the remote system due to its passive nature.
+     * </p>
+     */
+    boolean linkServerGroup(int serverGroupID);
 }

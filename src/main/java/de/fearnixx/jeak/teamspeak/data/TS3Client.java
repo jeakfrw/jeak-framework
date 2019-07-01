@@ -7,7 +7,6 @@ import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;

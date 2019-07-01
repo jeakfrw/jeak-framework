@@ -5,7 +5,7 @@ import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.except.CircularInheritanceException;
 import de.fearnixx.jeak.service.permission.framework.SubjectCache;
-import de.fearnixx.jeak.service.permission.framework.membership.MembershipIndex;
+import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 
 import java.util.Comparator;
 import java.util.List;
@@ -17,12 +17,12 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
 
     private final UUID subjectUUID;
     private final SubjectCache permissionSvc;
-    private final MembershipIndex membershipIndex;
+    private final SubjectIndex subjectIndex;
 
-    public SubjectAccessor(UUID subjectUUID, SubjectCache permissionSvc, MembershipIndex membershipIndex) {
+    public SubjectAccessor(UUID subjectUUID, SubjectCache permissionSvc, SubjectIndex subjectIndex) {
         this.subjectUUID = subjectUUID;
         this.permissionSvc = permissionSvc;
-        this.membershipIndex = membershipIndex;
+        this.subjectIndex = subjectIndex;
     }
 
     @Override
@@ -32,8 +32,17 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
 
     @Override
     public Optional<IPermission> getPermission(String permission) {
-        return getPermissionFromSelf(permission)
-                .or(() -> getPermissionFromParents(permission));
+        return getPermission(permission, true);
+    }
+
+    @Override
+    public Optional<IPermission> getPermission(String permission, boolean allowTransitive) {
+        if (allowTransitive) {
+            return getPermissionFromSelf(permission)
+                    .or(() -> getPermissionFromParents(permission));
+        } else {
+            return getPermissionFromSelf(permission);
+        }
     }
 
     protected abstract Optional<IPermission> getPermissionFromSelf(String permission);
@@ -47,7 +56,7 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
     }
 
     /**
-     * FIXME: Actually implement in {@link MembershipIndex}!
+     * FIXME: Actually implement in {@link SubjectIndex}!
      * @throws CircularInheritanceException if inheritance circularity is detected.
      */
     protected void addMemberCircularityCheck(UUID memberUUID) {
@@ -62,12 +71,12 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
 
     @Override
     public List<UUID> getMembers() {
-        return membershipIndex.getMembersOf(getUniqueID());
+        return subjectIndex.getMembersOf(getUniqueID());
     }
 
     @Override
     public boolean addMember(UUID uuid) {
-        membershipIndex.addParent(getUniqueID(), uuid);
+        subjectIndex.addParent(getUniqueID(), uuid);
         return true;
     }
 
@@ -79,11 +88,24 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
     @Override
     public List<IGroup> getParents() {
         // FIXME: Create specialized checked getter for group subjects
-        return membershipIndex.getParentsOf(getUniqueID())
+        return subjectIndex.getParentsOf(getUniqueID())
                 .stream()
                 .map(getCache()::getSubject)
                 .map(IGroup.class::cast)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean hasParent(UUID uniqueID) {
+        return getParents()
+                .stream()
+                .anyMatch(grp -> grp.getUniqueID().equals(uniqueID));
+    }
+
+    @Override
+    public boolean linkServerGroup(int serverGroupID) {
+        subjectIndex.linkServerGroup(this, serverGroupID);
+        return true;
     }
 
     public abstract void saveIfModified();

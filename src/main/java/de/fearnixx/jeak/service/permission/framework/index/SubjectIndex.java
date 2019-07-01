@@ -1,12 +1,15 @@
-package de.fearnixx.jeak.service.permission.framework.membership;
+package de.fearnixx.jeak.service.permission.framework.index;
+
+import de.fearnixx.jeak.service.permission.base.IGroup;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Helper class responsible for managing subject memberships and inheritance.
+ * Helper class responsible for managing subject indexing.
  */
-public abstract class MembershipIndex {
+public abstract class SubjectIndex {
 
     public boolean isParentOf(UUID parent, UUID subjectUUID) {
         return getParentsOf(subjectUUID)
@@ -14,6 +17,8 @@ public abstract class MembershipIndex {
                 .anyMatch(existing -> existing.equals(parent));
 
     }
+
+    public abstract void linkServerGroup(IGroup group, int serverGroupID);
 
     public abstract List<UUID> getMembersOf(UUID subjectUUID);
 
@@ -28,5 +33,11 @@ public abstract class MembershipIndex {
         addParent(parent, forSubject);
     }
 
+    public abstract UUID createGroup(String name);
+
+    public abstract void deleteSubject(UUID uniqueId);
+
     public abstract void saveIfModified();
+
+    public abstract Optional<UUID> findGroupByName(String name);
 }

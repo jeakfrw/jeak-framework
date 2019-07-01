@@ -5,8 +5,9 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.profile.event.IProfileEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.permission.framework.membership.ConfigMembershipIndex;
-import de.fearnixx.jeak.service.permission.framework.membership.MembershipIndex;
+import de.fearnixx.jeak.service.permission.base.IGroup;
+import de.fearnixx.jeak.service.permission.framework.index.ConfigIndex;
+import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.fearnixx.jeak.service.permission.framework.subject.ConfigSubject;
 import de.fearnixx.jeak.service.permission.framework.subject.SubjectAccessor;
 import de.fearnixx.jeak.service.task.ITask;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +38,7 @@ public class SubjectCache {
 
     private final Map<UUID, SubjectAccessor> cachedAccessors = new ConcurrentHashMap<>();
     private final Map<UUID, LocalDateTime> cacheTimings = new ConcurrentHashMap<>();
-    private final MembershipIndex membershipIndex = new ConfigMembershipIndex();
+    private final SubjectIndex subjectIndex;
 
     private final ITask cacheBuster = ITask.builder()
             .name("perms-cache-buster")
@@ -50,6 +52,10 @@ public class SubjectCache {
     @Inject
     private IBot bot;
 
+    public SubjectCache(SubjectIndex subjectIndex) {
+        this.subjectIndex = subjectIndex;
+    }
+
     public synchronized SubjectAccessor getSubject(UUID uuid) {
         // When redirected, use that UUID. Otherwise, use the given one.
         UUID realUUID = profileMerges.getOrDefault(uuid, uuid);
@@ -61,7 +67,7 @@ public class SubjectCache {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
         File subjectFile = new File(bot.getConfigDirectory(), "permissions/" + uuid.toString() + ".json");
         FileConfig config = new FileConfig(loader, subjectFile);
-        return new ConfigSubject(uuid, config, this);
+        return new ConfigSubject(uuid, config, this, subjectIndex);
     }
 
     @Listener
@@ -104,6 +110,16 @@ public class SubjectCache {
             }
         });
 
-        membershipIndex.saveIfModified();
+        subjectIndex.saveIfModified();
+    }
+
+    public Optional<IGroup> createGroup(String name) {
+        final UUID groupUID = subjectIndex.createGroup(name);
+        return Optional.ofNullable(getSubject(groupUID));
+    }
+
+    public boolean delete(UUID subjectUUID) {
+        subjectIndex.deleteSubject(subjectUUID);
+        return true;
     }
 }

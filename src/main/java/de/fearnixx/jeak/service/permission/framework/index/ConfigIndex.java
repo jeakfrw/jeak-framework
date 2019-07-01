@@ -1,5 +1,6 @@
-package de.fearnixx.jeak.service.permission.framework.membership;
+package de.fearnixx.jeak.service.permission.framework.index;
 
+import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.IValueHolder;
@@ -9,14 +10,18 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
-public class ConfigMembershipIndex extends MembershipIndex {
+public class ConfigIndex extends SubjectIndex {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConfigMembershipIndex.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConfigIndex.class);
     private IConfig config;
     private boolean modified;
 
-    public ConfigMembershipIndex(IConfig config) {
+    public void setConfig(IConfig config) {
+        if (this.config != null) {
+            throw new IllegalStateException("#setConfig is unsafe and must not be re-used!");
+        }
         this.config = config;
     }
 
@@ -59,8 +64,9 @@ public class ConfigMembershipIndex extends MembershipIndex {
     @Override
     public synchronized List<UUID> getParentsOf(UUID subjectUUID) {
         List<UUID> parents = new LinkedList<>();
+        final String subjectSUID = subjectUUID.toString();
         config.getRoot()
-                .getNode("parents", subjectUUID.toString())
+                .getNode("parents", subjectSUID)
                 .optList()
                 .orElseGet(Collections::emptyList)
                 .stream()
@@ -73,7 +79,8 @@ public class ConfigMembershipIndex extends MembershipIndex {
     @Override
     public synchronized void addParent(UUID parent, UUID toSubject) {
         final String parentSUID = parent.toString();
-        final IConfigNode subjectNode = config.getRoot().getNode("parents", parentSUID);
+        final String subjectSUID = toSubject.toString();
+        final IConfigNode subjectNode = config.getRoot().getNode("parents", subjectSUID);
         final boolean alreadyAssigned = subjectNode.optList()
                 .orElseGet(Collections::emptyList)
                 .stream()
@@ -91,7 +98,60 @@ public class ConfigMembershipIndex extends MembershipIndex {
 
     @Override
     public void removeParent(UUID parent, UUID fromSubject) {
+        final String parentSUID = parent.toString();
+        final String subjectSUID = fromSubject.toString();
+        final IConfigNode subjectNode = config.getRoot().getNode("parents", subjectSUID);
+        final ArrayList<IConfigNode> parentsCopy = new ArrayList<>(subjectNode.optList().orElseGet(Collections::emptyList));
+        parentsCopy.removeIf(node -> node.asString().equals(parentSUID));
+        // FIXME: Actually re-set parents!
+    }
 
+    @Override
+    public UUID createGroup(String name) {
+        final UUID uuid = UUID.randomUUID();
+        config.getRoot().getNode("groups", uuid.toString(), "name").setString(name);
+        return uuid;
+    }
+
+    @Override
+    public void deleteSubject(UUID uniqueId) {
+        final String groupSUID = uniqueId.toString();
+        config.getRoot().getNode("groups").remove(groupSUID);
+        // FIXME: Delete memberships too.
+
+        setModified();
+    }
+
+    @Override
+    public void linkServerGroup(IGroup group, int serverGroupID) {
+        final String groupSUID = group.getUniqueID().toString();
+        final IConfigNode groupNode = config.getRoot().getNode("groups", groupSUID);
+
+        if (serverGroupID <= 0) {
+            groupNode.remove("linkedId");
+        } else {
+            groupNode.getNode("linkedId").setInteger(serverGroupID);
+        }
+        setModified();
+    }
+
+    @Override
+    public Optional<UUID> findGroupByName(String name) {
+        final String loweredName = name.toLowerCase();
+        final List<String> matches = config.getRoot().getNode("groups")
+                .optMap()
+                .orElseGet(Collections::emptyMap)
+                .entrySet()
+                .stream()
+                .filter(grp -> grp.getValue().getNode("name").optString("").toLowerCase().equals(loweredName))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toList());
+
+        if (matches.size() == 1) {
+            return Optional.of(UUID.fromString(matches.get(0)));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private synchronized void setModified() {

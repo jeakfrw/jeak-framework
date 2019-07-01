@@ -45,6 +45,11 @@ public interface ISubject {
     Optional<IPermission> getPermission(String permission);
 
     /**
+     * Same as {@link #getPermission(String)} but with control over whether or not parents should be evaluated.
+     */
+    Optional<IPermission> getPermission(String permission, boolean allowTransitive);
+
+    /**
      * Returns all permissions directly assigned to this subject.
      * This does not include transitive permissions.
      */
@@ -71,4 +76,10 @@ public interface ISubject {
      *           This may only be the case for third party permission providers as the internal provider allows rw-access.
      */
     boolean removePermission(String permission);
+
+    /**
+     * Returns whether or not the given subject unique ID is a parent of this subject.
+     * @apiNote Transitive parents are not included in this list.
+     */
+    boolean hasParent(UUID uniqueID);
 }

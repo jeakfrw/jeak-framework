@@ -60,6 +60,11 @@ public class TS3User extends TS3UserHolder {
     }
 
     @Override
+    public boolean hasParent(UUID uniqueID) {
+        return getSubject().hasParent(uniqueID);
+    }
+
+    @Override
     public List<IPermission> getPermissions() {
         return getSubject().getPermissions();
     }
@@ -72,6 +77,11 @@ public class TS3User extends TS3UserHolder {
     @Override
     public Optional<IPermission> getPermission(String permission) {
         return getSubject().getPermission(permission);
+    }
+
+    @Override
+    public Optional<IPermission> getPermission(String permission, boolean allowTransitive) {
+        return getSubject().getPermission(permission, allowTransitive);
     }
 
     @Override
