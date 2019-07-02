@@ -5,7 +5,6 @@ pull_request_rules:
       - "#approved-reviews-by>=1"
       - "-closed"
       - "-merged"
-      - "-review-requested"
       - "-label~=breaking"
     actions:
       - merge:
