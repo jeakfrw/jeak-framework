@@ -5,11 +5,15 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.fearnixx.jeak.service.permission.base.ISubject;
+import de.fearnixx.jeak.service.permission.framework.commands.CreateGroupCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.GrantPermissionCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.LinkGroupCommand;
 import de.fearnixx.jeak.service.permission.framework.index.ConfigIndex;
 import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.mlessmann.confort.LoaderFactory;
@@ -35,6 +39,9 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Inject
     private IEventService eventService;
 
+    @Inject
+    private ICommandService commandService;
+
     private final SubjectIndex subjectIndex = new ConfigIndex();
     private SubjectCache subjectCache = new SubjectCache(this);
 
@@ -46,6 +53,16 @@ public class InternalPermissionProvider implements IPermissionProvider {
         ((ConfigIndex) subjectIndex).load();
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
+
+        final CreateGroupCommand crGrpCommand = new CreateGroupCommand();
+        final LinkGroupCommand lnkGrpCommand = new LinkGroupCommand();
+        final GrantPermissionCommand grntPermCommand = new GrantPermissionCommand();
+        injectionService.injectInto(crGrpCommand);
+        injectionService.injectInto(lnkGrpCommand);
+        injectionService.injectInto(grntPermCommand);
+        commandService.registerCommand("perm-group-create", crGrpCommand);
+        commandService.registerCommand("perm-group-link", lnkGrpCommand);
+        commandService.registerCommand("perm-group-grant", grntPermCommand);
     }
 
     @Override
