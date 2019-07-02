@@ -65,21 +65,6 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
                 .max(Comparator.comparing(IPermission::getValue));
     }
 
-    /**
-     * FIXME: Actually implement in {@link SubjectIndex}!
-     *
-     * @throws CircularInheritanceException if inheritance circularity is detected.
-     */
-    protected void addMemberCircularityCheck(UUID memberUUID) {
-        getParents().stream()
-                .map(ISubject::getUniqueID)
-                .forEach(parentUID -> {
-                    if (parentUID.equals(memberUUID)) {
-                        throw new CircularInheritanceException(memberUUID + " is already parent of: " + getUniqueID());
-                    }
-                });
-    }
-
     @Override
     public List<UUID> getMembers() {
         return getProvider().getIndex().getMembersOf(getUniqueID());

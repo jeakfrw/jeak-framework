@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.permission.framework.index;
 
 import de.fearnixx.jeak.service.permission.base.IGroup;
+import de.fearnixx.jeak.service.permission.except.CircularInheritanceException;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.IValueHolder;
@@ -98,6 +99,8 @@ public class ConfigIndex extends SubjectIndex {
                 .map(IValueHolder::asString)
                 .anyMatch(existing -> existing.equals(parentSUID));
 
+        addParentCircularityCheck(parent, toSubject);
+
         if (!alreadyAssigned) {
             final IConfigNode entry = subjectNode.createNewInstance();
             entry.setString(parent.toString());
@@ -105,6 +108,18 @@ public class ConfigIndex extends SubjectIndex {
 
             setModified();
         }
+    }
+
+    private void addParentCircularityCheck(UUID parent, UUID toSubject) {
+        getParentsOf(parent)
+                .forEach(parentsParents -> {
+                    if (!parentsParents.equals(toSubject)) {
+                        // This will abort when the above becomes true during recursion.
+                        addParentCircularityCheck(parentsParents, toSubject);
+                    } else {
+                        throw new CircularInheritanceException("Subject " + toSubject + " must not inherit from " + parent);
+                    }
+                });
     }
 
     @Override

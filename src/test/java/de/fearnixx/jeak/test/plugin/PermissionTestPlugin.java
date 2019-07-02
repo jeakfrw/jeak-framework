@@ -5,7 +5,9 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.permission.base.IGroup;
+import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
+import de.fearnixx.jeak.service.permission.except.CircularInheritanceException;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
@@ -57,6 +59,7 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
 
         addTest("user_has_perm_by_ts3");
         addTest("parent_delete");
+        addTest("parent_circularity_detect");
     }
 
     @Listener
@@ -65,6 +68,7 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
         checkOnlineUser();
         testOfflineParents();
         testOnlineParents();
+        testCircularityDetection();
     }
 
     private void checkOnlineUser() {
@@ -204,6 +208,31 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
         } else {
             logger.warn("Failed to create parent for online-client tests!");
             fail("parent_create");
+        }
+    }
+
+    @SuppressWarnings({"ConstantConditions", "OptionalGetWithoutIsPresent"})
+    private void testCircularityDetection() {
+        final IPermissionProvider provider = permissionService.getFrameworkProvider();
+        IGroup a = null;
+        IGroup b = null;
+        IGroup c = null;
+        try {
+            a = provider.createParent("group-A").get();
+            b = provider.createParent("group-B").get();
+            c = provider.createParent("group-C").get();
+            a.addMember(b);
+            b.addMember(c);
+
+            // This should fail.
+            c.addMember(a);
+
+        } catch (CircularInheritanceException e) {
+            success("parent_circularity_detect");
+        } finally {
+            provider.deleteSubject(a.getUniqueID());
+            provider.deleteSubject(b.getUniqueID());
+            provider.deleteSubject(c.getUniqueID());
         }
     }
 
