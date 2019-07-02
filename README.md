@@ -59,7 +59,7 @@ They are really making work easier for us! :)
 Buddy allows us to use their Open Source project plan for both the framework and the [Confort](https://github.com/MarkL4YG/confort) library.  
 Their unique way of CI/CD configuration eliminates the need of unclear and verbose config files and we love the editor-approach.  
 See [https://buddy.works/](https://buddy.works/) for more!  
-<a href="https://buddy.works"><img src="https://assets.fearnixx.de/3rdparty/buddy.works/logo-blue.svg" height="50" width="200" alt="Buddy.Works logo."></img></a>
+<a href="https://buddy.works"><img src="https://assets.fearnixx.de/3rdparty/buddy.works/logo-blue.svg" height="100" width="200" alt="Buddy.Works logo."></img></a>
 
 
 ### Docs: ReadMe.IO
