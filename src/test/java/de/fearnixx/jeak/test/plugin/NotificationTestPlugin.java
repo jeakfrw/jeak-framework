@@ -45,29 +45,7 @@ public class NotificationTestPlugin extends AbstractTestPlugin {
     }
 
     @Listener
-    public void onConnected(IBotStateEvent.IConnectStateEvent.IPostConnect events) {
-        if (NOTIFY_TEST_RECIPIENT != null) {
-            Optional<IUserProfile> optProfile = profileService.getOrCreateProfile(RECIPIENT_UID);
-            if (!optProfile.isPresent()) {
-                fail("notficiationTest_profileRetrieved");
-                return;
-            }
-
-            optProfile.get().setOption(SendMailChannel.MAIL_ADDRESS_PROFILE_OPTION, PROP_TEST_RECIPIENT);
-            INotification notification = INotification.builder()
-                    .addRecipient(RECIPIENT_UID)
-                    .urgency(Urgency.ALERT)
-                    .lifespan(Lifespan.FOREVER)
-                    .summary("[TESTSYSTEM] Mail notification test.")
-                    .longText("This is a test notification.")
-                    .build();
-            notificationService.dispatch(notification);
-            success("notficiationTest_messageDispatched");
-        }
-    }
-
-    @Listener
-    public void onUserJoined(IQueryEvent.IDataEvent.IRefreshClients event) {
+    public void onClientsRefreshed(IQueryEvent.IDataEvent.IRefreshClients event) {
         event.getClients()
                 .stream()
                 .filter(c -> c.getClientUniqueID().equals(RECIPIENT_UID))
@@ -88,5 +66,30 @@ public class NotificationTestPlugin extends AbstractTestPlugin {
                         }
                     });
                 });
+
+        testNotifyMail();
+    }
+
+    private void testNotifyMail() {
+        if (NOTIFY_TEST_RECIPIENT != null) {
+            Optional<IUserProfile> optProfile = profileService.getOrCreateProfile(RECIPIENT_UID);
+            if (optProfile.isEmpty()) {
+                fail("notficiationTest_profileRetrieved");
+                return;
+            } else {
+                success("notficiationTest_profileRetrieved");
+            }
+
+            optProfile.get().setOption(SendMailChannel.MAIL_ADDRESS_PROFILE_OPTION, PROP_TEST_RECIPIENT);
+            INotification notification = INotification.builder()
+                    .addRecipient(RECIPIENT_UID)
+                    .urgency(Urgency.ALERT)
+                    .lifespan(Lifespan.FOREVER)
+                    .summary("[TESTSYSTEM] Mail notification test.")
+                    .longText("This is a test notification.")
+                    .build();
+            notificationService.dispatch(notification);
+            success("notficiationTest_messageDispatched");
+        }
     }
 }
