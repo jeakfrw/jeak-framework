@@ -184,8 +184,14 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
                 }
 
                 group.linkServerGroup(client.getGroupIDs().get(0));
-                if (!client.hasParent(group.getUniqueID()) && client.hasPermission("permtest.test_permission")) {
-                    success("user_has_perm_by_ts3");
+                if (!client.hasParent(group.getUniqueID())) {
+                    if (client.hasPermission("permtest.test_permission")) {
+                        success("user_has_perm_by_ts3");
+                    } else {
+                        logger.warn("Client not picked up by group-linking!");
+                    }
+                } else {
+                    logger.warn("Client still member of linked-test-group!");
                 }
 
                 if (!permissionService.getFrameworkProvider().deleteSubject(group.getUniqueID())) {

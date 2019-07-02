@@ -2,8 +2,7 @@ package de.fearnixx.jeak.service.permission.framework.subject;
 
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
-import de.fearnixx.jeak.service.permission.framework.SubjectCache;
-import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
+import de.fearnixx.jeak.service.permission.framework.InternalPermissionProvider;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -24,8 +23,8 @@ public class ConfigSubject extends SubjectAccessor {
     private boolean dead = false;
     private boolean modified;
 
-    public ConfigSubject(UUID subjectUUID, IConfig configRef, SubjectCache permissionSvc, SubjectIndex subjectIndex) {
-        super(subjectUUID, permissionSvc, subjectIndex);
+    public ConfigSubject(UUID subjectUUID, IConfig configRef, InternalPermissionProvider provider) {
+        super(subjectUUID, provider);
         this.configRef = configRef;
         try {
             configRef.load();
@@ -88,6 +87,7 @@ public class ConfigSubject extends SubjectAccessor {
     public boolean setPermission(String permission, int value) {
         configRef.getRoot().getNode("permissions", permission, "value")
                 .setInteger(value);
+
         setModified();
         return true;
     }

@@ -75,4 +75,12 @@ public interface IPermissionProvider {
      * If the underlying system is in <strong>read-only</strong> mode, this should always return {@code false}.
      */
     boolean deleteSubject(UUID subjectUUID);
+
+    /**
+     * Returns all groups linked to the given server group.
+     * @see IGroup#getLinkedServerGroup() for more details.
+     *
+     * @apiNote For systems that do not support this feature, the list will always be empty.
+     */
+    List<IGroup> getGroupsLinkedToServerGroup(int serverGroupId);
 }

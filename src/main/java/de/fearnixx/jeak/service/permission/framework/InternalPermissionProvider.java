@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class InternalPermissionProvider implements IPermissionProvider {
 
@@ -35,7 +36,7 @@ public class InternalPermissionProvider implements IPermissionProvider {
     private IEventService eventService;
 
     private final SubjectIndex subjectIndex = new ConfigIndex();
-    private SubjectCache subjectCache = new SubjectCache(subjectIndex);
+    private SubjectCache subjectCache = new SubjectCache(this);
 
     @Listener
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {
@@ -45,6 +46,17 @@ public class InternalPermissionProvider implements IPermissionProvider {
         ((ConfigIndex) subjectIndex).load();
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
+    }
+
+    @Override
+    public List<IGroup> getGroupsLinkedToServerGroup(int serverGroupId) {
+        return subjectIndex.getGroupsLinkedTo(serverGroupId)
+                .stream()
+                .map(this::getSubject)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(IGroup.class::cast)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
@@ -93,5 +105,13 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Override
     public boolean deleteSubject(UUID subjectUUID) {
         return subjectCache.delete(subjectUUID);
+    }
+
+    public SubjectCache getCache() {
+        return subjectCache;
+    }
+
+    public SubjectIndex getIndex() {
+        return subjectIndex;
     }
 }

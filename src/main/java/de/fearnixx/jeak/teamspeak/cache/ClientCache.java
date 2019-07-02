@@ -200,9 +200,9 @@ public class ClientCache {
 
     private void applyPermissions(TS3Client client) {
         String ts3uid = client.getClientUniqueID();
-        UUID uuid = profileService.getProfile(ts3uid)
+        UUID uuid = profileService.getOrCreateProfile(ts3uid)
                 .map(IUserProfile::getUniqueId)
-                .orElseGet(UUID::randomUUID);
+                .orElseThrow(() -> new IllegalStateException("Failed to reserve profile UUID for subject: " + client));
         logger.debug("Client {} got permission UUID: {}", client, uuid);
         final TS3UserSubject ts3Subject = new TS3UserSubject(permService.getTS3Provider(), client.getClientDBID());
         client.setTs3PermSubject(ts3Subject);

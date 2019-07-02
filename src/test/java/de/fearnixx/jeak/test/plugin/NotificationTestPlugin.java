@@ -19,7 +19,8 @@ import java.util.Optional;
 @JeakBotPlugin(id = "notificationtest")
 public class NotificationTestPlugin extends AbstractTestPlugin {
 
-    private static final String RECIPIENT_UID = "GANC6dTbew+a3A2h/8c5CGJXzsE=";
+    //    private static final String RECIPIENT_UID = "MarkL4YG";
+    private static final String RECIPIENT_UID = "NKLz7mUMAqrv07j1CZJ5OcDfj6I=";
     private static final String PROP_TEST_RECIPIENT = "jeak.test.notifyTest.recipient";
     private static final String NOTIFY_TEST_RECIPIENT = Main.getProperty(PROP_TEST_RECIPIENT, null);
 
@@ -66,21 +67,26 @@ public class NotificationTestPlugin extends AbstractTestPlugin {
     }
 
     @Listener
-    public void onUserJoined(IQueryEvent.INotification.IClientEnter event) {
-        Optional<String> optUUID = event.getProperty(PropertyKeys.Client.UID);
-
-        optUUID.ifPresent(uid ->  {
-            if (uid.equals(RECIPIENT_UID)) {
-                INotification notification = INotification.builder()
-                        .addRecipient(RECIPIENT_UID)
-                        .urgency(Urgency.BASIC)
-                        .lifespan(Lifespan.BASIC)
-                        .summary("[TESTSYSTEM] TS3 notification test.")
-                        .shortText("This is a test notification.")
-                        .build();
-                notificationService.dispatch(notification);
-                success("notificationTest_liveMessageDispatched");
-            }
-        });
+    public void onUserJoined(IQueryEvent.IDataEvent.IRefreshClients event) {
+        event.getClients()
+                .stream()
+                .filter(c -> c.getClientUniqueID().equals(RECIPIENT_UID))
+                .limit(1)
+                .forEach(client -> {
+                    Optional<String> optUUID = client.getProperty(PropertyKeys.Client.UID);
+                    optUUID.ifPresent(uid -> {
+                        if (uid.equals(RECIPIENT_UID)) {
+                            INotification notification = INotification.builder()
+                                    .addRecipient(RECIPIENT_UID)
+                                    .urgency(Urgency.BASIC)
+                                    .lifespan(Lifespan.BASIC)
+                                    .summary("[TESTSYSTEM] TS3 notification test.")
+                                    .shortText("This is a test notification.")
+                                    .build();
+                            notificationService.dispatch(notification);
+                            success("notificationTest_liveMessageDispatched");
+                        }
+                    });
+                });
     }
 }

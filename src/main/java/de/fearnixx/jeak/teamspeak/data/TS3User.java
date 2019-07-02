@@ -12,10 +12,7 @@ import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public class TS3User extends TS3UserHolder {
     private TS3UserSubject ts3PermSubject;

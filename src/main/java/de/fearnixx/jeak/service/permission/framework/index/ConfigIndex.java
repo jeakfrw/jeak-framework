@@ -157,7 +157,7 @@ public class ConfigIndex extends SubjectIndex {
 
     @Override
     public List<UUID> getGroupsLinkedTo(Integer ts3GroupId) {
-        return config.getRoot().getNode("group")
+        return config.getRoot().getNode("groups")
                 .optMap()
                 .orElseGet(Collections::emptyMap)
                 .entrySet()

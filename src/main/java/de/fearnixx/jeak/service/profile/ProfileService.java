@@ -124,7 +124,7 @@ public class ProfileService implements IProfileService {
         Objects.requireNonNull(uuid, "Lookup UUID may not be null!");
 
         if (!indexConfig.getRoot().getNode(uuid.toString()).isVirtual()) {
-            return Optional.ofNullable(retrieveUserProfile(uuid).orElse(null));
+            return Optional.ofNullable(retrieveUserProfile(uuid, null).orElse(null));
         } else {
             return Optional.empty();
         }
@@ -133,21 +133,20 @@ public class ProfileService implements IProfileService {
     @Override
     public Optional<IUserProfile> getProfile(String ts3Identity) {
         final Optional<UUID> optUUID = lookupUUID(ts3Identity);
-        return optUUID.map(uuid -> retrieveUserProfile(uuid).orElse(null));
+        return optUUID.map(uuid -> retrieveUserProfile(uuid, null).orElse(null));
     }
 
     @Override
     public Optional<IUserProfile> getOrCreateProfile(String ts3Identity) {
         Objects.requireNonNull(ts3Identity, "Lookup identity may not be null!");
-
         final Optional<UUID> optUUID = lookupUUID(ts3Identity);
-        UUID uuid = optUUID.orElseGet(UUID::randomUUID);
-
-        if (!optUUID.isPresent()) {
+        final UUID uuid = optUUID.orElseGet(UUID::randomUUID);
+        final ConfigProfile profile = retrieveUserProfile(uuid, ts3Identity)
+                .orElseThrow(() -> new IllegalStateException("Failed to create profile: " + uuid));
+        if (optUUID.isEmpty()) {
             addToIndex(ts3Identity, uuid);
         }
-
-        return Optional.ofNullable(retrieveUserProfile(uuid).orElse(null));
+        return Optional.ofNullable(profile);
     }
 
     private synchronized void addToIndex(String ts3Identity, UUID uuid) {
@@ -199,7 +198,7 @@ public class ProfileService implements IProfileService {
      * Only creates new profiles when {@code createIfAbsent} is set.
      * The cached profile is returned, when available.
      */
-    private Optional<ConfigProfile> retrieveUserProfile(UUID uuid) {
+    private Optional<ConfigProfile> retrieveUserProfile(UUID uuid, String forTs3Identity) {
         ConfigProfile profile;
         profile = getProfileFromCache(uuid);
 
@@ -208,7 +207,7 @@ public class ProfileService implements IProfileService {
             return Optional.of(profile);
 
         } else {
-            Optional<ConfigProfile> optProfile = makeUserProfile(uuid);
+            Optional<ConfigProfile> optProfile = makeUserProfile(uuid, forTs3Identity);
             optProfile.ifPresent(this::cacheProfile);
             return optProfile;
         }
@@ -222,7 +221,7 @@ public class ProfileService implements IProfileService {
         profileCache.put(profile.getUniqueId(), profile);
     }
 
-    private Optional<ConfigProfile> makeUserProfile(UUID uuid) {
+    private Optional<ConfigProfile> makeUserProfile(UUID uuid, String ts3Identity) {
         final File profileFile = getProfileFSRef(uuid);
         final FileConfig profileConfig = new FileConfig(configLoader, profileFile);
         final boolean isNew = !profileFile.isFile();
@@ -241,8 +240,13 @@ public class ProfileService implements IProfileService {
             logger.warn("Failed to load profile {}!", profileFile.getPath(), e);
         }
 
-        if (isNew) {
+        if (isNew && profile != null) {
+            if (ts3Identity == null) {
+                throw new IllegalStateException("Profiles cannot be created without an initial identity!");
+            }
+            profile.unsafeAddIdentity(new UserIdentity(IUserIdentity.SERVICE_TEAMSPEAK, ts3Identity));
             onProfileModified(profile);
+            logger.debug("Created profile: {}", uuid);
             ProfileEvent.ProfileCreatedEvent createdEvent = new ProfileEvent.ProfileCreatedEvent();
             createdEvent.setTargetProfile(profile);
             eventService.fireEvent(createdEvent);
@@ -264,9 +268,9 @@ public class ProfileService implements IProfileService {
 
     @Override
     public void mergeProfiles(UUID into, UUID other) {
-        ConfigProfile intoProfile = retrieveUserProfile(into)
+        ConfigProfile intoProfile = retrieveUserProfile(into, null)
                 .orElseThrow(() -> new IllegalArgumentException("No profile for target UUID: " + into));
-        ConfigProfile fromProfile = retrieveUserProfile(other)
+        ConfigProfile fromProfile = retrieveUserProfile(other, null)
                 .orElseThrow(() -> new IllegalArgumentException("No profile for source UUID: " + other));
 
         fromProfile.getLinkedIdentities()

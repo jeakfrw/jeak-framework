@@ -2,15 +2,16 @@ package de.fearnixx.jeak.service.permission.framework;
 
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.profile.IProfileService;
+import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.profile.event.IProfileEvent;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.permission.base.IGroup;
-import de.fearnixx.jeak.service.permission.framework.index.ConfigIndex;
-import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.fearnixx.jeak.service.permission.framework.subject.ConfigSubject;
 import de.fearnixx.jeak.service.permission.framework.subject.SubjectAccessor;
+import de.fearnixx.jeak.service.permission.framework.subject.UserConfigSubject;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.mlessmann.confort.LoaderFactory;
@@ -39,16 +40,19 @@ public class SubjectCache {
 
     private final Map<UUID, SubjectAccessor> cachedAccessors = new ConcurrentHashMap<>();
     private final Map<UUID, LocalDateTime> cacheTimings = new ConcurrentHashMap<>();
-    private final SubjectIndex subjectIndex;
 
     private final ITask cacheBuster = ITask.builder()
             .name("perms-cache-buster")
             .interval(3, TimeUnit.MINUTES)
             .runnable(this::bustCaches)
             .build();
+    private final InternalPermissionProvider provider;
 
     @Inject
     private ITaskService taskService;
+
+    @Inject
+    private IProfileService profileService;
 
     @Inject
     private IBot bot;
@@ -56,22 +60,32 @@ public class SubjectCache {
     @Inject
     private IInjectionService injectionService;
 
-    public SubjectCache(SubjectIndex subjectIndex) {
-        this.subjectIndex = subjectIndex;
+    public SubjectCache(InternalPermissionProvider provider) {
+        this.provider = provider;
     }
 
     public synchronized SubjectAccessor getSubject(UUID uuid) {
         // When redirected, use that UUID. Otherwise, use the given one.
         UUID realUUID = profileMerges.getOrDefault(uuid, uuid);
         cacheTimings.put(uuid, LocalDateTime.now().plusMinutes(20));
-        return cachedAccessors.computeIfAbsent(realUUID, this::makeStoredSubject);
+        return cachedAccessors.computeIfAbsent(realUUID, id -> makeStoredSubject(realUUID));
     }
 
     private SubjectAccessor makeStoredSubject(UUID uuid) {
+        final Optional<IUserProfile> optProfile = profileService.getProfile(uuid);
+
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
         File subjectFile = new File(bot.getConfigDirectory(), "permissions/" + uuid.toString() + ".json");
         FileConfig config = new FileConfig(loader, subjectFile);
-        final ConfigSubject subject = new ConfigSubject(uuid, config, this, subjectIndex);
+
+        ConfigSubject subject;
+        if (optProfile.isEmpty()) {
+            logger.debug("Created new unspecified subject for: {}", uuid);
+            subject = new ConfigSubject(uuid, config, provider);
+        } else {
+            logger.debug("Created new user subject for: {}", uuid);
+            subject = new UserConfigSubject(optProfile.get(), config, provider);
+        }
         injectionService.injectInto(subject);
         return subject;
     }
@@ -116,16 +130,16 @@ public class SubjectCache {
             }
         });
 
-        subjectIndex.saveIfModified();
+        provider.getIndex().saveIfModified();
     }
 
     public Optional<IGroup> createGroup(String name) {
-        final UUID groupUID = subjectIndex.createGroup(name);
+        final UUID groupUID = provider.getIndex().createGroup(name);
         return Optional.ofNullable(getSubject(groupUID));
     }
 
     public boolean delete(UUID subjectUUID) {
-        subjectIndex.deleteSubject(subjectUUID);
+        provider.getIndex().deleteSubject(subjectUUID);
         return true;
     }
 }

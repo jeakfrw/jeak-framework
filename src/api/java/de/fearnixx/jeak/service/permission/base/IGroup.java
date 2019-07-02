@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.permission.base;
 
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 
 import java.util.List;
@@ -22,6 +23,8 @@ public interface IGroup extends ISubject {
      * They cannot be removed from the group unless they are removed from the server group or the link is removed.
      *
      * @apiNote For permission systems that do not support this type of connection, this will always be empty.
+     * @implNote This feature is restricted to calls on {@link IUser#getPermission(String)} and {@link IClient#getPermission(String)}
+     *           as any other implementation would require empty profiles to be persisted just for lookup purposes!
      */
     Optional<Integer> getLinkedServerGroup();
 
