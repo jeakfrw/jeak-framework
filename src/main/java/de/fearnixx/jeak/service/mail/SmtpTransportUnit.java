@@ -73,14 +73,16 @@ public class SmtpTransportUnit implements ITransportUnit {
 
     public void dispatch(MimeMessage message) {
         executorService.execute(() -> {
+            Address[] recips = null;
             try {
+                recips = message.getAllRecipients();
                 jMailSmtp.connect();
-                jMailSmtp.sendMessage(message, message.getAllRecipients());
+                jMailSmtp.sendMessage(message, recips);
                 jMailSmtp.close();
                 logger.debug("[{}] Successfully sent message.", unitName);
 
             } catch (MessagingException e) {
-                logger.warn("[{}] Failed to dispatch message!", unitName, e);
+                logger.warn("[{}] Failed to dispatch message! Recipients: {}", unitName, recips, e);
 
             } finally {
                 if (jMailSmtp.isConnected()) {

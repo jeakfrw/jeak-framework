@@ -80,7 +80,7 @@ public class NotificationTestPlugin extends AbstractTestPlugin {
                 success("notficiationTest_profileRetrieved");
             }
 
-            optProfile.get().setOption(SendMailChannel.MAIL_ADDRESS_PROFILE_OPTION, PROP_TEST_RECIPIENT);
+            optProfile.get().setOption(SendMailChannel.MAIL_ADDRESS_PROFILE_OPTION, NOTIFY_TEST_RECIPIENT);
             INotification notification = INotification.builder()
                     .addRecipient(RECIPIENT_UID)
                     .urgency(Urgency.ALERT)
