@@ -5,14 +5,17 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.service.permission.base.IPermission;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 public abstract class AbstractTS3PermissionProvider implements ITS3PermissionProvider {
 
@@ -21,7 +24,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     private final PermIdCache permIdCache = new PermIdCache();
 
     @Inject
-    private IDataCache dataCache;
+    private IUserService userService;
 
     @Inject
     private IServer server;
@@ -42,6 +45,16 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
 
     @Override
     public abstract void clearCache(ITS3Permission.PriorityType type, Integer optClientOrGroupID, Integer optChannelID);
+
+    @Override
+    public Optional<ITS3Permission> getActivePermission(String permSID, String clientTS3UniqueID) {
+        Optional<IClient> optClient = userService.findClientByUniqueID(clientTS3UniqueID)
+                .stream()
+                .findFirst();
+        final ITS3Permission[] perm = new ITS3Permission[]{null};
+        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
+        return Optional.ofNullable(perm[0]);
+    }
 
     @Override
     public Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID) {
@@ -78,7 +91,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
                 continue;
             }
 
-            if ((value >= maxValue|| negateFlag)
+            if ((value >= maxValue || negateFlag)
                     && type.getWeight() > maxWeight) {
                 effective = perm;
                 maxValue = value;
@@ -91,7 +104,8 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
 
     protected List<ITS3Permission> getActiveContext(Integer clientID, String permSID) {
         final List<ITS3Permission> result = new ArrayList<>();
-        IClient client = dataCache.getClientMap().get(clientID);
+        Optional<IClient> optClient = userService.getClientByID(clientID);
+        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Given client ID is not online: " + clientID));
 
         client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
         getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);
@@ -100,17 +114,6 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
         getChannelPermission(client.getChannelID(), permSID).ifPresent(result::add);
 
         return result;
-    }
-
-    @Override
-    public Optional<IPermission> getPermission(String permSID, String clientUID) {
-        Optional<IClient> optClient = dataCache.getClients()
-                .stream()
-                .filter(c -> c.getClientUniqueID().equals(clientUID))
-                .findFirst();
-        final IPermission[] perm = new IPermission[]{null};
-        optClient.ifPresent(c -> getActivePermission(c.getClientDBID(), permSID).ifPresent(p -> perm[0] = p));
-        return Optional.ofNullable(perm[0]);
     }
 
     @Override

@@ -40,7 +40,7 @@ public class ConfigProfile implements IUserProfile {
 
     @Override
     public synchronized List<IUserIdentity> getLinkedIdentities(String serviceId) {
-        return Collections.unmodifiableList(configRef.getRoot()
+        return configRef.getRoot()
                 .getNode("identities", serviceId)
                 .optList()
                 .orElseGet(Collections::emptyList)
@@ -48,7 +48,7 @@ public class ConfigProfile implements IUserProfile {
                 .filter(n -> n.optString().isPresent())
                 .map(IValueHolder::asString)
                 .map(identity -> new UserIdentity(serviceId, identity))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toUnmodifiableList());
     }
 
     @Override
@@ -145,11 +145,11 @@ public class ConfigProfile implements IUserProfile {
         boolean containsId = serviceNode.optList().orElseGet(Collections::emptyList)
                 .stream()
                 .map(IValueHolder::asString)
-                .noneMatch(identity -> identity.equals(id.identity()));
-        if (containsId) {
-            IConfigNode listEntry = configRef.getRoot().createNewInstance();
-            listEntry.setString(id.identity());
-            serviceNode.append(listEntry);
+                .anyMatch(identity -> identity.equals(id.identity()));
+        if (!containsId) {
+            serviceNode.appendValue(id.identity());
+        } else {
+            logger.warn("Not re-adding id {}/{} to profile: {}", id.serviceId(), id.identity(), getUniqueId());
         }
 
         // No modification notification.

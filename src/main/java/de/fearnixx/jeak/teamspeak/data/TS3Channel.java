@@ -1,6 +1,10 @@
 package de.fearnixx.jeak.teamspeak.data;
 
 import de.fearnixx.jeak.Main;
+import de.fearnixx.jeak.service.permission.base.IGroup;
+import de.fearnixx.jeak.service.permission.base.IPermission;
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3ChannelSubject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.PropertyKeys.Channel;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -10,8 +14,7 @@ import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by MarkL4YG on 15.06.17.
@@ -21,6 +24,15 @@ public class TS3Channel extends TS3ChannelHolder {
     private static final Boolean CHANNEL_MSG_WARNING = Main.getProperty("jeak.checks.channelMsg", true);
 
     public static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
+
+    private TS3ChannelSubject permSubject;
+
+    public void setPermSubject(TS3ChannelSubject permSubject) {
+        if (this.permSubject != null) {
+            throw new IllegalStateException("#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
+        }
+        this.permSubject = permSubject;
+    }
 
     @Override
     public IQueryRequest sendMessage(String message) {
@@ -72,5 +84,37 @@ public class TS3Channel extends TS3ChannelHolder {
 
         properties.forEach(queryBuilder::addKey);
         return queryBuilder.build();
+    }
+
+    // == TS3 Subject == //
+
+    @Override
+    public Optional<ITS3Permission> getTS3Permission(String permSID) {
+        return permSubject.getTS3Permission(permSID);
+    }
+
+    @Override
+    public Optional<ITS3Permission> getActiveTS3Permission(String permSID) {
+        return permSubject.getActiveTS3Permission(permSID);
+    }
+
+    @Override
+    public IQueryRequest assignPermission(String permSID, int value, boolean permSkip, boolean permNegated) {
+        return permSubject.assignPermission(permSID, value, permSkip, permNegated);
+    }
+
+    @Override
+    public IQueryRequest assignPermission(String permSID, int value, boolean permSkip) {
+        return permSubject.assignPermission(permSID, value, permSkip);
+    }
+
+    @Override
+    public IQueryRequest assignPermission(String permSID, int value) {
+        return permSubject.assignPermission(permSID, value);
+    }
+
+    @Override
+    public IQueryRequest revokePermission(String permSID) {
+        return permSubject.revokePermission(permSID);
     }
 }

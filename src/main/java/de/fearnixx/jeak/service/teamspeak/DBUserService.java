@@ -88,6 +88,8 @@ public class DBUserService extends AbstractUserService {
                 user.setProperty(PropertyKeys.Client.LAST_JOIN_TIME, result.getLong("client_lastconnected"));
                 user.setProperty(PropertyKeys.DBClient.TOTAL_CONNECTIONS, result.getInt(PropertyKeys.DBClient.TOTAL_CONNECTIONS));
                 user.setProperty(PropertyKeys.Client.IPV4_ADDRESS, result.getString("client_lastip"));
+                applyPermissions(user);
+
                 results.add(user);
                 logger.debug("Constructed user: {}/{}", user.getClientDBID(), user.getNickName());
             }

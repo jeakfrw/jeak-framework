@@ -15,35 +15,27 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
 
     public String getClientUniqueID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.UID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing unique ID")
-                    .setSourceObject(this);
-        return optProperty.get();
+        return optProperty.orElseThrow(
+                () -> new ConsistencyViolationException("Client is missing unique ID").setSourceObject(this));
     }
 
     public Integer getClientDBID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.DBID);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing database ID")
-                    .setSourceObject(this);
-        return Integer.parseInt(optProperty.get());
+        return Integer.parseInt(optProperty.orElseThrow(
+                () -> new ConsistencyViolationException("Client is missing database ID").setSourceObject(this)));
     }
 
     public String getNickName() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.NICKNAME);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing nickname")
-                    .setSourceObject(this);
-        return optProperty.get();
+        return optProperty.orElseThrow(
+                () -> new ConsistencyViolationException("Client is missing nickname").setSourceObject(this));
     }
 
     @Override
     public String getDescription() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.DESCRIPTION);
-        if (!optProperty.isPresent()) {
-            throw new ConsistencyViolationException("Client is missing description!");
-        }
-        return optProperty.get();
+        return optProperty.orElseThrow(
+                () -> new ConsistencyViolationException("Client is missing description!").setSourceObject(this));
     }
 
     public String getIconID() {
@@ -52,10 +44,8 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
 
     public Long getCreated() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.CREATED_TIME);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client is missing creation timestamp")
-                    .setSourceObject(this);
-        return Long.parseLong(optProperty.get());
+        return Long.parseLong(optProperty.orElseThrow(
+                () -> new ConsistencyViolationException("Client is missing creation timestamp").setSourceObject(this)));
     }
 
     public LocalDateTime getCreatedTime() {
@@ -73,16 +63,14 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
     @Override
     public List<Integer> getGroupIDs() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.GROUPS);
-        if (!optProperty.isPresent())
-            throw new ConsistencyViolationException("Client has no server groups")
-                    .setSourceObject(this);
 
-        String s = optProperty.get();
+        String s = optProperty.orElseThrow(
+                () -> new ConsistencyViolationException("Client has no server groups").setSourceObject(this));
         String[] sIDs = s.split(",");
         Integer[] ids = new Integer[sIDs.length];
         for (int i = 0; i < sIDs.length; i++) {
             ids[i] = Integer.parseInt(sIDs[i]);
         }
-        return Collections.unmodifiableList(Arrays.asList(ids));
+        return List.of(ids);
     }
 }

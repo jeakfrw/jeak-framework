@@ -4,9 +4,13 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
+import de.fearnixx.jeak.profile.IProfileService;
+import de.fearnixx.jeak.profile.IUserProfile;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.permission.base.IPermissionService;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3UserSubject;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -20,7 +24,10 @@ import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -39,6 +46,12 @@ public class ClientCache {
 
     @Inject
     private ITaskService taskService;
+
+    @Inject
+    private IProfileService profileService;
+
+    @Inject
+    private IPermissionService permService;
 
     // == CLIENTLIST = //
 
@@ -157,10 +170,7 @@ public class ClientCache {
 
                         if (client == null) {
                             // Client is new - New reference
-                            client = new TS3Client();
-                            client.copyFrom(message);
-                            logger.debug("Created new client representation for {}/{}",
-                                    client.getClientUniqueID(), client.getNickName());
+                            client = createClient(message);
 
                         } else {
                             // Client not new - Update values
@@ -177,15 +187,38 @@ public class ClientCache {
         return mapping;
     }
 
+    private TS3Client createClient(IRawQueryEvent.IMessage message) {
+        TS3Client client;
+        client = new TS3Client();
+        client.copyFrom(message);
+        applyPermissions(client);
+
+        logger.debug("Created new client representation for {}/{}",
+                client.getClientUniqueID(), client.getNickName());
+        return client;
+    }
+
+    private void applyPermissions(TS3Client client) {
+        String ts3uid = client.getClientUniqueID();
+        UUID uuid = profileService.getOrCreateProfile(ts3uid)
+                .map(IUserProfile::getUniqueId)
+                .orElseThrow(() -> new IllegalStateException("Failed to reserve profile UUID for subject: " + client));
+        logger.debug("Client {} got permission UUID: {}", client, uuid);
+        final TS3UserSubject ts3Subject = new TS3UserSubject(permService.getTS3Provider(), client.getClientDBID());
+        client.setTs3PermSubject(ts3Subject);
+        client.setFrameworkSubjectUUID(uuid);
+        client.setFrwPermProvider(permService.getFrameworkProvider());
+    }
+
     public Map<Integer, IClient> getClientMap() {
         synchronized (LOCK) {
-            return Collections.unmodifiableMap(clientCache);
+            return Map.copyOf(clientCache);
         }
     }
 
     public List<IClient> getClients() {
         synchronized (LOCK) {
-            return Collections.unmodifiableList(new ArrayList<>(clientCache.values()));
+            return List.copyOf(clientCache.values());
         }
     }
 

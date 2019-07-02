@@ -7,6 +7,9 @@ import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.permission.base.IPermissionService;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3ChannelSubject;
+import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -21,10 +24,7 @@ import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +42,9 @@ public class ChannelCache {
 
     @Inject
     private IServer server;
+
+    @Inject
+    private IPermissionService permService;
 
     private final Object LOCK;
 
@@ -191,7 +194,7 @@ public class ChannelCache {
 
                             if (isSpacer != wasSpacer) {
                                 // Spacer state changed - Update reference
-                                channel = isSpacer ? new TS3Spacer() : new TS3Channel();
+                                channel = createChannel(isSpacer);
                                 channel.copyFrom(o);
 
                             } else {
@@ -210,9 +213,16 @@ public class ChannelCache {
         return channelMap;
     }
 
+    private TS3Channel createChannel(boolean isSpacer) {
+        TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
+        final TS3ChannelSubject channelSubject = new TS3ChannelSubject(permService.getTS3Provider(), channel.getID());
+        channel.setPermSubject(channelSubject);
+        return channel;
+    }
+
     public List<IChannel> getChannels() {
         synchronized (internalCache) {
-            return Collections.unmodifiableList(new ArrayList<>(internalCache.values()));
+            return List.copyOf(internalCache.values());
         }
     }
 

@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.service.permission.teamspeak.ITS3Subject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
@@ -21,7 +22,7 @@ import java.util.Map;
  * @implNote That means obsolete channels are invalidated automatically through {@link #getPersistence()} as {@link ChannelPersistence#DELETED}
  * @implNote However the API can not make this guarantee for any custom implementations!
  */
-public interface IChannel extends IDataHolder {
+public interface IChannel extends IDataHolder, ITS3Subject {
 
     /**
      * @return The channel ID
