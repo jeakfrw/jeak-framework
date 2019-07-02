@@ -109,6 +109,7 @@ public class SubjectCache {
         taskService.removeTask(cacheBuster);
         cachedAccessors.values().forEach(SubjectAccessor::saveIfModified);
         cachedAccessors.clear();
+        provider.getIndex().saveIfModified();
     }
 
     private synchronized void bustCaches() {
