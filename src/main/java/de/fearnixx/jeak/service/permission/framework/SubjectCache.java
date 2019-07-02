@@ -105,6 +105,11 @@ public class SubjectCache {
     }
 
     @Listener
+    public synchronized void onProfileDeleted(IProfileEvent.IProfileDeleted deleteEvent) {
+        provider.deleteSubject(deleteEvent.getProfileUUID());
+    }
+
+    @Listener
     public synchronized void onShutdown(IBotStateEvent.IPreShutdown event) {
         taskService.removeTask(cacheBuster);
         cachedAccessors.values().forEach(SubjectAccessor::saveIfModified);
