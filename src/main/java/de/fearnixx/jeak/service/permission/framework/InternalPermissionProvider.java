@@ -48,7 +48,7 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Listener
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
-        FileConfig config = new FileConfig(loader, new File(bot.getConfigDirectory(), "permissions/index.json"));
+        FileConfig config = new FileConfig(loader, new File(bot.getConfigDirectory(), "permissions/_index.json"));
         ((ConfigIndex) subjectIndex).setConfig(config);
         ((ConfigIndex) subjectIndex).load();
         eventService.registerListener(subjectCache);
@@ -111,7 +111,9 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Override
     public Optional<IGroup> findGroupByName(String name) {
         Optional<UUID> optGroupUUID = subjectIndex.findGroupByName(name);
-        return optGroupUUID.map(this::getSubject).map(IGroup.class::cast);
+        return optGroupUUID.map(this::getSubject)
+                .map(Optional::get)
+                .map(IGroup.class::cast);
     }
 
     @Override
