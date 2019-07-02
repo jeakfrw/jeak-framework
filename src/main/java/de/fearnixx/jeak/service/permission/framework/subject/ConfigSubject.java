@@ -40,13 +40,6 @@ public class ConfigSubject extends SubjectAccessor {
     }
 
     @Override
-    public boolean hasPermission(String permission) {
-        return getPermission(permission)
-                .map(p -> p.getValue() > 0)
-                .orElse(false);
-    }
-
-    @Override
     protected Optional<IPermission> getPermissionFromSelf(String permSID) {
         IConfigNode valueNode = configRef.getRoot()
                 .getNode("permissions", permSID, "value");

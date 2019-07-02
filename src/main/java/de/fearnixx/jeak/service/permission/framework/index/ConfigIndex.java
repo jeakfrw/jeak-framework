@@ -30,6 +30,7 @@ public class ConfigIndex extends SubjectIndex {
             config.load();
             if (config.getRoot().isVirtual()) {
                 config.getRoot().getNode("parents").setMap();
+                config.getRoot().getNode("admins").setList();
                 setModified();
             }
             return true;
@@ -37,6 +38,16 @@ public class ConfigIndex extends SubjectIndex {
             logger.error("Failed to load membership index!", e);
             return false;
         }
+    }
+
+    public synchronized boolean isAdmin(UUID uuid) {
+        final String suid = uuid.toString();
+        return config.getRoot().getNode("admins")
+                .optList()
+                .orElseGet(Collections::emptyList)
+                .stream()
+                .map(IValueHolder::asString)
+                .anyMatch(str -> str.equals(suid));
     }
 
     @Override

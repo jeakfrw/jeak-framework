@@ -33,6 +33,14 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
     }
 
     @Override
+    public boolean hasPermission(String permission) {
+        return provider.getIndex().isAdmin(getUniqueID())
+                || getPermission(permission)
+                .map(p -> p.getValue() > 0)
+                .orElse(false);
+    }
+
+    @Override
     public Optional<IPermission> getPermission(String permission) {
         return getPermission(permission, true);
     }

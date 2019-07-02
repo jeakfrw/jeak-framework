@@ -20,6 +20,8 @@ public abstract class SubjectIndex {
 
     public abstract void linkServerGroup(IGroup group, int serverGroupID);
 
+    public abstract boolean isAdmin(UUID subjectUUID);
+
     public abstract List<UUID> getMembersOf(UUID subjectUUID);
 
     public abstract List<UUID> getParentsOf(UUID subjectUUID);
