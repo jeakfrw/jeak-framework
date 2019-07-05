@@ -140,7 +140,11 @@ public class ProfileService implements IProfileService {
     public Optional<IUserProfile> getOrCreateProfile(String ts3Identity) {
         Objects.requireNonNull(ts3Identity, "Lookup identity may not be null!");
         final Optional<UUID> optUUID = lookupUUID(ts3Identity);
-        final UUID uuid = optUUID.orElseGet(UUID::randomUUID);
+        final UUID uuid = optUUID.orElseGet(() -> {
+            final UUID generated = UUID.randomUUID();
+            logger.debug("Generated profile UUID {} for identity {}", generated, ts3Identity);
+            return generated;
+        });
         final ConfigProfile profile = retrieveUserProfile(uuid, ts3Identity)
                 .orElseThrow(() -> new IllegalStateException("Failed to create profile: " + uuid));
         if (optUUID.isEmpty()) {
