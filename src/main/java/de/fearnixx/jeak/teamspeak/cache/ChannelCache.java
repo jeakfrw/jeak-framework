@@ -9,16 +9,12 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3ChannelSubject;
-import de.fearnixx.jeak.service.permission.teamspeak.TS3PermissionSubject;
 import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
-import de.fearnixx.jeak.teamspeak.data.IChannel;
-import de.fearnixx.jeak.teamspeak.data.TS3Channel;
-import de.fearnixx.jeak.teamspeak.data.TS3ChannelHolder;
-import de.fearnixx.jeak.teamspeak.data.TS3Spacer;
+import de.fearnixx.jeak.teamspeak.data.*;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
@@ -194,8 +190,7 @@ public class ChannelCache {
 
                             if (isSpacer != wasSpacer) {
                                 // Spacer state changed - Update reference
-                                channel = createChannel(isSpacer);
-                                channel.copyFrom(o);
+                                channel = createChannelFrom(isSpacer, o);
 
                             } else {
                                 // Channel not new - Update values
@@ -213,8 +208,9 @@ public class ChannelCache {
         return channelMap;
     }
 
-    private TS3Channel createChannel(boolean isSpacer) {
+    private TS3Channel createChannelFrom(boolean isSpacer, IDataHolder from) {
         TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
+        channel.copyFrom(from);
         final TS3ChannelSubject channelSubject = new TS3ChannelSubject(permService.getTS3Provider(), channel.getID());
         channel.setPermSubject(channelSubject);
         return channel;
