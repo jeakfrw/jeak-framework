@@ -78,14 +78,15 @@ public class EventContainer implements Runnable {
                     resetStartedOn();
                     // Skip the invocation exception for readability
                     logExceptionCause(e);
-                    logger.error("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
-                    eventService.unregisterListener(currentReceiver.getVictim());
                 }
 
             } catch (Exception e) {
                 synchronized (this) {
                     resetStartedOn();
+                    // Skip the invocation exception for readability
                     logExceptionCause(e);
+                    logger.error("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
+                    eventService.unregisterListener(currentReceiver.getVictim());
                 }
             }
 
