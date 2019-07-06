@@ -5,7 +5,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.controller.IRestControllerService;
-import de.fearnixx.jeak.service.controller.RegisterControllerException;
+import de.fearnixx.jeak.service.controller.exceptions.RegisterControllerException;
 import de.fearnixx.jeak.service.controller.testImpls.SecondTestController;
 import de.fearnixx.jeak.service.controller.testImpls.TestController;
 import de.fearnixx.jeak.test.AbstractTestPlugin;

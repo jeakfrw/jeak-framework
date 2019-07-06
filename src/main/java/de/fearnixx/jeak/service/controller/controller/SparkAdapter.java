@@ -19,12 +19,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static spark.Spark.before;
-import static spark.Spark.halt;
+import static spark.Spark.*;
 
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
     private IConnectionVerifier connectionVerifier;
+    private Map<String, String> headers;
 
     public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
         super(restConfiguration);
@@ -83,7 +83,7 @@ public class SparkAdapter extends HttpServer {
     private void checkAndSetCors(String path) {
         if (isCorsEnabled()) {
             Spark.options(path, (request, response) -> {
-                setHeaders(response, new HashMap<>());
+                headers = setHeaders(response, new HashMap<>());
                 return "";
             });
         }
@@ -121,31 +121,39 @@ public class SparkAdapter extends HttpServer {
                 methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
             Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
-            String contentType = controllerMethod.getAnnotation(RequestMapping.class).contentType();
-
             Map<String, String> additionalHeaders = new HashMap<>();
             if (returnValue instanceof ResponseEntity) {
                 ResponseEntity responseEntity = (ResponseEntity) returnValue;
                 additionalHeaders.putAll(responseEntity.getHeaders());
                 returnValue = responseEntity.getResponseEntity();
             }
+            headers = setHeaders(response, additionalHeaders);
 
-            if (contentType.contains("json")) {
+
+            String contentType = headers.get("Content-Type");
+            if (contentType != null && !contentType.isEmpty() && contentType.contains("json")) {
                 response.type(contentType);
                 returnValue = toJson(returnValue);
             }
-            setHeaders(response, additionalHeaders);
             return returnValue;
         };
     }
 
-    private void setHeaders(Response response, Map<String, String> additionalHeaders) {
-        Map<String, String> headers = loadHeaders();
+    /**
+     * This method adds the provided {@link Map} of headers to the provided {@link Response}.
+     *
+     * @param response
+     * @param additionalHeaders
+     * @return
+     */
+    private Map<String, String> setHeaders(Response response, Map<String, String> additionalHeaders) {
+        Map<String, String> headerMap = loadHeaders();
         if (isCorsEnabled()) {
-            headers.putAll(loadCorsHeaders());
+            headerMap.putAll(loadCorsHeaders());
         }
-        // Important to add the additional headers afterwards, so they can override the others
-        headers.putAll(additionalHeaders);
-        headers.forEach(response::header);
+        // Important to add the additional headerMap afterwards, so they can override the others
+        headerMap.putAll(additionalHeaders);
+        headerMap.forEach(response::header);
+        return headerMap;
     }
 }
