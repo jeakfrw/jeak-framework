@@ -25,6 +25,7 @@ import static spark.Spark.halt;
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
     private IConnectionVerifier connectionVerifier;
+    private Map<String, String> headers;
 
     public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
         super(restConfiguration);
@@ -121,26 +122,26 @@ public class SparkAdapter extends HttpServer {
                 methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
             Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
-            String contentType = controllerMethod.getAnnotation(RequestMapping.class).contentType();
-
             Map<String, String> additionalHeaders = new HashMap<>();
             if (returnValue instanceof ResponseEntity) {
                 ResponseEntity responseEntity = (ResponseEntity) returnValue;
                 additionalHeaders.putAll(responseEntity.getHeaders());
                 returnValue = responseEntity.getResponseEntity();
             }
+            setHeaders(response, additionalHeaders);
 
-            if (contentType.contains("json")) {
+
+            String contentType = headers.get("Content-Type");
+            if (contentType != null && !contentType.isEmpty() && contentType.contains("json")) {
                 response.type(contentType);
                 returnValue = toJson(returnValue);
             }
-            setHeaders(response, additionalHeaders);
             return returnValue;
         };
     }
 
     private void setHeaders(Response response, Map<String, String> additionalHeaders) {
-        Map<String, String> headers = loadHeaders();
+        headers = loadHeaders();
         if (isCorsEnabled()) {
             headers.putAll(loadCorsHeaders());
         }
