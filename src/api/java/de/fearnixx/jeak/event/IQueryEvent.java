@@ -159,6 +159,12 @@ public interface IQueryEvent extends IEvent {
             Integer getTargetChannelId();
 
             Integer getReasonId();
+
+            Boolean wasSelf();
+
+            Boolean wasForced();
+
+            Boolean wasServer();
         }
 
         interface ITextMessage extends INotification {

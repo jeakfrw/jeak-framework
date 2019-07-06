@@ -232,6 +232,21 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
                     .map(Integer::parseInt)
                     .orElseThrow(() -> new ConsistencyViolationException("ClientMoved-Event has no reasonid!"));
         }
+
+        @Override
+        public Boolean wasSelf() {
+            return getReasonId() == 0;
+        }
+
+        @Override
+        public Boolean wasForced() {
+            return getReasonId() == 1;
+        }
+
+        @Override
+        public Boolean wasServer() {
+            return wasForced() && getProperty("invokerid").isEmpty() && getProperty("invokername").orElse("").equals("Server");
+        }
     }
 
     public static class ClientTextMessage extends TargetClient implements TextMessageEvent, INotification.IClientTextMessage {
