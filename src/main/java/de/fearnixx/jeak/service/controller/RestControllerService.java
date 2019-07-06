@@ -7,6 +7,7 @@ import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.connection.RestConfiguration;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
 import de.fearnixx.jeak.service.controller.controller.SparkAdapter;
+import de.fearnixx.jeak.service.controller.exceptions.RegisterControllerException;
 
 import java.util.HashMap;
 import java.util.Map;
