@@ -19,8 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static spark.Spark.before;
-import static spark.Spark.halt;
+import static spark.Spark.*;
 
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
@@ -84,7 +83,7 @@ public class SparkAdapter extends HttpServer {
     private void checkAndSetCors(String path) {
         if (isCorsEnabled()) {
             Spark.options(path, (request, response) -> {
-                setHeaders(response, new HashMap<>());
+                headers = setHeaders(response, new HashMap<>());
                 return "";
             });
         }
@@ -128,7 +127,7 @@ public class SparkAdapter extends HttpServer {
                 additionalHeaders.putAll(responseEntity.getHeaders());
                 returnValue = responseEntity.getResponseEntity();
             }
-            setHeaders(response, additionalHeaders);
+            headers = setHeaders(response, additionalHeaders);
 
 
             String contentType = headers.get("Content-Type");
@@ -140,13 +139,21 @@ public class SparkAdapter extends HttpServer {
         };
     }
 
-    private void setHeaders(Response response, Map<String, String> additionalHeaders) {
-        headers = loadHeaders();
+    /**
+     * This method adds the provided {@link Map} of headers to the provided {@link Response}.
+     *
+     * @param response
+     * @param additionalHeaders
+     * @return
+     */
+    private Map<String, String> setHeaders(Response response, Map<String, String> additionalHeaders) {
+        Map<String, String> headerMap = loadHeaders();
         if (isCorsEnabled()) {
-            headers.putAll(loadCorsHeaders());
+            headerMap.putAll(loadCorsHeaders());
         }
-        // Important to add the additional headers afterwards, so they can override the others
-        headers.putAll(additionalHeaders);
-        headers.forEach(response::header);
+        // Important to add the additional headerMap afterwards, so they can override the others
+        headerMap.putAll(additionalHeaders);
+        headerMap.forEach(response::header);
+        return headerMap;
     }
 }
