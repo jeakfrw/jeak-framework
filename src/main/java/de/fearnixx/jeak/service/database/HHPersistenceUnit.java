@@ -7,6 +7,7 @@ import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
+import org.hibernate.TransactionException;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -15,8 +16,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -189,10 +192,23 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         if (isClosed) {
             throw new IOException("Persistence unit already closed!");
         }
-
         isClosed = true;
-        hikariDS.close();
+        logger.debug("[{}] Closing & flushing entity managers.", unitId);
+        entityManagers.forEach(eM -> {
+            try {
+                if (eM.getTransaction().isActive()) {
+                    eM.flush();
+                }
+                eM.close();
+            } catch (PersistenceException e) {
+                logger.warn("[{}] Failed to close entity manager.", unitId, e);
+            }
+        });
+        logger.debug("[{}] Closing hibernate session factory and registry.", unitId);
         hibernateSessionFactory.close();
         StandardServiceRegistryBuilder.destroy(hibernateServiceRegistry);
+
+        logger.debug("[{}] Closing Hikary source.", unitId);
+        hikariDS.close();
     }
 }

@@ -27,7 +27,7 @@ public class DBUserService extends AbstractUserService {
 
     private static final Logger logger = LoggerFactory.getLogger(DBUserService.class);
 
-    private IPersistenceUnit persistenceUnit;
+    private final IPersistenceUnit persistenceUnit;
 
     @Inject
     private IServer server;

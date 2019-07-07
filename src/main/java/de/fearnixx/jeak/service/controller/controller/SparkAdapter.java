@@ -19,7 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static spark.Spark.*;
+import static spark.Spark.before;
+import static spark.Spark.halt;
 
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);

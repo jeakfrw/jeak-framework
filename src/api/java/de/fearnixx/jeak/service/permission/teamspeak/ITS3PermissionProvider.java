@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Specialized permission provider that is capable of reflecting the permission evaluation from TeamSpeak 3.

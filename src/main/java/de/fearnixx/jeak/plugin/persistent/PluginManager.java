@@ -42,11 +42,11 @@ public class PluginManager {
 
     // * * * FIELDS * * * //
 
-    private List<File> sources = new ArrayList<>();
-    private List<URL> urlList = new ArrayList<>();
+    private final List<File> sources = new ArrayList<>();
+    private final List<URL> urlList = new ArrayList<>();
     private boolean includeCP;
     private ClassLoader pluginClassLoader;
-    private Map<String, PluginRegistry> registryMap = new HashMap<>();
+    private final Map<String, PluginRegistry> registryMap = new HashMap<>();
 
     // * * * CONSTRUCTION * * * //
 
@@ -65,10 +65,10 @@ public class PluginManager {
         }
         scanPluginSources();
 
-        List<Class<?>> candidates = new ArrayList<>();
         Reflections reflect = getPluginScanner(getPluginClassLoader());
 
-        candidates.addAll(reflect.getTypesAnnotatedWith(JeakBotPlugin.class, true));
+        var annotatedTypes = reflect.getTypesAnnotatedWith(JeakBotPlugin.class, true);
+        List<Class<?>> candidates = new ArrayList<>(annotatedTypes);
         logger.info("Found {} plugin candidates", candidates.size());
         candidates.forEach(c -> {
             Optional<PluginRegistry> r = PluginRegistry.getFor(c);

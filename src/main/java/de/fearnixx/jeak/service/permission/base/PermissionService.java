@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.service.permission.base;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
-import de.fearnixx.jeak.profile.IUserIdentity;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;

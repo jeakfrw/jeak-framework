@@ -8,13 +8,11 @@ import de.fearnixx.jeak.service.permission.base.Permission;
  */
 public class TS3Permission extends Permission implements ITS3Permission {
 
-    private PriorityType type;
-    private String sid;
+    private final PriorityType type;
 
-    public TS3Permission(PriorityType type, String sid) {
-        super(IUserIdentity.SERVICE_TEAMSPEAK, sid);
+    public TS3Permission(PriorityType type, String permSID) {
+        super(IUserIdentity.SERVICE_TEAMSPEAK, permSID);
         this.type = type;
-        this.sid = sid;
     }
 
     @Override

@@ -21,8 +21,8 @@ public class CommandLine implements Runnable {
     private final Object lock = new Object();
     private boolean terminated = false;
 
-    private InputStream in;
-    private OutputStreamWriter out;
+    private final InputStream in;
+    private final OutputStreamWriter out;
 
     public CommandLine(InputStream in, OutputStream out) {
         this.in = in;
@@ -72,6 +72,8 @@ public class CommandLine implements Runnable {
                 }
                 Thread.sleep(20);
             } catch (InterruptedException e) {
+                // We want to be explicit about this.
+                //noinspection UnnecessaryContinue
                 continue;
             } catch (IOException e) {
                 if (!"Stream closed".equals(e.getMessage())) {

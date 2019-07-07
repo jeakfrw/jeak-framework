@@ -2,7 +2,6 @@ package de.fearnixx.jeak.service.mail;
 
 import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
-import de.fearnixx.jeak.reflect.Listener;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -21,10 +20,10 @@ import java.util.concurrent.Executors;
 public class MailService implements IMailService {
 
     private static final Logger logger = LoggerFactory.getLogger(MailService.class);
-    private final String CONFIGURATION_MIME_TYPE = "application/json";
+    private static final String CONFIGURATION_MIME_TYPE = "application/json";
 
     private final ExecutorService dispatchExecutor = Executors.newSingleThreadExecutor();
-    private Map<String, SmtpTransportUnit> transportUnits = new HashMap<>();
+    private final Map<String, SmtpTransportUnit> transportUnits = new HashMap<>();
     private final File confDir;
 
     public MailService(File confDir) {

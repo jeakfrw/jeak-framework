@@ -21,7 +21,7 @@ public interface ITS3Permission extends IPermission {
         CHANNEL_GROUP(4),
         CHANNEL_CLIENT(5);
 
-        private Integer weight;
+        private final Integer weight;
 
         PriorityType(Integer weight) {
             this.weight = weight;

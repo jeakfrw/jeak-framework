@@ -28,13 +28,12 @@ public class TaskService extends Thread implements ITaskService {
 
     private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
 
-    public static final Integer THREAD_POOL_SIZE = 10;
-    public static Integer AWAIT_TERMINATION_DELAY = 5000;
+    public static final Integer THREAD_POOL_SIZE = Main.getProperty("bot.taskmgr.poolsize", 10);
 
     private final Map<ITask, Long> tasks;
     private boolean terminated = false;
 
-    private ExecutorService taskExecutor;
+    private final ExecutorService taskExecutor;
 
     @Inject
     private IEventService eventService;
@@ -42,8 +41,7 @@ public class TaskService extends Thread implements ITaskService {
     public TaskService(int capacity) {
         tasks = new HashMap<>(capacity, 0.8f);
         ThreadFactory threadFactory = new NamePatternThreadFactory("task-scheduler-%d");
-        taskExecutor = Executors.newFixedThreadPool(Main.getProperty("bot.taskmgr.poolsize", THREAD_POOL_SIZE), threadFactory);
-        AWAIT_TERMINATION_DELAY = Main.getProperty("bot.eventmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
+        taskExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE, threadFactory);
     }
 
     @Override

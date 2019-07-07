@@ -7,9 +7,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
-import de.fearnixx.jeak.teamspeak.data.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -7,11 +7,16 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
-import de.fearnixx.jeak.teamspeak.data.*;
+import de.fearnixx.jeak.teamspeak.data.IChannel;
+import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.TS3Channel;
+import de.fearnixx.jeak.teamspeak.data.TS3Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @FrameworkService(serviceInterface = IDataCache.class)
 public class DataCache implements IDataCache {

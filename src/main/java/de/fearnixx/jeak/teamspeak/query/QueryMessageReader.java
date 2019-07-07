@@ -13,8 +13,6 @@ import java.nio.charset.Charset;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
-
 public class QueryMessageReader implements AutoCloseable {
 
     private static final Logger netLogger = LoggerFactory.getLogger("de.fearnixx.jeak.teamspeak.query.Netlog");
@@ -25,7 +23,7 @@ public class QueryMessageReader implements AutoCloseable {
     private final StringBuilder largeBuffer = new StringBuilder();
     private final char[] buffer = new char[1024];
     private int bufferPos = 0;
-    private char[] character = new char[1];
+    private final char[] character = new char[1];
     private boolean closed = false;
 
     public QueryMessageReader(InputStream in,
@@ -38,6 +36,7 @@ public class QueryMessageReader implements AutoCloseable {
         this.parser = new QueryParser(onNotification, onAnswer, onGreetingStatus, requestSupplier);
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     public void read() throws IOException {
         boolean gotLF = false;
         while (!isClosed() && reader.read(character) != -1) {

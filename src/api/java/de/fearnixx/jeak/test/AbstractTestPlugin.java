@@ -15,7 +15,7 @@ public abstract class AbstractTestPlugin {
 
     private static final List<AbstractTestPlugin> testPlugins = new LinkedList<>();
 
-    public static final List<AbstractTestPlugin> getTestPlugins() {
+    public static List<AbstractTestPlugin> getTestPlugins() {
         return Collections.unmodifiableList(testPlugins);
     }
 

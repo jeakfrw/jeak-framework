@@ -14,8 +14,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.function.Consumer;
 
-import static de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
-
 public class TS3Connection implements AutoCloseable {
 
     public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 500);

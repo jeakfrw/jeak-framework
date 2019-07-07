@@ -1,12 +1,8 @@
 package de.fearnixx.jeak.teamspeak.query;
 
-import de.fearnixx.jeak.event.IQueryEvent;
-import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
-
-import java.util.function.Consumer;
 
 public abstract class AbstractQueryConnection implements IQueryConnection {
 

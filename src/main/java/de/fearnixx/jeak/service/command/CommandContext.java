@@ -14,8 +14,8 @@ public class CommandContext extends BasicDataHolder implements ICommandContext {
 
     private TargetType type;
     private String command;
-    private List<String> arguments;
     private IQueryEvent.INotification.ITextMessage rawEvent;
+    private final List<String> arguments;
 
     public CommandContext() {
         arguments = new ArrayList<>();

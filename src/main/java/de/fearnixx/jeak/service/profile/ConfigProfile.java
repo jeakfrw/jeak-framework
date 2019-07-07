@@ -58,15 +58,14 @@ public class ConfigProfile implements IUserProfile {
         configRef.getRoot().getNode("identities")
                 .optMap()
                 .orElseGet(Collections::emptyMap)
-                .forEach((service, identities) -> {
-                    identities.optList()
-                            .orElseGet(Collections::emptyList)
-                            .stream()
-                            .filter(n -> n.optString().isPresent())
-                            .map(IValueHolder::asString)
-                            .map(identity -> new UserIdentity(service, identity))
-                            .forEach(results::add);
-                });
+                .forEach((service, identities) ->
+                        identities.optList()
+                                .orElseGet(Collections::emptyList)
+                                .stream()
+                                .filter(n -> n.optString().isPresent())
+                                .map(IValueHolder::asString)
+                                .map(identity -> new UserIdentity(service, identity))
+                                .forEach(results::add));
         return results;
     }
 

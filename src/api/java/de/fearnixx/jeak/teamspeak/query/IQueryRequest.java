@@ -4,7 +4,6 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -46,8 +45,6 @@ public interface IQueryRequest {
      * the {@link IQueryConnection} invokes some callbacks based on the response.
      *
      * @implNote Consider callbacks asynchronous.
-     *
-     * This is the replacement of the two-parameter method {@link IQueryConnection#sendRequest(IQueryRequest, Consumer)}
      */
     Consumer<IQueryEvent.IAnswer> onDone();
 

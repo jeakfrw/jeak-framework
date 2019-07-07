@@ -35,15 +35,14 @@ public class DatabaseService implements IDatabaseService {
     @Inject
     public PluginManager pluginManager;
 
-    private File dbDir;
+    private final File dbDir;
 
     private ClassLoader entityClassLoader;
     private BootstrapServiceRegistry baseRegistry;
-    private Map<String, HHPersistenceUnit> persistenceUnits;
+    private final Map<String, HHPersistenceUnit> persistenceUnits = new ConcurrentHashMap<>();
 
     public DatabaseService(File dbDir) {
         this.dbDir = dbDir;
-        persistenceUnits = new ConcurrentHashMap<>();
     }
 
     private List<File> getDatabaseConfigurations() {

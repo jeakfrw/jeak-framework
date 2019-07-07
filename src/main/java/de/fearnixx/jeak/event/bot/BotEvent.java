@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.event.bot;
 
 import de.fearnixx.jeak.IBot;
-import de.fearnixx.jeak.JeakBot;
 
 /**
  * Created by MarkL4YG on 09.06.17.

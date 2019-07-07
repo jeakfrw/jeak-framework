@@ -15,17 +15,14 @@ import static de.fearnixx.jeak.plugin.PluginContainer.State.INIT;
  */
 public class PluginContainer {
 
-    private PluginRegistry myReg;
-    private Class<?> myClass;
+    private final Class<?> myClass;
 
     private Object victim;
 
-    private Map<Class<?>, List<Field>> injections;
+    private final Map<Class<?>, List<Field>> injections;
 
     public PluginContainer(PluginRegistry registry) {
-        this.myReg = registry;
         this.myClass = registry.getPluginClass();
-
         injections = registry.getInjections();
     }
 
