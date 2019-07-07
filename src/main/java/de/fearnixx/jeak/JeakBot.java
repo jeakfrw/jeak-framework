@@ -21,7 +21,6 @@ import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.service.teamspeak.QueryUserService;
-import de.fearnixx.jeak.service.teamspeak.UserService;
 import de.fearnixx.jeak.service.token.TokenService;
 import de.fearnixx.jeak.service.util.UtilCommands;
 import de.fearnixx.jeak.task.TaskService;
@@ -29,7 +28,6 @@ import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
 import de.fearnixx.jeak.teamspeak.TS3ConnectionTask;
 import de.fearnixx.jeak.teamspeak.cache.DataCache;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -63,7 +61,7 @@ public class JeakBot implements Runnable, IBot {
     // * * * FIELDS * * * //
 
     private Consumer<JeakBot> onShutdown;
-    private UUID instanceUUID = UUID.randomUUID();
+    private final UUID instanceUUID = UUID.randomUUID();
 
     private File baseDir;
     private File confDir;
@@ -77,10 +75,10 @@ public class JeakBot implements Runnable, IBot {
     private InjectionService injectionService;
     private Map<String, PluginContainer> plugins;
 
-    private TS3ConnectionTask connectionTask = new TS3ConnectionTask();
+    private final TS3ConnectionTask connectionTask = new TS3ConnectionTask();
     private Server server;
 
-    private ExecutorService shutdownExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService shutdownExecutor = Executors.newSingleThreadExecutor();
 
     // * * * CONSTRUCTION * * * //
 
@@ -401,11 +399,10 @@ public class JeakBot implements Runnable, IBot {
         // Decouple the shutdown callback from threads running inside the bots context.
         // This avoids any termination interrupts going on inside the framework instance from interrupting our shutdown handler.
         shutdownExecutor.execute(() -> {
-            final LinkedList<ExecutorService> executors = new LinkedList<>();
             final BotStateEvent.PreShutdown preShutdown = new BotStateEvent.PreShutdown();
             preShutdown.setBot(this);
             eventService.fireEvent(preShutdown);
-            executors.addAll(preShutdown.getExecutors());
+            var executors = new LinkedList<>(preShutdown.getExecutors());
 
             saveConfig();
 

@@ -83,7 +83,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
     }
 
     private void reportConsistencyViolation(ConsistencyViolationException e) {
-        logger.warn("Consistency violation reported: {}", e);
+        logger.warn("Consistency violation reported.", e);
     }
 
     private void onAnswer(RawQueryEvent.Message.Answer event) {

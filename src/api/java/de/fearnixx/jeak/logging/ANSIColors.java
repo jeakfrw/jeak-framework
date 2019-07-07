@@ -4,6 +4,7 @@ package de.fearnixx.jeak.logging;
  * Thanks to StackOverflow
  * https://stackoverflow.com/questions/5762491/how-to-print-color-in-console-using-system-out-println
  */
+@SuppressWarnings("unused")
 public abstract class ANSIColors {
 
     public static final String RESET = "\u001B[0m";

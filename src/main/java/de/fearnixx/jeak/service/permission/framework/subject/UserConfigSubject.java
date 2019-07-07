@@ -22,7 +22,7 @@ public class UserConfigSubject extends ConfigSubject {
     @Inject
     private IUserService userService;
 
-    private IUserProfile userProfile;
+    private final IUserProfile userProfile;
 
     public UserConfigSubject(IUserProfile userProfile, IConfig configRef, InternalPermissionProvider provider) {
         super(userProfile.getUniqueId(), configRef, provider);

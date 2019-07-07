@@ -5,7 +5,8 @@ import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryConnectionAccessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by MarkL4YG on 28-Jan-18
@@ -76,7 +77,7 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
 
         public static class Answer extends Message implements IRawQueryEvent.IMessage.IAnswer {
 
-            private IQueryRequest request;
+            private final IQueryRequest request;
 
             public Answer(IQueryRequest request) {
                 this.request = request;

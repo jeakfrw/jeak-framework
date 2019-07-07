@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NamePatternThreadFactory extends NamingThreadFactory {
 
     private final AtomicInteger threadCounter = new AtomicInteger(0);
-    private String namePattern;
+    private final String namePattern;
 
     public NamePatternThreadFactory(String namePattern) {
         super();

@@ -50,7 +50,7 @@ public enum NotificationReason {
      */
     SERVER_SHUTDOWN(11);
 
-    private int reasonId;
+    private final int reasonId;
 
     NotificationReason(int reasonId) {
         this.reasonId = reasonId;

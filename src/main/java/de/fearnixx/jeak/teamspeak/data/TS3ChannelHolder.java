@@ -15,7 +15,7 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
     private static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
 
     private boolean invalidated = false;
-    private List<IChannel> children;
+    private final List<IChannel> children;
 
     public TS3ChannelHolder(){
         super();
@@ -29,7 +29,8 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
 
     @Override
     public Integer getID() {
-        return Integer.parseInt(getProperty(PropertyKeys.Channel.ID).get());
+        return Integer.parseInt(getProperty(PropertyKeys.Channel.ID)
+                .orElseThrow(() -> new ConsistencyViolationException("Channel is missing ID!")));
     }
 
     @Override

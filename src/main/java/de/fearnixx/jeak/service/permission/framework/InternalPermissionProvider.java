@@ -43,7 +43,7 @@ public class InternalPermissionProvider implements IPermissionProvider {
     private ICommandService commandService;
 
     private final SubjectIndex subjectIndex = new ConfigIndex();
-    private SubjectCache subjectCache = new SubjectCache(this);
+    private final SubjectCache subjectCache = new SubjectCache(this);
 
     @Listener
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {

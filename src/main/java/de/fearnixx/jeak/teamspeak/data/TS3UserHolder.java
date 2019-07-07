@@ -6,8 +6,6 @@ import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 

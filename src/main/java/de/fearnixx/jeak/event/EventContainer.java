@@ -123,4 +123,8 @@ public class EventContainer implements Runnable {
     public IEvent getEvent() {
         return event;
     }
+
+    public long getScheduledOn() {
+        return scheduledOn;
+    }
 }

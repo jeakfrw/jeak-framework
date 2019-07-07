@@ -3,8 +3,8 @@ package de.fearnixx.jeak.plugin.persistent;
 import de.fearnixx.jeak.event.IEvent;
 import de.fearnixx.jeak.plugin.PluginContainer;
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.util.Common;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,7 @@ public class PluginRegistry {
         return Optional.of(pr);
     }
 
-    private Class<?> pluginClass;
+    private final Class<?> pluginClass;
     private JeakBotPlugin tag;
 
     private String id;
@@ -69,7 +69,7 @@ public class PluginRegistry {
         if (tag.depends().length == 0) {
             HARD_depends = Collections.emptyList();
         } else {
-            HARD_depends = Collections.unmodifiableList(Arrays.asList(tag.depends()));
+            HARD_depends = List.of(tag.depends());
         }
 
 

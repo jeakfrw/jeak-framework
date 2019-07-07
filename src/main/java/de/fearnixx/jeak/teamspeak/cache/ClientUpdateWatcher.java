@@ -42,7 +42,10 @@ public class ClientUpdateWatcher {
                 Map<Integer, TS3Channel> channelCache = dataCache.unsafeGetChannels();
                 TS3Channel fromChannel = channelCache.getOrDefault(client.getChannelID(), null);
                 Integer fromChannelId = fromChannel != null ? fromChannel.getID() : -1;
-                TS3Channel toChannel = channelCache.getOrDefault(Integer.parseInt(event.getProperty("ctid").get()), null);
+                TS3Channel toChannel = channelCache.getOrDefault(
+                        Integer.parseInt(event.getProperty("ctid")
+                                .orElseThrow(() -> new IllegalStateException("Missing ctid in ClientMoved!"))),
+                        null);
                 Integer toChannelId = toChannel != null ? toChannel.getID() : -1;
                 if (fromChannel == null || toChannel == null) {
                     logger.warn("Insufficient information for clientMoved update: {} -> {}", fromChannelId, toChannelId);
@@ -74,7 +77,8 @@ public class ClientUpdateWatcher {
             // Client has left - Apply to representation
             synchronized (LOCK) {
                 Map<Integer, TS3Client> clientCache = dataCache.unsafeGetClients();
-                Integer clientID = Integer.parseInt(event.getProperty("clid").get());
+                Integer clientID = Integer.parseInt(event.getProperty("clid")
+                        .orElseThrow(() -> new IllegalStateException("Missing clid in ClientLeave!")));
                 TS3Client client = clientCache.getOrDefault(clientID, null);
                 if (client == null) {
                     return;

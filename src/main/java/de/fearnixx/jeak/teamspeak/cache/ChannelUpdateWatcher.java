@@ -11,7 +11,7 @@ public class ChannelUpdateWatcher {
     private static final Logger logger = LoggerFactory.getLogger(ChannelUpdateWatcher.class);
 
     private final Object LOCK;
-    private DataCache cache;
+    private final DataCache cache;
 
     public ChannelUpdateWatcher(Object lock, DataCache cache) {
         this.LOCK = lock;

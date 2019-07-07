@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.service.util;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandException;
 import de.fearnixx.jeak.service.command.ICommandContext;
 import de.fearnixx.jeak.service.command.ICommandReceiver;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
@@ -16,7 +15,7 @@ public class WhoAmICommand implements ICommandReceiver {
     private IUserService userService;
 
     @Override
-    public void receive(ICommandContext ctx) throws CommandException {
+    public void receive(ICommandContext ctx) {
         final Integer invokerId = ctx.getRawEvent().getInvokerId();
         final Optional<IClient> optClient = userService.getClientByID(invokerId);
         if (optClient.isPresent()) {

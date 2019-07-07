@@ -9,7 +9,6 @@ import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.lang.IConfigLoader;
 import de.mlessmann.confort.config.FileConfig;
-import de.mlessmann.confort.lang.ConfigLoader;
 import de.mlessmann.confort.lang.RegisterLoaders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Main implements Runnable {
@@ -171,7 +169,6 @@ public class Main implements Runnable {
         if (getProperty("bot.enableTests", false)) {
             logger.warn("===== Dumping test results =====");
             AbstractTestPlugin.getTestPlugins()
-                    .stream()
                     .forEach(plugin -> {
                         logger.info("  {}", plugin.getClass().getAnnotation(JeakBotPlugin.class).id());
 

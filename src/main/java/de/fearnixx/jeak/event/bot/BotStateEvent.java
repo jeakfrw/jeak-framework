@@ -36,7 +36,7 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
 
         public static class Disconnect extends ConnectEvent implements IConnectStateEvent.IDisconnect {
 
-            private boolean graceful = false;
+            private final boolean graceful;
 
             public Disconnect(boolean graceful) {
                 this.graceful = graceful;
@@ -75,7 +75,7 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
 
     public static class PreShutdown extends BotStateEvent implements IPreShutdown {
 
-        private List<ExecutorService> executors = new LinkedList<>();
+        private final List<ExecutorService> executors = new LinkedList<>();
 
         @Override
         public void addExecutor(ExecutorService executorService) {
@@ -90,7 +90,7 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
 
     public static class PostShutdown extends BotStateEvent implements IPostShutdown {
 
-        private List<ExecutorService> executors = new LinkedList<>();
+        private final List<ExecutorService> executors = new LinkedList<>();
 
         @Override
         public void addExecutor(ExecutorService executorService) {

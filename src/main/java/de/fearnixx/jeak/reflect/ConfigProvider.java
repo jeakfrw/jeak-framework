@@ -19,7 +19,7 @@ public class ConfigProvider extends AbstractSpecialProvider<Config> {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfigProvider.class);
 
-    private File confDir;
+    private final File confDir;
 
     public ConfigProvider(File confDir) {
         this.confDir = confDir;

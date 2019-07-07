@@ -3,7 +3,6 @@ package de.fearnixx.jeak.util;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.regex.Pattern;
 
 /**
  * Created by Life4YourGames on 29.06.16.

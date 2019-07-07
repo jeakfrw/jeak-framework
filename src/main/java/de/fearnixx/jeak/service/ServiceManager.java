@@ -22,14 +22,14 @@ public class ServiceManager implements IServiceManager {
 
     @Override
     public <T> T provideUnchecked(Class<T> svcClass) {
-        return (T) services.get(svcClass);
+        return svcClass.cast(services.get(svcClass));
     }
 
     @Override
     public <T> Optional<T> provide(Class<T> svcClass) {
         Object svc = services.getOrDefault(svcClass, null);
         if (svc != null && svcClass.isAssignableFrom(svc.getClass())) {
-            return Optional.of((T) svc);
+            return Optional.of(svcClass.cast(svc));
         }
         return Optional.empty();
     }

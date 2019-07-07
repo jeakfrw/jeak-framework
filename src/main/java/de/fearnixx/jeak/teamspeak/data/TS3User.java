@@ -12,7 +12,10 @@ import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class TS3User extends TS3UserHolder {
     private TS3UserSubject ts3PermSubject;
@@ -136,9 +139,7 @@ public class TS3User extends TS3UserHolder {
         QueryBuilder queryBuilder = IQueryRequest.builder()
                 .command(QueryCommands.SERVER_GROUP.SERVERGROUP_ADD_CLIENT)
                 .addKey("cldbid", this.getClientDBID());
-        Arrays.stream(serverGroupIds).forEach(id -> {
-            queryBuilder.addKey("sgid", id).commitChainElement();
-        });
+        Arrays.stream(serverGroupIds).forEach(id -> queryBuilder.addKey("sgid", id).commitChainElement());
         return queryBuilder.build();
     }
 
@@ -147,9 +148,7 @@ public class TS3User extends TS3UserHolder {
         QueryBuilder queryBuilder = IQueryRequest.builder()
                 .command(QueryCommands.SERVER_GROUP.SERVERGROUP_DEL_CLIENT)
                 .addKey("cldbid", this.getClientDBID());
-        Arrays.stream(serverGroupIds).forEach(id -> {
-            queryBuilder.addKey("sgid", id).commitChainElement();
-        });
+        Arrays.stream(serverGroupIds).forEach(id -> queryBuilder.addKey("sgid", id).commitChainElement());
         return queryBuilder.build();
     }
 

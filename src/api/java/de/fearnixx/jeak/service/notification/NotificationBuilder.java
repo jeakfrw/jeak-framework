@@ -91,8 +91,7 @@ public class NotificationBuilder {
         final String longText = hasLongText ? this.longText : this.shortText;
         final int urgency = this.urgency;
         final int lifespan = this.lifespan;
-        final List<String> recipients =
-                Collections.unmodifiableList(new ArrayList<>(this.recipients));
+        final List<String> recipients = List.copyOf(this.recipients);
 
         return new INotification() {
             @Override

@@ -39,7 +39,7 @@ public enum Lifespan {
      */
     FOREVER(Integer.MAX_VALUE);
 
-    private int level;
+    private final int level;
 
     Lifespan(int level) {
         this.level = level;

@@ -2,7 +2,6 @@ package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
 import de.fearnixx.jeak.reflect.FrameworkService;
-import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission.PriorityType;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -15,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 /**
  * Created by MarkL4YG on 04-Feb-18
@@ -31,11 +29,11 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
 
     private static final Logger logger = LoggerFactory.getLogger(QueryPermissionProvider.class);
 
-    private Map<Integer, TS3PermCache> clientPerms = new HashMap<>();
-    private Map<Integer, TS3PermCache> channelPerms = new HashMap<>();
-    private Map<Integer, TS3PermCache> channelGroupPerms = new HashMap<>();
-    private Map<Integer, TS3PermCache> serverGroupPerms = new HashMap<>();
-    private Map<Integer, Map<Integer, TS3PermCache>> channelClientPerms = new HashMap<>();
+    private final Map<Integer, TS3PermCache> clientPerms = new HashMap<>();
+    private final Map<Integer, TS3PermCache> channelPerms = new HashMap<>();
+    private final Map<Integer, TS3PermCache> channelGroupPerms = new HashMap<>();
+    private final Map<Integer, TS3PermCache> serverGroupPerms = new HashMap<>();
+    private final Map<Integer, Map<Integer, TS3PermCache>> channelClientPerms = new HashMap<>();
 
     @Override
     public void clearCache(PriorityType type, Integer optClientOrGroupID, Integer optChannelID) {
@@ -97,7 +95,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
             getServer().getConnection().sendRequest(req);
             if (request.waitForCompletion()) {
                 answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
-                cache = new TS3PermCache(clientDBID, null, ITS3Permission.PriorityType.CLIENT);
+                cache = new TS3PermCache();
                 cache.setResponse(answer);
                 clientPerms.put(clientDBID, cache);
             } else {
@@ -130,7 +128,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
             getServer().getConnection().sendRequest(req);
             if (request.waitForCompletion()) {
                 answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
-                cache = new TS3PermCache(serverGroupID, null, ITS3Permission.PriorityType.SERVER_GROUP);
+                cache = new TS3PermCache();
                 cache.setResponse(answer);
                 serverGroupPerms.put(serverGroupID, cache);
             } else {
@@ -163,7 +161,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
             getServer().getConnection().sendRequest(req);
             if (request.waitForCompletion()) {
                 answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
-                cache = new TS3PermCache(channelGroupID, null, ITS3Permission.PriorityType.CHANNEL_GROUP);
+                cache = new TS3PermCache();
                 cache.setResponse(answer);
                 channelGroupPerms.put(channelGroupID, cache);
 
@@ -179,7 +177,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
     public Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
         IMessage.IAnswer answer = null;
         Map<Integer, TS3PermCache> channelClientMap = channelClientPerms.getOrDefault(channelID, null);
-        TS3PermCache cache = null;
+        TS3PermCache cache;
         if (channelClientMap != null) {
             cache = channelClientMap.getOrDefault(clientDBID, null);
             if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
@@ -202,7 +200,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
             getServer().getConnection().sendRequest(req);
             if (request.waitForCompletion()) {
                 answer = ((IMessage.IAnswer) request.getAnswer());
-                cache = new TS3PermCache(clientDBID, null, ITS3Permission.PriorityType.CHANNEL_CLIENT);
+                cache = new TS3PermCache();
                 cache.setResponse(answer);
                 if (channelClientMap == null) {
                     channelClientMap = new HashMap<>();
@@ -239,7 +237,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
             getServer().getConnection().sendRequest(req);
             if (request.waitForCompletion()) {
                 answer = ((IMessage.IAnswer) request.getAnswer());
-                cache = new TS3PermCache(channelID, null, ITS3Permission.PriorityType.CHANNEL);
+                cache = new TS3PermCache();
                 cache.setResponse(answer);
                 channelPerms.put(channelID, cache);
             } else {

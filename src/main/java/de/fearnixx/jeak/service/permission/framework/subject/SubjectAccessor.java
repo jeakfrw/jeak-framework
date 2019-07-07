@@ -3,9 +3,7 @@ package de.fearnixx.jeak.service.permission.framework.subject;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.ISubject;
-import de.fearnixx.jeak.service.permission.except.CircularInheritanceException;
 import de.fearnixx.jeak.service.permission.framework.InternalPermissionProvider;
-import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

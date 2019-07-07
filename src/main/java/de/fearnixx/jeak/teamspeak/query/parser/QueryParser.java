@@ -11,8 +11,6 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import static de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
-
 /**
  * Created by Life4YourGames on 05.07.17.
  */
@@ -37,12 +35,6 @@ public class QueryParser {
         };
     }
 
-    /**
-     * Instance of the request that's currently running
-     * -> Flushed when Message ended
-     */
-    @Deprecated
-    private IQueryRequest currentRequest;
     private final Supplier<IQueryRequest> requestSupplier;
 
     /**
@@ -203,20 +195,14 @@ public class QueryParser {
             this.onAnswer.accept(event);
     }
 
-    @SuppressWarnings({"deprecation", "squid:CallToDeprecatedMethod"})
     private IQueryRequest internalProvideRequest() {
-        IQueryRequest request = requestSupplier != null ? requestSupplier.get() : currentRequest;
+        IQueryRequest request = requestSupplier.get();
 
         if (request == null) {
             throw new QueryParseException("Request may not be null for anwers!");
         }
 
         return request;
-    }
-
-    @Deprecated
-    public void setCurrentRequest(IQueryRequest request) {
-        this.currentRequest = request;
     }
 
     /**

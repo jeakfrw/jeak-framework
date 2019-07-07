@@ -5,7 +5,6 @@ import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.database.IDatabaseService;
 import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import de.fearnixx.jeak.service.event.IEventService;

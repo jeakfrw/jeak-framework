@@ -24,7 +24,7 @@ import java.util.concurrent.*;
 public class EventService implements IEventService {
 
     public static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.eventmgr.poolsize", 10);
-    public static Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.eventmgr.terminatedelay", 10000);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.eventmgr.terminatedelay", 10000);
 
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
