@@ -11,7 +11,7 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |---|---|---|
 |License            |![ShieldsIO](https://img.shields.io/github/license/jeakfrw/core-framework.svg?color=success&style=flat-square)|[bleeding-1.X.X/LICENSE](https://github.com/jeakfrw/core-framework/blob/bleeding-1.X.X/LICENSE)
 |Language           |![ShieldsIO](https://img.shields.io/github/languages/top/jeakfrw/core-framework.svg?style=flat-square)|
-|Latest (stable)    |\<tbd\> |[/releases](https://github.com/jeakfrw/core-framework/releases)
+|Latest (stable)    |![ShieldsIO](https://img.shields.io/github/tag/jeakfrw/core-framework.svg?color=success&style=flat-square)  |[/releases](https://github.com/jeakfrw/core-framework/releases)
 |Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |[/releases](https://github.com/jeakfrw/core-framework/releases)
 |CI (1.X.X-stable)  |[![buddy pipeline](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192846/badge.svg?token=22548d502f11240ea437ccc14a4348c352915b0cf82518920be9d2c98bdcb9dd "buddy pipeline")](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192846) |[View on Buddy](https://app.buddy.works/m-lessmann/core-framework/pipelines)|
 |CI (1.X.X-bleeding)|[![buddy pipeline](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192314/badge.svg?token=22548d502f11240ea437ccc14a4348c352915b0cf82518920be9d2c98bdcb9dd "buddy pipeline")](https://app.buddy.works/m-lessmann/core-framework/pipelines/pipeline/192314) |[View on Buddy](https://app.buddy.works/m-lessmann/core-framework/pipelines)
