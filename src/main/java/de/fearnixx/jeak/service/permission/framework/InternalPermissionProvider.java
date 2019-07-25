@@ -14,6 +14,7 @@ import de.fearnixx.jeak.service.permission.base.ISubject;
 import de.fearnixx.jeak.service.permission.framework.commands.CreateGroupCommand;
 import de.fearnixx.jeak.service.permission.framework.commands.GrantPermissionCommand;
 import de.fearnixx.jeak.service.permission.framework.commands.LinkGroupCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.PermLookupCommand;
 import de.fearnixx.jeak.service.permission.framework.index.ConfigIndex;
 import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.mlessmann.confort.LoaderFactory;
@@ -57,12 +58,15 @@ public class InternalPermissionProvider implements IPermissionProvider {
         final CreateGroupCommand crGrpCommand = new CreateGroupCommand();
         final LinkGroupCommand lnkGrpCommand = new LinkGroupCommand();
         final GrantPermissionCommand grntPermCommand = new GrantPermissionCommand();
+        final PermLookupCommand permLookupCommand = new PermLookupCommand();
         injectionService.injectInto(crGrpCommand);
         injectionService.injectInto(lnkGrpCommand);
         injectionService.injectInto(grntPermCommand);
+        injectionService.injectInto(permLookupCommand);
         commandService.registerCommand("perm-group-create", crGrpCommand);
         commandService.registerCommand("perm-group-link", lnkGrpCommand);
         commandService.registerCommand("perm-group-grant", grntPermCommand);
+        commandService.registerCommand("permuuid-lookup", permLookupCommand);
     }
 
     @Override
