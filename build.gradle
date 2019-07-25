@@ -1,5 +1,5 @@
 group 'de.fearnixx'
-def projectVersion = '1.0.0'
+def projectVersion = '1.0.1'
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
