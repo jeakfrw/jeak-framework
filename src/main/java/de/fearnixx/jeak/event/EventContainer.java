@@ -66,7 +66,7 @@ public class EventContainer implements Runnable {
                 resetStartedOn();
                 // Event aborted!
                 logger.warn("An event has been aborted: {}", abort.getMessage(), abort);
-                return;
+                throw abort;
 
             } catch (ConsistencyViolationException e) {
                 resetStartedOn();
@@ -85,7 +85,7 @@ public class EventContainer implements Runnable {
                     resetStartedOn();
                     // Skip the invocation exception for readability
                     logExceptionCause(e);
-                    logger.error("In addition the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
+                    logger.error("In addition, the last event listener threw a checked exception! Passing those is NOT allowed. We will unregister the listener!");
                     eventService.unregisterListener(currentReceiver.getVictim());
                 }
             }

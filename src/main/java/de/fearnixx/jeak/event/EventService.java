@@ -2,6 +2,7 @@ package de.fearnixx.jeak.event;
 
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.util.NamePatternThreadFactory;
@@ -83,7 +84,11 @@ public class EventService implements IEventService {
                 synchronized (runningEvents) {
                     runningEvents.add(container);
                 }
-                container.run();
+                try {
+                    container.run();
+                } catch (EventAbortException e) {
+                    logger.debug("Aborted event: {}", eventName);
+                }
                 synchronized (runningEvents) {
                     runningEvents.remove(container);
                 }
