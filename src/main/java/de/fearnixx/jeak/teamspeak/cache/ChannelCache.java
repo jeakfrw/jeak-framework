@@ -126,6 +126,7 @@ public class ChannelCache {
             }
 
             // All others are new - Add them
+            boolean firstFill = internalCache.isEmpty();
             newMap.forEach(internalCache::put);
 
             // Update children
@@ -143,6 +144,9 @@ public class ChannelCache {
             // Ensure children lists to be ordered
             // TODO: Find a better solution than re-sorting the whole list every time!
             internalCache.values().forEach(TS3Channel::sortChildren);
+            if (firstFill) {
+                logger.info("Channel cache is ready.");
+            }
         }
 
         logger.debug("Channellist updated");
