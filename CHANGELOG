@@ -1,3 +1,10 @@
+# 1.0.1
+~ Query-Fix: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
+~ Fix: It was possible to create multiple groups with the same name
+~ Fix: EventAbortException not aborting events leading to exceptions being logged by plugins consuming inconsistent events
++ Add command: !permuuid-lookup to look up the permission subject UUIDs for different subjects
++ Add a constant vor the "permvalue" key on "*perm*add" commands which is for some reason yet another different key
+
 # 1.0.0-RC1
 + Query connection 
   + Send commands to the server
