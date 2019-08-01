@@ -7,6 +7,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.controller.InvokationBeforeInitializationException;
 
+import java.security.SecureRandom;
 import java.util.Set;
 
 @FrameworkService(serviceInterface = ITokenService.class)
@@ -35,9 +36,8 @@ public class TokenService implements ITokenService {
         if (tokenConfiguration == null) {
             throw new InvokationBeforeInitializationException("The TokenConfiguration is not initialized");
         }
-        TokenScope tokenScope = new TokenScope(endpointSet);
         String token = createToken();
-        tokenConfiguration.saveToken(token, tokenScope);
+        tokenConfiguration.saveToken(token, new TokenScope(endpointSet));
         return token;
     }
 
@@ -49,7 +49,8 @@ public class TokenService implements ITokenService {
     }
 
     private String createToken() {
-        // toDO: implement method
-        return "someRandomString";
+        String symbols = RandomString.digits + RandomString.upper + RandomString.lower;
+        RandomString tickets = new RandomString(23, new SecureRandom(), symbols);
+        return tickets.nextString();
     }
 }

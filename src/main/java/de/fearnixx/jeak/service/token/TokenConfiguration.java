@@ -77,8 +77,8 @@ public class TokenConfiguration extends Configurable {
 
     public void saveToken(String token, TokenScope tokenScope) {
         ConfigNode child = new ConfigNode();
-        String hallo = tokenScope.toString();
         child.setList();
+        child.appendValue(tokenScope.getScopeSet());
         getConfig().put(token, child);
     }
 }
