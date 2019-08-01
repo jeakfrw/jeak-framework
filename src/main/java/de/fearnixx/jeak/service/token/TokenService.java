@@ -7,7 +7,6 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.controller.InvokationBeforeInitializationException;
 
-import java.security.SecureRandom;
 import java.util.Set;
 
 @FrameworkService(serviceInterface = ITokenService.class)
@@ -49,8 +48,7 @@ public class TokenService implements ITokenService {
     }
 
     private String createToken() {
-        String symbols = RandomString.digits + RandomString.upper + RandomString.lower;
-        RandomString tickets = new RandomString(23, new SecureRandom(), symbols);
+        RandomString tickets = new RandomString(30);
         return tickets.nextString();
     }
 }
