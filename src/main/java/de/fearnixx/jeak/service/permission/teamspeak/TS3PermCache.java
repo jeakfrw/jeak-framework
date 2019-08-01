@@ -9,17 +9,10 @@ import java.time.LocalDateTime;
  */
 public class TS3PermCache {
 
-    private ITS3Permission.PriorityType type;
-    private Integer subjectID;
-    private Integer subjectID2;
-
     private IAnswer answer;
     private LocalDateTime timestamp;
 
-    public TS3PermCache(Integer subjectID, Integer subjectID2, ITS3Permission.PriorityType type) {
-        this.subjectID = subjectID;
-        this.subjectID2 = subjectID2;
-        this.type = type;
+    public TS3PermCache() {
         this.timestamp = LocalDateTime.now();
     }
 

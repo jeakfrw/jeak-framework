@@ -3,8 +3,6 @@ package de.fearnixx.jeak.teamspeak.data;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
-import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 

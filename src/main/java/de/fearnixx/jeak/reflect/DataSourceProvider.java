@@ -37,7 +37,7 @@ public class DataSourceProvider extends AbstractSpecialProvider<PersistenceUnit>
         if (clazz.isAssignableFrom(Boolean.class)) {
             value = unit.isPresent();
 
-        } else if (!unit.isPresent()) {
+        } else if (unit.isEmpty()) {
             logger.warn("Persistence unit not available: {}", unitName);
             return Optional.empty();
 

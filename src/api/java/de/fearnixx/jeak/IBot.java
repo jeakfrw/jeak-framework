@@ -1,7 +1,6 @@
 package de.fearnixx.jeak;
 
 import de.fearnixx.jeak.teamspeak.IServer;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 
 import java.io.File;
 import java.util.UUID;

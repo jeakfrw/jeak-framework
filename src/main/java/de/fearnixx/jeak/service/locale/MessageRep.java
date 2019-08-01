@@ -36,7 +36,6 @@ public class MessageRep {
     private void explodeTemplate() {
         Matcher paramMatcher = PARAM_PATTERN.matcher(rawTemplate);
 
-        int lastStart = 0;
         int lastEnd = 0;
         while (paramMatcher.find()) {
             final String parameterName = paramMatcher.group(1);
@@ -49,7 +48,6 @@ public class MessageRep {
             final int start = paramMatcher.start();
             final String left = rawTemplate.substring(lastEnd, start);
             splitMessageParts.add(left);
-            lastStart = start;
             lastEnd = paramMatcher.end();
         }
 

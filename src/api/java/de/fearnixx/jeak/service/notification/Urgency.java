@@ -10,7 +10,7 @@ public enum Urgency {
     WARN(500000),
     ALERT(1000000);
 
-    private int level;
+    private final int level;
 
     Urgency(int level) {
         this.level = level;

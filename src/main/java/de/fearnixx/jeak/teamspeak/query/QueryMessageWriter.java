@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +61,13 @@ public class QueryMessageWriter implements AutoCloseable {
             Map<String, String> properties = new LinkedHashMap<>(dataChain.get(i).getValues());
             String[] keys = properties.keySet().toArray(new String[0]);
 
+            // Skip empty chain elements
+            if (keys.length == 0) {
+                continue;
+            } else if (i > 0) {
+                sockMessage.append('|');
+            }
+
             for (int j = 0; j < keys.length; j++) {
                 String propKey = keys[j];
                 int keyLen = propKey.length();
@@ -82,10 +88,6 @@ public class QueryMessageWriter implements AutoCloseable {
                 if (j < keys.length-1) {
                     sockMessage.append(' ');
                 }
-            }
-
-            if (i < chainLastIndex && keys.length > 0) {
-                sockMessage.append('|');
             }
         }
 

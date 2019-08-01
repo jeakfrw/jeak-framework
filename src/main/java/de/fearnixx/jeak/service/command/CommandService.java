@@ -27,26 +27,23 @@ import java.util.concurrent.TimeUnit;
 public class CommandService implements ICommandService {
 
     public static final String COMMAND_PREFIX = "!";
-    public static final Integer THREAD_POOL_SIZE = 5;
-    public static Integer AWAIT_TERMINATION_DELAY = 5000;
+    public static final Integer THREAD_POOL_SIZE = Main.getProperty("bot.commandmgr.poolsize", 5);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("bot.commandmgr.terminatedelay", 5000);
 
     private static final Logger logger = LoggerFactory.getLogger(CommandService.class);
 
     @Inject
     public IServer server;
 
-    private Map<String, ICommandReceiver> commands;
-    private CommandParser parser;
-    private boolean terminated = false;
+    private final Map<String, ICommandReceiver> commands = new HashMap<>();
+    private final CommandParser parser = new CommandParser();
     private final Object lock = new Object();
+    private boolean terminated = false;
 
-    private ExecutorService executorSvc;
+    private final ExecutorService executorSvc;
 
     public CommandService() {
-        commands = new HashMap<>();
-        executorSvc = Executors.newFixedThreadPool(Main.getProperty("bot.commandmgr.poolsize", THREAD_POOL_SIZE));
-        AWAIT_TERMINATION_DELAY = Main.getProperty("bot.commandmgr.terminatedelay", AWAIT_TERMINATION_DELAY);
-        parser = new CommandParser();
+        executorSvc = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
     }
 
     /**
@@ -80,7 +77,9 @@ public class CommandService implements ICommandService {
 
                         // Unknown command
                         if (receivers.isEmpty()) {
-                            Integer targetID = Integer.valueOf(event.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
+                            final String sourceIdStr = event.getProperty(PropertyKeys.TextMessage.SOURCE_ID)
+                                    .orElseThrow(() -> new IllegalStateException("TextMessage has no source ID!"));
+                            Integer targetID = Integer.parseInt(sourceIdStr);
                             QueryBuilder request = IQueryRequest.builder()
                                                                          .command(QueryCommands.TEXTMESSAGE_SEND)
                                                                          .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
@@ -93,12 +92,13 @@ public class CommandService implements ICommandService {
                         // Execute receivers
                         final CommandContext ctx = optContext.get();
                         ctx.setRawEvent(event);
-                        ctx.setTargetType(TargetType.fromQueryNum(Integer.parseInt(event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get())));
+                        final String targetTypeStr = event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE)
+                                .orElseThrow(() -> new IllegalStateException("TextMessage event has no target type!"));
+                        ctx.setTargetType(TargetType.fromQueryNum(Integer.parseInt(targetTypeStr)));
                         executorSvc.execute(() -> {
-                            ICommandReceiver last = null;
                             logger.debug("Executing command receiver");
                             for (int i = receivers.size() - 1; i >= 0; i--) {
-                                last = receivers.get(i);
+                                ICommandReceiver last = receivers.get(i);
                                 try {
                                     last.receive(ctx);
                                 }  catch (CommandException ex) {
@@ -121,10 +121,10 @@ public class CommandService implements ICommandService {
 
     private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage, Throwable exception, ICommandReceiver receiver) {
         logger.warn("Error executing command", (exception instanceof CommandParameterException ? null : exception));
-        Integer targetType = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).get());
-        Integer targetID = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.SOURCE_ID).get());
+        Integer targetType = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).orElseThrow());
+        Integer targetID = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.SOURCE_ID).orElseThrow());
 
-        String message = null;
+        String message;
         if (exception instanceof CommandParameterException) {
             CommandParameterException cpe = ((CommandParameterException) exception);
             message = "Rejected parameter!"

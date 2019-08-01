@@ -49,8 +49,8 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         public static class RefreshClients extends BasicDataEvent implements IRefreshClients {
 
-            private List<IClient> clients;
-            private Map<Integer, IClient> clientMap;
+            private final List<IClient> clients;
+            private final Map<Integer, IClient> clientMap;
 
             public RefreshClients(List<IClient> clients, Map<Integer, IClient> clientMap) {
                 this.clients = clients;
@@ -68,8 +68,8 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         public static class RefreshChannels extends BasicDataEvent implements IRefreshChannels {
 
-            private List<IChannel> channels;
-            private Map<Integer, IChannel> channelMap;
+            private final List<IChannel> channels;
+            private final Map<Integer, IChannel> channelMap;
 
             public RefreshChannels(List<IChannel> channels, Map<Integer, IChannel> channelMap) {
                 this.channels = channels;
@@ -231,6 +231,21 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
             return this.getProperty("reasonid")
                     .map(Integer::parseInt)
                     .orElseThrow(() -> new ConsistencyViolationException("ClientMoved-Event has no reasonid!"));
+        }
+
+        @Override
+        public Boolean wasSelf() {
+            return getReasonId() == 0;
+        }
+
+        @Override
+        public Boolean wasForced() {
+            return getReasonId() == 1;
+        }
+
+        @Override
+        public Boolean wasServer() {
+            return wasForced() && getProperty("invokerid").isEmpty() && getProperty("invokername").orElse("").equals("Server");
         }
     }
 

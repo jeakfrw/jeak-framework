@@ -11,7 +11,6 @@ import java.lang.annotation.Target;
  *
  * Special cases:
  * * {@link Config}
- * * {@link DataSource}
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

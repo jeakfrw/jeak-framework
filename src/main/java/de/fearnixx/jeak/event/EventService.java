@@ -2,6 +2,7 @@ package de.fearnixx.jeak.event;
 
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.util.NamePatternThreadFactory;
@@ -24,7 +25,7 @@ import java.util.concurrent.*;
 public class EventService implements IEventService {
 
     public static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.eventmgr.poolsize", 10);
-    public static Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.eventmgr.terminatedelay", 10000);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.eventmgr.terminatedelay", 10000);
 
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
@@ -83,7 +84,11 @@ public class EventService implements IEventService {
                 synchronized (runningEvents) {
                     runningEvents.add(container);
                 }
-                container.run();
+                try {
+                    container.run();
+                } catch (EventAbortException e) {
+                    logger.debug("Aborted event: {}", eventName);
+                }
                 synchronized (runningEvents) {
                     runningEvents.remove(container);
                 }

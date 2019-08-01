@@ -5,7 +5,7 @@ import java.util.Optional;
 
 public class ServiceBasedProvider {
 
-    private InjectionService injectionService;
+    private final InjectionService injectionService;
 
     public ServiceBasedProvider(InjectionService injectionService) {
         this.injectionService = injectionService;

@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * (Name shortened from `QueryRequestBuilder` for readability reasons).

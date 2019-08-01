@@ -132,8 +132,12 @@ public class ClientCache {
             }
 
             // All others are new - Add them
+            boolean firstFill = clientCache.isEmpty();
             clientMapping.forEach(clientCache::put);
             clientMapping.clear();
+            if (firstFill) {
+                logger.info("Client cache is ready.");
+            }
         }
 
         logger.debug("Clientlist updated");

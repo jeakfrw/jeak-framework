@@ -1,8 +1,6 @@
 package de.fearnixx.jeak.teamspeak.data;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.service.permission.base.IGroup;
-import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3ChannelSubject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
@@ -14,7 +12,9 @@ import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Created by MarkL4YG on 15.06.17.

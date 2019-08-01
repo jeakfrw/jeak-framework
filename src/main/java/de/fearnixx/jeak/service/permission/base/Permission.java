@@ -7,8 +7,8 @@ import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
  */
 public class Permission extends BasicDataHolder implements IPermission {
 
-    private String systemID;
-    private String permSID;
+    private final String systemID;
+    private final String permSID;
 
     public Permission(String systemID, String permSID) {
         this.systemID = systemID;

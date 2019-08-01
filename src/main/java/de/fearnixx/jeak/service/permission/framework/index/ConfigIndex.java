@@ -132,6 +132,10 @@ public class ConfigIndex extends SubjectIndex {
 
     @Override
     public UUID createGroup(String name) {
+        if (findGroupByName(name).isPresent()) {
+            throw new IllegalArgumentException("Group " + name + " already exists.");
+        }
+
         final UUID uuid = UUID.randomUUID();
         config.getRoot().getNode("groups", uuid.toString(), "name").setString(name);
         return uuid;

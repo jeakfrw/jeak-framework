@@ -20,7 +20,9 @@ import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -124,6 +126,7 @@ public class ChannelCache {
             }
 
             // All others are new - Add them
+            boolean firstFill = internalCache.isEmpty();
             newMap.forEach(internalCache::put);
 
             // Update children
@@ -141,6 +144,9 @@ public class ChannelCache {
             // Ensure children lists to be ordered
             // TODO: Find a better solution than re-sorting the whole list every time!
             internalCache.values().forEach(TS3Channel::sortChildren);
+            if (firstFill) {
+                logger.info("Channel cache is ready.");
+            }
         }
 
         logger.debug("Channellist updated");

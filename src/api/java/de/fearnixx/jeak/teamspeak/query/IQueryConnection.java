@@ -1,9 +1,6 @@
 package de.fearnixx.jeak.teamspeak.query;
 
-import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
-
-import java.util.function.Consumer;
 
 /**
  * Created by MarkL4YG on 10.06.17.

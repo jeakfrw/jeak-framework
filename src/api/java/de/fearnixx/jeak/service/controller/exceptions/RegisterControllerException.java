@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller;
+package de.fearnixx.jeak.service.controller.exceptions;
 
 public class RegisterControllerException extends RuntimeException{
     public RegisterControllerException(String message) {

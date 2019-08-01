@@ -45,7 +45,7 @@ public class ProfileService implements IProfileService {
 
     @Inject
     private ITaskService taskService;
-    private ITask profileSaveTask = ITask.builder()
+    private final ITask profileSaveTask = ITask.builder()
             .name("frw-profile-save")
             .interval(1, TimeUnit.MINUTES)
             .runnable(this::saveProfiles)

@@ -31,7 +31,7 @@ public class PermIdCache {
     @Inject
     private IServer server;
 
-    private ITask refreshTask = ITask.builder()
+    private final ITask refreshTask = ITask.builder()
             .name("permid-refresh")
             .interval(1, TimeUnit.HOURS)
             .runnable(this::refreshCache)

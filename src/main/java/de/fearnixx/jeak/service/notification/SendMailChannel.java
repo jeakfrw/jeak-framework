@@ -56,7 +56,7 @@ public class SendMailChannel implements INotificationChannel {
         notification.getRecipients().forEach(recipient -> {
             Optional<IUserProfile> optProfile = profileService.getProfile(recipient);
 
-            if (!optProfile.isPresent()) {
+            if (optProfile.isEmpty()) {
                 if (notification.getUrgency() >= Urgency.WARN.getLevel()) {
                     logger.warn("Cannot notify warn (or higher) recipient due to missing profile: {}", recipient);
                 }

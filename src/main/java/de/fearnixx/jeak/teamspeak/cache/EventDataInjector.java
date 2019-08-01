@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.teamspeak.cache;
 
-import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.event.IQueryEvent;
+import de.fearnixx.jeak.event.except.EventAbortException;
 import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
@@ -72,8 +72,9 @@ public class EventDataInjector {
 
     private void processTargetChannel(QueryEvent.Notification.TargetChannel event) {
         if (event instanceof QueryEvent.Notification.TargetChannel.ChannelCreate) {
-            String optName = event.getProperty("channel_name").get();
-            boolean isSpacer = TS3Spacer.spacerPattern.matcher(optName).matches();
+            String channelName = event.getProperty("channel_name")
+                    .orElseThrow(() -> new IllegalStateException("Missing channel_name in ChannelCreate event."));
+            boolean isSpacer = TS3Spacer.spacerPattern.matcher(channelName).matches();
             TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
             channel.copyFrom(event);
             synchronized (LOCK) {

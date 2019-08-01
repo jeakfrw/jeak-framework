@@ -6,7 +6,9 @@ import de.fearnixx.jeak.service.controller.connection.ControllerRequestVerifier;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.connection.RestConfiguration;
 import de.fearnixx.jeak.service.controller.controller.ControllerContainer;
+import de.fearnixx.jeak.service.controller.controller.IncapableDummyAdapter;
 import de.fearnixx.jeak.service.controller.controller.SparkAdapter;
+import de.fearnixx.jeak.service.controller.exceptions.RegisterControllerException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,6 +16,7 @@ import java.util.Optional;
 
 @FrameworkService(serviceInterface = IRestControllerService.class)
 public class RestControllerService implements IRestControllerService {
+
     private final Map<Class<?>, Object> controllers;
     private HttpServer httpServer;
     private ControllerRequestVerifier connectionVerifier;
@@ -30,7 +33,9 @@ public class RestControllerService implements IRestControllerService {
         this.connectionVerifier = new ControllerRequestVerifier();
         this.restConfiguration = new RestConfiguration();
         this.controllers = controllers;
-        this.httpServer = new SparkAdapter(connectionVerifier, restConfiguration);
+        this.httpServer = IncapableDummyAdapter.EXPERIMENTAL_REST_ENABLED ?
+                new SparkAdapter(connectionVerifier, restConfiguration)
+                : new IncapableDummyAdapter(restConfiguration);
     }
 
     @Listener
