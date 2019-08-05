@@ -7,7 +7,9 @@ import java.util.List;
 
 /**
  * Wrapper class for commands to offer some convenience methods.
+ * @deprecated see {@link ICommandReceiver}.
  */
+@Deprecated
 public interface ICommandContext {
 
     TargetType getTargetType();
