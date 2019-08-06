@@ -26,8 +26,8 @@ public class RandomString {
     private final char[] buf;
 
     public RandomString(int length, Random random, String symbols) {
-        if (length < 1) throw new IllegalArgumentException();
-        if (symbols.length() < 2) throw new IllegalArgumentException();
+        if (length < 1) throw new IllegalArgumentException("The length can not be lower than 1");
+        if (symbols.length() < 2) throw new IllegalArgumentException("You are not allowed to use less than two symbols");
         this.random = Objects.requireNonNull(random);
         this.symbols = symbols.toCharArray();
         this.buf = new char[length];
