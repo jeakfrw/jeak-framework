@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller;
+package de.fearnixx.jeak.except;
 
 public class InvokationBeforeInitializationException extends RuntimeException {
 
