@@ -81,4 +81,8 @@ public class TokenConfiguration extends Configurable {
         child.appendValue(tokenScope.getScopeSet());
         getConfig().put(token, child);
     }
+
+    public boolean deleteToken(String token) {
+        return getConfig().remove(token) != null;
+    }
 }

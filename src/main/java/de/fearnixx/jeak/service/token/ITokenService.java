@@ -5,8 +5,6 @@ import java.util.Set;
 public interface ITokenService {
     /**
      * Verify a given token.
-     * IMPORTANT: Only use this method after the {@link de.fearnixx.jeak.event.bot.IBotStateEvent.IPreInitializeEvent}
-     * was fired.
      *
      * @param endpoint The endpoint to verify the token for.
      * @param token The token as {@link String} to verify.
@@ -17,11 +15,18 @@ public interface ITokenService {
 
     /**
      * Generate a new token for the verification of requests.
-     * IMPORTANT: Only use this method after the {@link de.fearnixx.jeak.event.bot.IBotStateEvent.IPreInitializeEvent}
-     * was fired.
      *
      * @param endpointSet The endpoints to register the token for. The List needs to have at least one item.
      * @return The generated token.
      */
     String generateToken(Set<String> endpointSet);
+
+    /**
+     * Revoke and token.
+     *
+     * @param token The token to be revoked.
+     * @return true if the token was successfully revoked,
+     * false otherwise
+     */
+    boolean revokeToken(String token);
 }
