@@ -36,7 +36,7 @@ public class ClientCache {
     private static final Logger logger = LoggerFactory.getLogger(ClientCache.class);
 
     private final Map<Integer, TS3Client> clientCache = new ConcurrentHashMap<>(50);
-    private final Object LOCK;
+    private final Object lock;
 
     @Inject
     private IServer server;
@@ -74,7 +74,7 @@ public class ClientCache {
             .build();
 
     public ClientCache(Object lock) {
-        this.LOCK = lock;
+        this.lock = lock;
     }
 
     @Listener
@@ -82,9 +82,12 @@ public class ClientCache {
         taskService.runTask(clientListTask);
     }
 
+    /**
+     * Remove disconnected clients.
+     */
     @Listener(order = Listener.Orders.LATEST)
     public void onDisconnected(IBotStateEvent.IConnectStateEvent.IDisconnect event) {
-        synchronized (LOCK) {
+        synchronized (lock) {
             logger.info("Clearing client cache due to disconnect.");
             taskService.removeTask(clientListTask);
             clientCache.values().forEach(TS3ClientHolder::invalidate);
@@ -108,26 +111,26 @@ public class ClientCache {
      */
     private void refreshClients(IRawQueryEvent.IMessage.IAnswer event) {
         List<IRawQueryEvent.IMessage> objects = event.toList();
-        synchronized (LOCK) {
+        synchronized (lock) {
             final Map<Integer, TS3Client> clientMapping = generateClientMapping(objects);
 
             TS3Client oldClientRep;
-            Integer oID;
+            Integer oldId;
             TS3Client freshClient;
 
-            Integer[] cIDs = clientCache.keySet().toArray(new Integer[0]);
+            Integer[] channelIds = clientCache.keySet().toArray(new Integer[0]);
             for (int i = clientCache.size() - 1; i >= 0; i--) {
-                oID = cIDs[i];
-                oldClientRep = clientCache.get(oID);
-                freshClient = clientMapping.getOrDefault(oID, null);
+                oldId = channelIds[i];
+                oldClientRep = clientCache.get(oldId);
+                freshClient = clientMapping.getOrDefault(oldId, null);
 
                 if (freshClient == null) {
                     // Client removed - invalidate & remove
                     oldClientRep.invalidate();
-                    clientCache.remove(oID);
+                    clientCache.remove(oldId);
 
                 } else {
-                    clientMapping.remove(oID);
+                    clientMapping.remove(oldId);
                 }
             }
 
@@ -151,8 +154,8 @@ public class ClientCache {
     /**
      * Creates a Map of all available clients from a `clientlist` answer event.
      * Helper method for {@link #refreshClients(IRawQueryEvent.IMessage.IAnswer)}.
-     * <p>
-     * Handles update existing and creating clients
+     *
+     * <p>Handles update existing and creating clients
      */
     private Map<Integer, TS3Client> generateClientMapping(List<IRawQueryEvent.IMessage> messageObjects) {
         final Map<Integer, TS3Client> mapping = new HashMap<>(messageObjects.size(), 1.1f);
@@ -214,20 +217,26 @@ public class ClientCache {
         client.setFrwPermProvider(permService.getFrameworkProvider());
     }
 
-    public Map<Integer, IClient> getClientMap() {
-        synchronized (LOCK) {
-            return Map.copyOf(clientCache);
-        }
-    }
-
+    /**
+     * Returns the clients for {@link IDataCache#getClients()}.
+     */
     public List<IClient> getClients() {
-        synchronized (LOCK) {
+        synchronized (lock) {
             return List.copyOf(clientCache.values());
         }
     }
 
+    /**
+     * Returns the clients for {@link IDataCache#getClientMap()}.
+     */
+    public Map<Integer, IClient> getClientMap() {
+        synchronized (lock) {
+            return Map.copyOf(clientCache);
+        }
+    }
+
     Map<Integer, TS3Client> getUnsafeClientMap() {
-        synchronized (LOCK) {
+        synchronized (lock) {
             return clientCache;
         }
     }

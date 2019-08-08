@@ -20,8 +20,4 @@ public class CircularInheritanceException extends RuntimeException {
     public CircularInheritanceException(Throwable cause) {
         super(cause);
     }
-
-    public CircularInheritanceException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

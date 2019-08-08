@@ -14,11 +14,11 @@ public class ClientUpdateWatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(ClientUpdateWatcher.class);
 
-    private final Object LOCK;
+    private final Object lock;
     private final DataCache dataCache;
 
     public ClientUpdateWatcher(Object lock, DataCache dataCache) {
-        this.LOCK = lock;
+        this.lock = lock;
         this.dataCache = dataCache;
     }
 
@@ -31,7 +31,7 @@ public class ClientUpdateWatcher {
         if (event instanceof IQueryEvent.INotification.IClientMoved) {
             // Client has moved - Apply to representation
             final Map<Integer, TS3Client> internalCache = dataCache.unsafeGetClients();
-            synchronized (LOCK) {
+            synchronized (lock) {
                 Integer clientID = Integer.valueOf(event.getProperty("clid").orElse("-1"));
                 TS3Client client = internalCache.getOrDefault(clientID, null);
                 if (client == null) {
@@ -75,7 +75,7 @@ public class ClientUpdateWatcher {
 
         } else if (event instanceof IQueryEvent.INotification.IClientLeave) {
             // Client has left - Apply to representation
-            synchronized (LOCK) {
+            synchronized (lock) {
                 Map<Integer, TS3Client> clientCache = dataCache.unsafeGetClients();
                 Integer clientID = Integer.parseInt(event.getProperty("clid")
                         .orElseThrow(() -> new IllegalStateException("Missing clid in ClientLeave!")));

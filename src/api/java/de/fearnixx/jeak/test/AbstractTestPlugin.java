@@ -9,7 +9,7 @@ import java.util.*;
  * The class tracks the instances created while the framework is running.
  * This way, the framework can be connected to a real test instance of TS3 in order to run tests.
  *
- * On shutdown, the framework then retrieves the registered tests and their results.
+ * <p>On shutdown, the framework then retrieves the registered tests and their results.
  */
 public abstract class AbstractTestPlugin {
 

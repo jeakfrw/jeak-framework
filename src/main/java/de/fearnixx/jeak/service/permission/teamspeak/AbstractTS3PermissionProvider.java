@@ -58,8 +58,9 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     public Optional<ITS3Permission> getActivePermission(Integer clientID, String permSID) {
         List<ITS3Permission> activeContext = getActiveContext(clientID, permSID);
 
-        if (activeContext.isEmpty())
+        if (activeContext.isEmpty()) {
             return Optional.empty();
+        }
 
         boolean skipFlag = false;
         boolean negateFlag = false;
@@ -76,7 +77,10 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
                 negateFlag = true;
             }
 
-            if (perm.getSkip() && (type == ITS3Permission.PriorityType.SERVER_GROUP || type == ITS3Permission.PriorityType.CLIENT)) {
+            boolean isClientOrServerGrp =
+                    type == ITS3Permission.PriorityType.SERVER_GROUP
+                    || type == ITS3Permission.PriorityType.CLIENT;
+            if (perm.getSkip() && isClientOrServerGrp) {
                 skipFlag = true;
             }
         }
@@ -85,7 +89,9 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
             ITS3Permission.PriorityType type = perm.getPriorityType();
             Integer value = perm.getValue();
 
-            if (skipFlag && (type == ITS3Permission.PriorityType.CHANNEL || type == ITS3Permission.PriorityType.CHANNEL_GROUP)) {
+            boolean isChannelOrChannelGrp = type == ITS3Permission.PriorityType.CHANNEL
+                    || type == ITS3Permission.PriorityType.CHANNEL_GROUP;
+            if (skipFlag && isChannelOrChannelGrp) {
                 continue;
             }
 
@@ -103,7 +109,8 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     protected List<ITS3Permission> getActiveContext(Integer clientID, String permSID) {
         final List<ITS3Permission> result = new ArrayList<>();
         Optional<IClient> optClient = userService.getClientByID(clientID);
-        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Given client ID is not online: " + clientID));
+        IClient client = optClient
+                .orElseThrow(() -> new IllegalStateException("Given client ID is not online: " + clientID));
 
         client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
         getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);

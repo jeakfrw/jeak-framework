@@ -29,12 +29,16 @@ public class CommandLine implements Runnable {
         this.out = new OutputStreamWriter(out);
     }
 
+    /**
+     * Will run the command line in an infinite loop until ^C or `stop` is received.
+     */
     public void run() {
         StringBuilder b = new StringBuilder(128);
         byte[] buffer = new byte[1024];
         byte[] cc = new byte[1];
         int buffPos = 0;
-        boolean lf, cr;
+        boolean lf;
+        boolean cr;
 
         terminated = false;
         outer: while (true) {
@@ -59,11 +63,13 @@ public class CommandLine implements Runnable {
 
                 lf = cc[0] == '\n';
                 cr = cc[0] == '\r';
-                if (cr) continue; // Ignore carriage-return
+                if (cr) {
+                    continue; // Ignore carriage-return
+                }
 
                 buffer[buffPos++] = cc[0];
                 if (lf || buffPos == buffer.length) {
-                    b.append(new String(buffer, 0, buffPos-1, Charset.defaultCharset()));
+                    b.append(new String(buffer, 0, buffPos - 1, Charset.defaultCharset()));
                     buffPos = 0;
                     if (lf) {
                         processCommand(b.toString());
@@ -85,6 +91,7 @@ public class CommandLine implements Runnable {
     }
 
     private static final Pattern commp = Pattern.compile("[\\w\\d]+");
+
     private void processCommand(String command) throws IOException {
         if (!commp.matcher(command).matches()) {
             logger.warn("Command not matching: {}", command);
@@ -107,6 +114,9 @@ public class CommandLine implements Runnable {
         }
     }
 
+    /**
+     * Allows to kill the command line
+     */
     public void kill() {
         synchronized (lock) {
             terminated = true;

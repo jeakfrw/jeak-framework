@@ -10,19 +10,22 @@ public class ChannelUpdateWatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(ChannelUpdateWatcher.class);
 
-    private final Object LOCK;
+    private final Object lock;
     private final DataCache cache;
 
     public ChannelUpdateWatcher(Object lock, DataCache cache) {
-        this.LOCK = lock;
+        this.lock = lock;
         this.cache = cache;
     }
 
+    /**
+     * When channels are edited, we want to update their cached representation.
+     */
     @Listener(order = Listener.Orders.LATEST)
     public void afterChannelEdited(IQueryEvent.INotification.IChannelEdited event) {
         Integer channelId = event.getTarget().getID();
 
-        synchronized (LOCK) {
+        synchronized (lock) {
             TS3Channel target = cache.unsafeGetChannels().getOrDefault(channelId, null);
 
             if (target == null) {

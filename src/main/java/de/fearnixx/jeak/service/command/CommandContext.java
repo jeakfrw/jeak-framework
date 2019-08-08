@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by MarkL4YG on 15-Feb-18
+ * Implementation of the rudimentary command context that is currently available.
  */
 public class CommandContext extends BasicDataHolder implements ICommandContext {
 

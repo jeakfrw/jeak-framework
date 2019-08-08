@@ -25,6 +25,10 @@ public class BlockingRequest {
         maxThreshold = timeUnit.toMillis(time);
     }
 
+    /**
+     * Uses Java monitors to wait for the request to complete.
+     * Will exit and return false when interrupted.
+     */
     public boolean waitForCompletion() {
         synchronized (monitor) {
             try {
@@ -46,10 +50,16 @@ public class BlockingRequest {
         }
     }
 
+    /**
+     * Returns the original request that has been wrapped into this one.
+     */
     public IQueryRequest getOriginalRequest() {
         return originalRequest;
     }
 
+    /**
+     * Returns the received answer by TeamSpeak. Is {@code null} when the request is not finished OR was unsuccessful.
+     */
     public IQueryEvent.IAnswer getAnswer() {
         synchronized (monitor) {
             return answer;

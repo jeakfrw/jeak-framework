@@ -11,15 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BasicDataHolder implements IDataHolder {
 
-    private final Object LOCK = new Object();
+    private final Object lock = new Object();
     private Map<String, String> values;
 
     public BasicDataHolder() {
         values = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public Map<String, String> getValues() {
-        synchronized (LOCK) {
+        synchronized (lock) {
             return values;
         }
     }
@@ -31,35 +35,47 @@ public class BasicDataHolder implements IDataHolder {
 
     @Override
     public Optional<String> getProperty(String key) {
-        synchronized (LOCK) {
+        synchronized (lock) {
             return Optional.ofNullable(values.getOrDefault(key, null));
         }
     }
 
     @Override
     public void setProperty(String key, String value) {
-        synchronized (LOCK) {
-            if (value == null)
+        synchronized (lock) {
+            if (value == null) {
                 values.remove(key);
-            else
+            } else {
                 values.put(key, value);
+            }
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void setProperty(String key, Object value) {
         setProperty(key, value != null ? value.toString() : null);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public IDataHolder copyFrom(IDataHolder other) {
-        synchronized (LOCK) {
+        synchronized (lock) {
             this.values = new ConcurrentHashMap<>();
             return merge(other);
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public IDataHolder merge(IDataHolder other) {
-        synchronized (LOCK) {
+        synchronized (lock) {
             for (Map.Entry<String, String> entry : other.getValues().entrySet()) {
                 this.values.put(entry.getKey(), entry.getValue());
             }

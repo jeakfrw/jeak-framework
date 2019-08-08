@@ -44,7 +44,7 @@ public class ChannelCache {
     @Inject
     private IPermissionService permService;
 
-    private final Object LOCK;
+    private final Object lock;
 
     // == CHANNELLIST == //
     private final IQueryRequest channelListRequest = IQueryRequest.builder()
@@ -63,17 +63,23 @@ public class ChannelCache {
             .build();
 
     public ChannelCache(Object lock) {
-        this.LOCK = lock;
+        this.lock = lock;
     }
 
+    /**
+     * Connect listener.
+     */
     @Listener
     public void onConnected(IBotStateEvent.IConnectStateEvent.IPostConnect event) {
         taskService.runTask(channelListTask);
     }
 
+    /**
+     * Disconnection listener.
+     */
     @Listener(order = Listener.Orders.LATEST)
     public void onDisconnected(IBotStateEvent.IConnectStateEvent.IDisconnect event) {
-        synchronized (LOCK) {
+        synchronized (lock) {
             logger.info("Clearing channel cache due to disconnect.");
             taskService.removeTask(channelListTask);
             internalCache.values().forEach(TS3ChannelHolder::invalidate);
@@ -100,39 +106,41 @@ public class ChannelCache {
         synchronized (internalCache) {
             final Map<Integer, TS3Channel> newMap = generateChannelMapping(messages);
             TS3Channel o;
-            Integer oID;
+            Integer oldId;
             TS3Channel n;
-            Integer[] cIDs = internalCache.keySet().toArray(new Integer[0]);
+            Integer[] channelIds = internalCache.keySet().toArray(new Integer[0]);
             for (int i = internalCache.size() - 1; i >= 0; i--) {
-                oID = cIDs[i];
-                o = internalCache.get(oID);
+                oldId = channelIds[i];
+                o = internalCache.get(oldId);
                 o.clearChildren();
-                n = newMap.getOrDefault(oID, null);
+                n = newMap.getOrDefault(oldId, null);
                 if (n == null) {
                     // Channel removed - invalidate & remove
                     o.invalidate();
-                    internalCache.remove(oID);
+                    internalCache.remove(oldId);
 
                 } else if (n == o) {
                     // Channel unchanged - continue
-                    newMap.remove(oID);
+                    newMap.remove(oldId);
 
                 } else {
                     // Channel reference updated - invalidate & change
                     o.invalidate();
-                    internalCache.put(oID, n);
-                    newMap.remove(oID);
+                    internalCache.put(oldId, n);
+                    newMap.remove(oldId);
                 }
             }
 
             // All others are new - Add them
-            boolean firstFill = internalCache.isEmpty();
+            final boolean firstFill = internalCache.isEmpty();
             newMap.forEach(internalCache::put);
 
             // Update children
             internalCache.forEach((cid, c) -> {
                 int pid = c.getParent();
-                if (pid == 0) return;
+                if (pid == 0) {
+                    return;
+                }
                 TS3Channel parent = internalCache.getOrDefault(pid, null);
                 if (parent == null) {
                     logger.warn("Channel {} has nonexistent parent: {}", cid, c.getParent());
@@ -160,8 +168,8 @@ public class ChannelCache {
     /**
      * Creates a Map of all available clients from a `channellist` answer event.
      * Helper method for {@link #refreshChannels(IRawQueryEvent.IMessage.IAnswer)}.
-     * <p>
-     * Handles update existing and creating channels.
+     *
+     * <p>Handles update existing and creating channels.
      */
     private Map<Integer, TS3Channel> generateChannelMapping(List<IRawQueryEvent.IMessage> messageObjects) {
         final Map<Integer, TS3Channel> channelMap = new ConcurrentHashMap<>(messageObjects.size(), 1.1f);
@@ -184,15 +192,15 @@ public class ChannelCache {
                             channel.copyFrom(o);
 
                         } else {
-                            String nName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
+                            String channelName = o.getProperty(PropertyKeys.Channel.NAME).orElse(null);
 
-                            if (nName == null) {
+                            if (channelName == null) {
                                 logger.warn("Skipping a channel due to missing name");
                                 return;
                             }
 
                             boolean wasSpacer = channel.isSpacer();
-                            boolean isSpacer = TS3Spacer.spacerPattern.matcher(nName).matches();
+                            boolean isSpacer = TS3Spacer.spacerPattern.matcher(channelName).matches();
 
                             if (isSpacer != wasSpacer) {
                                 // Spacer state changed - Update reference
@@ -222,12 +230,18 @@ public class ChannelCache {
         return channel;
     }
 
+    /**
+     * Returns the channels for {@link IDataCache#getChannels()}.
+     */
     public List<IChannel> getChannels() {
         synchronized (internalCache) {
             return List.copyOf(internalCache.values());
         }
     }
 
+    /**
+     * Returns the channels for {@link IDataCache#getChannelMap()}.
+     */
     public Map<Integer, IChannel> getChannelMap() {
         synchronized (internalCache) {
             return Collections.unmodifiableMap(internalCache);
