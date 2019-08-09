@@ -38,7 +38,8 @@ public class UserConfigSubject extends ConfigSubject {
     protected Optional<IPermission> getLinkedPermissions(String permission, boolean allowTransitive) {
         if (allowTransitive) {
             List<IGroup> linkedGroups = new LinkedList<>();
-            final List<IUserIdentity> linkedIdentities = userProfile.getLinkedIdentities(IUserIdentity.SERVICE_TEAMSPEAK);
+            final List<IUserIdentity> linkedIdentities =
+                    userProfile.getLinkedIdentities(IUserIdentity.SERVICE_TEAMSPEAK);
             if (linkedIdentities.isEmpty()) {
                 throw new IllegalStateException("No identities linked to profile: " + userProfile.getUniqueId());
             }
@@ -47,7 +48,7 @@ public class UserConfigSubject extends ConfigSubject {
                     .map(IUserIdentity::identity)
                     .map(userService::findUserByUniqueID)
                     .filter(results -> {
-                        if (results.size() > 0) {
+                        if (!results.isEmpty()) {
                             return true;
                         } else {
                             logger.warn("No user found for profile: {}", getUniqueID());

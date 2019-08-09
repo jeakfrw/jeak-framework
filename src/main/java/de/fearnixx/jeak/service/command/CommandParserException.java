@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.command;
 
 /**
- * Created by MarkL4YG on 15-Feb-18
+ * Created by MarkL4YG on 15-Feb-18.
  */
 public class CommandParserException extends CommandException {
 

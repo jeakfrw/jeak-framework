@@ -34,6 +34,7 @@ public interface IQueryEvent extends IEvent {
 
             /**
              * The current state of the cache as a flat list.
+             *
              * @implNote collection is unmodifiable!
              */
             List<IClient> getClients();
@@ -42,6 +43,7 @@ public interface IQueryEvent extends IEvent {
             /**
              * The current state of the cache as a map.
              * {@link IClient#getClientID()} -> {@link IClient}
+             *
              * @implNote collection is unmodifiable!
              */
             Map<Integer, IClient> getClientMap();
@@ -55,6 +57,7 @@ public interface IQueryEvent extends IEvent {
 
             /**
              * The current state of the cache as a flat list.
+             *
              * @implNote collection is unmodifiable!
              */
             List<IChannel> getChannels();
@@ -62,6 +65,7 @@ public interface IQueryEvent extends IEvent {
             /**
              * The current state of the cache as a map.
              * {@link IChannel#getID()} -> {@link IChannel}
+             *
              * @implNote collection is unmodifiable!
              */
             Map<Integer, IChannel> getChannelMap();
@@ -74,7 +78,7 @@ public interface IQueryEvent extends IEvent {
     interface IAnswer extends IQueryEvent {
 
         /**
-         * The request that has requested/received the response
+         * The request that has requested/received the response.
          */
         IQueryRequest getRequest();
 
@@ -202,13 +206,13 @@ public interface IQueryEvent extends IEvent {
             TargetType getTargetMode();
         }
 
-        interface IClientTextMessage extends ITextMessage,ITargetClient {
+        interface IClientTextMessage extends ITextMessage, ITargetClient {
         }
 
-        interface IChannelTextMessage extends ITextMessage,ITargetChannel{
+        interface IChannelTextMessage extends ITextMessage, ITargetChannel {
         }
 
-        interface IServerTextMessage extends ITextMessage,ITargetServer {
+        interface IServerTextMessage extends ITextMessage, ITargetServer {
         }
 
         interface IChannelCreated extends ITargetChannel {
@@ -224,7 +228,9 @@ public interface IQueryEvent extends IEvent {
 
             /**
              * Channel properties and their new values.
-             * @implNote changes for {@link IChannelEditedDescription} and {@link IChannelPasswordChanged} are always empty!
+             *
+             * @implNote changes for {@link IChannelEditedDescription} and
+             * {@link IChannelPasswordChanged} are always empty!
              */
             Map<String, String> getChanges();
 

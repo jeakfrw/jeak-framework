@@ -21,7 +21,7 @@ import java.util.Optional;
  */
 public class TS3Channel extends TS3ChannelHolder {
 
-    private static final Boolean CHANNEL_MSG_WARNING = Main.getProperty("jeak.checks.channelMsg", true);
+    private static final boolean CHANNEL_MSG_WARNING = Main.getProperty("jeak.checks.channelMsg", true);
 
     public static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
 
@@ -29,7 +29,8 @@ public class TS3Channel extends TS3ChannelHolder {
 
     public void setPermSubject(TS3ChannelSubject permSubject) {
         if (this.permSubject != null) {
-            throw new IllegalStateException("#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
+            throw new IllegalStateException(
+                    "#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
         }
         this.permSubject = permSubject;
     }
@@ -37,7 +38,8 @@ public class TS3Channel extends TS3ChannelHolder {
     @Override
     public IQueryRequest sendMessage(String message) {
         if (CHANNEL_MSG_WARNING) {
-            logger.warn("Sending commands to channels is not supported at the moment! You will see the message only in the current channel");
+            logger.warn("Sending commands to channels is not supported at the moment! "
+                    + "You will see the message only in the current channel");
         }
         return IQueryRequest.builder()
                 .command(QueryCommands.TEXTMESSAGE_SEND)

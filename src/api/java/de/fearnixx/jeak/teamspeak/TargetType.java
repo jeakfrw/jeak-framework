@@ -3,32 +3,33 @@ package de.fearnixx.jeak.teamspeak;
 /**
  * Created by Life4YourGames on 05.07.17.
  *
- * Enumerated representation of possible target types in the ServerQuery
+ * <p>Enumerated representation of possible target types in the ServerQuery
  */
 public enum TargetType {
     CLIENT(1),
     CHANNEL(2),
     SERVER(3);
 
-    private final Integer query_value;
+    private final Integer queryValue;
 
-    TargetType(Integer query_value) {
-        this.query_value = query_value;
+    TargetType(Integer queryValue) {
+        this.queryValue = queryValue;
     }
 
     public Integer getQueryNum() {
-        return query_value;
+        return queryValue;
     }
 
     public static TargetType valueOf(int i) {
-        return values()[i-1];
+        return values()[i - 1];
     }
 
-    public static TargetType fromQueryNum(Integer qNum) throws IllegalArgumentException {
+    public static TargetType fromQueryNum(Integer queryNumber) {
         for (TargetType tt : values()) {
-            if (tt.getQueryNum().equals(qNum))
+            if (tt.getQueryNum().equals(queryNumber)) {
                 return tt;
+            }
         }
-        throw new IllegalArgumentException("Unknown query number: " + qNum);
+        throw new IllegalArgumentException("Unknown query number: " + queryNumber);
     }
 }

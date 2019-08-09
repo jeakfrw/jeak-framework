@@ -71,6 +71,9 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         return false;
     }
 
+    /**
+     * Initialize the Hikari connection pool and Hibernate for this persistence unit.
+     */
     public boolean initialize() {
         if (hikariDS != null) {
             throw new IllegalStateException("Cannot re-initialize data source!");
@@ -121,8 +124,8 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
 
             hibernateServiceRegistry = registryBuilder.build();
             MetadataSources metaSources = new MetadataSources(hibernateServiceRegistry);
-            for (Class<?> aClass : DatabaseService.getClasses()) {
-                metaSources.addAnnotatedClassName(aClass.getName());
+            for (Class<?> entityClass : DatabaseService.getClasses()) {
+                metaSources.addAnnotatedClassName(entityClass.getName());
             }
             hibernateSessionFactory = metaSources.getMetadataBuilder().build().buildSessionFactory();
             return true;
@@ -194,12 +197,12 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         }
         isClosed = true;
         logger.debug("[{}] Closing & flushing entity managers.", unitId);
-        entityManagers.forEach(eM -> {
+        entityManagers.forEach(entityManager -> {
             try {
-                if (eM.getTransaction().isActive()) {
-                    eM.flush();
+                if (entityManager.getTransaction().isActive()) {
+                    entityManager.flush();
                 }
-                eM.close();
+                entityManager.close();
             } catch (PersistenceException e) {
                 logger.warn("[{}] Failed to close entity manager.", unitId, e);
             }

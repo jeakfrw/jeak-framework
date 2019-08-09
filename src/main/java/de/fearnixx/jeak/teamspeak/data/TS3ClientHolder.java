@@ -25,9 +25,10 @@ public abstract class TS3ClientHolder extends TS3User implements IClient {
     @Override
     public Integer getClientID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.ID);
-        if (optProperty.isEmpty())
+        if (optProperty.isEmpty()) {
             throw new ConsistencyViolationException("Client is missing ID")
                     .setSourceObject(this);
+        }
         return Integer.parseInt(optProperty.get());
     }
 
@@ -67,27 +68,30 @@ public abstract class TS3ClientHolder extends TS3User implements IClient {
     @Override
     public Integer getChannelID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_ID);
-        if (optProperty.isEmpty())
+        if (optProperty.isEmpty()) {
             throw new ConsistencyViolationException("Client is missing channel ID")
                     .setSourceObject(this);
+        }
         return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public Integer getChannelGroupID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_GROUP);
-        if (optProperty.isEmpty())
+        if (optProperty.isEmpty()) {
             throw new ConsistencyViolationException("Client is missing channel group ID")
                     .setSourceObject(this);
+        }
         return Integer.parseInt(optProperty.get());
     }
 
     @Override
     public Integer getChannelGroupSource() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.CHANNEL_GROUP_SOURCE);
-        if (optProperty.isEmpty())
+        if (optProperty.isEmpty()) {
             throw new ConsistencyViolationException("Client has no channel group source!")
                     .setSourceObject(this);
+        }
         return Integer.parseInt(optProperty.get());
     }
 

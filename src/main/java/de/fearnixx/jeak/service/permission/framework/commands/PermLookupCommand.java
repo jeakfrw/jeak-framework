@@ -106,6 +106,7 @@ public class PermLookupCommand implements ICommandReceiver {
             return;
         }
 
-        throw new CommandException("Unknown arguments! Usage: \"!permuuid-lookup [g:<group_name>|u:<user_name>|sg:<servergroup_id>]");
+        throw new CommandException("Unknown arguments! Usage: "
+                + "\"!permuuid-lookup [g:<group_name>|u:<user_name>|sg:<servergroup_id>]");
     }
 }

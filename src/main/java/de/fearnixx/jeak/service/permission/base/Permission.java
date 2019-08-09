@@ -2,9 +2,6 @@ package de.fearnixx.jeak.service.permission.base;
 
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 
-/**
- * Created by MarkL4YG on 07-Feb-18
- */
 public class Permission extends BasicDataHolder implements IPermission {
 
     private final String systemID;

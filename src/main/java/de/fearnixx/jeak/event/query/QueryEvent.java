@@ -177,14 +177,16 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         public Integer getOriginChannelId() {
             return getProperty("cfid")
                     .map(Integer::parseInt)
-                    .orElseThrow(() -> new ConsistencyViolationException("ClientLeave-Event without original channel id!"));
+                    .orElseThrow(() -> new ConsistencyViolationException(
+                            "ClientLeave-Event without original channel id!"));
         }
 
         @Override
         public Integer getTargetChannelId() {
             return getProperty("ctid")
                     .map(Integer::parseInt)
-                    .orElseThrow(() -> new ConsistencyViolationException("ClientLeave-Event without target channel id!"));
+                    .orElseThrow(() -> new ConsistencyViolationException(
+                            "ClientLeave-Event without target channel id!"));
         }
     }
 
@@ -206,14 +208,16 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         public Integer getOriginChannelId() {
             return getProperty("cfid")
                     .map(Integer::parseInt)
-                    .orElseThrow(() -> new ConsistencyViolationException("ClientEnter-Event without original channel id!"));
+                    .orElseThrow(() -> new ConsistencyViolationException(
+                            "ClientEnter-Event without original channel id!"));
         }
 
         @Override
         public Integer getTargetChannelId() {
             return getProperty("ctid")
                     .map(Integer::parseInt)
-                    .orElseThrow(() -> new ConsistencyViolationException("ClientEnter-Event without target channel id!"));
+                    .orElseThrow(() -> new ConsistencyViolationException(
+                            "ClientEnter-Event without target channel id!"));
         }
     }
 
@@ -245,11 +249,14 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
 
         @Override
         public Boolean wasServer() {
-            return wasForced() && getProperty("invokerid").isEmpty() && getProperty("invokername").orElse("").equals("Server");
+            return wasForced()
+                    && getProperty("invokerid").isEmpty()
+                    && getProperty("invokername").orElse("").equals("Server");
         }
     }
 
-    public static class ClientTextMessage extends TargetClient implements TextMessageEvent, INotification.IClientTextMessage {
+    public static class ClientTextMessage extends TargetClient
+            implements TextMessageEvent, INotification.IClientTextMessage {
     }
 
     public abstract static class TargetChannel extends Notification implements ITargetChannel {
@@ -336,13 +343,15 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         }
     }
 
-    public static class ChannelTextMessage extends TargetChannel implements TextMessageEvent, INotification.IChannelTextMessage {
+    public static class ChannelTextMessage extends TargetChannel
+            implements TextMessageEvent, INotification.IChannelTextMessage {
     }
 
     public abstract static class TargetServer extends Notification {
     }
 
-    public static class ServerTextMessage extends TargetServer implements TextMessageEvent, INotification.IServerTextMessage {
+    public static class ServerTextMessage extends TargetServer
+            implements TextMessageEvent, INotification.IServerTextMessage {
     }
 
     public static class ChannelMoved extends ChannelEdit implements INotification.IChannelMoved {

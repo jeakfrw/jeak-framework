@@ -5,13 +5,13 @@ package de.fearnixx.jeak.teamspeak;
  * Simplifies optimization
  * Also simplifies adaptation to small query changes
  *
- * These values are taken directly from the server query manual backpages.
+ * <p>These values are taken directly from the server query manual backpages.
  * However, since the manual is dated here and there, we have to make adjustments to those values.
  */
 public abstract class PropertyKeys {
 
     /**
-     * All available keys used in TextMessage stuff
+     * All available keys used in TextMessage stuff.
      */
     public abstract static class TextMessage {
 
@@ -74,7 +74,7 @@ public abstract class PropertyKeys {
     }
 
     /**
-     * All available client properties (clientdblist response)
+     * All available client properties (clientdblist response).
      */
     public abstract static class DBClient {
 
@@ -99,7 +99,7 @@ public abstract class PropertyKeys {
     }
 
     /**
-     * All available channel properties
+     * All available channel properties.
      */
     public abstract static class Channel {
 

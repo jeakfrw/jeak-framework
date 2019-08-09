@@ -30,7 +30,7 @@ public interface IQueryRequest {
      * Check if chaining is supported for your requested command during development.
      * If not, just fill the first element in the chain - only that will be sent in that case.
      *
-     * The data properties to send with the request.
+     * <p>The data properties to send with the request.
      */
     List<IDataHolder> getDataChain();
 

@@ -8,9 +8,6 @@ import de.fearnixx.jeak.teamspeak.query.QueryConnectionAccessor;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by MarkL4YG on 28-Jan-18
- */
 public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
 
     public QueryConnectionAccessor connection;
@@ -67,8 +64,9 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
 
         public void setError(ErrorMessage message) {
             this.error = message;
-            if (hasNext())
+            if (hasNext()) {
                 getNext().setError(message);
+            }
         }
 
         public IErrorMessage getError() {
@@ -94,7 +92,7 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
             private Integer hash;
 
             public Notification() {
-                setError(ErrorMessage.OK());
+                setError(ErrorMessage.okay());
             }
 
             public String getCaption() {
@@ -117,7 +115,7 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
 
     public static class ErrorMessage extends Message.Answer implements IRawQueryEvent.IMessage.IErrorMessage {
 
-        public static ErrorMessage OK() {
+        public static ErrorMessage okay() {
             ErrorMessage m = new ErrorMessage(null);
             m.setProperty("command", "error");
             m.setProperty("id", "0");

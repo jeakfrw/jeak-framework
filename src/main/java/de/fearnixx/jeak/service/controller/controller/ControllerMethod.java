@@ -35,14 +35,9 @@ public class ControllerMethod {
 
     /**
      * Invoke the method from its {@link ControllerContainer}.
-     *
-     * @param controller
-     * @param methodParameters
-     * @return
-     * @throws InvocationTargetException
-     * @throws IllegalAccessException
      */
-    public Object invoke(Object controller, Object... methodParameters) throws InvocationTargetException, IllegalAccessException {
+    public Object invoke(Object controller, Object... methodParameters)
+            throws InvocationTargetException, IllegalAccessException {
         return this.method.invoke(controller, methodParameters);
     }
 
@@ -65,12 +60,6 @@ public class ControllerMethod {
         return methodParameterList;
     }
 
-    /**
-     *
-     * @param annotationClass
-     * @param <T>
-     * @return
-     */
     public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         return method.getAnnotation(annotationClass);
     }

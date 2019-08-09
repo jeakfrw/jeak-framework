@@ -15,7 +15,7 @@ public interface ILocalizationService {
      * Directs the service to generate locales for a unit with the given ID.
      * If a unit is registered already, that unit is returned without any additional action.
      *
-     * Registrations are recommended to be done in {@link IBotStateEvent.IPreInitializeEvent}
+     * <p>Registrations are recommended to be done in {@link IBotStateEvent.IPreInitializeEvent}
      */
     ILocalizationUnit registerUnit(String unitId);
 

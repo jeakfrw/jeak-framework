@@ -36,7 +36,7 @@ public interface IUser extends ITS3UserSubject, ISubject {
      * CRC32 checksum of the icon associated with the client.
      * Empty if none is set.
      *
-     * @implNote The fix applied to {@link IChannel#}
+     * @implNote The fix applied to channel icons has also been applied here.
      */
     String getIconID();
 

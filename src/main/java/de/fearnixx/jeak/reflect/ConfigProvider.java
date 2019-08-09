@@ -38,8 +38,9 @@ public class ConfigProvider extends AbstractSpecialProvider<Config> {
         String ctxId = ctx.getContextId();
 
         String fileName = annotation.id();
-        if (fileName.isEmpty())
+        if (fileName.isEmpty()) {
             fileName = ctxId;
+        }
 
         if (fileName == null) {
             final String fieldName = field.getName();
@@ -55,8 +56,9 @@ public class ConfigProvider extends AbstractSpecialProvider<Config> {
             baseDir = new File(baseDir, ctxId);
         }
 
-        if (!annotation.category().isEmpty())
+        if (!annotation.category().isEmpty()) {
             baseDir = new File(baseDir, annotation.category());
+        }
 
         if (!baseDir.isDirectory() && !baseDir.mkdirs()) {
             final IOException except = new IOException("Failed to create target directory: " + baseDir.getPath());

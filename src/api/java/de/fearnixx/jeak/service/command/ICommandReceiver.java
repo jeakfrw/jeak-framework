@@ -8,7 +8,7 @@ public interface ICommandReceiver {
      * * Channel text
      * * Server text
      *
-     * Commands must start with "!" in order to be received.
+     * <p>Commands must start with "!" in order to be received.
      * CommandReceivers only receive the commands they are registered for.
      *
      * @param ctx The context of the executed command

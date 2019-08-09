@@ -63,8 +63,8 @@ public class TokenConfiguration extends Configurable {
         IConfigNode tokenNode = getConfig().getNode(token);
         Set<String> tokenScopes = new HashSet<>();
         if (!tokenNode.isVirtual()) {
-            Optional<List<IConfigNode>> iConfigNodes = tokenNode.optList();
-            iConfigNodes.ifPresent(localIConfigNodes ->
+            Optional<List<IConfigNode>> nodes = tokenNode.optList();
+            nodes.ifPresent(localIConfigNodes ->
                     localIConfigNodes.stream()
                             .map(IConfigNode::optString)
                             .filter(Optional::isPresent)

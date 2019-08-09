@@ -3,13 +3,13 @@ package de.fearnixx.jeak.service.task;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Builder to construct an object implementing {@link ITask}
+ * Builder to construct an object implementing {@link ITask}.
  */
 public class TaskBuilder {
-    private long l;
+    private long delay;
     private TimeUnit tu;
     private ITask.TaskType type;
-    private Runnable r;
+    private Runnable runnable;
     private String name;
 
     TaskBuilder() {
@@ -17,15 +17,15 @@ public class TaskBuilder {
     }
 
     /**
-     * Resets this builder
+     * Resets this builder.
      * Built objects should keep their values
      * @return this
      */
     public TaskBuilder reset() {
-        l = 0;
+        delay = 0;
         tu = TimeUnit.DAYS;
         type = ITask.TaskType.DELAY;
-        r = null;
+        runnable = null;
         name = null;
         return this;
     }
@@ -49,7 +49,7 @@ public class TaskBuilder {
     public TaskBuilder delay(long l, TimeUnit unit) {
         type = ITask.TaskType.DELAY;
         this.tu = unit;
-        this.l = l;
+        this.delay = l;
         return this;
     }
 
@@ -62,7 +62,7 @@ public class TaskBuilder {
     public TaskBuilder interval(long l, TimeUnit unit) {
         type = ITask.TaskType.REPEAT;
         this.tu = unit;
-        this.l = l;
+        this.delay = l;
         return this;
     }
 
@@ -72,7 +72,7 @@ public class TaskBuilder {
      * @return this
      */
     public TaskBuilder runnable(Runnable r) {
-        this.r = r;
+        this.runnable = r;
         return this;
     }
 
@@ -84,9 +84,9 @@ public class TaskBuilder {
     public ITask build() {
         final String fName = name;
         final ITask.TaskType fType = type;
-        final long fL = l;
+        final long fL = delay;
         final TimeUnit fTU = tu;
-        final Runnable fR = r;
+        final Runnable fR = runnable;
         return new ITask() {
             @Override
             public long getDelay() {

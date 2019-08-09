@@ -83,15 +83,17 @@ public class JeakBot implements Runnable, IBot {
     // * * * CONSTRUCTION * * * //
 
     public void setConfig(IConfig configRep) {
-        if (this.configRep != null)
+        if (this.configRep != null) {
             throw new IllegalStateException("Cannot change config once set!");
+        }
         this.configRep = configRep;
     }
 
-    public void setPluginManager(PluginManager pMgr) {
-        if (this.pMgr != null)
+    public void setPluginManager(PluginManager pluginManager) {
+        if (this.pMgr != null) {
             throw new IllegalStateException("Cannot change pluginManager once set!");
-        this.pMgr = pMgr;
+        }
+        this.pMgr = pluginManager;
     }
 
     // * * * [Runnable] * * * //
@@ -101,7 +103,8 @@ public class JeakBot implements Runnable, IBot {
         logger.info("Initializing JeakBot version {}", VERSION);
 
         if (initCalled) {
-            throw new IllegalStateException("Reinitialization of JeakBot instances is not supported! Completely shut down beforehand and/or create a new one.");
+            throw new IllegalStateException("Reinitialization of JeakBot instances is not supported! "
+                    + "Completely shut down beforehand and/or create a new one.");
         }
 
         // Bot Pre-Initialization
@@ -222,7 +225,7 @@ public class JeakBot implements Runnable, IBot {
 
         c.setState(PluginContainer.State.DEPENDENCIES);
 
-        for (String dep : pr.getHARD_depends()) {
+        for (String dep : pr.getDependencies()) {
             if (!reg.containsKey(dep) || !loadPlugin(reg, dep, reg.get(dep))) {
                 logger.error("Unresolvable HARD dependency: {} for plugin {}", dep, id);
                 c.setState(PluginContainer.State.FAILED_DEP);

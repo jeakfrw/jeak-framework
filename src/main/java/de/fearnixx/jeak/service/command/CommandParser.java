@@ -3,14 +3,15 @@ package de.fearnixx.jeak.service.command;
 import java.util.Optional;
 
 /**
- * Created by MarkL4YG on 15-Feb-18
+ * Rudimentary parser for quoted command arguments.
  */
 public class CommandParser {
 
     public Optional<CommandContext> parseLine(String commandLine) throws CommandParserException {
 
-        if (commandLine == null || !commandLine.startsWith(CommandService.COMMAND_PREFIX))
+        if (commandLine == null || !commandLine.startsWith(CommandService.COMMAND_PREFIX)) {
             return Optional.empty();
+        }
 
         CommandContext ctx = new CommandContext();
         // Arguments shouldn't be much more than this
@@ -42,8 +43,9 @@ public class CommandParser {
                         break;
                     }
                 default:
-                    if (buffPos == buff.length)
+                    if (buffPos == buff.length) {
                         throw new CommandParserException("Argument buffer exceeded");
+                    }
                     buff[buffPos++] = ch;
             }
         }

@@ -54,7 +54,8 @@ public class TaskService extends Thread implements ITaskService {
     @Override
     public void scheduleTask(ITask task) {
         if (task == null || task.getRunnable() == null || task.getTimeUnit() == null) {
-            throw new IllegalArgumentException("Tried to register an invalid or NULL task! Report this to the plugin dev!");
+            throw new IllegalArgumentException(
+                    "Tried to register an invalid or NULL task! Report this to the plugin dev!");
         }
         long delay = task.getTimeUnit().toSeconds(task.getInterval());
         if (task.getType() == ITask.TaskType.REPEAT && delay < 5) {
@@ -65,8 +66,9 @@ public class TaskService extends Thread implements ITaskService {
             return;
         }
         synchronized (tasks) {
-            if (tasks.containsKey(task))
+            if (tasks.containsKey(task)) {
                 return;
+            }
             tasks.put(task, delay);
         }
         logger.debug("Task {} scheduled for {} seconds", task.getName(), delay);
@@ -118,8 +120,9 @@ public class TaskService extends Thread implements ITaskService {
                         if (--l == 0) {
                             toDo.add(t);
                         } else {
-                            if (l % 100 == 0)
+                            if (l % 100 == 0) {
                                 logger.debug("{} has {} seconds left", t.getName(), l);
+                            }
                             tasks.replace(t, l);
                         }
                     });

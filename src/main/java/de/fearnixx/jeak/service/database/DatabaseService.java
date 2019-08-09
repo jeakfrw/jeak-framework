@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
- * Created by MarkL4YG on 09-Feb-18
+ * Loads and initializes the database connections.
  */
 @FrameworkService(serviceInterface = IDatabaseService.class)
 public class DatabaseService implements IDatabaseService {
@@ -60,6 +60,7 @@ public class DatabaseService implements IDatabaseService {
         return list;
     }
 
+    // FIXME: Ist das Kunst, oder kann das weg?
     //@Listener(order = Listener.Orders.SYSTEM)
     public void onLoad(BotStateEvent.PreInitializeEvent event) {
         List<File> dataSourceFiles = getDatabaseConfigurations();
@@ -109,6 +110,9 @@ public class DatabaseService implements IDatabaseService {
         }
     }
 
+    /**
+     * Returns currently discovered entity classes.
+     */
     public static Set<Class<?>> getClasses() {
         synchronized (CLASS_LOCK) {
             return new HashSet<>(ENTITIES);

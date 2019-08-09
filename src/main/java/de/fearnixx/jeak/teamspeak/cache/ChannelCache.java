@@ -213,7 +213,7 @@ public class ChannelCache {
                         }
 
                         // Fix channel icon ID in case it got misread by TS3
-                        TS3DataFixes.ICONS_INVALID_CRC32(channel, PropertyKeys.Channel.ICON_ID);
+                        TS3DataFixes.iconsInvalidCrc32(channel, PropertyKeys.Channel.ICON_ID);
                         channelMap.put(cid, channel);
                     } catch (Exception e) {
                         logger.warn("Failed to parse a channel", e);

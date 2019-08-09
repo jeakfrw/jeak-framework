@@ -113,12 +113,17 @@ public class SparkAdapter extends HttpServer {
             for (MethodParameter methodParameter : methodParameterList) {
                 Object retrievedParameter = null;
                 if (methodParameter.hasAnnotation(PathParam.class)) {
-                    retrievedParameter = transformRequestOption(request.params(getPathParamName(methodParameter)), request, methodParameter);
+                    retrievedParameter = transformRequestOption(
+                            request.params(getPathParamName(methodParameter)), request, methodParameter);
+
                 } else if (methodParameter.hasAnnotation(RequestParam.class)) {
-                    retrievedParameter = transformRequestOption(request.queryMap(getRequestParamName(methodParameter)).value(), request, methodParameter);
+                    retrievedParameter = transformRequestOption(
+                            request.queryMap(getRequestParamName(methodParameter)).value(), request, methodParameter);
+
                 } else if (methodParameter.hasAnnotation(RequestBody.class)) {
                     retrievedParameter = transformRequestOption(request.body(), request, methodParameter);
                 }
+
                 methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
             Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
@@ -142,10 +147,6 @@ public class SparkAdapter extends HttpServer {
 
     /**
      * This method adds the provided {@link Map} of headers to the provided {@link Response}.
-     *
-     * @param response
-     * @param additionalHeaders
-     * @return
      */
     private Map<String, String> setHeaders(Response response, Map<String, String> additionalHeaders) {
         Map<String, String> headerMap = loadHeaders();

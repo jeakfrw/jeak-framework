@@ -51,7 +51,8 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
     }
 
     private Optional<ITS3Permission> selectFromTable(Integer idOne, String permSID, String tableName, Integer idTwo) {
-        String sql = "SELECT perm_value, perm_negated, perm_skip FROM " + tableName + " WHERE server_id = ? AND perm_id = ? AND id1 = ?";
+        String sql = "SELECT perm_value, perm_negated, perm_skip FROM "
+                + tableName + " WHERE server_id = ? AND perm_id = ? AND id1 = ?";
 
         if (idTwo != null) {
             sql += " AND id2 = ?";

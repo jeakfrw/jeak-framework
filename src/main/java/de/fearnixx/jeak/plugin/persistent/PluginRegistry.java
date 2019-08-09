@@ -24,7 +24,9 @@ public class PluginRegistry {
 
     public static Optional<PluginRegistry> getFor(Class<?> pluginClass) {
         PluginRegistry pr = new PluginRegistry(pluginClass);
-        if (!pr.analyze()) return Optional.empty();
+        if (!pr.analyze()) {
+            return Optional.empty();
+        }
         return Optional.of(pr);
     }
 
@@ -34,7 +36,7 @@ public class PluginRegistry {
     private String id;
     private String version;
     private String buildAgainst;
-    private List<String> HARD_depends;
+    private List<String> dependencies;
 
     private List<Method> listeners;
     private Map<Class<?>, List<Field>> injections;
@@ -45,7 +47,8 @@ public class PluginRegistry {
 
     protected boolean analyze() {
         logger.debug("Analyzing class: {} from {}",
-                pluginClass.toGenericString(), pluginClass.getProtectionDomain().getCodeSource().getLocation().getPath());
+                pluginClass::toGenericString,
+                () -> pluginClass.getProtectionDomain().getCodeSource().getLocation().getPath());
 
         tag = pluginClass.getAnnotation(JeakBotPlugin.class);
         if (tag == null) {
@@ -54,7 +57,7 @@ public class PluginRegistry {
         }
         id = tag.id();
         if (!id.matches("^[a-zA-Z.][a-zA-Z.]+$")) {
-            logger.error("Plugin ID: {} is invalid!",  this.id);
+            logger.error("Plugin ID: {} is invalid!", this.id);
             return false;
         }
         version = Common.stripVersion(tag.version());
@@ -67,9 +70,9 @@ public class PluginRegistry {
         buildAgainst = tag.builtAgainst();
 
         if (tag.depends().length == 0) {
-            HARD_depends = Collections.emptyList();
+            dependencies = Collections.emptyList();
         } else {
-            HARD_depends = List.of(tag.depends());
+            dependencies = List.of(tag.depends());
         }
 
 
@@ -102,7 +105,10 @@ public class PluginRegistry {
         for (Field field : fields) {
             if (field.getAnnotation(Inject.class) == null) continue;
             int mod = field.getModifiers();
-            if (!Modifier.isPublic(mod) || Modifier.isAbstract(mod) || Modifier.isFinal(mod) || Modifier.isVolatile(mod)) {
+            if (!Modifier.isPublic(mod)
+                    || Modifier.isAbstract(mod)
+                    || Modifier.isFinal(mod)
+                    || Modifier.isVolatile(mod)) {
                 logger.debug("Wrong modifiers for field: {}", field.getName());
             }
             List<Field> l = injections.getOrDefault(field.getType(), null);
@@ -114,7 +120,8 @@ public class PluginRegistry {
         }
 
         logger.debug("Plugin class {} analysed", pluginClass.toGenericString());
-        final String logMessage = String.format("ID: %s Version: %s HDependencies: %d Against: %s", this.id, this.version, HARD_depends.size(), buildAgainst);
+        final String logMessage = String.format("ID: %s Version: %s HDependencies: %d Against: %s",
+                this.id, this.version, dependencies.size(), buildAgainst);
         logger.debug(logMessage);
         return true;
     }
@@ -127,8 +134,8 @@ public class PluginRegistry {
         return id;
     }
 
-    public List<String> getHARD_depends() {
-        return HARD_depends;
+    public List<String> getDependencies() {
+        return dependencies;
     }
 
     public List<Method> getListeners() {

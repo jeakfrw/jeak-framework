@@ -25,14 +25,16 @@ public class TS3User extends TS3UserHolder {
 
     public void setTs3PermSubject(TS3UserSubject ts3PermSubject) {
         if (this.ts3PermSubject != null) {
-            throw new IllegalStateException("#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
+            throw new IllegalStateException(
+                    "#setTs3PermSubject is an unsafe operation and may not be repeated after init!");
         }
         this.ts3PermSubject = ts3PermSubject;
     }
 
     public void setFrameworkSubjectUUID(UUID frameworkSubject) {
         if (this.frameworkSubject != null) {
-            throw new IllegalStateException("#setFrameworkSubject is an unsafe operation and may not be repeated after init!");
+            throw new IllegalStateException(
+                    "#setFrameworkSubject is an unsafe operation and may not be repeated after init!");
         }
         this.frameworkSubject = frameworkSubject;
     }
@@ -46,7 +48,8 @@ public class TS3User extends TS3UserHolder {
 
     private ISubject getSubject() {
         return frwPermProvider.getSubject(frameworkSubject)
-                .orElseThrow(() -> new IllegalStateException("Framework did not return subject for: " + frameworkSubject));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Framework did not return subject for: " + frameworkSubject));
     }
 
     @Override

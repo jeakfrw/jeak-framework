@@ -25,7 +25,8 @@ public interface IProfileService {
      * If no matching profile could be found, the profile will be created.
      * @return An {@link Optional#empty()} ONLY when the profile could not be created due to an error.
      *            {@link Optional<IUserProfile>} in the normal use case.
-     * @apiNote Plugins are recommended to use {@link #getProfile(UUID)} or {@link #getProfile(String)} whenever possible.
+     * @apiNote Plugins are recommended to use {@link #getProfile(UUID)} or
+     * {@link #getProfile(String)} whenever possible.
      *          For read-only access, this prevents the unnecessary creation of empty profiles.
      */
     Optional<IUserProfile> getOrCreateProfile(String ts3Identity);

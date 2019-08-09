@@ -21,7 +21,7 @@ public interface IUserIdentity {
      * With TeamSpeak, this will be the unique ID of the users identity. Other services may use different formats.
      * For example, Minecraft plugins could use {@link UUID#toString()}ed identifiers here.
      *
-     * This means, the format of the string is dependent on the service id!
+     * <p>This means, the format of the string is dependent on the service id!
      */
     String identity();
 }

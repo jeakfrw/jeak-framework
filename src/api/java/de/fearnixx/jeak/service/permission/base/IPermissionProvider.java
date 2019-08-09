@@ -6,9 +6,11 @@ import java.util.UUID;
 
 /**
  * Provides permission information about clients.
- * Permission providers are - technically - part of the internal API. Plugins should use {@link ISubject} wherever possible.
+ * Permission providers are - technically - part of the internal API.
+ * Plugins should use {@link ISubject} wherever possible.
  * Implementing and registering a custom permission provider will allow other system IDs to be checked.
- * By default, TeamSpeak 3 and the internal permission provider are registered and additional providers may be registered by plugins.
+ * By default, TeamSpeak 3 and the internal permission provider are registered
+ * and additional providers may be registered by plugins.
  * @see IPermissionService#registerProvider(String, IPermissionProvider)
  */
 public interface IPermissionProvider {
@@ -16,14 +18,16 @@ public interface IPermissionProvider {
     /**
      * Returns the internal subject representation of this permission system.
      * Only {@link Optional#empty()} if the permission system is read-only and the requested subject does not exist.
-     * If the permission system is writable and the subject does not exist, the subject should be created and reserved when this is called.
+     * If the permission system is writable and the subject does not exist,
+     * the subject should be created and reserved when this is called.
      * It shall be persisted when any information is written.
      */
     Optional<ISubject> getSubject(UUID subjectUUID);
 
     /**
      * Returns the stored information about this permission for the specified user/profile.
-     * @implNote This should be the effective permission. This means that inherited and overwritten permissions shall be taken into account.
+     * @implNote This should be the effective permission.
+     * This means that inherited and overwritten permissions shall be taken into account.
      */
     Optional<IPermission> getPermission(String permSID, UUID subjectUniqueID);
 
@@ -66,7 +70,8 @@ public interface IPermissionProvider {
 
     /**
      * Requests the creation of a new group subject.
-     * If the underlying system is in <strong>read-only</strong> mode, this should always return {@link Optional#empty()}.
+     * If the underlying system is in <strong>read-only</strong> mode,
+     * this should always return {@link Optional#empty()}.
      */
     Optional<IGroup> createParent(String name);
 

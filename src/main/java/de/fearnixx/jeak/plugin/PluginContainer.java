@@ -33,16 +33,19 @@ public class PluginContainer {
     public List<Field> getInjectionsFor(Class<?> forClass) {
         List<Field> res = new ArrayList<>();
         injections.forEach((c, l) -> {
-            if (c.isAssignableFrom(forClass))
+            if (c.isAssignableFrom(forClass)) {
                 res.addAll(l);
+            }
         });
         return res;
     }
 
     private State state = INIT;
+
     public State getState() {
         return state;
     }
+
     public void setState(State state) {
         this.state = state;
     }

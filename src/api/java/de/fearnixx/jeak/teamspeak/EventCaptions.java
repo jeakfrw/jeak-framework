@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.teamspeak;
 
 /**
- * Created by MarkL4YG on 30-May-18
+ * Constants for TeamSpeak 3 notification events.
  */
 public abstract class EventCaptions {
 

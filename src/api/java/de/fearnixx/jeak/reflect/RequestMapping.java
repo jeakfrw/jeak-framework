@@ -9,18 +9,24 @@ import java.lang.annotation.Target;
 
 /**
  * Mark a method as method to be available via the controller.
- *
- * method(): REQUIRED Specify the used HTTP-method.
- *
- * endpoint(): REQUIRED Specify the endpoint for the annotated method.
- *
- * isSecured(): Specify whether or not the calls to this endpoint should use an authorization scheme.
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface RequestMapping {
+
+    /**
+     * REQUIRED Specify the used HTTP-method.
+     * @implNote Please note that {@code OPTIONS} is specially covered by the REST service.
+     */
     RequestMethod method();
+
+    /**
+     * REQUIRED Specify the endpoint for the annotated method. This will be concatenated with {@code /api/<plugin-id>/}.
+     */
     String endpoint();
+
+    /**
+     * Specify whether or not the calls to this endpoint should use an authorization scheme.
+     */
     boolean isSecured() default true;
 }

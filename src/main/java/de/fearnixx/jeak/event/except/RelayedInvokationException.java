@@ -17,8 +17,4 @@ public class RelayedInvokationException extends RuntimeException {
     public RelayedInvokationException(Throwable cause) {
         super(cause);
     }
-
-    protected RelayedInvokationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

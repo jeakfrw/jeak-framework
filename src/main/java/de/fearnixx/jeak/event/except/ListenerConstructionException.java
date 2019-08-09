@@ -17,8 +17,4 @@ public class ListenerConstructionException extends RuntimeException {
     public ListenerConstructionException(Throwable cause) {
         super(cause);
     }
-
-    protected ListenerConstructionException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

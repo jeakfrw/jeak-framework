@@ -30,11 +30,14 @@ public class CreateGroupCommand implements ICommandReceiver {
         final IClient invoker = userService.getClientByID(invokerId).orElse(null);
 
         if (invoker == null) {
-            throw new CommandException("Sorry, your client could not be found in the cache. Please wait a moment and try again.");
+            String msg = "Sorry, your client could not be found in the cache. Please wait a moment and try again.";
+            throw new CommandException(msg);
         }
 
         if (!invoker.hasPermission("frw.permission.create_group")) {
-            throw new CommandException("You are not allowed to use this command! (UID: " + invoker.getUniqueID() + ", failed at: frw.permission.create_group)");
+            String msg = "You are not allowed to use this command! (UID: "
+                    + invoker.getUniqueID() + ", failed at: frw.permission.create_group)";
+            throw new CommandException(msg);
         }
 
         if (ctx.getArguments().size() != 1) {

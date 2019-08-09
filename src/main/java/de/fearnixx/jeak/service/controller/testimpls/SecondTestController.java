@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.controller.testImpls;
+package de.fearnixx.jeak.service.controller.testimpls;
 
 import de.fearnixx.jeak.reflect.RequestBody;
 import de.fearnixx.jeak.reflect.RequestMapping;

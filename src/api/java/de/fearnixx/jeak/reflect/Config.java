@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * Designates a field to be filled with configuration representation.
  *
- * Allowed types:
+ * <p>Allowed types:
  * * {@link java.nio.file.Path}
  * * {@link java.io.File}
  * * {@link IConfig}
@@ -28,13 +28,12 @@ public @interface Config {
     String id() default "";
 
     /**
-     * If you happen to have many configuration files:
-     * Will determine what sub directory to use
+     * Will determine what sub directory to use if you happen to have many configuration files.
      */
     String category() default "";
 
     /**
-     * The configuration format
+     * The configuration format.
      * (Currently not in use!)
      */
     String format() default "";

@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 /**
- * Created by MarkL4YG on 28-Jan-18
+ * {@inheritDoc}
  */
 @FrameworkService(serviceInterface = IServer.class)
 public class Server implements IServer {
@@ -45,7 +45,7 @@ public class Server implements IServer {
     @Inject
     public IBot bot;
 
-    private final Object LOCK = new Object();
+    private final Object lock = new Object();
 
     private String host;
     private int port;
@@ -57,8 +57,9 @@ public class Server implements IServer {
 
     private QueryConnectionAccessor mainConnection;
 
-    public void setCredentials(String host, Integer port, String user, String pass, Integer instanceId, Boolean useSSL, String nickname) {
-        synchronized (LOCK) {
+    public void setCredentials(String host, Integer port, String user, String pass,
+                               Integer instanceId, Boolean useSSL, String nickname) {
+        synchronized (lock) {
             Objects.requireNonNull(host, "Host may not be null!");
             Objects.requireNonNull(port, "Port may not be null!");
             Objects.requireNonNull(user, "Username may not be null!");
@@ -79,7 +80,7 @@ public class Server implements IServer {
 
     @Override
     public void connect() {
-        synchronized (LOCK) {
+        synchronized (lock) {
             if (host == null) {
                 throw new IllegalStateException("Cannot connect without credentials");
             }

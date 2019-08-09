@@ -39,7 +39,6 @@ public abstract class HttpServer {
 
     /**
      * Start the http server.
-     *
      */
     public void start() {
         restConfiguration.getPort().ifPresent(Spark::port);
@@ -56,21 +55,21 @@ public abstract class HttpServer {
      * Build the endpoint.
      *
      * @param controllerContainer The controller as {@link ControllerContainer}.
-     * @param controllerMethod The method as {@link ControllerMethod}.
+     * @param controllerMethod    The method as {@link ControllerMethod}.
      * @return The endpoint as {@link String} created from the {@link ControllerContainer} and {@link ControllerMethod}.
      */
     protected String buildEndpoint(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
-        char DELIMITER = '/';
+        final char delimiter = '/';
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append(API_ENDPOINT);
         String controllerEndpoint = controllerContainer.getControllerEndpoint();
-        if (controllerEndpoint.charAt(0) != DELIMITER) {
-            stringBuilder.append(DELIMITER);
+        if (controllerEndpoint.charAt(0) != delimiter) {
+            stringBuilder.append(delimiter);
         }
         stringBuilder.append(controllerEndpoint);
         String methodEndpoint = controllerMethod.getPath();
-        if (methodEndpoint.charAt(0) != DELIMITER) {
-            stringBuilder.append(DELIMITER);
+        if (methodEndpoint.charAt(0) != delimiter) {
+            stringBuilder.append(delimiter);
         }
         stringBuilder.append(methodEndpoint);
         return stringBuilder.toString().replaceAll("//", "/");
@@ -79,9 +78,6 @@ public abstract class HttpServer {
     /**
      * Convert a request option from json.
      *
-     * @param string
-     * @param request
-     * @param methodParameter
      * @return The generated Object.
      */
     protected Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
@@ -97,8 +93,7 @@ public abstract class HttpServer {
     /**
      * Retrieve the name from a {@link RequestParam} annotated value. Only call the method, if you are sure the used
      * {@link MethodParameter} is annotated with an {@link RequestParam}.
-     *
-     * @param methodParameter
+
      * @return The name of the annotated variable.
      */
     protected String getRequestParamName(MethodParameter methodParameter) {
@@ -128,10 +123,9 @@ public abstract class HttpServer {
     /**
      * Generate a json representation of the provided object.
      *
-     * @param o
      * @return A {@link String} with the object as json if o =! null,
-     * an empty {@link String} otherwise.
-     * @throws JsonProcessingException
+     *         an empty {@link String} otherwise.
+     * @throws JsonProcessingException when there was an error.
      */
     protected String toJson(Object o) throws JsonProcessingException {
         if (o == null) {
@@ -145,7 +139,7 @@ public abstract class HttpServer {
         try {
             deserializedObject = objectMapper.readValue(json, clazz);
         } catch (IOException e) {
-            logger.error("There was an error while trying to deserialize json",e);
+            logger.error("There was an error while trying to deserialize json", e);
         }
         return deserializedObject;
     }

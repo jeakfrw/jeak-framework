@@ -84,9 +84,9 @@ public class PermIdCache {
             logger.info("Cache-miss for \"{}\". Attempting lazy retrieval.", permSID);
             Optional<Integer> optPermId = lazilyGetPermId(permSID);
 
-             permId = optPermId.orElseThrow(() -> new IllegalArgumentException("Unknown permSID: " + permSID));
-             logger.debug("Updating cache: {} -> {}", permSID, permId);
-             internalCache.put(permSID, permId);
+            permId = optPermId.orElseThrow(() -> new IllegalArgumentException("Unknown permSID: " + permSID));
+            logger.debug("Updating cache: {} -> {}", permSID, permId);
+            internalCache.put(permSID, permId);
         }
         return permId;
     }
@@ -97,9 +97,9 @@ public class PermIdCache {
                 .addKey("permsid", permSid)
                 .build();
 
-        BlockingRequest bRequest = new BlockingRequest(request);
-        if (bRequest.waitForCompletion()) {
-            IQueryEvent.IAnswer answer = bRequest.getAnswer();
+        BlockingRequest blockingRequest = new BlockingRequest(request);
+        if (blockingRequest.waitForCompletion()) {
+            IQueryEvent.IAnswer answer = blockingRequest.getAnswer();
 
             if (answer.getErrorCode() == 0) {
                 List<IDataHolder> chain = answer.getDataChain();

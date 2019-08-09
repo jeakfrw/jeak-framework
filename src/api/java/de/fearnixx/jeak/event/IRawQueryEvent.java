@@ -22,7 +22,7 @@ public interface IRawQueryEvent extends IEvent, IDataHolder {
      * Provides access to both previous and next message if present until the next "error" report.
      * Also provides access to the error report.
      *
-     * Notifications will always use errorid=0.
+     * <p>Notifications will always use errorid=0.
      */
     interface IMessage extends IRawQueryEvent {
 

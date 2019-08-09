@@ -20,10 +20,6 @@ public class ConsistencyViolationException extends RuntimeException {
         super(cause);
     }
 
-    public ConsistencyViolationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
-
     public ConsistencyViolationException setSourceObject(Object sourceObject) {
         this.sourceObject = sourceObject;
         return this;

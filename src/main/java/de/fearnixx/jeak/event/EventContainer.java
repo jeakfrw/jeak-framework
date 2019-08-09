@@ -44,8 +44,9 @@ public class EventContainer implements Runnable {
                     container = currentReceiver;
                 }
 
-                if (Thread.currentThread().isInterrupted())
+                if (Thread.currentThread().isInterrupted()) {
                     throw new InterruptedException("Interrupted during event execution");
+                }
                 container.accept(event);
 
             } catch (InterruptedException e) {

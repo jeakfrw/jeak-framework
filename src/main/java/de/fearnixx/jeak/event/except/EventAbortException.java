@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.event.except;
 
 /**
- * Created by MarkL4YG on 01-Feb-18
+ * Special exception that causes events to be immediately aborted causing no following listeners to be fired.
  */
 public class EventAbortException extends RuntimeException {
 

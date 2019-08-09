@@ -11,7 +11,7 @@ import java.util.UUID;
  * Subjects are "things" that can have or lack permissions.
  * At the moment, these are users (and thus, clients) and groups.
  *
- * Subjects are always assigned with a specific permission system.
+ * <p>Subjects are always assigned with a specific permission system.
  * Most of the time, this will be the internal framework permission system.
  */
 public interface ISubject {
@@ -33,14 +33,19 @@ public interface ISubject {
 
     /**
      * Whether or not the subject has a positive value set for the provided permission.
-     * If the subject has parents, this should also evaluate the parent permissions when the permission is unset on the subject.
-     * @apiNote  It is <strong>not possible</strong> to check TS3 permissions with this. Use {@link ITS3Subject} for that.
+     * If the subject has parents,
+     * this should also evaluate the parent permissions when the permission is unset on the subject.
+     *
+     * @apiNote It is <strong>not possible</strong> to check TS3 permissions with this.
+     * Use {@link ITS3Subject} for that.
      */
     boolean hasPermission(String permission);
 
     /**
-     * @see #hasPermission(String) but with more control over whether or not the permission is set and what exact value is defined.
-     * If the subject has parents, this should also evaluate the parent permissions when the permission is unset on the subject.
+     * @see #hasPermission(String) but with more control over whether
+     * or not the permission is set and what exact value is defined.
+     * If the subject has parents,
+     * this should also evaluate the parent permissions when the permission is unset on the subject.
      */
     Optional<IPermission> getPermission(String permission);
 
@@ -61,9 +66,11 @@ public interface ISubject {
      * Sets the given permission on this subject to the given value.
      * If the permission is not directly assigned to this subject, it is added to the subject.
      *
-     * @apiNote Use {@link ITS3Subject#assignPermission(String, int)} and its overloaded signatures for TeamSpeak 3 permissions.
+     * @apiNote Use {@link ITS3Subject#assignPermission(String, int)}
+     * and its overloaded signatures for TeamSpeak 3 permissions.
      * @implNote If the permission system/provider is read-only, this will return {@code false}.
-     *           This may only be the case for third party permission providers as the internal provider allows rw-access.
+     * This may only be the case for third party permission providers
+     * as the internal provider allows rw-access.
      */
     boolean setPermission(String permission, int value);
 
@@ -73,12 +80,13 @@ public interface ISubject {
      * @apiNote This is not the same as setting the permission to 0 as a 0-value can override other values.
      * @apiNote Use {@link ITS3Subject#revokePermission(String)} for TeamSpeak 3 permissions.
      * @implNote If the permission system/provider is read-only, this will return {@code false}.
-     *           This may only be the case for third party permission providers as the internal provider allows rw-access.
+     * This may only be the case for third party permission providers as the internal provider allows rw-access.
      */
     boolean removePermission(String permission);
 
     /**
      * Returns whether or not the given subject unique ID is a parent of this subject.
+     *
      * @apiNote Transitive parents are not included in this list.
      */
     boolean hasParent(UUID uniqueID);

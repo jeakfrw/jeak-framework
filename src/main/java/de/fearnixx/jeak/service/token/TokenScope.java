@@ -5,6 +5,7 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
+ * .
  * pluginId/
  * pluginId/Controller/
  * pluginId/Controller/method1
@@ -17,7 +18,6 @@ public class TokenScope {
     }
 
     /**
-     *
      * @param scope
      * @return
      */
@@ -41,9 +41,9 @@ public class TokenScope {
         return scopeSet;
     }
 
-    private Optional<String> combineStrings(String ... strings) {
+    private Optional<String> combineStrings(String... strings) {
         return Arrays.stream(strings)
-                .reduce((s, s2) -> s+"/"+s2);
+                .reduce((s, s2) -> s + "/" + s2);
     }
 
     private String[] splitScope(String scope) {

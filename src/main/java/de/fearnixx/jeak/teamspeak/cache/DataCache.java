@@ -31,12 +31,12 @@ public class DataCache implements IDataCache {
     @Inject
     private IInjectionService injectionService;
 
-    private final Object LOCK = new Object();
-    private final ChannelCache channelCache = new ChannelCache(LOCK);
-    private final ClientCache clientCache = new ClientCache(LOCK);
-    private final ChannelUpdateWatcher channelUpdateWatcher = new ChannelUpdateWatcher(LOCK, this);
-    private final ClientUpdateWatcher clientUpdateWatcher = new ClientUpdateWatcher(LOCK, this);
-    private final EventDataInjector dataInjector = new EventDataInjector(LOCK, this);
+    private final Object lock = new Object();
+    private final ChannelCache channelCache = new ChannelCache(lock);
+    private final ClientCache clientCache = new ClientCache(lock);
+    private final ChannelUpdateWatcher channelUpdateWatcher = new ChannelUpdateWatcher(lock, this);
+    private final ClientUpdateWatcher clientUpdateWatcher = new ClientUpdateWatcher(lock, this);
+    private final EventDataInjector dataInjector = new EventDataInjector(lock, this);
 
     @Listener(order = Listener.Orders.SYSTEM)
     public void onInitialize(IBotStateEvent.IInitializeEvent event) {

@@ -18,8 +18,8 @@ public interface IServer {
     /**
      * Provides access to the main query connection.
      * @throws java.util.NoSuchElementException when the server is not connected.
-     * * @implNote identity may change through reconnects! Do not store reference.
-     * * @implNote in event-listeners, it is generally safe to assume that the connection is active
+     * @implNote identity may change through reconnects! Do not store reference.
+     * @implNote in event-listeners, it is generally safe to assume that the connection is active
      */
     IQueryConnection getConnection();
 
@@ -34,7 +34,7 @@ public interface IServer {
     boolean isConnected();
 
     /**
-     * Returns a {@link IQueryRequest} that can be used to send a server-wide message
+     * Returns a {@link IQueryRequest} that can be used to send a server-wide message.
      */
     IQueryRequest sendMessage(String message);
 
@@ -55,7 +55,8 @@ public interface IServer {
 
     /**
      * The desired nickname for "clientupdate".
-     * @apiNote This may be different from {@link IQueryConnection#getWhoAmI()}s "client_nickname" which is the actual nickname.
+     * @apiNote This may be different from {@link IQueryConnection#getWhoAmI()}s
+     * "client_nickname" which is the actual nickname.
      */
     String getNickname();
 }

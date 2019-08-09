@@ -26,7 +26,8 @@ public class EventListenerContainer {
 
     private static final Logger logger = LoggerFactory.getLogger(EventListenerContainer.class);
     private static final MethodType LISTENER_INTERFACE_TYPE = MethodType.methodType(BiConsumer.class);
-    private static final MethodType LISTENER_LAMBDA_METHOD_TYPE = MethodType.methodType(void.class, Object.class, Object.class);
+    private static final MethodType LISTENER_LAMBDA_METHOD_TYPE =
+            MethodType.methodType(void.class, Object.class, Object.class);
     public static final Boolean FAST_LAMBDAS_ENABLED = Main.getProperty("jeak.frw.enableLambdaEvents", false);
 
     private static final Map<String, BiConsumer<Object, IEvent>> lambdaCache = new ConcurrentHashMap<>();
@@ -44,9 +45,10 @@ public class EventListenerContainer {
                     + method.getName() + ": Wrong number of parameters");
         }
 
-        if (!IEvent.class.isAssignableFrom(paramTypes[0]))
+        if (!IEvent.class.isAssignableFrom(paramTypes[0])) {
             throw new IllegalArgumentException("Cannot register listener " + victim.getClass() + "#"
                     + method.getName() + ": Wrong parameter type!");
+        }
 
         //noinspection unchecked - Assignable check is done above
         listensTo = (Class<IEvent>) paramTypes[0];
@@ -121,9 +123,11 @@ public class EventListenerContainer {
         } catch (EventAbortException | ConsistencyViolationException e) {
             throw e;
         } catch (RelayedInvokationException e) {
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e.getCause());
+            throw new EventInvocationException("Failed to pass \""
+                    + event.getClass().getName() + "\" to " + listenerFQN, e.getCause());
         } catch (Exception e) {
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e);
+            throw new EventInvocationException("Failed to pass \""
+                    + event.getClass().getName() + "\" to " + listenerFQN, e);
         }
     }
 
@@ -131,7 +135,8 @@ public class EventListenerContainer {
         return listenerFQN;
     }
 
-    private static BiConsumer<Object, IEvent> constructIfNotCached(String methodFQN, Supplier<BiConsumer<Object, IEvent>> supplier) {
+    private static BiConsumer<Object, IEvent> constructIfNotCached(String methodFQN,
+                                                                   Supplier<BiConsumer<Object, IEvent>> supplier) {
         synchronized (lambdaCache) {
             return lambdaCache.computeIfAbsent(methodFQN, fqn -> supplier.get());
         }

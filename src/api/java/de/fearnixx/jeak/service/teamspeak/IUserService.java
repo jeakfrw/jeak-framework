@@ -12,7 +12,8 @@ import java.util.Optional;
  * Note the following:
  * As TS3 does not enforce uniqueness, developers need to be aware of this multi-result scenario.
  * In fact, TS3 has been observed to end up with multiple entries of the same "unique" id in the database.
- * In addition, as {@link IClient} extends {@link IUser} the DBID-searching methods can also return multiple instances for each connection a client has.
+ * In addition, as {@link IClient} extends {@link IUser},
+ * the DBID-searching methods can also return multiple instances for each connection a client has.
  * This is why all search methods return lists.
  * </p>
  * <p>

@@ -17,7 +17,7 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
     private boolean invalidated = false;
     private final List<IChannel> children;
 
-    public TS3ChannelHolder(){
+    public TS3ChannelHolder() {
         super();
         children = new ArrayList<>();
     }
@@ -73,18 +73,22 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
 
     @Override
     public ChannelPersistence getPersistence() {
-        if (invalidated)
+        if (invalidated) {
             return ChannelPersistence.DELETED;
+        }
         String perm = getValues().getOrDefault(PropertyKeys.Channel.FLAG_PERMANENT, "0");
         String semi = getValues().getOrDefault(PropertyKeys.Channel.FLAG_SEMI_PERMANENT, "0");
         if ("0".equals(perm) && "0".equals(semi)) {
             return ChannelPersistence.TEMPORARY;
         }
-        if ("1".equals(perm))
+        if ("1".equals(perm)) {
             return ChannelPersistence.PERMANENT;
-        if ("1".equals(semi))
+        }
+        if ("1".equals(semi)) {
             return ChannelPersistence.SEMI_PERMANENT;
-        throw new ConsistencyViolationException("A channel has reached invalid persistence! Maybe a plugin is editing channels wrongly.");
+        }
+        throw new ConsistencyViolationException("A channel has reached invalid persistence! "
+                + "Maybe a plugin is editing channels wrongly.");
 
     }
 
@@ -134,9 +138,13 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
 
     public void addSubChannel(IChannel channel) {
         int id = getID();
-        if (channel.getParent() != id)
-            throw new IllegalArgumentException(id + ": Channel " + channel.getID() + "is not my child! :" + channel.getParent());
-        if (!children.contains(channel)) children.add(channel);
+        if (channel.getParent() != id) {
+            throw new IllegalArgumentException(id + ": Channel " + channel.getID()
+                    + "is not my child! :" + channel.getParent());
+        }
+        if (!children.contains(channel)) {
+            children.add(channel);
+        }
     }
 
     @Override

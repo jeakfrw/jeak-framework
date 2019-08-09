@@ -33,8 +33,8 @@ public class RestControllerService implements IRestControllerService {
         this.connectionVerifier = new ControllerRequestVerifier();
         this.restConfiguration = new RestConfiguration();
         this.controllers = controllers;
-        this.httpServer = IncapableDummyAdapter.EXPERIMENTAL_REST_ENABLED ?
-                new SparkAdapter(connectionVerifier, restConfiguration)
+        this.httpServer = IncapableDummyAdapter.EXPERIMENTAL_REST_ENABLED
+                ? new SparkAdapter(connectionVerifier, restConfiguration)
                 : new IncapableDummyAdapter(restConfiguration);
     }
 
@@ -81,8 +81,8 @@ public class RestControllerService implements IRestControllerService {
             return false;
         }
         return controllers.keySet().stream()
-                .filter(aClass -> extractPluginId(aClass).equals(extractPluginId(controllerClass)))
-                .anyMatch(aClass -> extractControllerName(aClass).equals(extractControllerName(controllerClass)));
+                .filter(someClass -> extractPluginId(someClass).equals(extractPluginId(controllerClass)))
+                .anyMatch(someClass -> extractControllerName(someClass).equals(extractControllerName(controllerClass)));
     }
 
     private String extractControllerName(Class<?> clazz) {

@@ -64,10 +64,10 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
 
         String s = optProperty.orElseThrow(
                 () -> new ConsistencyViolationException("Client has no server groups").setSourceObject(this));
-        String[] sIDs = s.split(",");
-        Integer[] ids = new Integer[sIDs.length];
-        for (int i = 0; i < sIDs.length; i++) {
-            ids[i] = Integer.parseInt(sIDs[i]);
+        String[] stringIDs = s.split(",");
+        Integer[] ids = new Integer[stringIDs.length];
+        for (int i = 0; i < stringIDs.length; i++) {
+            ids[i] = Integer.parseInt(stringIDs[i]);
         }
         return List.of(ids);
     }

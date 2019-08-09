@@ -35,6 +35,7 @@ public class QueryEncoder {
 
     /**
      * Encode an ASCII String for the query connection
+     *
      * @param upTo only work on partial buffer - exclusive last index
      * @return A new buffer with critical characters replaced
      */
@@ -44,23 +45,25 @@ public class QueryEncoder {
         int innerPos;
         int replaced = 0;
         for (pos = 0; pos < upTo; pos++) {
-            for (innerPos = 0; innerPos < critChars.length; innerPos++)
+            for (innerPos = 0; innerPos < critChars.length; innerPos++) {
                 if (origin[pos] == critChars[innerPos]) {
                     // Add an additional character
                     replaced++;
                 }
+            }
         }
         char[] dest = new char[upTo + replaced];
 
         replaced = 0;
         int destPos;
-        outer: for (pos = 0; pos < upTo; pos++) {
+        outer:
+        for (pos = 0; pos < upTo; pos++) {
             destPos = pos + replaced;
             for (innerPos = 0; innerPos < critChars.length; innerPos++) {
                 if (origin[pos] == critChars[innerPos]) {
                     // Replace critical character
                     dest[destPos] = escapeSeqs[innerPos].charAt(0);
-                    dest[destPos+1] = escapeSeqs[innerPos].charAt(1);
+                    dest[destPos + 1] = escapeSeqs[innerPos].charAt(1);
                     replaced++;
                     continue outer;
                 }
@@ -77,6 +80,7 @@ public class QueryEncoder {
 
     /**
      * Decode an ASCII String for the query connection
+     *
      * @param upTo only work on partial buffer - exclusive last index
      * @return A new buffer with escape characters replaced
      */
@@ -85,19 +89,22 @@ public class QueryEncoder {
         int pos;
         int innerPos;
         int size = upTo;
-        for (pos = upTo-1; pos >= 0; pos--) {
-            for (innerPos = 0; innerPos < escapeSeqs.length; innerPos++)
-                if (origin[pos] == escapeSeqs[innerPos].charAt(0) && origin[pos+1] == escapeSeqs[innerPos].charAt(1))
+        for (pos = upTo - 1; pos >= 0; pos--) {
+            for (innerPos = 0; innerPos < escapeSeqs.length; innerPos++) {
+                if (origin[pos] == escapeSeqs[innerPos].charAt(0) && origin[pos + 1] == escapeSeqs[innerPos].charAt(1)) {
                     // Subtract a character
                     size--;
+                }
+            }
         }
         char[] dest = new char[size];
         int replacements = 0;
         int origPos;
-        outer: for (pos = 0; pos < dest.length; pos++) {
+        outer:
+        for (pos = 0; pos < dest.length; pos++) {
             // Each replacement causes the lengths to be 1 char off since we replace 2 chars with 1
             origPos = pos + replacements;
-            for (innerPos = 0; innerPos < escapeSeqs.length; innerPos++)
+            for (innerPos = 0; innerPos < escapeSeqs.length; innerPos++) {
                 if (origin[origPos] == escapeSeqs[innerPos].charAt(0) && origin[origPos + 1] == escapeSeqs[innerPos].charAt(1)) {
                     // Replace escape characters
                     dest[pos] = critChars[innerPos];
@@ -105,6 +112,7 @@ public class QueryEncoder {
                     // Abort normal copy
                     continue outer;
                 }
+            }
             dest[pos] = origin[origPos];
         }
         return dest;

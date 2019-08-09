@@ -35,10 +35,10 @@ public @interface JeakBotPlugin {
      * Bot will refuse to start with plugins that won't work.
      * Bot will issue a warning if builtAgainst does not match with its version
      *
-     * Empty string is a wildcard!
+     * <p>Empty string is a wildcard!
      * This means no breaking version and built against ANY.
      *
-     * - Note: Currently unused. Will be added later
+     * @apiNote Currently unused. Will be added later
      */
     String builtAgainst() default "";
 }

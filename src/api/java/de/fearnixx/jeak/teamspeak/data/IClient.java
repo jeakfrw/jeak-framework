@@ -8,8 +8,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 20.06.17.
- * <p>
- * Abstract representation of online clients
+ *
+ * <p>Abstract representation of online clients
  */
 public interface IClient extends IDataHolder, IUser {
 

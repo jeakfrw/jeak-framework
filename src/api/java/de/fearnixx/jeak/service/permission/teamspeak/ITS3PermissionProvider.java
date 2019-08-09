@@ -28,7 +28,8 @@ public interface ITS3PermissionProvider {
 
     /**
      * Use sparingly!
-     * When the TeamSpeak 3 server is not using a connectable database or the persistence unit is not configured for the framework,
+     * When the TeamSpeak 3 server is not using a connectable database
+     * or the persistence unit is not configured for the framework,
      * the service will cache permlist-responses from the server to reduce response times.
      * If cache invalidation is not sufficient, this can be used to wipe cached entries.
      */

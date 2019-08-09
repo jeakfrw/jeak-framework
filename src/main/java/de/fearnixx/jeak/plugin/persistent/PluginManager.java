@@ -51,8 +51,9 @@ public class PluginManager {
     // * * * CONSTRUCTION * * * //
 
     public void addSource(File dir) {
-        if (dir.exists())
+        if (dir.exists()) {
             sources.add(dir);
+        }
     }
 
     public List<File> getSources() {
@@ -85,7 +86,8 @@ public class PluginManager {
     public ClassLoader getPluginClassLoader() {
         if (pluginClassLoader == null) {
             if (includeCP) {
-                pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]), PluginManager.class.getClassLoader());
+                pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]),
+                        PluginManager.class.getClassLoader());
             } else {
                 pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]));
             }
@@ -135,9 +137,9 @@ public class PluginManager {
         } else {
             sources.forEach(f -> {
                 try {
-                    if (f.isFile() && f.getName().endsWith(".jar"))
+                    if (f.isFile() && f.getName().endsWith(".jar")) {
                         urlList.add(f.toURI().toURL());
-                    else if (f.isDirectory()) {
+                    } else if (f.isDirectory()) {
                         File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
                         if (files != null) {
                             for (File f2 : files) {

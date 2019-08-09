@@ -13,11 +13,11 @@ import java.util.Optional;
 
 public class EventDataInjector {
 
-    private final Object LOCK;
+    private final Object lock;
     private final DataCache dataCache;
 
     public EventDataInjector(Object lock, DataCache dataCache) {
-        this.LOCK = lock;
+        this.lock = lock;
         this.dataCache = dataCache;
     }
 
@@ -43,7 +43,7 @@ public class EventDataInjector {
             // Reset `cliententerview` specific properties.
             client.setProperty("ctid", null);
             client.setProperty("cfid", null);
-            synchronized (LOCK) {
+            synchronized (lock) {
                 dataCache.unsafeGetClients().put(client.getClientID(), client);
             }
         }
@@ -58,7 +58,7 @@ public class EventDataInjector {
             Integer clientID = Integer.valueOf(optClientID.get());
 
             TS3Client client;
-            synchronized (LOCK) {
+            synchronized (lock) {
                 client = dataCache.unsafeGetClients().getOrDefault(clientID, null);
             }
 
@@ -77,7 +77,7 @@ public class EventDataInjector {
             boolean isSpacer = TS3Spacer.spacerPattern.matcher(channelName).matches();
             TS3Channel channel = isSpacer ? new TS3Spacer() : new TS3Channel();
             channel.copyFrom(event);
-            synchronized (LOCK) {
+            synchronized (lock) {
                 dataCache.unsafeGetChannels().put(channel.getID(), channel);
             }
         }
@@ -86,7 +86,7 @@ public class EventDataInjector {
         if (optChannelID.isPresent()) {
             Integer channelID = Integer.valueOf(optChannelID.get());
             TS3Channel client;
-            synchronized (LOCK) {
+            synchronized (lock) {
                 client = dataCache.unsafeGetChannels().getOrDefault(channelID, null);
             }
 

@@ -48,7 +48,8 @@ public class NotificationBuilder {
         Objects.requireNonNull(shortText, "Short text may not be null!");
 
         if (shortText.length() > TS3_MAX_TEXTMSG_LENGTH) {
-            logger.warn("Someone set a short text longer than the allowed TS3 text message length. This is not recommended!");
+            logger.warn("Someone set a short text longer than the allowed TS3 text message length. "
+                    + "This is not recommended!");
         }
 
         this.shortText = shortText;
@@ -79,7 +80,6 @@ public class NotificationBuilder {
     }
 
     /**
-     *
      * suppresses: squid:HiddenFieldCheck
      *   - Since <strong>all</strong> fields are hidden to construct the anonymous class.
      */

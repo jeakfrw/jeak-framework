@@ -20,8 +20,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static de.fearnixx.jeak.teamspeak.TargetType.CLIENT;
+
 /**
- * Created by MarkL4YG on 08-Nov-17
+ * Service to support chat commands that can be received by clients.
  */
 @FrameworkService(serviceInterface = ICommandService.class)
 public class CommandService implements ICommandService {
@@ -47,15 +49,18 @@ public class CommandService implements ICommandService {
     }
 
     /**
-     * The CommandService actually uses given functionality and parses TextMessages starting with "!"
+     * The CommandService actually uses given functionality and parses TextMessages starting with "!".
      * (Character is defined at compile-time by a static field)
      *
-     * Actual execution is done asynchronously!
+     * <p>Actual execution is done asynchronously!
+     *
      * @param event The event
      */
     @Listener
     public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
-        if (terminated) return;
+        if (terminated) {
+            return;
+        }
         String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse(null);
         if (msg != null) {
             try {
@@ -81,10 +86,10 @@ public class CommandService implements ICommandService {
                                     .orElseThrow(() -> new IllegalStateException("TextMessage has no source ID!"));
                             Integer targetID = Integer.parseInt(sourceIdStr);
                             QueryBuilder request = IQueryRequest.builder()
-                                                                         .command(QueryCommands.TEXTMESSAGE_SEND)
-                                                                         .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
-                                                                         .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
-                                                                         .addKey(PropertyKeys.TextMessage.MESSAGE, "Unknown command!");
+                                    .command(QueryCommands.TEXTMESSAGE_SEND)
+                                    .addKey(PropertyKeys.TextMessage.TARGET_TYPE, CLIENT.getQueryNum())
+                                    .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
+                                    .addKey(PropertyKeys.TextMessage.MESSAGE, "Unknown command!");
                             server.getConnection().sendRequest(request.build());
                             return;
                         }
@@ -101,10 +106,10 @@ public class CommandService implements ICommandService {
                                 ICommandReceiver last = receivers.get(i);
                                 try {
                                     last.receive(ctx);
-                                }  catch (CommandException ex) {
+                                } catch (CommandException ex) {
                                     handleExceptionOn(ctx.getRawEvent(), ex, last);
 
-                                }  catch (Exception thrown) {
+                                } catch (Exception thrown) {
                                     logger.error("Uncaught exception while executing command!", thrown);
                                     handleExceptionOn(ctx.getRawEvent(), thrown, last);
                                 }
@@ -119,7 +124,8 @@ public class CommandService implements ICommandService {
         }
     }
 
-    private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage, Throwable exception, ICommandReceiver receiver) {
+    private void handleExceptionOn(IQueryEvent.INotification.ITextMessage textMessage,
+                                   Throwable exception, ICommandReceiver receiver) {
         logger.warn("Error executing command", (exception instanceof CommandParameterException ? null : exception));
         Integer targetType = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.TARGET_TYPE).orElseThrow());
         Integer targetID = Integer.valueOf(textMessage.getProperty(PropertyKeys.TextMessage.SOURCE_ID).orElseThrow());
@@ -128,17 +134,21 @@ public class CommandService implements ICommandService {
         if (exception instanceof CommandParameterException) {
             CommandParameterException cpe = ((CommandParameterException) exception);
             message = "Rejected parameter!"
-                      + "\nParameter name: " + cpe.getParamName()
-                      + "\nPassed value: " + cpe.getPassedValue()
-                      + "\nMessage: " + cpe.getMessage();
-            if (cpe.getCause() != null)
-                message += "\nCaused by: " + cpe.getCause().getClass().getSimpleName() + ": " + cpe.getCause().getMessage();
-            if (receiver != null)
+                    + "\nParameter name: " + cpe.getParamName()
+                    + "\nPassed value: " + cpe.getPassedValue()
+                    + "\nMessage: " + cpe.getMessage();
+            if (cpe.getCause() != null) {
+                message += "\nCaused by: "
+                        + cpe.getCause().getClass().getSimpleName()
+                        + ": " + cpe.getCause().getMessage();
+            }
+            if (receiver != null) {
                 message += "\nRejected by: " + receiver.getClass().getName();
+            }
         } else {
             StringBuilder msgBuilder = new StringBuilder("There was an error processing your command");
 
-            if(!(exception instanceof CommandException)) {
+            if (!(exception instanceof CommandException)) {
                 msgBuilder.append("!\n");
                 msgBuilder.append(exception.getClass().getSimpleName());
             }
@@ -154,17 +164,18 @@ public class CommandService implements ICommandService {
         }
 
         QueryBuilder request = IQueryRequest.builder()
-                                                     .command(QueryCommands.TEXTMESSAGE_SEND)
-                                                     .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.CLIENT.getQueryNum())
-                                                     .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
-                                                     .addKey(PropertyKeys.TextMessage.MESSAGE, message);
+                .command(QueryCommands.TEXTMESSAGE_SEND)
+                .addKey(PropertyKeys.TextMessage.TARGET_TYPE, CLIENT.getQueryNum())
+                .addKey(PropertyKeys.TextMessage.TARGET_ID, targetID)
+                .addKey(PropertyKeys.TextMessage.MESSAGE, message);
         server.getConnection().sendRequest(request.build());
     }
 
     @Override
     public void registerCommand(String command, ICommandReceiver receiver) {
-        if (receiver == null)
+        if (receiver == null) {
             throw new IllegalArgumentException("CommandReceiver may not be null!");
+        }
         synchronized (lock) {
             commands.put(command, receiver);
         }
@@ -184,14 +195,14 @@ public class CommandService implements ICommandService {
     public void shutdown(IBotStateEvent.IPreShutdown event) {
         synchronized (lock) {
             terminated = true;
-            boolean terminated_successfully = false;
+            boolean terminatedSuccessfully = false;
             try {
                 executorSvc.shutdown();
-                terminated_successfully = executorSvc.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
+                terminatedSuccessfully = executorSvc.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 logger.error("Got interrupted while awaiting thread termination!", e);
             }
-            if (!terminated_successfully) {
+            if (!terminatedSuccessfully) {
                 logger.warn("Some command receivers did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
                 logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
             }

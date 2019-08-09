@@ -30,15 +30,18 @@ public class GrantPermissionCommand implements ICommandReceiver {
         final IClient invoker = userService.getClientByID(invokerId).orElse(null);
 
         if (invoker == null) {
-            throw new CommandException("Sorry, your client could not be found in the cache. Please wait a moment and try again.");
+            throw new CommandException("Sorry, your client could not be found in the cache. "
+                    + "Please wait a moment and try again.");
         }
 
         if (!invoker.hasPermission("frw.permission.edit")) {
-            throw new CommandException("You are not allowed to use this command! (UID: " + invoker.getUniqueID() + ", failed at: frw.permission.edit)");
+            throw new CommandException("You are not allowed to use this command! (UID: "
+                    + invoker.getUniqueID() + ", failed at: frw.permission.edit)");
         }
 
         if (ctx.getArguments().size() < 2 || ctx.getArguments().size() > 3) {
-            throw new CommandException("At least two and at most three parameters are expected: <group-name> <permission_name> [value]");
+            throw new CommandException("At least two and at most three parameters are expected: "
+                    + "<group-name> <permission_name> [value]");
         }
 
         final String groupName = ctx.getArguments().get(0);

@@ -5,8 +5,6 @@ import java.util.Optional;
 /**
  * The service manager allows plugins to easily access framework services.
  * The service manager also allows plugins to register framework services.
- *
- * Created by MarkL4YG on 20.06.17.
  */
 public interface IServiceManager {
 
@@ -31,7 +29,7 @@ public interface IServiceManager {
     /**
      * Get a service.
      *
-     * This method performs no checks! The following may happen:
+     * <p>This method performs no checks! The following may happen:
      * * Your desired service is returned
      * * {@code null} is returned
      * * A {@link ClassCastException} is thrown

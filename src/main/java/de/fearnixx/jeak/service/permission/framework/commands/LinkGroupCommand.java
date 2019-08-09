@@ -30,15 +30,18 @@ public class LinkGroupCommand implements ICommandReceiver {
         final IClient invoker = userService.getClientByID(invokerId).orElse(null);
 
         if (invoker == null) {
-            throw new CommandException("Sorry, your client could not be found in the cache. Please wait a moment and try again.");
+            throw new CommandException("Sorry, your client could not be found in the cache. "
+                    + "Please wait a moment and try again.");
         }
 
         if (!invoker.hasPermission("frw.permission.link_group")) {
-            throw new CommandException("You are not allowed to use this command! (UID: " + invoker.getUniqueID() + ", failed at: frw.permission.link_group)");
+            throw new CommandException("You are not allowed to use this command! (UID: "
+                    + invoker.getUniqueID() + ", failed at: frw.permission.link_group)");
         }
 
         if (ctx.getArguments().size() != 2) {
-            throw new CommandException("(Only/At least) Two parameters are expected: <group-name> <ts3-servergroup-id>");
+            throw new CommandException("(Only/At least) Two parameters are expected: "
+                    + " <group-name> <ts3-servergroup-id>");
         }
 
         final String desiredName = ctx.getArguments().get(0);
@@ -50,9 +53,11 @@ public class LinkGroupCommand implements ICommandReceiver {
 
         final int serverGroupId = Integer.parseInt(ctx.getArguments().get(1));
         if (optGroup.get().linkServerGroup(serverGroupId)) {
-            server.getConnection().sendRequest(invoker.sendMessage("Linked group \"" + optGroup.get().getName() + "\" to sgID: " + serverGroupId));
+            server.getConnection().sendRequest(invoker.sendMessage("Linked group \""
+                    + optGroup.get().getName() + "\" to sgID: " + serverGroupId));
         } else {
-            throw new CommandException("Failed to link server group: " + optGroup.get().getName() + " to server group id; " + serverGroupId);
+            throw new CommandException("Failed to link server group: "
+                    + optGroup.get().getName() + " to server group id; " + serverGroupId);
         }
     }
 }

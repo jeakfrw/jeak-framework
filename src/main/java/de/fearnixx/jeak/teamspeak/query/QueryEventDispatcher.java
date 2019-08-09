@@ -95,7 +95,8 @@ public class QueryEventDispatcher {
                 checkHash = false;
                 String strMode =
                         event.getProperty(PropertyKeys.TextMessage.TARGET_TYPE)
-                                .orElseThrow(() -> new ConsistencyViolationException("TextMessage event without mode ID received!"));
+                                .orElseThrow(() -> new ConsistencyViolationException(
+                                        "TextMessage event without mode ID received!"));
 
                 int mode = Integer.parseInt(strMode);
                 switch (mode) {
@@ -192,7 +193,8 @@ public class QueryEventDispatcher {
         eventService.fireEvent(answer);
     }
 
-    private void invokeCallbacks(IRawQueryEvent.IMessage.IAnswer event, IQueryRequest request, QueryEvent.Answer answer) {
+    private void invokeCallbacks(IRawQueryEvent.IMessage.IAnswer event, IQueryRequest request,
+                                 QueryEvent.Answer answer) {
         int errorCode = event.getError().getCode();
         if (errorCode == 0 && request.onSuccess() != null) {
             request.onSuccess().accept(answer);

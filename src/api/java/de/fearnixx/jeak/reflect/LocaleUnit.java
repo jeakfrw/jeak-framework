@@ -24,7 +24,8 @@ public @interface LocaleUnit {
      * Implicitly calls {@link ILocalizationUnit#loadDefaultsFromResource(ClassLoader, String)} after unit construction.
      * This is a convenience value so plugins that store their default language files in the classpath.
      *
-     * @apiNote For performance and consistency reasons, it is recommended to use this value at most <strong>once per unit!</strong>
+     * @apiNote For performance and consistency reasons,
+     * it is recommended to use this value at most <strong>once per unit!</strong>
      *
      * @see ILocalizationUnit#loadDefaultsFromResource(ClassLoader, String) for more information.
      */

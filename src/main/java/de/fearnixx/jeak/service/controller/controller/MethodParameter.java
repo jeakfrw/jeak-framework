@@ -56,12 +56,9 @@ public class MethodParameter {
 
     /**
      * Apply a function on a specified annotation.
-     *
-     * @param function
-     * @param annotation
-     * @return
      */
-    public Optional<Object> callAnnotationFunction(Function<Annotation, Object> function, Class<? extends Annotation> annotation) {
+    public Optional<Object> callAnnotationFunction(Function<Annotation, Object> function,
+                                                   Class<? extends Annotation> annotation) {
         Optional<? extends Annotation> optionalAnnotation = getAnnotation(annotation);
         Object returnValue = null;
         if (optionalAnnotation.isPresent()) {

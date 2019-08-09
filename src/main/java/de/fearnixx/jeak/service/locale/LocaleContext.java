@@ -37,7 +37,8 @@ public class LocaleContext implements ILocaleContext {
                         .orElseThrow(() -> new IllegalStateException("Language context nodes may only be maps!"))
                         .forEach((msgId, template) -> {
                             String templateString = template.optString()
-                                    .orElseThrow(() -> new IllegalStateException("Message templates may only be strings!"));
+                                    .orElseThrow(
+                                            () -> new IllegalStateException("Message templates may only be strings!"));
 
                             logger.debug("[{}] Exploding message: {}.{}", unitId, locale, msgId);
                             preExploded.put(msgId, new MessageRep(templateString));
@@ -62,7 +63,8 @@ public class LocaleContext implements ILocaleContext {
     @Override
     public String getMessage(String messageId, Map<String, String> messageParams) {
         return optMessage(messageId, messageParams)
-                .orElseThrow(() -> new IllegalStateException(String.format(MISSING_TPL_MESSAGE, messageId, getUnitId(), getLocale())));
+                .orElseThrow(() -> new IllegalStateException(
+                        String.format(MISSING_TPL_MESSAGE, messageId, getUnitId(), getLocale())));
     }
 
     /**
@@ -71,7 +73,8 @@ public class LocaleContext implements ILocaleContext {
     @Override
     public String getMessage(String messageId) {
         return optMessage(messageId)
-                .orElseThrow(() -> new IllegalStateException(String.format(MISSING_TPL_MESSAGE, messageId, getUnitId(), getLocale())));
+                .orElseThrow(() -> new IllegalStateException(
+                        String.format(MISSING_TPL_MESSAGE, messageId, getUnitId(), getLocale())));
     }
 
     /**

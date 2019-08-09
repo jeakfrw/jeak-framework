@@ -185,7 +185,7 @@ public class ClientCache {
                         }
 
                         // Fix client icon ID in case it got misread by TS3
-                        TS3DataFixes.ICONS_INVALID_CRC32(client, PropertyKeys.Client.ICON_ID);
+                        TS3DataFixes.iconsInvalidCrc32(client, PropertyKeys.Client.ICON_ID);
                         mapping.put(cid, client);
                     } catch (Exception e) {
                         logger.warn("Failed to parse a client", e);

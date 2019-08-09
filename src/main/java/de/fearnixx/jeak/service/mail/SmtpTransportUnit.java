@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
+import static javax.mail.Message.RecipientType.*;
+
 public class SmtpTransportUnit implements ITransportUnit {
 
     private static final Logger logger = LoggerFactory.getLogger(SmtpTransportUnit.class);
@@ -24,9 +26,9 @@ public class SmtpTransportUnit implements ITransportUnit {
 
     private final ExecutorService executorService;
     private final String unitName;
-    private Properties jMailProperties;
-    private Transport jMailSmtp;
-    private Session jMailSession;
+    private Properties javaMailProperties;
+    private Transport javaMailSmtp;
+    private Session javaMailSession;
 
     public SmtpTransportUnit(String unitName, ExecutorService executorService) {
         this.unitName = unitName;
@@ -34,37 +36,42 @@ public class SmtpTransportUnit implements ITransportUnit {
     }
 
     public void load(IConfigNode configuration) throws MessagingException {
-        jMailProperties = new Properties();
+        javaMailProperties = new Properties();
 
         configuration.getNode("username").optString().ifPresent(user -> {
-            jMailProperties.setProperty("mail.smtp.auth", "true");
-            jMailProperties.setProperty("mail.smtp.user", user);
+            javaMailProperties.setProperty("mail.smtp.auth", "true");
+            javaMailProperties.setProperty("mail.smtp.user", user);
         });
 
-        jMailProperties.setProperty("mail.smtp.pass", configuration.getNode("pass").optString("webmaster"));
-        jMailProperties.setProperty("mail.smtp.starttls.enable", configuration.getNode("starttls").optString("true"));
-        jMailProperties.setProperty("mail.smtp.host", configuration.getNode("host").optString("localhost"));
-        jMailProperties.setProperty("mail.smtp.port", configuration.getNode("port").optString("25"));
-        jMailProperties.setProperty("mail.smtp.from", configuration.getNode("from").optString("mail@localhost"));
+        javaMailProperties.setProperty("mail.smtp.pass",
+                configuration.getNode("pass").optString("webmaster"));
+        javaMailProperties.setProperty("mail.smtp.starttls.enable",
+                configuration.getNode("starttls").optString("true"));
+        javaMailProperties.setProperty("mail.smtp.host",
+                configuration.getNode("host").optString("localhost"));
+        javaMailProperties.setProperty("mail.smtp.port",
+                configuration.getNode("port").optString("25"));
+        javaMailProperties.setProperty("mail.smtp.from",
+                configuration.getNode("from").optString("mail@localhost"));
 
         configuration.getNode("properties")
                 .optMap()
-                .ifPresent(map -> map.forEach((k, v) -> jMailProperties.setProperty(k, v.asString())));
+                .ifPresent(map -> map.forEach((k, v) -> javaMailProperties.setProperty(k, v.asString())));
 
-        if ("true".equals(jMailProperties.getProperty("mail.smtp.auth"))) {
-            jMailSession = Session.getInstance(jMailProperties, new Authenticator() {
+        if ("true".equals(javaMailProperties.getProperty("mail.smtp.auth"))) {
+            javaMailSession = Session.getInstance(javaMailProperties, new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
                     return new PasswordAuthentication(
-                            jMailProperties.getProperty("mail.smtp.user"),
-                            jMailProperties.getProperty("mail.smtp.pass")
+                            javaMailProperties.getProperty("mail.smtp.user"),
+                            javaMailProperties.getProperty("mail.smtp.pass")
                     );
                 }
             });
         } else {
-            jMailSession = Session.getInstance(jMailProperties);
+            javaMailSession = Session.getInstance(javaMailProperties);
         }
-        jMailSmtp = jMailSession.getTransport("smtp");
+        javaMailSmtp = javaMailSession.getTransport("smtp");
     }
 
     public void dispatch(IMail message) {
@@ -76,18 +83,18 @@ public class SmtpTransportUnit implements ITransportUnit {
             Address[] recips = null;
             try {
                 recips = message.getAllRecipients();
-                jMailSmtp.connect();
-                jMailSmtp.sendMessage(message, recips);
-                jMailSmtp.close();
+                javaMailSmtp.connect();
+                javaMailSmtp.sendMessage(message, recips);
+                javaMailSmtp.close();
                 logger.debug("[{}] Successfully sent message.", unitName);
 
             } catch (MessagingException e) {
                 logger.warn("[{}] Failed to dispatch message! Recipients: {}", unitName, recips, e);
 
             } finally {
-                if (jMailSmtp.isConnected()) {
+                if (javaMailSmtp.isConnected()) {
                     try {
-                        jMailSmtp.close();
+                        javaMailSmtp.close();
                     } catch (MessagingException e) {
                         logger.warn("[{}] Failed to close SMTP connection.", unitName, e);
                     }
@@ -98,18 +105,18 @@ public class SmtpTransportUnit implements ITransportUnit {
 
     protected Optional<MimeMessage> buildMime(IMail message) {
         try {
-            MimeMessage mimeMessage = new MimeMessage(jMailSession);
+            MimeMessage mimeMessage = new MimeMessage(javaMailSession);
             MimeMultipart mimeMultipart = new MimeMultipart();
 
             logger.debug("[{}] Adding recipients.", unitName);
             message.getRecipientsTO().forEach(rec ->
-                    addRecipient(mimeMessage, rec, MimeMessage.RecipientType.TO));
+                    addRecipient(mimeMessage, rec, TO));
             logger.debug("To: {}", message.getRecipientsTO());
             message.getRecipientsCC().forEach(rec ->
-                    addRecipient(mimeMessage, rec, MimeMessage.RecipientType.CC));
+                    addRecipient(mimeMessage, rec, CC));
             logger.debug("CC: {}", message.getRecipientsCC());
             message.getRecipientsBCC().forEach(rec ->
-                    addRecipient(mimeMessage, rec, MimeMessage.RecipientType.BCC));
+                    addRecipient(mimeMessage, rec, BCC));
             logger.debug("BCC: {}", message.getRecipientsBCC());
             mimeMessage.setSubject(message.getSubject(), CHARSET.toString());
 

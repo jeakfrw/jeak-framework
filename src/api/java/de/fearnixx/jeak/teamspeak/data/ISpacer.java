@@ -3,7 +3,7 @@ package de.fearnixx.jeak.teamspeak.data;
 /**
  * Created by MarkL4YG on 15.06.17.
  *
- * Abstract representation of a spacer using the information queried via the ServerQuery
+ * <p>Abstract representation of a spacer using the information queried via the ServerQuery
  * This extends a normal Channel representation:
  * @see IChannel
  *
@@ -25,14 +25,14 @@ public interface ISpacer extends IChannel {
     Float getNumber();
 
     /**
-     * Checks if the spacer has the "centered" flag
+     * Checks if the spacer has the "centered" flag.
      * "[cspacer]"
      * @return If the center flag exists
      */
     Boolean isCentered();
 
     /**
-     * Checks if the spacer has the "repeat" flag
+     * Checks if the spacer has the "repeat" flag.
      * "[*spacer]"
      * @return If the repeat flag exists
      */

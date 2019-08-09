@@ -108,27 +108,34 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
                 .orElseGet(Collections::emptyMap)
                 .forEach((defLanguageKey, defLanguageEntries) -> {
 
-                    if (!defLanguageEntries.isMap()) {
-                        logger.warn("[{}] Non-map language node found: {}", unitId, defLanguageKey);
-                    } else {
-                        defLanguageEntries.asMap().forEach((defTemplateId, defTemplate) -> {
-                            IConfigNode storedTemplateNode = getConfig().getNode("langs", defLanguageKey, defTemplateId);
-
-                            if (storedTemplateNode.isVirtual()) {
-                                String templateStr = defTemplate.optString(null);
-
-                                if (templateStr != null) {
-                                    logger.debug("[{}] Loading default template for key: {}.{}", unitId, defLanguageKey, defTemplateId);
-                                    storedTemplateNode.setString(templateStr);
-                                } else {
-                                    logger.warn("[{}] Non-string template node found: {}.{}", unitId, defLanguageKey, defTemplateId);
-                                }
-                            }
-                        });
-                    }
+                    loadLang(defLanguageKey, defLanguageEntries);
                 });
 
         save();
+    }
+
+    private void loadLang(String defLanguageKey, IConfigNode defLanguageEntries) {
+        if (!defLanguageEntries.isMap()) {
+            logger.warn("[{}] Non-map language node found: {}", unitId, defLanguageKey);
+        } else {
+            defLanguageEntries.asMap().forEach((defTemplateId, defTemplate) -> {
+                IConfigNode storedTemplateNode =
+                        getConfig().getNode("langs", defLanguageKey, defTemplateId);
+
+                if (storedTemplateNode.isVirtual()) {
+                    String templateStr = defTemplate.optString(null);
+
+                    if (templateStr != null) {
+                        logger.debug("[{}] Loading default template for key: {}.{}",
+                                unitId, defLanguageKey, defTemplateId);
+                        storedTemplateNode.setString(templateStr);
+                    } else {
+                        logger.warn("[{}] Non-string template node found: {}.{}",
+                                unitId, defLanguageKey, defTemplateId);
+                    }
+                }
+            });
+        }
     }
 
     private void loadDefaultsFromStream(Reader reader) throws IOException, ParseException {

@@ -14,11 +14,10 @@ import java.util.*;
 import java.util.concurrent.*;
 
 /**
- * <p>
  * The event manager manages all events fired within an instance of the bot.
  * Each bot creates it's own instances.
- * <p>
- * The following system properties are acknowledged by the EventService class
+ *
+ * <p>The following system properties are acknowledged by the EventService class
  * * "bot.eventmgr.poolsize" (Integer)
  * * "bot.eventmgr.terminatedelay" (Integer in milliseconds)
  */
@@ -29,7 +28,7 @@ public class EventService implements IEventService {
 
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
-    private final Object LOCK = new Object();
+    private final Object lock = new Object();
     private final List<EventListenerContainer> registeredListeners = new LinkedList<>();
     private final List<EventContainer> runningEvents = new ArrayList<>();
     private final ThreadPoolExecutor eventExecutor;
@@ -48,8 +47,7 @@ public class EventService implements IEventService {
     }
 
     /**
-     * Fires a specified event to all suitable listeners
-     *
+     * {@inheritDoc}
      * @param event {@link IEvent} instance
      */
     @Override
@@ -58,8 +56,10 @@ public class EventService implements IEventService {
 
         // Run on a temporary copy so adding new listeners during an event doesn't cause a dead-lock!
         final List<EventListenerContainer> acceptingListeners = new LinkedList<>();
-        synchronized (LOCK) {
-            if (terminated) return;
+        synchronized (lock) {
+            if (terminated) {
+                return;
+            }
             registeredListeners.stream()
                     .filter(container -> container.accepts(event.getClass()))
                     .forEach(acceptingListeners::add);
@@ -105,32 +105,36 @@ public class EventService implements IEventService {
      * Adds a new {@link EventListenerContainer} to the event listeners
      */
     public void addContainer(EventListenerContainer container) {
-        synchronized (LOCK) {
+        synchronized (lock) {
             registeredListeners.add(container);
         }
     }
 
     /**
+     * {@inheritDoc}
      * @see IEventService#registerListeners(Object...)
      */
     @Override
     public void registerListeners(Object... l) {
-        for (Object o : l)
+        for (Object o : l) {
             registerListener(o);
+        }
     }
 
     /**
+     * {@inheritDoc}
      * @see IEventService#registerListener(Object)
      */
     @Override
     public void registerListener(Object victim) {
         Objects.requireNonNull(victim, "Listener victim may not be null!");
 
-        synchronized (LOCK) {
+        synchronized (lock) {
             for (Method method : victim.getClass().getMethods()) {
                 Listener anno = method.getAnnotation(Listener.class);
-                if (anno == null)
+                if (anno == null) {
                     continue;
+                }
 
                 registeredListeners.add(new EventListenerContainer(victim, method));
             }
@@ -141,11 +145,12 @@ public class EventService implements IEventService {
     public void unregisterListener(Object victim) {
         Objects.requireNonNull(victim, "Listener victim may not be null!");
 
-        synchronized (LOCK) {
+        synchronized (lock) {
             for (Method method : victim.getClass().getMethods()) {
                 Listener anno = method.getAnnotation(Listener.class);
-                if (anno == null)
+                if (anno == null) {
                     continue;
+                }
 
                 registeredListeners.removeIf(container -> container.getVictim() == victim);
             }
@@ -155,8 +160,10 @@ public class EventService implements IEventService {
     @SuppressWarnings("squid:S2142")
     private void deadListenerCheck() {
         while (true) {
-            synchronized (LOCK) {
-                if (terminated) return;
+            synchronized (lock) {
+                if (terminated) {
+                    return;
+                }
             }
 
             synchronized (runningEvents) {
@@ -182,18 +189,19 @@ public class EventService implements IEventService {
      * Waits for termination as long as specified by AWAIT_TERMINATION_DELAY
      */
     public void shutdown() {
-        synchronized (LOCK) {
+        synchronized (lock) {
             terminated = true;
-            boolean terminated_successfully = false;
+            boolean terminatedSuccessfully = false;
             try {
                 eventExecutor.shutdown();
                 deadCheckExecutor.shutdown();
-                terminated_successfully = eventExecutor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
+                terminatedSuccessfully =
+                        eventExecutor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 logger.error("Got interrupted while awaiting thread termination!", e);
                 Thread.currentThread().interrupt();
             }
-            if (!terminated_successfully) {
+            if (!terminatedSuccessfully) {
                 logger.warn("Some events did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
                 logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
             }

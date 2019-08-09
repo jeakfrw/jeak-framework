@@ -55,7 +55,7 @@ public class Main implements Runnable {
     /**
      * Warning "unchecked" suppressed: Checks are performed!
      *
-     * Char is not supported - use string .-.
+     * <p>Char is not supported - use string .-.
      */
     @SuppressWarnings({"unchecked", "squid:S3776"})
     public static <T> T getProperty(String name, T def) {
@@ -159,8 +159,9 @@ public class Main implements Runnable {
             StackTraceElement[] trace = thread.getStackTrace();
             String position = "No position available";
 
-            if (trace.length > 0)
+            if (trace.length > 0) {
                 position = "(" + trace[0].getClassName() + ':' + trace[0].getLineNumber() + ')';
+            }
 
             logger.debug("Running thread on shutdown: [{}] {}/{} @ {}",
                     thread.getState(), thread.getId(), thread.getName(), position);

@@ -54,7 +54,7 @@ public class TS3UserSubject extends TS3PermissionSubject implements ITS3UserSubj
                 .command(QueryCommands.PERMISSION.CLIENT_PERMISSION_ADD)
                 .addKey(PropertyKeys.Client.DBID, clientDBID)
                 .addKey(PropertyKeys.Permission.ID, permID)
-                .addKey(PropertyKeys.Permission.FLAG_NEGATED, permNegated ? "1": "0")
+                .addKey(PropertyKeys.Permission.FLAG_NEGATED, permNegated ? "1" : "0")
                 .addKey(PropertyKeys.Permission.FLAG_SKIP, permSkip ? "1" : "0")
                 .addKey(PropertyKeys.Permission.VALUE, value)
                 .onError(e -> logger.warn("Failed to assign permission \"{}\" to clientDBID \"{}\": {} - {}",

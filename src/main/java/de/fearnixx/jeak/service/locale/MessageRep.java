@@ -93,7 +93,8 @@ public class MessageRep {
 
         // Fail-fast approach. If this happens ever, for any reason, we want the administrator to know it.
         if (partsIt.hasNext()) {
-            throw new ConsistencyViolationException("Parts iterator is out of sync with params iterator! THIS SHOULD NOT HAPPEN!");
+            throw new ConsistencyViolationException(
+                    "Parts iterator is out of sync with params iterator! THIS SHOULD NOT HAPPEN!");
         }
 
         return builder.toString();

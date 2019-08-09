@@ -8,7 +8,7 @@ import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 public interface IQueryConnection extends AutoCloseable {
 
     /**
-     * Sets the nickname of this server query connection
+     * Sets the nickname of this server query connection.
      * @param nickName The new nickname
      */
     void setNickName(String nickName);
@@ -21,7 +21,7 @@ public interface IQueryConnection extends AutoCloseable {
     /**
      * Send a request.
      *
-     * This queues the request and sends it when possible.
+     * <p>This queues the request and sends it when possible.
      * @param req The request to send
      */
     void sendRequest(IQueryRequest req);

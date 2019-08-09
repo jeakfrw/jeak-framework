@@ -89,10 +89,11 @@ public class QueryBuilder {
      * @param value String|Object - on objects {@link #toString()} is invoked
      */
     public QueryBuilder addKey(String key, Object value) {
-        if (currentObj.hasProperty(key))
+        if (currentObj.hasProperty(key)) {
             currentObj.setProperty(key, value != null ? value.toString() : null);
-        else
+        } else {
             currentObj.setProperty(key, value != null ? value.toString() : null);
+        }
         return this;
     }
 
@@ -151,23 +152,23 @@ public class QueryBuilder {
         }
 
         return new IQueryRequest() {
-            final String fComm = command;
-            final List<IDataHolder> fChain = Collections.unmodifiableList(chain);
-            final List<String> fOptions = Collections.unmodifiableList(options);
+            final String constCommand = command;
+            final List<IDataHolder> constChain = Collections.unmodifiableList(chain);
+            final List<String> constOptions = Collections.unmodifiableList(options);
 
             @Override
             public String getCommand() {
-                return fComm;
+                return constCommand;
             }
 
             @Override
             public List<IDataHolder> getDataChain() {
-                return fChain;
+                return constChain;
             }
 
             @Override
             public List<String> getOptions() {
-                return fOptions;
+                return constOptions;
             }
 
             @Override

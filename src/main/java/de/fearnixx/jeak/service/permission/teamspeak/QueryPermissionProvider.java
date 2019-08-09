@@ -16,9 +16,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Created by MarkL4YG on 04-Feb-18
- *
- * Helpful documentation if you want to understand TS3 perms a little better:
+ * <p>Helpful documentation if you want to understand TS3 perms a little better.
  * * http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Permissions%20Guide.txt
  */
 @FrameworkService(serviceInterface = ITS3PermissionProvider.class)
@@ -40,33 +38,40 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
 
         switch (type) {
             case CLIENT:
-                if (optClientOrGroupID == null)
+                if (optClientOrGroupID == null) {
                     throw new IllegalArgumentException("ClientID missing");
+                }
                 clientPerms.remove(optClientOrGroupID);
                 break;
             case CHANNEL:
-                if (optChannelID == null)
+                if (optChannelID == null) {
                     throw new IllegalArgumentException("ChannelID missing");
+                }
                 channelPerms.remove(optChannelID);
                 break;
             case SERVER_GROUP:
-                if (optClientOrGroupID == null)
+                if (optClientOrGroupID == null) {
                     throw new IllegalArgumentException("Server group ID missing");
+                }
                 serverGroupPerms.remove(optClientOrGroupID);
                 break;
             case CHANNEL_GROUP:
-                if (optClientOrGroupID == null)
+                if (optClientOrGroupID == null) {
                     throw new IllegalArgumentException("Channel group ID missing");
+                }
                 channelGroupPerms.remove(optClientOrGroupID);
                 break;
             case CHANNEL_CLIENT:
-                if (optClientOrGroupID == null)
+                if (optClientOrGroupID == null) {
                     throw new IllegalArgumentException("Client ID missing");
-                if (optChannelID == null)
+                }
+                if (optChannelID == null) {
                     throw new IllegalArgumentException("Channel ID missing");
+                }
                 Map<Integer, TS3PermCache> clients = channelClientPerms.getOrDefault(optChannelID, null);
-                if (clients != null)
+                if (clients != null) {
                     clients.remove(optClientOrGroupID);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown PriorityType!");
@@ -248,15 +253,17 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL);
     }
 
-    protected Optional<ITS3Permission> permFromList(String permSID, IMessage.IAnswer answer, ITS3Permission.PriorityType type) {
+    protected Optional<ITS3Permission> permFromList(String permSID, IMessage.IAnswer answer,
+                                                    ITS3Permission.PriorityType type) {
 
         if (answer != null && answer.getError().getCode().equals(EMPTY_RESULT_ID)) {
             return Optional.empty();
         }
 
         while (answer != null) {
-            if (permSID.equals(answer.getProperty("permsid").orElse(null)))
+            if (permSID.equals(answer.getProperty("permsid").orElse(null))) {
                 break;
+            }
             answer = ((IMessage.IAnswer) answer.getNext());
         }
 

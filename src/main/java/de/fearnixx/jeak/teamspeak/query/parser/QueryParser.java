@@ -89,7 +89,7 @@ public class QueryParser {
                 notification.setCaption(parseInfo.caption);
                 ParseContext<Message.Notification> notificationContext = new ParseContext<>(notification);
                 parseToContext(input, parseInfo, notificationContext);
-                notificationContext.setError(RawQueryEvent.ErrorMessage.OK());
+                notificationContext.setError(RawQueryEvent.ErrorMessage.okay());
 
                 if (notificationContext.isClosed()) {
                     onNotification(notificationContext.getMessage());
@@ -168,17 +168,19 @@ public class QueryParser {
                     break;
 
                 case Symbols.PROPVALDIV:
-                    if (doKey)
+                    if (doKey) {
                         doKey = false;
-                    else
+                    } else {
                         parseContext.addToValBuffer(c);
+                    }
                     break;
 
                 default:
-                    if (doKey)
+                    if (doKey) {
                         parseContext.addToKeyBuffer(c);
-                    else
+                    } else {
                         parseContext.addToValBuffer(c);
+                    }
             }
         }
 
@@ -186,13 +188,15 @@ public class QueryParser {
     }
 
     private void onNotification(Message.Notification event) {
-        if (this.onNotification != null)
+        if (this.onNotification != null) {
             this.onNotification.accept(event);
+        }
     }
 
     private void onAnswer(Message.Answer event) {
-        if (this.onAnswer != null)
+        if (this.onAnswer != null) {
             this.onAnswer.accept(event);
+        }
     }
 
     private IQueryRequest internalProvideRequest() {

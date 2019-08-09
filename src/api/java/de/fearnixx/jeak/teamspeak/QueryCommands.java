@@ -3,6 +3,7 @@ package de.fearnixx.jeak.teamspeak;
 /**
  * All commands defined in the TS3 server query manual.
  */
+@SuppressWarnings({"All", "CheckStyle"})
 public abstract class QueryCommands {
 
     private QueryCommands() {
@@ -111,7 +112,7 @@ public abstract class QueryCommands {
 
         public static final String CHANNEL_GROUP_PERMISSION_ADD = "channelgroupaddperm";
         public static final String CHANNEL_GROUP_PERMISSION_DEL = "channelgroupdelperm";
-        public static final String CHANNEL_GROUP_PERMISSION_LIST= "channelgrouppermlist";
+        public static final String CHANNEL_GROUP_PERMISSION_LIST = "channelgrouppermlist";
 
         public static final String CLIENT_LIST_PERMISSIONS = "clientpermlist";
         public static final String CLIENT_PERMISSION_ADD = "clientaddperm";
@@ -231,11 +232,12 @@ public abstract class QueryCommands {
 
         public static final String CLIENT_GET_DBID_FROMUID = "clientgetdbidfromuid";
         public static final String CLIENT_GET_NAME_FROMUID = "clientgetnamefromuid";
-        public static final String CLIENT_GET_NAME_FROMDBID= "clientgetnamefromdbid";
+        public static final String CLIENT_GET_NAME_FROMDBID = "clientgetnamefromdbid";
     }
 
     /**
      * File transfer commands.
+     *
      * @deprecated File transfer is not yet supported! Deprecation will be removed once supported.
      */
     @Deprecated

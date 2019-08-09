@@ -8,7 +8,7 @@ import java.util.Optional;
  * Locale contexts represent localization units focused on one specific locale.
  * The actual translated text templates are located in their respective locale context.
  *
- * Locale contexts are constructed within {@link ILocalizationUnit}s and always belong to their unit.
+ * <p>Locale contexts are constructed within {@link ILocalizationUnit}s and always belong to their unit.
  */
 public interface ILocaleContext {
 

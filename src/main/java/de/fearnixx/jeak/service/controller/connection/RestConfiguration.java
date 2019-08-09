@@ -63,14 +63,14 @@ public class RestConfiguration extends Configurable {
         getConfig().getNode(HEADER_CONFIG)
                 .optMap()
                 .orElseGet(Collections::emptyMap)
-                .forEach((s, iConfigNode) -> header.put(s, iConfigNode.asString()));
+                .forEach((s, node) -> header.put(s, node.asString()));
         return header;
     }
 
     public boolean isCorsEnabled() {
         Optional<Map<String, IConfigNode>> cors = getConfig().getNode(CORS_CONFIG)
                 .optMap();
-        if (!cors.isPresent()) {
+        if (cors.isEmpty()) {
             return false;
         }
         return cors.get().get(CORS_CONFIG_ENABLED).asBoolean();
@@ -81,7 +81,7 @@ public class RestConfiguration extends Configurable {
         getConfig().getNode(CORS_CONFIG, HEADER_CONFIG)
                 .optMap()
                 .orElseGet(Collections::emptyMap)
-                .forEach((s, iConfigNode) -> header.put(s, iConfigNode.asString()));
+                .forEach((s, node) -> header.put(s, node.asString()));
         return header;
     }
 }

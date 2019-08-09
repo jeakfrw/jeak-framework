@@ -101,7 +101,8 @@ public abstract class DBProfile implements IUserProfile {
     @Override
     public void setOption(String optionId, String value) {
         synchronized (userProfileConnection) {
-            String query = "INSERT into frw_profiles_options (`ident`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(`value`)";
+            String query = "INSERT into frw_profiles_options (`ident`, `value`) VALUES (?, ?)"
+                    + " ON DUPLICATE KEY UPDATE value = VALUES(`value`)";
             try (PreparedStatement statement = userProfileConnection.prepareStatement(query)) {
                 statement.setString(1, optionId);
 

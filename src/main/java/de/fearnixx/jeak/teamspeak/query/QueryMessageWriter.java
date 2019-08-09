@@ -85,7 +85,7 @@ public class QueryMessageWriter implements AutoCloseable {
                         .append('=')
                         .append(encodedValParts);
 
-                if (j < keys.length-1) {
+                if (j < keys.length - 1) {
                     sockMessage.append(' ');
                 }
             }
@@ -93,8 +93,9 @@ public class QueryMessageWriter implements AutoCloseable {
 
         // Append: Options
         request.getOptions().forEach(option -> {
-            if (sockMessage.length() > 0)
+            if (sockMessage.length() > 0) {
                 sockMessage.append(' ');
+            }
             sockMessage.append(option);
         });
 

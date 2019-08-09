@@ -6,7 +6,7 @@ package de.fearnixx.jeak.service.permission.base;
 public interface IPermission {
 
     /**
-     * The string ID of the permission
+     * The string ID of the permission.
      * Examples:
      * <ul>
      *     <li>{@code "i_channel_join_power"}</li>
@@ -16,7 +16,7 @@ public interface IPermission {
     String getSID();
 
     /**
-     * The ID of the permission where values originate from
+     * The ID of the permission where values originate from.
      * Example:
      * <ul>
      *     <li>{@code "teamspeak"}</li>
@@ -27,7 +27,7 @@ public interface IPermission {
 
     /**
      * Fully qualified ID. In form:
-     *   "\<system\>:\<sid\>"
+     *   {@code <system>:<sid>}
      * Examples:
      * <ul>
      *     <li>{@code "teamspeak:i_channel_join_power"}</li>

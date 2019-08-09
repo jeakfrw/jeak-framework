@@ -5,7 +5,6 @@ import java.util.Optional;
 
 /**
  * The controller manager allows plugins to register services to a specified REST method.
- *
  */
 public interface IRestControllerService {
 
@@ -22,18 +21,18 @@ public interface IRestControllerService {
      * Optionally get a controller of the specified class.
      *
      * @param cntrlrClass The desired controller class.
-     * @param <T> The desired controller type.
+     * @param <T>         The desired controller type.
      * @return An {@link Optional<T>} representing the result.
      */
     <T> Optional<T> provide(Class<T> cntrlrClass);
 
     /**
      * Get a controller.
-     * <p>
-     * This method performs no checks!
+     *
+     * <p>This method performs no checks!
      *
      * @param cntrlrClass The desired service class.
-     * @param <T> The desired controller type.
+     * @param <T>         The desired controller type.
      * @return Either the controller instance,
      * or {@core null} and a {@link ClassCastException} is thrown.
      */

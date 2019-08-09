@@ -11,16 +11,17 @@ import java.util.Map;
 /**
  * Created by MarkL4YG on 15.06.17.
  *
- * Abstract representation of a channel using the information queried via the ServerQuery
+ * <p>Abstract representation of a channel using the information queried via the ServerQuery
  * Spacers extend this:
- * @see ISpacer
  *
- * @apiNote All values can be changed through the {@link IDataHolder} interface - At least on instances created by the bot itself
+ * @apiNote All values can be changed through the {@link IDataHolder} interface
+ * - At least on instances created by the bot itself
  * @apiNote Remember that changing the values will not actually edit the channel on the server!
- *
  * @implNote Channels acquired using {@link IDataCache#getChannels()} are currently updated regularly and thread safe.
- * @implNote That means obsolete channels are invalidated automatically through {@link #getPersistence()} as {@link ChannelPersistence#DELETED}
+ * @implNote That means obsolete channels are invalidated automatically through
+ * {@link #getPersistence()} as {@link ChannelPersistence#DELETED}
  * @implNote However the API can not make this guarantee for any custom implementations!
+ * @see ISpacer
  */
 public interface IChannel extends IDataHolder, ITS3Subject {
 
@@ -67,15 +68,18 @@ public interface IChannel extends IDataHolder, ITS3Subject {
      * - "[*spacer<int/>]"
      * - "[*cspacer<int/>]"
      * - All above using a float instead
+     *
      * @return If this channel is a spacer
      */
     Boolean isSpacer();
 
     /**
-     * @implNote This becomes {@link ChannelPersistence#DELETED} once the server received a channellist response without the channel ID. Any plugin should drop the object at that time
      * @return The channel persistence mode
+     * @implNote This becomes {@link ChannelPersistence#DELETED} once the server received a
+     * {@code channellist} response without the channel ID. Any plugin should drop the object at that time.
      */
     ChannelPersistence getPersistence();
+
     enum ChannelPersistence {
         TEMPORARY,
         SEMI_PERMANENT,
@@ -94,8 +98,8 @@ public interface IChannel extends IDataHolder, ITS3Subject {
     Integer getClientCount();
 
     /**
-     * @implNote The maximum can be below the actual count! TS3 allows admins to ignore this limit
      * @return The maximum number of clients in this channel
+     * @implNote The maximum can be below the actual count! TS3 allows admins to ignore this limit
      */
     Integer getMaxClientCount();
 
@@ -105,8 +109,8 @@ public interface IChannel extends IDataHolder, ITS3Subject {
     Integer getClientCountBelow();
 
     /**
-     * @implNote The maximum can be below the actual count! TS3 allows admins to ignore this limit
      * @return The maximum number of clients below this channel
+     * @implNote The maximum can be below the actual count! TS3 allows admins to ignore this limit
      */
     Integer getMaxClientCountBelow();
 
@@ -127,7 +131,9 @@ public interface IChannel extends IDataHolder, ITS3Subject {
 
     /**
      * Sends a message to this channel.
-     * @deprecated <p>Not available at the moment. TS3 forces any messages directed at a channel to be sent to the current one.
+     *
+     * @deprecated <p>Not available at the moment.
+     * TS3 forces any messages directed at a channel to be sent to the current one.
      * As this is likely to be the default channel or a dedicated bot-channel, this is not useful.
      * A work-around is scheduled to be put in place: https://gitlab.com/fearnixxgaming/jeakbot/jeakbot-framework/issues/32
      * </p>

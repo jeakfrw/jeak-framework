@@ -105,8 +105,8 @@ public class CommandLine implements Runnable {
                 Main.getInstance().shutdown();
                 break;
             case "help":
-                logger.info("\nCommands: \n\thelp - Display this page" +
-                        "\n\tstop - Shutdown all bots");
+                logger.info("\nCommands: \n\thelp - Display this page"
+                        + "\n\tstop - Shutdown all bots");
                 break;
             default:
                 logger.warn("Unknown command: {}\n", command);
@@ -115,7 +115,7 @@ public class CommandLine implements Runnable {
     }
 
     /**
-     * Allows to kill the command line
+     * Allows to kill the command line.
      */
     public void kill() {
         synchronized (lock) {

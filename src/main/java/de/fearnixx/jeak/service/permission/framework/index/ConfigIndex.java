@@ -117,7 +117,8 @@ public class ConfigIndex extends SubjectIndex {
                         // This will abort when the above becomes true during recursion.
                         addParentCircularityCheck(parentsParents, toSubject);
                     } else {
-                        throw new CircularInheritanceException("Subject " + toSubject + " must not inherit from " + parent);
+                        throw new CircularInheritanceException("Subject " + toSubject
+                                + " must not inherit from " + parent);
                     }
                 });
     }

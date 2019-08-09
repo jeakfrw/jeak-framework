@@ -48,7 +48,9 @@ public class TS3Connection implements AutoCloseable {
                     })
                     .build();
 
-    public TS3Connection(InputStream in, OutputStream out, Consumer<RawQueryEvent.Message.Answer> onAnswer, Consumer<RawQueryEvent.Message.Notification> onNotification) {
+    public TS3Connection(InputStream in, OutputStream out,
+                         Consumer<RawQueryEvent.Message.Answer> onAnswer,
+                         Consumer<RawQueryEvent.Message.Notification> onNotification) {
         messageReader = new QueryMessageReader(in, this::onNotification, this::onAnswer, this::onGreetingStatus, this::supplyRequest);
         messageWriter = new QueryMessageWriter(out);
         this.onAnswer = onAnswer;

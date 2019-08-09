@@ -18,8 +18,4 @@ public class EventInvocationException extends RuntimeException {
     public EventInvocationException(Throwable cause) {
         super(cause);
     }
-
-    public EventInvocationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }

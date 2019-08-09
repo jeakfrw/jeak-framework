@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Utility/helper class for plugins or other modules that have a configuration.
@@ -19,12 +20,14 @@ import java.nio.charset.Charset;
  */
 public abstract class Configurable  {
 
-    private static final Charset RESOURCE_CHARSET = Charset.forName("UTF-8");
+    private static final Charset RESOURCE_CHARSET = StandardCharsets.UTF_8;
     private final Logger logger;
     private final Class<? extends Configurable> mainClass;
     private IConfigNode config;
 
     /**
+     * Initializes the configurable class and allows to use the right name for the logger retrieved afterwards.
+     *
      * @param subClass is used to instantiate the logger and retrieve the default resource.
      */
     protected Configurable(Class<? extends Configurable> subClass) {

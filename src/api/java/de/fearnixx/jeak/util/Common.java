@@ -18,6 +18,9 @@ public class Common {
         return s.isEmpty() ? "0" : s;
     }
 
+    /**
+     * Copies all data from an input (stream) into an (output) stream.
+     */
     public static void copyStream(InputStream i, OutputStream o, Integer bufferSize) throws IOException {
         byte[] buffer = new byte[bufferSize == null ? 1024 : bufferSize];
         int bytesRead;

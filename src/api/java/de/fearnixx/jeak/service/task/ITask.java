@@ -5,10 +5,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by MarkL4YG on 11.06.17.
  *
- * Abstract task representation used by the {@link ITaskService}s.
+ * <p>Abstract task representation used by the {@link ITaskService}s.
  * Allows plugins to register asynchronous tasks
  *
- * See {@link TaskBuilder} to construct one
+ * <p>See {@link TaskBuilder} to construct one
  */
 public interface ITask {
 
@@ -17,8 +17,7 @@ public interface ITask {
     }
 
     /**
-     * Determines the type of the task
-     * Delayed or Repeated
+     * Determines the type of the task.
      */
     enum TaskType {
         REPEAT,
@@ -26,25 +25,25 @@ public interface ITask {
     }
 
     /**
-     * The tasks delay
+     * The tasks delay.
      * @return The delay
      */
     long getDelay();
 
     /**
-     * The tasks interval
+     * The tasks interval.
      * @return The interval
      */
     long getInterval();
 
     /**
-     * The {@link TimeUnit} of the interval or delay
+     * The {@link TimeUnit} of the interval or delay.
      * @return The TimeUnit
      */
     TimeUnit getTimeUnit();
 
     /**
-     * The {@link TaskType} of the task
+     * The {@link TaskType} of the task.
      * @return The type
      */
     TaskType getType();
@@ -52,7 +51,8 @@ public interface ITask {
     /**
      * By default, tasks that are set to an interval will be rescheduled after they have been run.
      * Return false for when the task should no longer be re-scheduled.
-     * @apiNote As this is for advanced tasks, this cannot be changed using the task builder. <br>Use {@link TaskType#DELAY} for the builder.
+     * @apiNote As this is for advanced tasks, this cannot be changed using the task builder.
+     * <br>Use {@link TaskType#DELAY} for the builder.
      */
     boolean shouldReschedule();
 
