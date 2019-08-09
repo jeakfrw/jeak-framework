@@ -23,8 +23,8 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|[Discord Invite](https://discord.gg/DPYR5aB)|  
 
 > [1]: [CVE-2018-10237](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10237) has been ignored as we do not use Guava for data deserialization. The vulnerability is introduced by org.reflections which we use for classpath scanning. (The attack vector is over the network where Reflections and thus Guava is not used.) __The reflections update for this CVE seems to be incompatible at the moment and needs to be investigated at some point.__   
-
-_Note: Although we ignore vulnerabilities that do not apply to our distribution environment, we will apply patches when possible just to adress concerns and deviated environments._  
+> [2]: [CVE-2019-14379](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-14379) has been ignored as the vulnerability only applies to environments where ``ehcache`` is installed which is not the case for the default supported Jeak build and distribution.  
+_Note: Although we ignore vulnerabilities that do not apply to our distribution environment, we will apply patches when possible just to address concerns and deviated environments._  
 
 # Links
 * [Project license](./LICENSE)
@@ -77,6 +77,11 @@ While the framework is located on GitHub, plugins by FearNixx are hosted over at
 ### IDE: JetBrains
 We use and love IntelliJ IDEA for development.  
 We want to thank JetBrains for making the community version free to use and allowing some of us to use educational licenses for our free projects! :)
+  
+### Code collaboration / discussion
+We use CodeStream to collaborate on and discuss code, concepts and bugs.  
+CodeStream kindly allowed us to use their free open source plan so anyone can join and discuss with us! :)  
+<a href="https://codestream.com"><img src="https://assets.fearnixx.de/3rdparty/codestream/codestream-light.svg" height="50" width="200" alt="CodeStream Logo"></img></a>
   
 ### Git: GitKraken
 Some of us use GitKraken to interact with and manage Git.  
