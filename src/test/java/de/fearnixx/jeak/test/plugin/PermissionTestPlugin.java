@@ -113,6 +113,12 @@ public class PermissionTestPlugin extends AbstractTestPlugin {
     }
 
     private void testOfflineParents() {
+        Optional<IGroup> prevGroup = permissionService.getFrameworkProvider().findGroupByName("test-group");
+        if (prevGroup.isPresent()) {
+            logger.info("Test group exists... deleting.");
+            permissionService.getFrameworkProvider().deleteSubject(prevGroup.get().getUniqueID());
+        }
+
         IGroup group = permissionService.getFrameworkProvider().createParent("test-group").orElse(null);
 
         if (group != null) {
