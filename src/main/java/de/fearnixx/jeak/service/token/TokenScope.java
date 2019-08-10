@@ -37,6 +37,10 @@ public class TokenScope {
         return false;
     }
 
+    public Set<String> getScopeSet() {
+        return scopeSet;
+    }
+
     private Optional<String> combineStrings(String ... strings) {
         return Arrays.stream(strings)
                 .reduce((s, s2) -> s+"/"+s2);

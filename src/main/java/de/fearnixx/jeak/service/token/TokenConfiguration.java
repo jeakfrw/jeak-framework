@@ -5,6 +5,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
+import de.mlessmann.confort.node.ConfigNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,5 +73,12 @@ public class TokenConfiguration extends Configurable {
             );
         }
         return new TokenScope(tokenScopes);
+    }
+
+    public void saveToken(String token, TokenScope tokenScope) {
+        ConfigNode child = new ConfigNode();
+        child.setList();
+        child.appendValue(tokenScope.getScopeSet());
+        getConfig().put(token, child);
     }
 }
