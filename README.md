@@ -9,7 +9,8 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 ## Badges
 |Type/Name|Badge|URL|
 |---|---|---|
-|License            |![ShieldsIO](https://img.shields.io/github/license/jeakfrw/core-framework.svg?color=success&style=flat-square)|[bleeding-1.X.X/LICENSE](https://github.com/jeakfrw/core-framework/blob/bleeding-1.X.X/LICENSE)
+|License            |![ShieldsIO](https://img.shields.io/github/license/jeakfrw/core-framework.svg?color=success&style=flat-square)[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fjeakfrw%2Fjeak-framework.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fjeakfrw%2Fjeak-framework?ref=badge_shield)
+|[bleeding-1.X.X/LICENSE](https://github.com/jeakfrw/core-framework/blob/bleeding-1.X.X/LICENSE)
 |Language           |![ShieldsIO](https://img.shields.io/github/languages/top/jeakfrw/core-framework.svg?style=flat-square)|
 |Latest (stable)    |![ShieldsIO](https://img.shields.io/github/tag/jeakfrw/core-framework.svg?color=success&style=flat-square)  |[/releases](https://github.com/jeakfrw/core-framework/releases)
 |Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/core-framework.svg?color=yellow&style=flat-square) |[/releases](https://github.com/jeakfrw/core-framework/releases)
@@ -90,3 +91,6 @@ GitKraken allows free use for open source projects and we thank them for that. :
 ### Server administration: Pterodactyl  
 On our servers, we utilize the free application server management software [Pterodactyl](https://pterodactyl.io).  
 Managing our test systems and environments would be way harder without it!
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fjeakfrw%2Fjeak-framework.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fjeakfrw%2Fjeak-framework?ref=badge_large)
