@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * <p>
  * Abstract representation of online clients
  */
-public interface IClient extends IDataHolder, IUser {
+public interface IClient extends IDataHolder, IWatchableDataHolder, IUser {
 
     Boolean isValid();
 

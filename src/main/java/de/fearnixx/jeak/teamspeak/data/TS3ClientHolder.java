@@ -3,11 +3,17 @@ package de.fearnixx.jeak.teamspeak.data;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Consumer;
 
 public abstract class TS3ClientHolder extends TS3User implements IClient {
 
     private boolean invalidated = false;
+    private final Map<String, ConcurrentLinkedDeque<IPropertyWatcher<String, Object>>> watchers = new ConcurrentHashMap<>();
+    private Consumer<Runnable> changeListenerInvokationSink = null;
 
     public TS3ClientHolder() {
         super();
@@ -161,4 +167,35 @@ public abstract class TS3ClientHolder extends TS3User implements IClient {
         return getNickName() + '/' + getClientID() + "/db" + getClientDBID();
     }
 
+    @Override
+    public synchronized void watch(String propertyName, IPropertyWatcher<String, String> listener) {
+        watchers.computeIfAbsent(propertyName, prop -> new ConcurrentLinkedDeque<>());
+    }
+
+    @Override
+    public synchronized void setProperty(String key, Object value) {
+        String oldValue = super.getProperty(key).orElse(null);
+        super.setProperty(key, value);
+        runListener(key, oldValue, value);
+    }
+
+    private synchronized void runListener(String property, Object presentValue, Object oldValue) {
+        var propWatchers = this.watchers.getOrDefault(property, null);
+        if (propWatchers != null) {
+            // Use weakly consistent iterator for iteration.
+            Runnable invocation = () ->
+                    propWatchers.iterator()
+                            .forEachRemaining(watcher -> watcher.onValueChanged(property, oldValue, presentValue));
+
+            if (changeListenerInvokationSink == null) {
+                invocation.run();
+            } else {
+                changeListenerInvokationSink.accept(invocation);
+            }
+        }
+    }
+
+    public synchronized void deferPropListeners(Consumer<Runnable> sink) {
+        changeListenerInvokationSink = sink;
+    }
 }
