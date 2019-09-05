@@ -2,12 +2,12 @@ package de.fearnixx.jeak.service.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.pool.HikariPool;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import org.hibernate.HibernateException;
 import org.hibernate.SessionFactory;
-import org.hibernate.TransactionException;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.StandardServiceRegistry;
@@ -19,7 +19,6 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -78,8 +77,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
 
         if (loadConfig()) {
             readConfiguration();
-            initializeHikariSource();
-            return initializeHibernateServices();
+            return initializeHikariSource() && initializeHibernateServices();
         } else {
             return false;
         }
@@ -104,14 +102,20 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
                                         dataSourceOpts.put(key, strVal))));
     }
 
-    private void initializeHikariSource() {
+    private boolean initializeHikariSource() {
         HikariConfig hikariConfig = new HikariConfig();
         hikariConfig.setJdbcUrl(getJdbcUrl());
         hikariConfig.setUsername(getUsername());
         hikariConfig.setPassword(getPassword());
 
         dataSourceOpts.forEach(hikariConfig::addDataSourceProperty);
-        hikariDS = new HikariDataSource(hikariConfig);
+        try {
+            hikariDS = new HikariDataSource(hikariConfig);
+            return true;
+        } catch (HikariPool.PoolInitializationException e) {
+            logger.error("Could not create persistence unit: {}", unitId, e);
+            return false;
+        }
     }
 
     private boolean initializeHibernateServices() {
