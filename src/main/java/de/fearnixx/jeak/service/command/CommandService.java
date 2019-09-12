@@ -15,6 +15,8 @@ import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 08-Nov-17
+ * @deprecated see {@link ICommandReceiver}
  */
+@Deprecated
 @FrameworkService(serviceInterface = ICommandService.class)
 public class CommandService implements ICommandService {
 
@@ -36,6 +40,7 @@ public class CommandService implements ICommandService {
     public IServer server;
 
     private final Map<String, ICommandReceiver> commands = new HashMap<>();
+    private final Map<String, String> commandDeprecations = new HashMap<>();
     private final CommandParser parser = new CommandParser();
     private final Object lock = new Object();
     private boolean terminated = false;
@@ -163,11 +168,37 @@ public class CommandService implements ICommandService {
 
     @Override
     public void registerCommand(String command, ICommandReceiver receiver) {
-        if (receiver == null)
+        if (receiver == null) {
             throw new IllegalArgumentException("CommandReceiver may not be null!");
+        }
+        Class<? extends ICommandReceiver> rxClass = receiver.getClass();
+        Deprecated deprecated = rxClass.getAnnotation(Deprecated.class);
+        String supersededBy = deprecated != null ? getSuperseded(rxClass) : "";
+
         synchronized (lock) {
             commands.put(command, receiver);
+
+            if (deprecated != null) {
+                commandDeprecations.put(rxClass.getName(), supersededBy);
+            }
         }
+    }
+
+    private String getSuperseded(Class<? extends ICommandReceiver> rxClass) {
+        try {
+            Method supersededBy = rxClass.getDeclaredMethod("supersededBy");
+            Object successorNameObj = supersededBy.invoke(rxClass);
+            if (successorNameObj instanceof String) {
+                return (String) successorNameObj;
+            }
+            logger.warn("Deprecated command listener returns invalid data for #supersededBy: {} - {}", rxClass.getName(), successorNameObj);
+
+        } catch (NoSuchMethodException e) {
+            logger.info("Deprecated command listener lists no successor: {}", rxClass.getName());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            logger.warn("Could not retrieve successor name for deprecated command listener: {}", rxClass.getName(), e);
+        }
+        return "";
     }
 
     @Override

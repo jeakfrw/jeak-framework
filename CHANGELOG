@@ -1,19 +1,28 @@
-# 1.0.1
-~ Query-Fix: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
-~ Fix: It was possible to create multiple groups with the same name
-~ Fix: EventAbortException not aborting events leading to exceptions being logged by plugins consuming inconsistent events
-+ Add command: !permuuid-lookup to look up the permission subject UUIDs for different subjects
-+ Add a constant vor the "permvalue" key on "*perm*add" commands which is for some reason yet another different key
+## 1.0.1
+~ Fixed: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
+~ Fixed: It was possible to create multiple groups with the same name
+~ Fixed: EventAbortException not aborting events leading to exceptions being logged by plugins consuming inconsistent events
++ Added command: !permuuid-lookup to look up the permission subject UUIDs for different subjects
++ Added a constant vor the "permvalue" key on "*perm*add" commands which is for some reason yet another different key
+~ Deprecated ``ICommandReceiver`` to prepare for the new command implementation. See the interface for more info.
++ Added support for deprecated command listeners which will trigger a warning to users (and optionally display the given alternative)
 
-# 1.0.0-RC1
-+ Query connection 
-  + Send commands to the server
-  + Receive answers (with and w/o callbacks)
-+ API with Javadoc available
-+ Event service  
-+ Service management
-+ Task management
-+ Configuration
-+ Injections (injects everything stored as a service)
-+ Hibernate integration (Rough. But works!)
-+ Commandline ``stop`` support (graceful shutdown)
+## 1.0.0
++ Added request-based connection abstraction for TS3 query connections
++ Added event abstractions for query notifications
++ Added caching for clients and channels currently on the server
++ Added support for getting user information about clients that are offline
++ Added support for persistently storing information about users in their profiles
++ Added support for TeamSpeak 3's permission system
++ Added support for an internal permission system
++ Added support for configuration files for plugins & services
++ Added support for language files & thus localization based on the country flag of a client
++ Added support for notifications
++ Added support for sending mails via. SMTP
++ Added database support via. both JPAs DataSource and Hibernates EntityManager
++ Added injection service to provide plugins with the service instances they need
++ Added rough support for chat commands
++ Added support for dispatching and catching of events within the framework
++ Added support for (a)synchronous tasks
++ Added logging via. SLF4J & implementation via. Log4J2
++ Added a bunch of test plugins for our testing environment
