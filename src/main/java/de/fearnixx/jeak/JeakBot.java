@@ -20,7 +20,7 @@ import de.fearnixx.jeak.service.notification.NotificationService;
 import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
-import de.fearnixx.jeak.service.teamspeak.QueryUserService;
+import de.fearnixx.jeak.service.teamspeak.UserService;
 import de.fearnixx.jeak.service.token.TokenService;
 import de.fearnixx.jeak.service.util.UtilCommands;
 import de.fearnixx.jeak.task.TaskService;
@@ -173,7 +173,7 @@ public class JeakBot implements Runnable, IBot {
         initializeService(mailSvc);
         initializeService(new ProfileService(new File(confDir, "profiles")));
         initializeService(new PermissionService());
-        initializeService(new QueryUserService());
+        initializeService(new UserService());
         initializeService(new TokenService());
         initializeService(new RestControllerService());
 
