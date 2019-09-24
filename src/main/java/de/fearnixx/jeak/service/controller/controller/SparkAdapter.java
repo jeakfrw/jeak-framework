@@ -132,8 +132,8 @@ public class SparkAdapter extends HttpServer {
 
 
             String contentType = headers.get("Content-Type");
-            if (contentType != null && !contentType.isEmpty() && contentType.contains("json")) {
-                response.type(contentType);
+            if (contentType == null || ("application/json".equals(contentType))) {
+                response.type("application/json");
                 returnValue = toJson(returnValue);
             }
             return returnValue;
