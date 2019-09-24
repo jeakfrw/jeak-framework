@@ -156,8 +156,8 @@ public class DBUserService extends AbstractUserService {
     }
 
     private synchronized void withConnection(Consumer<Connection> consumer) {
-        try {
-            consumer.accept(persistenceUnit.getDataSource().getConnection());
+        try (Connection conn = persistenceUnit.getDataSource().getConnection()) {
+            consumer.accept(conn);
         } catch (SQLException e) {
             logger.error("Failed to get database connection!", e);
         }
