@@ -7,6 +7,7 @@
   * JavaMail (dsn, smtp, mailapi) 1.6.3 -> 1.6.4
   * slf4j-api 1.7.27 -> 1.7.28
   * log4j2 1.6.3 -> 1.6.4
+~ Fixed: Some parsing bugs with external services were fixed where the services failed to read the build configuration properly
 
 ## 1.0.1
 ~ Fixed: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
