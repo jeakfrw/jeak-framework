@@ -1,3 +1,13 @@
+## 1.0.2
+~ Fixed: Fast tracked db-based user service wasn't available
+~ Fixed: User service wrongly set ``client_id`` instead of ``client_db_id``
+~ Fixed: Serialization of response objects when no content-type request header is present
+~ Updated dependencies:
+  * jackson 2.9.9.1 -> 2.10.0.pr3
+  * JavaMail (dsn, smtp, mailapi) 1.6.3 -> 1.6.4
+  * slf4j-api 1.7.27 -> 1.7.28
+  * log4j2 1.6.3 -> 1.6.4
+
 ## 1.0.1
 ~ Fixed: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
 ~ Fixed: It was possible to create multiple groups with the same name
