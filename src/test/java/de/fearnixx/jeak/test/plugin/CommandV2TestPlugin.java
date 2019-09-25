@@ -18,12 +18,14 @@ public class CommandV2TestPlugin extends AbstractTestPlugin {
                         argumentSpec("arg", "a", String.class),
                         argumentSpec("barg", "b", Integer.class)
                 )
+                .permission("test.command")
                 .subcommand(
                         commandSpec("test")
                                 .parameters(
                                         paramSpec("something", String.class),
                                         paramSpec().optional(paramSpec("someElse", String.class))
                                 )
+                                .permission("test.subcommand", 4)
                                 .build()
                 )
                 .build();

@@ -13,6 +13,8 @@ public class CommandSpecBuilder {
     private final List<ICommandParamSpec> paramSpecs = new LinkedList<>();
     private Consumer<Object> executor;
     private String name;
+    private String requiredPerm;
+    private int requiredPermValue;
 
     CommandSpecBuilder() {
     }
@@ -47,6 +49,17 @@ public class CommandSpecBuilder {
 
     public CommandSpecBuilder executor(Consumer<Object> executor) {
         this.executor = executor;
+        return this;
+    }
+
+    public CommandSpecBuilder permission(String permissionId) {
+        requiredPerm = permissionId;
+        return this;
+    }
+
+    public CommandSpecBuilder permission(String permissionId, int ofAtLeast) {
+        requiredPerm = permissionId;
+        requiredPermValue = ofAtLeast;
         return this;
     }
 
