@@ -81,7 +81,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.10.0.pr3'
 
     runtime 'org.antlr:antlr4-runtime:4.7.2'
-    runtime 'org.apache.logging.log4j:log4j-api:2.12.0'
+    runtime 'org.apache.logging.log4j:log4j-api:2.12.1'
     runtime 'org.apache.logging.log4j:log4j-core:2.12.0'
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.12.0'
     runtime 'mysql:mysql-connector-java:8.0.17'
