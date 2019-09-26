@@ -32,6 +32,12 @@ repositories {
     maven {
         url uri('https://nexus.fearnixx.de/repository/maven-public')
     }
+    maven {
+        url uri('https://jitpack.io')
+    }
+    maven {
+        url uri('http://tomp2p.net/dev/mvn/')
+    }
 }
 
 sourceSets {
@@ -52,7 +58,7 @@ sourceSets {
             srcDirs = ['src/api/resources', 'src/main/resources']
         }
     }
-    
+
     test {
         java {
             srcDirs = ['src/test/java']
@@ -67,7 +73,7 @@ dependencies {
     apiCompile 'de.mlessmann:confort-api:1.0.0-rc.1'
     apiCompile 'org.hibernate:hibernate-core:5.4.4.Final'
     apiCompile 'org.slf4j:slf4j-api:1.7.28'
-
+    
     compile sourceSets.api.output
 
     compile 'de.mlessmann:confort:1.0.0-rc.1'
@@ -81,6 +87,12 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.10.0.pr3'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.10.0.pr3'
 
+    compile 'com.github.manevolent:ts3j:master-SNAPSHOT'
+    compile 'org.apache.commons:commons-lang3:3.9'
+    compile 'net.tomp2p:opus-wrapper:1.4'
+    compile 'com.sun.jna:jna:3.0.9'
+    compile 'com.github.manevolent:ffmpeg4j:534e72e6e7'
+    
     runtime 'org.antlr:antlr4-runtime:4.7.2'
     runtime 'org.apache.logging.log4j:log4j-api:2.12.1'
     runtime 'org.apache.logging.log4j:log4j-core:2.12.1'

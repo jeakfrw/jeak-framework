@@ -28,6 +28,7 @@ import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
 import de.fearnixx.jeak.teamspeak.TS3ConnectionTask;
 import de.fearnixx.jeak.teamspeak.cache.DataCache;
+import de.fearnixx.jeak.teamspeak.voice.connection.ClientConnectionService;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -176,6 +177,7 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new UserService());
         initializeService(new TokenService());
         initializeService(new RestControllerService());
+        initializeService(new ClientConnectionService());
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
