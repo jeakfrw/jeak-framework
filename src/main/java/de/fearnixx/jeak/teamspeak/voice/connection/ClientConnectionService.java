@@ -76,7 +76,9 @@ public class ClientConnectionService implements IClientConnectionService {
                 server.getPort()
         );
 
-        return clientConnections.put(identifier, clientConnection);
+        clientConnections.put(identifier, clientConnection);
+
+        return clientConnection;
     }
 
     @Listener

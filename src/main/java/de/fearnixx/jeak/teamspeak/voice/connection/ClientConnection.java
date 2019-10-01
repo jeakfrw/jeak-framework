@@ -3,7 +3,9 @@ package de.fearnixx.jeak.teamspeak.voice.connection;
 import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSocket;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractClientConnectionInformation;
+import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
 import de.fearnixx.jeak.voice.connection.IClientConnection;
+import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,7 +23,7 @@ public class ClientConnection implements IClientConnection {
 
     private boolean connected;
 
-    public ClientConnection(AbstractClientConnectionInformation clientConnectionInformation, String hostname, int port) {
+    ClientConnection(AbstractClientConnectionInformation clientConnectionInformation, String hostname, int port) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;
@@ -81,6 +83,18 @@ public class ClientConnection implements IClientConnection {
 
             //TODO: return the result of an action performed on the connection
         }
+    }
+
+    @Override
+    public IMp3AudioPlayer registerMp3AudioPlayer() {
+        if (!connected) {
+            throw new IllegalStateException("An Mp3AudioPlayer can only be registered when the client connection is connected");
+        }
+
+        Mp3AudioPlayer mp3AudioPlayer = new Mp3AudioPlayer();
+        ts3jClientSocket.setMicrophone(mp3AudioPlayer);
+
+        return mp3AudioPlayer;
     }
 
     boolean isLocked() {

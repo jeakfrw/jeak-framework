@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.voice.connection;
 
+import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
+
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
@@ -52,4 +54,11 @@ public interface IClientConnection {
      * @param password  password of the channel
      */
     void sendToChannel(int channelId, String password);
+
+    /**
+     * Registers an Mp3-Audio-Player for the client-connection if the client is connected
+     *
+     * @return mp3AudioPlayer the audio player
+     */
+    IMp3AudioPlayer registerMp3AudioPlayer();
 }

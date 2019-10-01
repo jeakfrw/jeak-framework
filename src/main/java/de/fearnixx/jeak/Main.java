@@ -26,6 +26,7 @@ public class Main implements Runnable {
     private static final String CONF_FORMAT = "application/json";
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final Main INSTANCE = new Main();
+    private static final String LIBRARY_PROPERTY = "jna.library.path";
 
     private final PluginManager pluginManager = new PluginManager();
 
@@ -40,6 +41,10 @@ public class Main implements Runnable {
     private final CommandLine cmd = new CommandLine(System.in, System.out);
 
     public static void main(String[] arguments) {
+
+        final String libraryPath = System.getProperty(LIBRARY_PROPERTY);
+        System.setProperty(LIBRARY_PROPERTY, libraryPath + ";" + new File("libraries/native").getAbsoluteFile().getAbsolutePath());
+
         for (String arg : arguments) {
             logger.info("ARG: {}", arg);
         }
@@ -54,7 +59,7 @@ public class Main implements Runnable {
 
     /**
      * Warning "unchecked" suppressed: Checks are performed!
-     *
+     * <p>
      * Char is not supported - use string .-.
      */
     @SuppressWarnings({"unchecked", "squid:S3776"})
