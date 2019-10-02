@@ -22,7 +22,7 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
         }
     }
 
-    private boolean paused = false;
+    private boolean paused = true;
     private FFmpegAudioSourceSubstream audioSourceSubstream;
 
     public Mp3AudioPlayer() {
@@ -81,7 +81,10 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
             long sleep;
             double volume = 0.5D;
 
+            paused = false;
+
             while (true) {
+
                 int available = availableInput();
 
                 if (available > 0) {
@@ -192,5 +195,10 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
         }
 
         setAudioFile(new FileInputStream(new File(configDir, "frw/voice/sounds/" + filepath)));
+    }
+
+    @Override
+    public boolean isPlaying() {
+        return !paused;
     }
 }

@@ -40,8 +40,14 @@ public interface IMp3AudioPlayer {
 
     /**
      * Sets the audio-file for the audio player
-     *  @param configDir config-dir of the running bot
+     *
+     * @param configDir config-dir of the running bot
      * @param filename  name of the audio file
      */
     void setAudioFile(File configDir, String filename) throws FileNotFoundException;
+
+    /**
+     * @return whether the player is currently playing
+     */
+    boolean isPlaying();
 }

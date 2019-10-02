@@ -51,6 +51,11 @@ public class ClientConnection implements IClientConnection {
     @Override
     public void disconnect(String reason) throws TimeoutException {
         try {
+            if (ts3jClientSocket.getMicrophone() != null
+                    && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(Mp3AudioPlayer.class)) {
+                ((Mp3AudioPlayer) ts3jClientSocket.getMicrophone()).stop();
+            }
+
             ts3jClientSocket.disconnect(reason);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
