@@ -7,8 +7,7 @@ import com.github.manevolent.ffmpeg4j.stream.source.FFmpegSourceStream;
 import de.fearnixx.jeak.teamspeak.voice.sound.opus.OpusParameters;
 import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -182,13 +181,16 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
 
     @Override
     public void setAudioFile(InputStream inputStream) {
-
-        /** TODO: Reset the stream. There is some awkward behaviour here as well
-         if (!frameQueue.isEmpty()) {
-         frameQueue.clear();
-         audioSourceSubstream.close();
-         }*/
-
         audioSourceSubstream = createAudioInputStream(inputStream);
+    }
+
+    @Override
+    public void setAudioFile(File configDir, String filename) throws FileNotFoundException {
+        String filepath = filename;
+        if (!filepath.toLowerCase().endsWith(".mp3")) {
+            filepath += ".mp3";
+        }
+
+        setAudioFile(new FileInputStream(new File(configDir, "frw/voice/sounds/" + filepath)));
     }
 }

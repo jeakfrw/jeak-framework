@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.voice.sound;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 public interface IMp3AudioPlayer {
@@ -35,4 +37,11 @@ public interface IMp3AudioPlayer {
      * @param inputStream the audio
      */
     void setAudioFile(InputStream inputStream);
+
+    /**
+     * Sets the audio-file for the audio player
+     *  @param configDir config-dir of the running bot
+     * @param filename  name of the audio file
+     */
+    void setAudioFile(File configDir, String filename) throws FileNotFoundException;
 }

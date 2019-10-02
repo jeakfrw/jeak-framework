@@ -14,8 +14,7 @@ import de.fearnixx.jeak.voice.connection.IClientConnection;
 import de.fearnixx.jeak.voice.connection.IClientConnectionService;
 import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
 
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +41,10 @@ public class VoiceConnectionTestPlugin extends AbstractTestPlugin {
         addTest("test");
     }
 
+    public static final String[] sounds = new String[]{"avicii", "EpicSaxGuy"};
+
+    private int counter = 0;
+
     @Listener
     public void onConnect(IBotStateEvent.IConnectStateEvent.IPostConnect event) throws Exception {
         connection = connectionService.getClientConnection("test");
@@ -50,7 +53,7 @@ public class VoiceConnectionTestPlugin extends AbstractTestPlugin {
 
         final IMp3AudioPlayer mp3AudioPlayer = connection.registerMp3AudioPlayer();
 
-        mp3AudioPlayer.setAudioFile(new FileInputStream(new File(bot.getConfigDirectory(), "frw/voice/sounds/EpicSaxGuy.mp3")));
+        mp3AudioPlayer.setAudioFile(bot.getConfigDirectory(), sounds[counter++ % 2]);
 
         new Thread(() -> {
             mp3AudioPlayer.start();
@@ -63,6 +66,11 @@ public class VoiceConnectionTestPlugin extends AbstractTestPlugin {
             if (!channels.isEmpty()) {
                 Collections.shuffle(channels);
                 connection.sendToChannel(channels.get(0).getID());
+                try {
+                    mp3AudioPlayer.setAudioFile(bot.getConfigDirectory(), sounds[counter++ % 2]);
+                } catch (FileNotFoundException e) {
+                    //
+                }
             }
         }).build());
 
