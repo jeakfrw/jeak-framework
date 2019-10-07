@@ -1,7 +1,11 @@
 package de.fearnixx.jeak.teamspeak.voice.connection;
 
 import com.github.manevolent.ts3j.command.CommandException;
+import com.github.manevolent.ts3j.event.TS3Listener;
+import com.github.manevolent.ts3j.event.TextMessageEvent;
 import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSocket;
+import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractClientConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
 import de.fearnixx.jeak.voice.connection.IClientConnection;
@@ -17,16 +21,18 @@ public class ClientConnection implements IClientConnection {
     private final AbstractClientConnectionInformation clientConnectionInformation;
     private final String hostname;
     private final int port;
+    private final IEventService eventService;
 
     private LocalTeamspeakClientSocket ts3jClientSocket;
     private boolean locked;
 
     private boolean connected;
 
-    ClientConnection(AbstractClientConnectionInformation clientConnectionInformation, String hostname, int port) {
+    ClientConnection(AbstractClientConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;
+        this.eventService = eventService;
         locked = true;
     }
 
@@ -37,6 +43,17 @@ public class ClientConnection implements IClientConnection {
         ts3jClientSocket.setNickname(clientConnectionInformation.getClientNickname());
         ts3jClientSocket.setIdentity(clientConnectionInformation.getTeamspeakIdentity());
 
+        ts3jClientSocket.addListener(
+                new TS3Listener() {
+                    @Override
+                    public void onTextMessage(TextMessageEvent e) {
+                        eventService.fireEvent(
+                                new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
+                        );
+                    }
+                }
+        );
+
         InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
         ts3jClientSocket.connect(inetSocketAddress, null, 10000L);
 
@@ -44,12 +61,12 @@ public class ClientConnection implements IClientConnection {
     }
 
     @Override
-    public void disconnect() throws TimeoutException {
+    public void disconnect() {
         disconnect(null);
     }
 
     @Override
-    public void disconnect(String reason) throws TimeoutException {
+    public void disconnect(String reason) {
         try {
             if (ts3jClientSocket.getMicrophone() != null
                     && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(Mp3AudioPlayer.class)) {
@@ -59,7 +76,7 @@ public class ClientConnection implements IClientConnection {
             ts3jClientSocket.disconnect(reason);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-        } catch (IOException | ExecutionException e) {
+        } catch (IOException | ExecutionException | TimeoutException e) {
             //We assume that the server is not reachable for this connection. Therefor it is declared disconnected
         }
 
