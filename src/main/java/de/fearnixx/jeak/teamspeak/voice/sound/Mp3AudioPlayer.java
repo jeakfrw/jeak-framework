@@ -9,10 +9,11 @@ import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
 
 import java.io.*;
 import java.util.Collection;
-import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioPlayer {
+
+    private static final String MP3_EXTENSION = "mp3";
 
     static {
         try {
@@ -24,6 +25,7 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
 
     private boolean paused = true;
     private FFmpegAudioSourceSubstream audioSourceSubstream;
+    private LinkedBlockingQueue<AudioFrame> frameQueue;
 
     public Mp3AudioPlayer() {
         super(AUDIO_FORMAT,
@@ -38,6 +40,8 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
                         true // OPUS MUSIC - channel doesn't have to be Opus Music ;)
                 )
         );
+
+        startWrite();
     }
 
     public Mp3AudioPlayer(InputStream fileInputStream) {
@@ -49,12 +53,11 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
     }
 
     @Override
-    public void start() {
-        startWrite();
-    }
-
-    @Override
     public void stop() {
+        if (!paused) {
+            pause();
+        }
+
         stopWrite();
     }
 
@@ -72,7 +75,7 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
                         bufferSize
                 )) {
 
-            Queue<AudioFrame> frameQueue = new LinkedBlockingQueue<>();
+            this.frameQueue = new LinkedBlockingQueue<>();
             AudioFrame currentFrame = null;
             int frameOffset = 0; // offset within current frame
 
@@ -134,6 +137,7 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
                 }
 
                 if (available < 0) {
+                    paused = true;
                     break;
                 }
             }
@@ -149,6 +153,7 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
     }
 
     public void pause() {
+        frameQueue.clear();
         paused = true;
     }
 
@@ -165,13 +170,13 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
         }
     }
 
-    public static FFmpegAudioSourceSubstream createAudioInputStream(InputStream inputStream) {
+    private FFmpegAudioSourceSubstream createAudioInputStream(InputStream inputStream) {
         try {
             FFmpegInput input = new FFmpegInput(inputStream);
 
             //There might be an awkward reason - but this stream cant be used with try-with-resource
 
-            FFmpegSourceStream stream = input.open(FFmpeg.getInputFormatByName("mp3"));
+            FFmpegSourceStream stream = input.open(FFmpeg.getInputFormatByName(getFilenameExtension()));
             return (FFmpegAudioSourceSubstream) stream.registerStreams()
                     .stream()
                     .filter(x -> x.getMediaType() == MediaType.AUDIO)
@@ -188,17 +193,21 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
     }
 
     @Override
-    public void setAudioFile(File configDir, String filename) throws FileNotFoundException {
+    public void setAudioFile(File parentDir, String filename) throws FileNotFoundException {
         String filepath = filename;
-        if (!filepath.toLowerCase().endsWith(".mp3")) {
-            filepath += ".mp3";
+        if (!filepath.toLowerCase().endsWith(getFilenameExtension())) {
+            filepath += "." + getFilenameExtension();
         }
 
-        setAudioFile(new FileInputStream(new File(configDir, "frw/voice/sounds/" + filepath)));
+        setAudioFile(new FileInputStream(new File(parentDir, filepath)));
     }
 
     @Override
     public boolean isPlaying() {
         return !paused;
+    }
+
+    private String getFilenameExtension() {
+        return MP3_EXTENSION;
     }
 }
