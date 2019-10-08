@@ -6,9 +6,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Represents a client connection
+ * Represents a voice connection
  */
-public interface IClientConnection {
+public interface IVoiceConnection {
 
     /**
      * Connects the client to the server

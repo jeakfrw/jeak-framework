@@ -5,7 +5,7 @@ import com.github.manevolent.ts3j.identity.LocalIdentity;
 /**
  * STUB
  */
-public class DbClientConnectionInformation extends AbstractClientConnectionInformation {
+public class DbVoiceConnectionInformation extends AbstractVoiceConnectionInformation {
 
     @Override
     public void setClientNickname(String clientNickname) {

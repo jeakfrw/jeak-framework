@@ -8,11 +8,11 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.IServer;
-import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractClientConnectionInformation;
-import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigClientConnectionInformation;
-import de.fearnixx.jeak.teamspeak.voice.connection.info.DbClientConnectionInformation;
-import de.fearnixx.jeak.voice.connection.IClientConnection;
-import de.fearnixx.jeak.voice.connection.IClientConnectionService;
+import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
+import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
+import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
+import de.fearnixx.jeak.voice.connection.IVoiceConnection;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.config.FileConfig;
 
@@ -21,8 +21,8 @@ import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 
-@FrameworkService(serviceInterface = IClientConnectionService.class)
-public class ClientConnectionService implements IClientConnectionService {
+@FrameworkService(serviceInterface = IVoiceConnectionService.class)
+public class VoiceConnectionService implements IVoiceConnectionService {
 
     @Inject
     private IServer server;
@@ -35,19 +35,19 @@ public class ClientConnectionService implements IClientConnectionService {
 
     private boolean isDatabaseConnected = false;
 
-    private Map<String, ClientConnection> clientConnections = new HashMap<>();
+    private Map<String, VoiceConnection> clientConnections = new HashMap<>();
 
 
     @Override
     public boolean isConnectionAvailable(String identifier) {
-        final ClientConnection connection = clientConnections.get(identifier);
+        final VoiceConnection connection = clientConnections.get(identifier);
         return connection == null || !connection.isLocked();
     }
 
     @Override
-    public IClientConnection getClientConnection(String identifier) {
+    public IVoiceConnection getVoiceConnection(String identifier) {
         if (clientConnections.containsKey(identifier)) {
-            final ClientConnection clientConnection = clientConnections.get(identifier);
+            final VoiceConnection clientConnection = clientConnections.get(identifier);
 
             if (clientConnection.isLocked()) {
                 throw new IllegalStateException("Tried to access a locked client connection!");
@@ -59,13 +59,13 @@ public class ClientConnectionService implements IClientConnectionService {
 
         final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
 
-        AbstractClientConnectionInformation newClientConnectionInformation;
+        AbstractVoiceConnectionInformation newClientConnectionInformation;
 
         if (isDatabaseConnected) {
             //TODO: Store client connection information in database
-            newClientConnectionInformation = new DbClientConnectionInformation();
+            newClientConnectionInformation = new DbVoiceConnectionInformation();
         } else {
-            newClientConnectionInformation = new ConfigClientConnectionInformation(
+            newClientConnectionInformation = new ConfigVoiceConnectionInformation(
                     new FileConfig(LoaderFactory.getLoader("application/json"),
                             new File(bot.getConfigDirectory(), "frw/voice/" + identifier + ".json")),
                     identifier
@@ -74,7 +74,7 @@ public class ClientConnectionService implements IClientConnectionService {
             newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
         }
 
-        final ClientConnection clientConnection = new ClientConnection(
+        final VoiceConnection clientConnection = new VoiceConnection(
                 newClientConnectionInformation,
                 server.getHost(),
                 server.getPort(),
@@ -89,8 +89,8 @@ public class ClientConnectionService implements IClientConnectionService {
     @Listener
     public void preShutdown(IBotStateEvent.IPreShutdown event) {
         clientConnections.values().stream()
-                .filter(ClientConnection::isConnected)
-                .forEach(ClientConnection::disconnect);
+                .filter(VoiceConnection::isConnected)
+                .forEach(VoiceConnection::disconnect);
     }
 
     @Listener

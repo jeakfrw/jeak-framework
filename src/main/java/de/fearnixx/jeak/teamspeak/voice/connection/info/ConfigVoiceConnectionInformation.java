@@ -9,7 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-public class ConfigClientConnectionInformation extends AbstractClientConnectionInformation {
+public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInformation {
 
     private static final String NICKNAME_NODE = "nickname";
     private static final String IDENTITY_NODE = "identity";
@@ -17,7 +17,7 @@ public class ConfigClientConnectionInformation extends AbstractClientConnectionI
 
     private String identifier;
 
-    public ConfigClientConnectionInformation(IConfig configRef, String identifier) {
+    public ConfigVoiceConnectionInformation(IConfig configRef, String identifier) {
         this.identifier = identifier;
         this.configRef = configRef;
 

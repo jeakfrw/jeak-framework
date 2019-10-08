@@ -4,20 +4,18 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
+/**
+ * Represents an audio-player that can play mp3-files
+ */
 public interface IMp3AudioPlayer {
 
     /**
-     * Starts the audio player. Has to be called to initialize the audio player
-     */
-    void start();
-
-    /**
-     * Stops the current file
+     * Stops playing the current file
      */
     void stop();
 
     /**
-     * Starts playing the current selected audio file
+     * Starts playing the current audio file
      */
     void play();
 
@@ -41,13 +39,13 @@ public interface IMp3AudioPlayer {
     /**
      * Sets the audio-file for the audio player
      *
-     * @param configDir config-dir of the running bot
+     * @param parentDir parent-dir of the audio-file
      * @param filename  name of the audio file
      */
-    void setAudioFile(File configDir, String filename) throws FileNotFoundException;
+    void setAudioFile(File parentDir, String filename) throws FileNotFoundException;
 
     /**
-     * @return whether the player is currently playing
+     * @return whether the audio-player is currently playing
      */
     boolean isPlaying();
 }

@@ -13,6 +13,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This class was extracted from an example by manevolent
+ */
 public class TeamspeakFastMixerSink implements Microphone {
     static final AudioFormat AUDIO_FORMAT =
             new AudioFormat(48000, 32, 2, true, false);

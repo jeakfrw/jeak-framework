@@ -3,6 +3,9 @@ package de.fearnixx.jeak.teamspeak.voice.sound.opus;
 
 import net.tomp2p.opuswrapper.Opus;
 
+/**
+ * This class was extracted from an example by manevolent
+ */
 public class OpusUtil {
     public static int checkError(String description, int returnCode) throws RuntimeException {
         if (returnCode < Opus.OPUS_OK)

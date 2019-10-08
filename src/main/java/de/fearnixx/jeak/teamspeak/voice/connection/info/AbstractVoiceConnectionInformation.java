@@ -1,9 +1,9 @@
 package de.fearnixx.jeak.teamspeak.voice.connection.info;
 
 import com.github.manevolent.ts3j.identity.LocalIdentity;
-import de.fearnixx.jeak.voice.connection.IClientConnectionInformation;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionInformation;
 
-public abstract class AbstractClientConnectionInformation implements IClientConnectionInformation {
+public abstract class AbstractVoiceConnectionInformation implements IVoiceConnectionInformation {
 
     public abstract void setClientNickname(String clientNickname);
 

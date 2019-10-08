@@ -11,6 +11,8 @@ import java.nio.ShortBuffer;
 
 /**
  * Thread-safe opus encoder
+ *
+ * This class was extracted from an example by manevolent
  */
 public class OpusEncoder implements AutoCloseable {
     private static final int[] OPUS_PERMITTED_SAMPLE_RATES =

@@ -6,9 +6,9 @@ import com.github.manevolent.ts3j.event.TextMessageEvent;
 import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSocket;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
-import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractClientConnectionInformation;
+import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
-import de.fearnixx.jeak.voice.connection.IClientConnection;
+import de.fearnixx.jeak.voice.connection.IVoiceConnection;
 import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
 
 import java.io.IOException;
@@ -16,9 +16,9 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
-public class ClientConnection implements IClientConnection {
+public class VoiceConnection implements IVoiceConnection {
 
-    private final AbstractClientConnectionInformation clientConnectionInformation;
+    private final AbstractVoiceConnectionInformation clientConnectionInformation;
     private final String hostname;
     private final int port;
     private final IEventService eventService;
@@ -28,7 +28,7 @@ public class ClientConnection implements IClientConnection {
 
     private boolean connected;
 
-    ClientConnection(AbstractClientConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService) {
+    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;

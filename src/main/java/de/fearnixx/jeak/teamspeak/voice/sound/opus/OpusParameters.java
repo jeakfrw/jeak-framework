@@ -1,5 +1,8 @@
 package de.fearnixx.jeak.teamspeak.voice.sound.opus;
 
+/**
+ * This class was extracted from an example by manevolent
+ */
 public class OpusParameters {
     private final int opusFrameRate;
     private final int opusBitrate;

@@ -2,9 +2,9 @@ package de.fearnixx.jeak.voice.connection;
 
 
 /**
- * Represents information on a connection of a client
+ * Represents information of a voice connection
  */
-public interface IClientConnectionInformation {
+public interface IVoiceConnectionInformation {
 
     /**
      * @return UNIQUE identifier of the connection
