@@ -136,21 +136,6 @@ public class DBUserService extends AbstractUserService {
     }
 
     @Override
-    public List<IClient> findClientByUniqueID(String ts3uniqueID) {
-        return null;
-    }
-
-    @Override
-    public List<IClient> findClientByDBID(int ts3dbID) {
-        return null;
-    }
-
-    @Override
-    public List<IClient> findClientByNickname(String ts3nickname) {
-        return null;
-    }
-
-    @Override
     public Optional<IClient> getClientByID(int clientId) {
         return Optional.empty();
     }
