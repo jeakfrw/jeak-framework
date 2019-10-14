@@ -24,15 +24,21 @@ import static spark.Spark.*;
 
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
-    public static final int MAX_THREADS = Main.getProperty("bot.sparkadapter.maxpoolsize", 8);
-    public static final int MIN_THREADS = Main.getProperty("bot.sparkadapter.minpoolsize", 3);
+    public static final int NUM_THREADS = Main.getProperty("jeak.http.poolsize", -1);
+    public static final int MAX_THREADS = Main.getProperty("jeak.sparkadapter.maxpoolsize", 8);
+    public static final int MIN_THREADS = Main.getProperty("jeak.sparkadapter.minpoolsize", 3);
     public static final int TIMEOUT_MILLIS = 30000;
     private IConnectionVerifier connectionVerifier;
     private Map<String, String> headers;
 
     public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
         super(restConfiguration);
-        threadPool(MAX_THREADS, MIN_THREADS, TIMEOUT_MILLIS);
+        // only use NUM_THREADS, if it was configured
+        if (NUM_THREADS > 0) {
+            threadPool(NUM_THREADS, NUM_THREADS, TIMEOUT_MILLIS);
+        } else {
+            threadPool(MAX_THREADS, MIN_THREADS, TIMEOUT_MILLIS);
+        }
         this.connectionVerifier = connectionVerifier;
     }
 
