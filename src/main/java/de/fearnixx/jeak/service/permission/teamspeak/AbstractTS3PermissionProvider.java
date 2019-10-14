@@ -103,7 +103,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     protected List<ITS3Permission> getActiveContext(Integer clientID, String permSID) {
         final List<ITS3Permission> result = new ArrayList<>();
         Optional<IClient> optClient = userService.getClientByID(clientID);
-        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Given client ID is not online: " + clientID));
+        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Cannot check permissions: Given client ID is not online: " + clientID));
 
         client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
         getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);
