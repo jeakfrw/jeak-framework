@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.controller.controller;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.reflect.PathParam;
 import de.fearnixx.jeak.reflect.RequestBody;
 import de.fearnixx.jeak.reflect.RequestMapping;
@@ -19,16 +20,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static spark.Spark.before;
-import static spark.Spark.halt;
+import static spark.Spark.*;
 
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
+    public static final int NUM_THREADS = Main.getProperty("jeak.http.poolsize", -1);
+    public static final int MAX_THREADS = Main.getProperty("jeak.sparkadapter.maxpoolsize", 8);
+    public static final int MIN_THREADS = Main.getProperty("jeak.sparkadapter.minpoolsize", 3);
+    public static final int TIMEOUT_MILLIS = 30000;
     private IConnectionVerifier connectionVerifier;
     private Map<String, String> headers;
 
     public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
         super(restConfiguration);
+        // only use NUM_THREADS, if it was configured
+        if (NUM_THREADS > 0) {
+            threadPool(NUM_THREADS, NUM_THREADS, TIMEOUT_MILLIS);
+        } else {
+            threadPool(MAX_THREADS, MIN_THREADS, TIMEOUT_MILLIS);
+        }
         this.connectionVerifier = connectionVerifier;
     }
 
