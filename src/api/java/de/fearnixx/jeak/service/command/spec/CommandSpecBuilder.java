@@ -1,8 +1,6 @@
 package de.fearnixx.jeak.service.command.spec;
 
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class CommandSpecBuilder {
@@ -63,12 +61,55 @@ public class CommandSpecBuilder {
         return this;
     }
 
-    public ICommandSpec build() {
-        return null;
-    }
-
     public CommandSpecBuilder name(String name) {
         this.name = name;
         return this;
+    }
+
+    public ICommandSpec build() {
+        return new ICommandSpec() {
+            private final String fName = name;
+            private final List<String> fAliases = new ArrayList<>(aliases);
+            private final List<ICommandParamSpec> fParams = new ArrayList<>(paramSpecs);
+            private final List<ICommandArgumentSpec> fArguments = new ArrayList<>(argumentSpecs);
+            private final Consumer<Object> fExecutor = executor;
+            private final String fRequiredPermission = requiredPerm;
+            private final int fRequiredPermValue = requiredPermValue;
+
+            @Override
+            public String getCommand() {
+                return fName;
+            }
+
+            @Override
+            public List<String> getAliases() {
+                return fAliases;
+            }
+
+            @Override
+            public List<ICommandParamSpec> getParameters() {
+                return fParams;
+            }
+
+            @Override
+            public List<ICommandArgumentSpec> getArguments() {
+                return fArguments;
+            }
+
+            @Override
+            public Consumer<Object> getExecutor() {
+                return fExecutor;
+            }
+
+            @Override
+            public Optional<String> getRequiredPermission() {
+                return Optional.ofNullable(fRequiredPermission);
+            }
+
+            @Override
+            public int getRequiredPermissionValue() {
+                return fRequiredPermValue;
+            }
+        };
     }
 }

@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.command.spec;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -35,6 +36,38 @@ public class ParamSpecBuilder {
     }
 
     public ICommandParamSpec build() {
-        return null;
+        return new ICommandParamSpec() {
+
+            private final String fName = name;
+            private final SpecType fSpecType = null;
+            private final List<ICommandParamSpec> fFirstOfSpecs = new ArrayList<>(firstOfSpecs);
+            private final ICommandParamSpec fOptionalParamSpec = optionalSpec;
+            private final Class<?> fValueType = valueType;
+
+            @Override
+            public String getName() {
+                return fName;
+            }
+
+            @Override
+            public SpecType getSpecType() {
+                return fSpecType;
+            }
+
+            @Override
+            public List<ICommandParamSpec> getFirstOfP() {
+                return fFirstOfSpecs;
+            }
+
+            @Override
+            public ICommandParamSpec getOptional() {
+                return fOptionalParamSpec;
+            }
+
+            @Override
+            public Class<?> getValueType() {
+                return fValueType;
+            }
+        };
     }
 }

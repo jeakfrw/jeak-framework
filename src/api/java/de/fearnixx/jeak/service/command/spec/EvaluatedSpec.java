@@ -6,9 +6,9 @@ public interface EvaluatedSpec<T> {
 
     SpecType getSpecType();
 
-    List<T> getFirstOfParams();
+    List<T> getFirstOfP();
 
-    T getOptionalParam();
+    T getOptional();
 
     Class<?> getValueType();
 
