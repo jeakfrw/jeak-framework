@@ -1,10 +1,10 @@
 package de.fearnixx.jeak.service.command.spec.matcher;
 
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 
 public interface IParameterMatcher<T> {
 
     Class<T> getSupportedType();
 
-    IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName);
+    IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName);
 }

@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -39,7 +39,7 @@ public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
         String paramString = ctx.getArguments().get(startParamPosition);
         List<IUser> results = Collections.emptyList();
         if (DBID_PATTERN.matcher(paramString).matches()) {
@@ -62,8 +62,8 @@ public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
 
         if (results.size() == 1) {
             IUser user = results.get(0);
-            ctx.getParameters().put(parameterName, user);
-            ctx.getParameters().put(parameterName + "Id", user);
+            ctx.putOrReplaceOne(parameterName, user);
+            ctx.putOrReplaceOne(parameterName + "Id", user);
             return MatcherResponse.SUCCESS;
 
         } else if (!results.isEmpty()) {

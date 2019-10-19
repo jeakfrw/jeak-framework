@@ -49,7 +49,15 @@ public class CommandService implements ICommandService {
     private final ExecutorService executorSvc;
 
     public CommandService() {
-        executorSvc = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+        executorSvc = Executors.newFixedThreadPool(getThreadPoolSize());
+    }
+
+    protected int getThreadPoolSize() {
+        return THREAD_POOL_SIZE;
+    }
+
+    protected int getTerminateDelay() {
+        return AWAIT_TERMINATION_DELAY;
     }
 
     /**
@@ -239,5 +247,9 @@ public class CommandService implements ICommandService {
     @Override
     public void unregisterCommand(ICommandSpec specInstance) {
         throw new UnsupportedOperationException("LEGACY IMPLEMENTATION USED!");
+    }
+
+    protected Map<String, ICommandReceiver> getLegacyReceivers() {
+        return commands;
     }
 }

@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -22,14 +22,15 @@ public class ISubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
         try {
             var optSubject = permissionService.getFrameworkProvider()
                     .getSubject(UUID.fromString(ctx.getArguments().get(startParamPosition)));
             if (optSubject.isEmpty()) {
                 return getIncompatibleTypeResponse(ctx, startParamPosition);
             }
-            ctx.getParameters().put(parameterName, optSubject.get());
+            ctx.putOrReplaceOne(parameterName, optSubject.get());
+            ctx.putOrReplaceOne(parameterName + "Id", optSubject.get().getUniqueID());
             return MatcherResponse.SUCCESS;
 
         } catch (IllegalArgumentException e) {

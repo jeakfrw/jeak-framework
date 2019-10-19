@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -30,13 +30,13 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String argName) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String argName) {
         String paramString = ctx.getArguments().get(startParamPosition);
         if (ID_PATTERN.matcher(paramString).matches()) {
             IChannel channel = dataCache.getChannelMap().getOrDefault(Integer.parseInt(paramString), null);
             if (channel != null) {
-                ctx.getParameters().put(argName, channel);
-                ctx.getParameters().put(argName + "Id", channel.getID());
+                ctx.putOrReplaceOne(argName, channel);
+                ctx.putOrReplaceOne(argName + "Id", channel.getID());
                 return MatcherResponse.SUCCESS;
             }
         } else {
@@ -47,8 +47,8 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
 
             if (result.size() == 1) {
                 IChannel channel = result.get(0);
-                ctx.getParameters().put(argName, channel);
-                ctx.getParameters().put(argName + "Id", channel.getID());
+                ctx.putOrReplaceOne(argName, channel);
+                ctx.putOrReplaceOne(argName + "Id", channel.getID());
                 return MatcherResponse.SUCCESS;
 
             } else if (result.size() > 1) {

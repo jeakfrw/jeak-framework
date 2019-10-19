@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command.matcher.meta;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -19,7 +19,7 @@ public class AllOfMatcher implements IParameterMatcher<Void> {
     private ILocalizationUnit localeUnit;
 
     @Override
-    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int paramStartIndex, String name) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int paramStartIndex, String name) {
         List<String> notices = new LinkedList<>();
         int matcherIndex = 0;
         for (var paramEntry : parameters.entrySet()) {

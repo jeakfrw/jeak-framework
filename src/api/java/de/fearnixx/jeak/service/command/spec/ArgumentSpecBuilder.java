@@ -61,6 +61,6 @@ public class ArgumentSpecBuilder {
             public Class<?> getValueType() {
                 return null;
             }
-        }
+        };
     }
 }

@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command.matcher.meta;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -31,7 +31,7 @@ public class HasPermissionMatcher implements IParameterMatcher<Void> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String name) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String name) {
         IClient sender = ctx.getSender();
 
         var optPerm = sender.getPermission(requiredPermission);

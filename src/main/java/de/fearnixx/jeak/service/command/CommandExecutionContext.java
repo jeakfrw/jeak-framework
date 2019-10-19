@@ -32,8 +32,9 @@ public class CommandExecutionContext extends CommandContext implements ICommandE
         return getOne(fullName).isPresent();
     }
 
-    public Map<String, Object> getParameters() {
-        return parameters;
+    @Override
+    public Object putOrReplaceOne(String fullName, Object value) {
+        return parameters.put(fullName, value);
     }
 
     public IClient getSender() {

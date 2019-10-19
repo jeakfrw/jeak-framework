@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -38,7 +38,7 @@ public class ClientParameterMatcher extends AbstractTypeMatcher<IClient> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
         String paramString = ctx.getArguments().get(startParamPosition);
         List<IClient> results = Collections.emptyList();
         if (DBID_PATTERN.matcher(paramString).matches()) {
@@ -60,7 +60,8 @@ public class ClientParameterMatcher extends AbstractTypeMatcher<IClient> {
         }
 
         if (results.size() == 1) {
-            ctx.getParameters().put(parameterName, results.get(0));
+            ctx.putOrReplaceOne(parameterName, results.get(0));
+            ctx.putOrReplaceOne(parameterName + "Id", results.get(0).getClientID());
 
         } else if (!results.isEmpty()) {
             String names =
