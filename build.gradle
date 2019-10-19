@@ -4,6 +4,7 @@ def projectVersion = project.version
 
 apply plugin: 'java'
 apply plugin: 'maven-publish'
+apply plugin: 'antlr'
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
@@ -93,6 +94,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
 }
 
+apply from: './antlr.gradle'
 apply from: './artifacts.gradle'
 apply from: './distribution.gradle'
 apply from: './publication.gradle'
