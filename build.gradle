@@ -93,6 +93,7 @@ dependencies {
     runtime 'com.sun.mail:dsn:1.6.4'
     
     testCompile 'junit:junit:4.12'
+    testCompile 'org.hamcrest:hamcrest:2.2'
 }
 
 apply from: './antlr.gradle'

@@ -40,7 +40,7 @@ task deleteInvalidGrammarSource(type: Delete) {
     dependsOn tasks.fixGrammarSourcePackage
 }
 
-build {
+classes {
     dependsOn tasks.deleteInvalidGrammarSource
 }
 
