@@ -19,7 +19,7 @@ public class CommandV2TestPlugin extends AbstractTestPlugin {
                         argumentSpec("barg", "b", Integer.class)
                 )
                 .permission("test.command")
-                .subcommand(
+                .subCommand(
                         commandSpec("test")
                                 .parameters(
                                         paramSpec("something", String.class),

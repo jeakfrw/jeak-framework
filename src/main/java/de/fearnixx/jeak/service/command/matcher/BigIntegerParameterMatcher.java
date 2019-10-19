@@ -1,15 +1,12 @@
 package de.fearnixx.jeak.service.command.matcher;
 
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 
 import java.math.BigInteger;
-import java.util.Optional;
 
-public class BigIntegerParameterMatcher implements IParameterMatcher<BigInteger> {
-
-    private static final Logger logger = LoggerFactory.getLogger(BigIntegerParameterMatcher.class);
+public class BigIntegerParameterMatcher extends AbstractTypeMatcher<BigInteger> {
 
     @Override
     public Class<BigInteger> getSupportedType() {
@@ -17,13 +14,15 @@ public class BigIntegerParameterMatcher implements IParameterMatcher<BigInteger>
     }
 
     @Override
-    public Optional<BigInteger> tryMatch(String paramString) {
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String argName) {
         BigInteger number = null;
         try {
-            number = new BigInteger(paramString);
+            number = new BigInteger(ctx.getArguments().get(startParamPosition));
+            ctx.getParameters().put(argName, number);
+            return MatcherResponse.SUCCESS;
+
         } catch (NumberFormatException e) {
-            logger.info("Could not parse number parameter: {}", paramString);
+            return getIncompatibleTypeResponse(ctx, startParamPosition);
         }
-        return Optional.ofNullable(number);
     }
 }

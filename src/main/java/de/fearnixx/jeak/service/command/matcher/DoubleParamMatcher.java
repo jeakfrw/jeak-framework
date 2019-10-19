@@ -1,12 +1,12 @@
 package de.fearnixx.jeak.service.command.matcher;
 
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
-public class DoubleParamMatcher implements IParameterMatcher<Double> {
+public class DoubleParamMatcher extends AbstractTypeMatcher<Double> {
 
     private static final Logger logger = LoggerFactory.getLogger(DoubleParamMatcher.class);
 
@@ -16,13 +16,15 @@ public class DoubleParamMatcher implements IParameterMatcher<Double> {
     }
 
     @Override
-    public Optional<Double> tryMatch(String paramString) {
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
         Double number = null;
         try {
-            number = Double.parseDouble(paramString);
+            number = Double.parseDouble(ctx.getArguments().get(startParamPosition));
+            ctx.getParameters().put(parameterName, number);
+            return MatcherResponse.SUCCESS;
+
         } catch (NumberFormatException e) {
-            logger.warn("Failed to parse double parameter: {}", e);
+            return getIncompatibleTypeResponse(ctx, startParamPosition);
         }
-        return Optional.ofNullable(number);
     }
 }

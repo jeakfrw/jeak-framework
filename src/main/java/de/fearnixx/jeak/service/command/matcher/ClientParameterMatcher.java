@@ -1,7 +1,10 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
@@ -10,10 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-public class ClientParameterMatcher implements IParameterMatcher<IClient> {
+public class ClientParameterMatcher extends AbstractTypeMatcher<IClient> {
 
     private static final Pattern DBID_PATTERN = Pattern.compile("\\d+");
     private static final Pattern CLID_PATTERN = Pattern.compile("c:\\d+");
@@ -34,7 +38,8 @@ public class ClientParameterMatcher implements IParameterMatcher<IClient> {
     }
 
     @Override
-    public Optional<IClient> tryMatch(String paramString) {
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
+        String paramString = ctx.getArguments().get(startParamPosition);
         List<IClient> results = Collections.emptyList();
         if (DBID_PATTERN.matcher(paramString).matches()) {
             results = userService.findClientByDBID(Integer.parseInt(paramString));
@@ -55,10 +60,16 @@ public class ClientParameterMatcher implements IParameterMatcher<IClient> {
         }
 
         if (results.size() == 1) {
-            return Optional.of(results.get(0));
+            ctx.getParameters().put(parameterName, results.get(0));
+
         } else if (!results.isEmpty()) {
-            logger.info("Found multiple results for user param: {}", paramString);
+            String names =
+                    results.stream().map(IClient::toString).collect(Collectors.joining(", "));
+            String ambiguityMessage =
+                    getLocaleUnit().getContext(ctx.getSender().getCountryCode())
+                            .getMessage("matcher.type.ambiguousSearch", Map.of("results", names));
+            return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, ambiguityMessage);
         }
-        return Optional.empty();
+        return getIncompatibleTypeResponse(ctx, startParamPosition);
     }
 }

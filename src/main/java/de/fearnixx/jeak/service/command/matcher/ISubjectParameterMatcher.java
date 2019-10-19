@@ -1,14 +1,17 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.ISubject;
 
-import java.util.Optional;
+import java.util.Map;
 import java.util.UUID;
 
-public class ISubjectParameterMatcher implements IParameterMatcher<ISubject> {
+public class ISubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
 
     @Inject
     private IPermissionService permissionService;
@@ -19,7 +22,21 @@ public class ISubjectParameterMatcher implements IParameterMatcher<ISubject> {
     }
 
     @Override
-    public Optional<ISubject> tryMatch(String paramString) {
-        return permissionService.getFrameworkProvider().getSubject(UUID.fromString(paramString));
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
+        try {
+            var optSubject = permissionService.getFrameworkProvider()
+                    .getSubject(UUID.fromString(ctx.getArguments().get(startParamPosition)));
+            if (optSubject.isEmpty()) {
+                return getIncompatibleTypeResponse(ctx, startParamPosition);
+            }
+            ctx.getParameters().put(parameterName, optSubject.get());
+            return MatcherResponse.SUCCESS;
+
+        } catch (IllegalArgumentException e) {
+            String invalidArgumentMessage =
+                    getLocaleUnit().getContext(ctx.getSender().getCountryCode())
+                            .getMessage("matcher.type.incompatible", Map.of("type", UUID.class.getSimpleName()));
+            return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, invalidArgumentMessage);
+        }
     }
 }

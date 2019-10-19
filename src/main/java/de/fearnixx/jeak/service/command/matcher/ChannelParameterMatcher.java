@@ -1,18 +1,21 @@
 package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class ChannelParameterMatcher implements IParameterMatcher<IChannel> {
+public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
 
     private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
@@ -27,11 +30,14 @@ public class ChannelParameterMatcher implements IParameterMatcher<IChannel> {
     }
 
     @Override
-    public Optional<IChannel> tryMatch(String paramString) {
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String argName) {
+        String paramString = ctx.getArguments().get(startParamPosition);
         if (ID_PATTERN.matcher(paramString).matches()) {
             IChannel channel = dataCache.getChannelMap().getOrDefault(Integer.parseInt(paramString), null);
             if (channel != null) {
-                return Optional.of(channel);
+                ctx.getParameters().put(argName, channel);
+                ctx.getParameters().put(argName + "Id", channel.getID());
+                return MatcherResponse.SUCCESS;
             }
         } else {
             List<IChannel> result = dataCache.getChannels()
@@ -39,12 +45,25 @@ public class ChannelParameterMatcher implements IParameterMatcher<IChannel> {
                     .filter(c -> c.getName().contains(paramString))
                     .collect(Collectors.toList());
 
-            if (result.size() > 1) {
-                logger.warn("Multiple results found for user input: {}", paramString);
-            } else if (result.size() == 1) {
-                return Optional.of(result.get(0));
+            if (result.size() == 1) {
+                IChannel channel = result.get(0);
+                ctx.getParameters().put(argName, channel);
+                ctx.getParameters().put(argName + "Id", channel.getID());
+                return MatcherResponse.SUCCESS;
+
+            } else if (result.size() > 1) {
+                String allChannels =
+                        result.stream()
+                                .map(c -> c.getName() + '/' + c.getID())
+                                .collect(Collectors.joining(","));
+                String ambiguityMessage = getLocaleUnit()
+                        .getContext(ctx.getSender().getCountryCode())
+                        .getMessage("matcher.type.ambiguousSearch",
+                                Map.of("results", allChannels));
+                return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, ambiguityMessage);
             }
         }
-        return Optional.empty();
+
+        return getIncompatibleTypeResponse(ctx, startParamPosition);
     }
 }

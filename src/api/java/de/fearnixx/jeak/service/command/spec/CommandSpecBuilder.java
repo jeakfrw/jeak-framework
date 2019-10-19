@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.service.command.spec;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 public class CommandSpecBuilder {
 
@@ -9,7 +8,7 @@ public class CommandSpecBuilder {
     private final List<ICommandSpec> subcommands = new LinkedList<>();
     private final List<ICommandArgumentSpec> argumentSpecs = new LinkedList<>();
     private final List<ICommandParamSpec> paramSpecs = new LinkedList<>();
-    private Consumer<Object> executor;
+    private ICommandExecutor executor;
     private String name;
     private String requiredPerm;
     private int requiredPermValue;
@@ -24,7 +23,7 @@ public class CommandSpecBuilder {
         return this;
     }
 
-    public CommandSpecBuilder subcommand(ICommandSpec spec) {
+    public CommandSpecBuilder subCommand(ICommandSpec spec) {
         subcommands.add(spec);
         return this;
     }
@@ -45,7 +44,7 @@ public class CommandSpecBuilder {
         return this;
     }
 
-    public CommandSpecBuilder executor(Consumer<Object> executor) {
+    public CommandSpecBuilder executor(ICommandExecutor executor) {
         this.executor = executor;
         return this;
     }
@@ -72,7 +71,7 @@ public class CommandSpecBuilder {
             private final List<String> fAliases = new ArrayList<>(aliases);
             private final List<ICommandParamSpec> fParams = new ArrayList<>(paramSpecs);
             private final List<ICommandArgumentSpec> fArguments = new ArrayList<>(argumentSpecs);
-            private final Consumer<Object> fExecutor = executor;
+            private final ICommandExecutor fExecutor = executor;
             private final String fRequiredPermission = requiredPerm;
             private final int fRequiredPermValue = requiredPermValue;
 
@@ -97,7 +96,7 @@ public class CommandSpecBuilder {
             }
 
             @Override
-            public Consumer<Object> getExecutor() {
+            public ICommandExecutor getExecutor() {
                 return fExecutor;
             }
 

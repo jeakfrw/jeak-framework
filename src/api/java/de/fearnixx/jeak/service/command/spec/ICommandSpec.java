@@ -2,7 +2,6 @@ package de.fearnixx.jeak.service.command.spec;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public interface ICommandSpec {
 
@@ -14,7 +13,7 @@ public interface ICommandSpec {
 
     List<ICommandArgumentSpec> getArguments();
 
-    Consumer<Object> getExecutor();
+    ICommandExecutor getExecutor();
 
     Optional<String> getRequiredPermission();
 

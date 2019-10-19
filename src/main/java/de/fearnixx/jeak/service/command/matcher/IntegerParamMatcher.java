@@ -1,12 +1,12 @@
 package de.fearnixx.jeak.service.command.matcher;
 
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
-public class IntegerParamMatcher implements IParameterMatcher<Integer> {
+public class IntegerParamMatcher extends AbstractTypeMatcher<Integer> {
 
     private static final Logger logger = LoggerFactory.getLogger(IntegerParamMatcher.class);
 
@@ -16,13 +16,14 @@ public class IntegerParamMatcher implements IParameterMatcher<Integer> {
     }
 
     @Override
-    public Optional<Integer> tryMatch(String paramString) {
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String parameterName) {
         Integer number = null;
         try {
-            number = Integer.parseInt(paramString);
+            number = Integer.parseInt(ctx.getArguments().get(startParamPosition));
+            ctx.getParameters().put(parameterName, number);
+            return MatcherResponse.SUCCESS;
         } catch (NumberFormatException e) {
-            logger.info("Failed to extract number parameter from given value: {}", paramString);
+            return getIncompatibleTypeResponse(ctx, startParamPosition);
         }
-        return Optional.ofNullable(number);
     }
 }

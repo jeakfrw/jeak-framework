@@ -1,13 +1,14 @@
 package de.fearnixx.jeak.service.command.matcher;
 
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.CommandExecutionContext;
+import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
-import java.util.Optional;
 
-public class BigDecimalParameterMatcher implements IParameterMatcher<BigDecimal> {
+public class BigDecimalParameterMatcher extends AbstractTypeMatcher<BigDecimal> {
 
     private static final Logger logger = LoggerFactory.getLogger(BigDecimalParameterMatcher.class);
 
@@ -17,13 +18,15 @@ public class BigDecimalParameterMatcher implements IParameterMatcher<BigDecimal>
     }
 
     @Override
-    public Optional<BigDecimal> tryMatch(String paramString) {
+    public IMatcherResponse tryMatch(CommandExecutionContext ctx, int startParamPosition, String argName) {
         BigDecimal number = null;
         try {
-            number = new BigDecimal(paramString);
+            number = new BigDecimal(ctx.getArguments().get(startParamPosition));
+            ctx.getParameters().put(argName, number);
+            return MatcherResponse.SUCCESS;
+
         } catch (NumberFormatException e) {
-            logger.info("Failed to parse input number: {}", paramString);
+            return getIncompatibleTypeResponse(ctx, startParamPosition);
         }
-        return Optional.ofNullable(number);
     }
 }

@@ -6,6 +6,7 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -31,8 +32,8 @@ import java.util.concurrent.TimeUnit;
 public class CommandService implements ICommandService {
 
     public static final String COMMAND_PREFIX = "!";
-    public static final Integer THREAD_POOL_SIZE = Main.getProperty("bot.commandmgr.poolsize", 5);
-    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("bot.commandmgr.terminatedelay", 5000);
+    public static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.commandmgr.poolsize", 5);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.commandmgr.terminatedelay", 5000);
 
     private static final Logger logger = LoggerFactory.getLogger(CommandService.class);
 
@@ -228,5 +229,15 @@ public class CommandService implements ICommandService {
             }
             event.addExecutor(executorSvc);
         }
+    }
+
+    @Override
+    public void registerCommand(ICommandSpec spec) {
+        throw new UnsupportedOperationException("LEGACY IMPLEMENTATION USED!");
+    }
+
+    @Override
+    public void unregisterCommand(ICommandSpec specInstance) {
+        throw new UnsupportedOperationException("LEGACY IMPLEMENTATION USED!");
     }
 }
