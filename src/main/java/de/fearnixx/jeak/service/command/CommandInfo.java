@@ -9,6 +9,7 @@ public class CommandInfo {
 
     private final List<String> parameters = new LinkedList<>();
     private final Map<String, String> arguments = new LinkedHashMap<>();
+    private final List<String> errorMessages = new LinkedList<>();
 
     public boolean isParameterized() {
         return !parameters.isEmpty();
@@ -24,5 +25,9 @@ public class CommandInfo {
 
     public Map<String, String> getArguments() {
         return arguments;
+    }
+
+    public List<String> getErrorMessages() {
+        return errorMessages;
     }
 }

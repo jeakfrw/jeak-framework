@@ -69,36 +69,46 @@ public class TypedCommandService extends CommandService {
 
     }
 
-    private CommandInfo parseCommandLine(String arguments) {
+    protected CommandInfo parseCommandLine(String arguments) {
         CodePointCharStream charStream = CharStreams.fromString(arguments);
         var lexer = new CommandExecutionCtxLexer(charStream);
         var tokenStream = new CommonTokenStream(lexer);
         var parser = new CommandExecutionCtxParser(tokenStream);
 
+
         // Use 2-stage parsing for expression performance
         // https://github.com/antlr/antlr4/blob/master/doc/faq/general.md#why-is-my-expression-parser-slow
         try {
+            // STAGE 1
+            var treeVisitor = new CommandCtxVisitor();
+            var errorListener = new SyntaxErrorListener(treeVisitor.getInfo().getErrorMessages()::add);
+
             logger.debug("Trying to run STAGE 1 parsing. (SSL prediction)");
             parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
+            parser.removeErrorListeners();
+            parser.addErrorListener(errorListener);
             var grammarContext = parser.commandExecution();
-            var treeVisitor = new CommandCtxVisitor();
             treeVisitor.visitCommandExecution(grammarContext);
             return treeVisitor.getInfo();
         } catch (Exception ex) {
             // STAGE 2
+            var treeVisitor = new CommandCtxVisitor();
+            var errorListener = new SyntaxErrorListener(treeVisitor.getInfo().getErrorMessages()::add);
+
             logger.debug("Trying to run STAGE 2 parsing. (LL prediction)", ex);
             tokenStream.seek(0);
             parser.reset();
             parser.getInterpreter().setPredictionMode(PredictionMode.LL);
+            parser.removeErrorListeners();
+            parser.addErrorListener(errorListener);
 
             try {
                 var grammarContext = parser.commandExecution();
-                var treeVisitor = new CommandCtxVisitor();
                 treeVisitor.visitCommandExecution(grammarContext);
-                return treeVisitor.getInfo();
             } catch (ParseVisitException e) {
-                throw new RuntimeException("NOT IMPLEMENTED!");
+                treeVisitor.getInfo().getErrorMessages().add(e.getMessage());
             }
+            return treeVisitor.getInfo();
         }
     }
 }
