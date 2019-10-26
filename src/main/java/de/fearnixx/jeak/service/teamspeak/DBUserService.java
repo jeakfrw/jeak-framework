@@ -6,7 +6,6 @@ import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
-import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.teamspeak.data.TS3User;
 import org.slf4j.Logger;
@@ -19,7 +18,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 @FrameworkService(serviceInterface = IUserService.class)
@@ -133,11 +131,6 @@ public class DBUserService extends AbstractUserService {
                 return true;
             }
         });
-    }
-
-    @Override
-    public Optional<IClient> getClientByID(int clientId) {
-        return Optional.empty();
     }
 
     private synchronized void withConnection(Consumer<Connection> consumer) {
