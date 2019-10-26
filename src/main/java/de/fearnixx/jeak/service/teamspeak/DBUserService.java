@@ -15,10 +15,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @FrameworkService(serviceInterface = IUserService.class)
 public class DBUserService extends AbstractUserService {
@@ -124,12 +123,30 @@ public class DBUserService extends AbstractUserService {
                 }
 
                 // Properties read - everything's fine.
-                return false;
             } catch (SQLException e) {
-                logger.error("Failed to get client properties for user: {}", user);
+                logger.error("Failed to get client properties for user: {}", user, e);
                 // This user could not be populated - remove it!
                 return true;
             }
+
+            // Try reading server groups
+            String permQuery = "SELECT sg.group_id FROM groups_server_to_client sg WHERE sg.id1 = ?";
+            try (PreparedStatement statement = connection.prepareStatement(permQuery)) {
+                statement.setInt(1, user.getClientDBID());
+                Set<String> groups = new HashSet<>();
+                try (ResultSet result = statement.executeQuery()) {
+                    while (result.next()) {
+                        groups.add("group_id");
+                    }
+                }
+                String serverGroups = groups.stream().collect(Collectors.joining(","));
+                user.setProperty(PropertyKeys.Client.GROUPS, serverGroups);
+
+            } catch (SQLException e) {
+                logger.error("Failed to get server groups for user: {}", user, e);
+                return true;
+            }
+            return false;
         });
     }
 
