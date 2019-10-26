@@ -65,7 +65,7 @@ sourceSets {
 
 dependencies {
     apiCompile 'de.mlessmann:confort-api:1.0.0-rc.1'
-    apiCompile 'org.hibernate:hibernate-core:5.4.6.Final'
+    apiCompile 'org.hibernate:hibernate-core:5.4.7.Final'
     apiCompile 'org.slf4j:slf4j-api:1.7.28'
 
     compile sourceSets.api.output
@@ -85,8 +85,8 @@ dependencies {
     runtime 'org.apache.logging.log4j:log4j-api:2.12.1'
     runtime 'org.apache.logging.log4j:log4j-core:2.12.1'
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.12.1'
-    runtime 'mysql:mysql-connector-java:8.0.17'
-    runtime 'org.mariadb.jdbc:mariadb-java-client:2.5.0'
+    runtime 'mysql:mysql-connector-java:8.0.18'
+    runtime 'org.mariadb.jdbc:mariadb-java-client:2.5.1'
     runtime 'com.sun.mail:smtp:1.6.4'
     runtime 'com.sun.mail:dsn:1.6.4'
     
