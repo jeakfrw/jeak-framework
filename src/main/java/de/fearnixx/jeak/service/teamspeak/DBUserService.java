@@ -136,7 +136,7 @@ public class DBUserService extends AbstractUserService {
                 Set<String> groups = new HashSet<>();
                 try (ResultSet result = statement.executeQuery()) {
                     while (result.next()) {
-                        groups.add("group_id");
+                        groups.add(result.getString("group_id"));
                     }
                 }
                 String serverGroups = groups.stream().collect(Collectors.joining(","));
