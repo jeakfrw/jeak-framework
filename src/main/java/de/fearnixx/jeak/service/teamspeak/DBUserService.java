@@ -130,9 +130,10 @@ public class DBUserService extends AbstractUserService {
             }
 
             // Try reading server groups
-            String permQuery = "SELECT sg.group_id FROM group_server_to_client sg WHERE sg.id1 = ?";
+            String permQuery = "SELECT sg.group_id FROM group_server_to_client sg WHERE sg.server_id = ? AND sg.id1 = ?";
             try (PreparedStatement statement = connection.prepareStatement(permQuery)) {
-                statement.setInt(1, user.getClientDBID());
+                statement.setInt(1, server.getInstanceId());
+                statement.setInt(2, user.getClientDBID());
                 Set<String> groups = new HashSet<>();
                 try (ResultSet result = statement.executeQuery()) {
                     while (result.next()) {
