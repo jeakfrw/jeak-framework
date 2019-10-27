@@ -146,6 +146,8 @@ public class DBUserService extends AbstractUserService {
                 logger.error("Failed to get server groups for user: {}", user, e);
                 return true;
             }
+
+            applyPermissions(user);
             return false;
         });
     }
