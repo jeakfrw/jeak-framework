@@ -94,6 +94,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
                 .orElseGet(() -> String.format("jdbc:%s://%s:%s/%s", driver, host, port, schemaName));
 
         dataSourceOpts.put("maximumPoolSize", "4");
+        dataSourceOpts.put("connectionTimeout", "240000");
         getConfig().getNode("dataSourceOpts")
                 .optMap()
                 .ifPresent(map ->
