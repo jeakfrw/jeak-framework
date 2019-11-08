@@ -7,6 +7,7 @@ import java.util.List;
 
 public class ParamSpecBuilder {
 
+    private EvaluatedSpec.SpecType specType;
     private ICommandParamSpec optionalSpec;
     private final List<ICommandParamSpec> firstOfSpecs = new LinkedList<>();
     private String name;
@@ -17,11 +18,13 @@ public class ParamSpecBuilder {
 
     public ICommandParamSpec firstMatching(ICommandParamSpec... parameters) {
         firstOfSpecs.addAll(Arrays.asList(parameters));
+        specType = EvaluatedSpec.SpecType.FIRST_OF;
         return this.build();
     }
 
     public ICommandParamSpec optional(ICommandParamSpec param) {
         optionalSpec = param;
+        specType = EvaluatedSpec.SpecType.OPTIONAL;
         return this.build();
     }
 
@@ -32,6 +35,7 @@ public class ParamSpecBuilder {
 
     public ParamSpecBuilder type(Class<?> type) {
         valueType = type;
+        specType = EvaluatedSpec.SpecType.TYPE;
         return this;
     }
 
@@ -39,7 +43,7 @@ public class ParamSpecBuilder {
         return new ICommandParamSpec() {
 
             private final String fName = name;
-            private final SpecType fSpecType = null;
+            private final SpecType fSpecType = specType;
             private final List<ICommandParamSpec> fFirstOfSpecs = new ArrayList<>(firstOfSpecs);
             private final ICommandParamSpec fOptionalParamSpec = optionalSpec;
             private final Class<?> fValueType = valueType;

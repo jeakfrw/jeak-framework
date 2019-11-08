@@ -18,7 +18,7 @@ public class HasPermissionMatcher implements IParameterMatcher<Void> {
     private final int requiredValue;
 
     @Inject
-    @LocaleUnit("commandSvc")
+    @LocaleUnit("commandService")
     private ILocalizationUnit localeUnit;
 
     public HasPermissionMatcher(String requiredPermission, int requiredValue) {

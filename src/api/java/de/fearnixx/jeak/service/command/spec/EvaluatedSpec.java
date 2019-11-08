@@ -4,6 +4,8 @@ import java.util.List;
 
 public interface EvaluatedSpec<T> {
 
+    String getName();
+
     SpecType getSpecType();
 
     List<T> getFirstOfP();

@@ -16,7 +16,7 @@ import java.util.Map;
 public abstract class AbstractTypeMatcher<T> implements IParameterMatcher<T> {
 
     @Inject
-    @LocaleUnit("commandSvc")
+    @LocaleUnit("commandService")
     private ILocalizationUnit localeUnit;
 
     protected ILocalizationUnit getLocaleUnit() {
@@ -25,9 +25,10 @@ public abstract class AbstractTypeMatcher<T> implements IParameterMatcher<T> {
 
     protected IMatcherResponse getIncompatibleTypeResponse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String input) {
         var messageParams = Map.of(
-                "type", getClass().getSimpleName(),
+                "type", getSupportedType().getSimpleName(),
                 "param", matchingContext.getArgumentOrParamName(),
-                "input", input
+                "input", input,
+                "reportedBy", getClass().getSimpleName()
         );
         var incompatibleMessage =
                 getLocaleUnit().getContext(ctx.getSender().getCountryCode())

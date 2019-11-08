@@ -5,7 +5,6 @@ import java.util.*;
 public class CommandSpecBuilder {
 
     private final List<String> aliases = new LinkedList<>();
-    private final List<ICommandSpec> subcommands = new LinkedList<>();
     private final List<ICommandArgumentSpec> argumentSpecs = new LinkedList<>();
     private final List<ICommandParamSpec> paramSpecs = new LinkedList<>();
     private ICommandExecutor executor;
@@ -20,11 +19,6 @@ public class CommandSpecBuilder {
         if (aliases != null) {
             this.aliases.addAll(Arrays.asList(aliases));
         }
-        return this;
-    }
-
-    public CommandSpecBuilder subCommand(ICommandSpec spec) {
-        subcommands.add(spec);
         return this;
     }
 

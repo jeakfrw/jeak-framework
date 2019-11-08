@@ -28,12 +28,10 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @FrameworkService(serviceInterface = ICommandService.class)
@@ -55,7 +53,7 @@ public class TypedCommandService extends CommandService {
     private IInjectionService injectionService;
 
     @Inject
-    @LocaleUnit(value = "commandService", defaultResource = "/localization/commandService.json")
+    @LocaleUnit(value = "commandService", defaultResource = "localization/commandService.json")
     private ILocalizationUnit locales;
 
     @Override
@@ -99,9 +97,16 @@ public class TypedCommandService extends CommandService {
 
     private synchronized void triggerCommand(IQueryEvent.INotification.IClientTextMessage txtEvent) {
         String msg = txtEvent.getMessage();
-        int firstSpace = msg.indexOf(' ');
-        String command = msg.substring(COMMAND_PREFIX.length(), firstSpace);
-        String arguments = msg.substring(firstSpace).trim();
+        String command;
+        String arguments;
+        if (msg.contains(" ")) {
+            int firstSpace = msg.indexOf(' ');
+            command = msg.substring(COMMAND_PREFIX.length(), firstSpace);
+            arguments = msg.substring(firstSpace).trim();
+        } else {
+            command = msg.substring(COMMAND_PREFIX.length());
+            arguments = msg.substring(COMMAND_PREFIX.length() + command.length()).trim();
+        }
 
         if (typedCommands.containsKey(command)) {
             dispatchTyped(txtEvent, arguments, typedCommands.get(command));
@@ -134,6 +139,12 @@ public class TypedCommandService extends CommandService {
             if (spec.getParameters().isEmpty()) {
                 info.getErrorMessages().add(langCtx.getMessage("command.notParameterized"));
             }
+        }
+        if (!info.getErrorMessages().isEmpty()) {
+            logger.info("Aborting command due to precondition errors.");
+            info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            sendErrorMessages(txtEvent, info);
+            return;
         }
 
 
@@ -223,18 +234,10 @@ public class TypedCommandService extends CommandService {
         List<MatchingContext> rootCtxs = new LinkedList<>();
         final AtomicInteger paramPositions = new AtomicInteger();
         parameters.forEach(par -> {
-            int pos = paramPositions.get();
-            IParameterMatcher<?> matcher = translateSpec(par, paramPositions);
-            String paramName = par.getName();
-            logger.trace("Adding parameter \"{}\" at expected position [{}] to command: \"{}\"", paramName, pos, command);
-            rootCtxs.add(new MatchingContext(paramName, matcher));
+            makeParMatcherCtx(command, rootCtxs::add, paramPositions, par);
         });
         arguments.forEach(arg -> {
-            IParameterMatcher<?> matcher = translateSpec(arg, paramPositions);
-            String argumentName = arg.getName();
-            String argumentShorthand = arg.getShorthand();
-            logger.trace("Adding argument \"{}/{}\" to command: \"{}\"", argumentName, argumentShorthand, command);
-            rootCtxs.add(new MatchingContext(argumentName, argumentShorthand, matcher));
+            makeArgMatcherCtx(command, rootCtxs::add, paramPositions, arg);
         });
 
         CommandRegistration registration = new CommandRegistration(spec, rootCtxs);
@@ -246,8 +249,43 @@ public class TypedCommandService extends CommandService {
         logger.info("Registered command \"{}\" with aliases: [{}]", command, aliasStr);
     }
 
+    private void makeArgMatcherCtx(String command, Consumer<MatchingContext> consumer, AtomicInteger paramPositions, ICommandArgumentSpec arg) {
+        IParameterMatcher<?> matcher = translateSpec(arg, paramPositions);
+        String argumentName = arg.getName();
+        String argumentShorthand = arg.getShorthand();
+        logger.trace("Adding argument \"{}/{}\" to command: \"{}\"", argumentName, argumentShorthand, command);
+        MatchingContext matcherCtx = new MatchingContext(argumentName, argumentShorthand, matcher);
+        consumer.accept(matcherCtx);
+
+        if (arg.getSpecType() == EvaluatedSpec.SpecType.OPTIONAL) {
+            makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, arg.getOptional());
+        } else if (arg.getSpecType() == EvaluatedSpec.SpecType.FIRST_OF) {
+            arg.getFirstOfP().forEach(subArg -> {
+                makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, subArg);
+            });
+        }
+    }
+
+    private void makeParMatcherCtx(String command, Consumer<MatchingContext> consumer, AtomicInteger paramPositions, ICommandParamSpec par) {
+        int pos = paramPositions.get();
+        IParameterMatcher<?> matcher = translateSpec(par, paramPositions);
+        String paramName = par.getName();
+        logger.trace("Adding parameter \"{}\" at expected position [{}] to command: \"{}\"", paramName, pos, command);
+        MatchingContext matchingCtx = new MatchingContext(paramName, matcher);
+        consumer.accept(matchingCtx);
+
+        if (par.getSpecType() == EvaluatedSpec.SpecType.OPTIONAL) {
+            makeParMatcherCtx(command, matchingCtx::addChild, paramPositions, par.getOptional());
+        } else if (par.getSpecType() == EvaluatedSpec.SpecType.FIRST_OF) {
+            par.getFirstOfP().forEach(subPar -> {
+                makeParMatcherCtx(command, matchingCtx::addChild, paramPositions, subPar);
+            });
+        }
+    }
+
     private IParameterMatcher<?> translateSpec(EvaluatedSpec spec, AtomicInteger posTracker) {
         EvaluatedSpec.SpecType type = spec.getSpecType();
+        Objects.requireNonNull(type, "Spec type may not be null! Param: " + spec.getName());
         switch (type) {
             case TYPE:
                 Optional<IParameterMatcher<?>> optMatcher = matcherRegistry.findForType(spec.getValueType());
@@ -256,6 +294,7 @@ public class TypedCommandService extends CommandService {
                         -> new IllegalArgumentException("No matcher found for type: " + spec.getValueType().getName()));
 
             case FIRST_OF:
+                posTracker.incrementAndGet();
                 return new OneOfMatcher();
 
             case OPTIONAL:

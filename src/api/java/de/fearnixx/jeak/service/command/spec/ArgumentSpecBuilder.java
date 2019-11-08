@@ -7,6 +7,7 @@ public class ArgumentSpecBuilder {
     private String name;
     private String shorthand;
     private Class<?> type;
+    private EvaluatedSpec.SpecType specType;
 
     ArgumentSpecBuilder() {
     }
@@ -23,6 +24,7 @@ public class ArgumentSpecBuilder {
 
     public ArgumentSpecBuilder type(Class<?> type) {
         this.type = type;
+        this.specType = EvaluatedSpec.SpecType.TYPE;
         return this;
     }
 
@@ -30,7 +32,8 @@ public class ArgumentSpecBuilder {
         return new ICommandArgumentSpec() {
             private final String fName = name;
             private final String fShorthand = shorthand;
-            private final SpecType fSpecType = null;
+            private final Class<?> fValueType = type;
+            private final SpecType fSpecType = specType;
 
             @Override
             public String getName() {
@@ -59,7 +62,7 @@ public class ArgumentSpecBuilder {
 
             @Override
             public Class<?> getValueType() {
-                return null;
+                return fValueType;
             }
         };
     }

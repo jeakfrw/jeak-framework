@@ -17,7 +17,7 @@ import java.util.Map;
 public class AllOfMatcher implements IParameterMatcher<Void> {
 
     @Inject
-    @LocaleUnit("commandSvc")
+    @LocaleUnit("commandService")
     private ILocalizationUnit localeUnit;
 
     @Override
