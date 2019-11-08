@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.plugin.persistent;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.IEvent;
 import de.fearnixx.jeak.plugin.PluginContainer;
 import de.fearnixx.jeak.reflect.Inject;
@@ -14,6 +15,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * Created by MarkL4YG on 01.06.17.
@@ -21,6 +23,9 @@ import java.util.*;
 public class PluginRegistry {
 
     private static final Logger logger = LoggerFactory.getLogger(PluginRegistry.class);
+    private static final boolean IGNORE_PLUGINID_RESTRICTION =
+            Main.getProperty("jeak.experimental.skipPluginIdCheck", false);
+    private static final Pattern PLUGIN_ID_VALIDATON = Pattern.compile("^[a-zA-Z.][a-zA-Z0-9.&+#]+$");
 
     public static Optional<PluginRegistry> getFor(Class<?> pluginClass) {
         PluginRegistry pr = new PluginRegistry(pluginClass);
@@ -53,8 +58,8 @@ public class PluginRegistry {
             return false;
         }
         id = tag.id();
-        if (!id.matches("^[a-zA-Z.][a-zA-Z.]+$")) {
-            logger.error("Plugin ID: {} is invalid!",  this.id);
+        if (!IGNORE_PLUGINID_RESTRICTION && !PLUGIN_ID_VALIDATON.matcher(id).matches()) {
+            logger.error("Plugin ID: {} is invalid! (Must match: {})",  this.id, PLUGIN_ID_VALIDATON);
             return false;
         }
         version = Common.stripVersion(tag.version());
