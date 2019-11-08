@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.query;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.IQueryEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,10 +10,11 @@ import java.util.concurrent.TimeUnit;
 public class BlockingRequest {
 
     private static final Logger logger = LoggerFactory.getLogger(BlockingRequest.class);
+    private static final Integer REQ_MAX_SECONDS = Main.getProperty("jeak.query.blockingTimeoutSecs", 120);
 
     private final IQueryRequest originalRequest;
     private final Object monitor = new Object();
-    private long maxThreshold = TimeUnit.SECONDS.toMillis(30);
+    private long maxThreshold = TimeUnit.SECONDS.toMillis(REQ_MAX_SECONDS);
     private IQueryEvent.IAnswer answer;
 
     public BlockingRequest(IQueryRequest originalRequest) {

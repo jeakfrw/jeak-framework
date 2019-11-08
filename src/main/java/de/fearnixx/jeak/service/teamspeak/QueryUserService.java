@@ -4,6 +4,7 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
@@ -13,10 +14,8 @@ import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @FrameworkService(serviceInterface = IUserService.class)
 public class QueryUserService extends AbstractUserService {
@@ -89,11 +88,36 @@ public class QueryUserService extends AbstractUserService {
                 .map(data -> {
                     TS3User user = new TS3User();
                     user.copyFrom(data);
+                    discoverServerGroups(user);
                     applyPermissions(user);
                     return user;
                 })
                 .forEach(result::add);
         return result;
+    }
+
+    private void discoverServerGroups(TS3User user) {
+        IQueryRequest sgDiscoverRequest = IQueryRequest.builder()
+                .command("servergroupsbyclientid")
+                .addKey("cldbid", user.getClientDBID())
+                .build();
+
+        BlockingRequest request = new BlockingRequest(sgDiscoverRequest);
+        server.getConnection().sendRequest(sgDiscoverRequest);
+        if (!request.waitForCompletion()) {
+            logger.error("Could not retrieve server groups of user: {}!", user);
+            user.setProperty(PropertyKeys.Client.GROUPS, "");
+            return;
+        } else {
+            IQueryEvent.IAnswer answer = request.getAnswer();
+            String groups = answer.getDataChain()
+                    .stream()
+                    .map(holder -> holder.getProperty("sgid"))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.joining(","));
+            user.setProperty(PropertyKeys.Client.GROUPS, groups);
+        }
     }
 
     @Override

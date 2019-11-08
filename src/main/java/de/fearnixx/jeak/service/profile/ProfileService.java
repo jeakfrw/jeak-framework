@@ -124,7 +124,7 @@ public class ProfileService implements IProfileService {
         Objects.requireNonNull(uuid, "Lookup UUID may not be null!");
 
         if (!indexConfig.getRoot().getNode(uuid.toString()).isVirtual()) {
-            return Optional.ofNullable(retrieveUserProfile(uuid, null).orElse(null));
+            return Optional.ofNullable(retrieveUserProfile(uuid, null, false).orElse(null));
         } else {
             return Optional.empty();
         }
@@ -133,7 +133,7 @@ public class ProfileService implements IProfileService {
     @Override
     public Optional<IUserProfile> getProfile(String ts3Identity) {
         final Optional<UUID> optUUID = lookupUUID(ts3Identity);
-        return optUUID.map(uuid -> retrieveUserProfile(uuid, null).orElse(null));
+        return optUUID.map(uuid -> retrieveUserProfile(uuid, null, false).orElse(null));
     }
 
     @Override
@@ -145,7 +145,7 @@ public class ProfileService implements IProfileService {
             logger.debug("Generated profile UUID {} for identity {}", generated, ts3Identity);
             return generated;
         });
-        final ConfigProfile profile = retrieveUserProfile(uuid, ts3Identity)
+        final ConfigProfile profile = retrieveUserProfile(uuid, ts3Identity, true)
                 .orElseThrow(() -> new IllegalStateException("Failed to create profile: " + uuid));
         if (optUUID.isEmpty()) {
             addToIndex(ts3Identity, uuid);
@@ -202,7 +202,7 @@ public class ProfileService implements IProfileService {
      * Only creates new profiles when {@code createIfAbsent} is set.
      * The cached profile is returned, when available.
      */
-    private Optional<ConfigProfile> retrieveUserProfile(UUID uuid, String forTs3Identity) {
+    private Optional<ConfigProfile> retrieveUserProfile(UUID uuid, String forTs3Identity, boolean createIfAbsent) {
         ConfigProfile profile;
         profile = getProfileFromCache(uuid);
 
@@ -211,7 +211,7 @@ public class ProfileService implements IProfileService {
             return Optional.of(profile);
 
         } else {
-            Optional<ConfigProfile> optProfile = makeUserProfile(uuid, forTs3Identity);
+            Optional<ConfigProfile> optProfile = makeUserProfile(uuid, forTs3Identity, createIfAbsent);
             optProfile.ifPresent(this::cacheProfile);
             return optProfile;
         }
@@ -225,11 +225,14 @@ public class ProfileService implements IProfileService {
         profileCache.put(profile.getUniqueId(), profile);
     }
 
-    private Optional<ConfigProfile> makeUserProfile(UUID uuid, String ts3Identity) {
+    private Optional<ConfigProfile> makeUserProfile(UUID uuid, String ts3Identity, boolean createIfAbsent) {
         final File profileFile = getProfileFSRef(uuid);
-        final FileConfig profileConfig = new FileConfig(configLoader, profileFile);
         final boolean isNew = !profileFile.isFile();
+        if (isNew && !createIfAbsent) {
+            return Optional.empty();
+        }
 
+        final FileConfig profileConfig = new FileConfig(configLoader, profileFile);
         ConfigProfile profile = null;
         try {
             profileConfig.load();
@@ -272,9 +275,9 @@ public class ProfileService implements IProfileService {
 
     @Override
     public void mergeProfiles(UUID into, UUID other) {
-        ConfigProfile intoProfile = retrieveUserProfile(into, null)
+        ConfigProfile intoProfile = retrieveUserProfile(into, null, false)
                 .orElseThrow(() -> new IllegalArgumentException("No profile for target UUID: " + into));
-        ConfigProfile fromProfile = retrieveUserProfile(other, null)
+        ConfigProfile fromProfile = retrieveUserProfile(other, null, false)
                 .orElseThrow(() -> new IllegalArgumentException("No profile for source UUID: " + other));
 
         fromProfile.getLinkedIdentities()
