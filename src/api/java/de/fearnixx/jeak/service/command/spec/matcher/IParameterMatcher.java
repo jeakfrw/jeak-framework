@@ -6,5 +6,5 @@ public interface IParameterMatcher<T> {
 
     Class<T> getSupportedType();
 
-    IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName);
+    IMatcherResponse tryMatch(ICommandExecutionContext ctx, IMatchingContext matchingContext);
 }

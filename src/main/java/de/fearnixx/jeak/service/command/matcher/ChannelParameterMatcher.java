@@ -4,6 +4,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
@@ -30,25 +31,29 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String argName) {
-        String paramString = ctx.getArguments().get(startParamPosition);
-        if (ID_PATTERN.matcher(paramString).matches()) {
-            IChannel channel = dataCache.getChannelMap().getOrDefault(Integer.parseInt(paramString), null);
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
+        String name = matchingContext.getArgumentOrParamName();
+        if (ID_PATTERN.matcher(extracted).matches()) {
+            IChannel channel = dataCache.getChannelMap().getOrDefault(Integer.parseInt(extracted), null);
             if (channel != null) {
-                ctx.putOrReplaceOne(argName, channel);
-                ctx.putOrReplaceOne(argName + "Id", channel.getID());
+                logger.debug("Found channel parameter: \"{}\" --> {}", extracted, channel);
+                ctx.putOrReplaceOne(name, channel);
+                ctx.putOrReplaceOne(name + "Id", channel.getID());
+                ctx.getParameterIndex().incrementAndGet();
                 return MatcherResponse.SUCCESS;
             }
         } else {
             List<IChannel> result = dataCache.getChannels()
                     .stream()
-                    .filter(c -> c.getName().contains(paramString))
+                    .filter(c -> c.getName().contains(extracted))
                     .collect(Collectors.toList());
 
             if (result.size() == 1) {
                 IChannel channel = result.get(0);
-                ctx.putOrReplaceOne(argName, channel);
-                ctx.putOrReplaceOne(argName + "Id", channel.getID());
+                logger.debug("Found channel parameter: \"{}\" --> {}", extracted, channel);
+                ctx.putOrReplaceOne(name, channel);
+                ctx.putOrReplaceOne(name + "Id", channel.getID());
+                ctx.getParameterIndex().incrementAndGet();
                 return MatcherResponse.SUCCESS;
 
             } else if (result.size() > 1) {
@@ -56,14 +61,15 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
                         result.stream()
                                 .map(c -> c.getName() + '/' + c.getID())
                                 .collect(Collectors.joining(","));
+                logger.debug("Channel parameter ambiguous: \"{}\" --> [{}]", extracted, allChannels);
                 String ambiguityMessage = getLocaleUnit()
                         .getContext(ctx.getSender().getCountryCode())
                         .getMessage("matcher.type.ambiguousSearch",
                                 Map.of("results", allChannels));
-                return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, ambiguityMessage);
+                return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
             }
         }
 
-        return getIncompatibleTypeResponse(ctx, startParamPosition);
+        return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
     }
 }

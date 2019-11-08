@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.command.matcher;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 
 public class BooleanParamMatcher extends AbstractTypeMatcher<Boolean> {
 
@@ -12,19 +13,20 @@ public class BooleanParamMatcher extends AbstractTypeMatcher<Boolean> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String argName) {
-        String paramString = ctx.getArguments().get(startParamPosition);
-
-        if ("t".equals(paramString) || "1".equals(paramString) || "true".equals(paramString)
-                || "y".equals(paramString) || "yes".equals(paramString)) {
-            ctx.putOrReplaceOne(argName, Boolean.TRUE);
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
+        if ("t".equals(extracted) || "1".equals(extracted) || "true".equals(extracted)
+                || "y".equals(extracted) || "yes".equals(extracted)) {
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), Boolean.TRUE);
+            ctx.getParameterIndex().incrementAndGet();
             return MatcherResponse.SUCCESS;
 
-        } else if ("f".equals(paramString) || "0".equals(paramString) || "false".equals(paramString)
-                || "n".equals(paramString) || "no".equals(paramString)) {
-            ctx.putOrReplaceOne(argName, Boolean.FALSE);
+        } else if ("f".equals(extracted) || "0".equals(extracted) || "false".equals(extracted)
+                || "n".equals(extracted) || "no".equals(extracted)) {
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), Boolean.FALSE);
+            ctx.getParameterIndex().incrementAndGet();
+            return MatcherResponse.SUCCESS;
         }
 
-        return getIncompatibleTypeResponse(ctx, startParamPosition);
+        return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
     }
 }

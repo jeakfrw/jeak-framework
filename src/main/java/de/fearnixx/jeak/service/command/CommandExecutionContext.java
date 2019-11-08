@@ -1,18 +1,23 @@
 package de.fearnixx.jeak.service.command;
 
+import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class CommandExecutionContext extends CommandContext implements ICommandExecutionContext {
+public class CommandExecutionContext extends BasicDataHolder implements ICommandExecutionContext {
 
     private final Map<String, Object> parameters = new HashMap<>();
     private final IClient sender;
+    private final CommandInfo info;
+    private final AtomicInteger parameterIndex = new AtomicInteger();
 
-    public CommandExecutionContext(IClient sender) {
+    public CommandExecutionContext(IClient sender, CommandInfo info) {
         this.sender = sender;
+        this.info = info;
     }
 
     @Override
@@ -39,5 +44,13 @@ public class CommandExecutionContext extends CommandContext implements ICommandE
 
     public IClient getSender() {
         return sender;
+    }
+
+    public CommandInfo getCommandInfo() {
+        return info;
+    }
+
+    public AtomicInteger getParameterIndex() {
+        return parameterIndex;
     }
 }

@@ -4,6 +4,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
@@ -39,31 +40,31 @@ public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
-        String paramString = ctx.getArguments().get(startParamPosition);
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
         List<IUser> results = Collections.emptyList();
-        if (DBID_PATTERN.matcher(paramString).matches()) {
-            results = userService.findUserByDBID(Integer.parseInt(paramString));
+        if (DBID_PATTERN.matcher(extracted).matches()) {
+            results = userService.findUserByDBID(Integer.parseInt(extracted));
 
-        } else if (CLID_PATTERN.matcher(paramString).matches()) {
-            IClient res = dataCache.getClientMap().getOrDefault(Integer.parseInt(paramString), null);
+        } else if (CLID_PATTERN.matcher(extracted).matches()) {
+            IClient res = dataCache.getClientMap().getOrDefault(Integer.parseInt(extracted), null);
             if (res != null) {
                 results = List.of(res);
             }
-        } else if (TSUID_PATTERN.matcher(paramString).matches()) {
-            results = userService.findUserByUniqueID(paramString);
+        } else if (TSUID_PATTERN.matcher(extracted).matches()) {
+            results = userService.findUserByUniqueID(extracted);
         } else {
-            if (paramString.length() < MAX_NICKNAME_LENGTH) {
-                results = userService.findUserByNickname(paramString);
+            if (extracted.length() < MAX_NICKNAME_LENGTH) {
+                results = userService.findUserByNickname(extracted);
             } else {
-                logger.warn("Input parameter is too long for a TS3 client name: {}", paramString);
+                logger.warn("Input parameter is too long for a TS3 client name: {}", extracted);
             }
         }
 
         if (results.size() == 1) {
             IUser user = results.get(0);
-            ctx.putOrReplaceOne(parameterName, user);
-            ctx.putOrReplaceOne(parameterName + "Id", user);
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), user);
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName() + "Id", user);
+            ctx.getParameterIndex().getAndIncrement();
             return MatcherResponse.SUCCESS;
 
         } else if (!results.isEmpty()) {
@@ -71,10 +72,11 @@ public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
                     results.stream().map(IUser::toString).collect(Collectors.joining(", "));
             String ambiguityMessage =
                     getLocaleUnit().getContext(ctx.getSender().getCountryCode())
-                            .getMessage("matcher.type.ambiguousSearch", Map.of("results", names));
-            return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, ambiguityMessage);
+                            .getMessage("matcher.type.ambiguousSearch",
+                                    Map.of("results", names, "param", matchingContext.getArgumentOrParamName()));
+            return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
         }
 
-        return getIncompatibleTypeResponse(ctx, startParamPosition);
+        return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
     }
 }

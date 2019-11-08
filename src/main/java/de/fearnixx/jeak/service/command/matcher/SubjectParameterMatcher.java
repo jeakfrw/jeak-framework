@@ -4,6 +4,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.permission.base.ISubject;
@@ -11,7 +12,7 @@ import de.fearnixx.jeak.service.permission.base.ISubject;
 import java.util.Map;
 import java.util.UUID;
 
-public class ISubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
+public class SubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
 
     @Inject
     private IPermissionService permissionService;
@@ -22,22 +23,23 @@ public class ISubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
         try {
             var optSubject = permissionService.getFrameworkProvider()
-                    .getSubject(UUID.fromString(ctx.getArguments().get(startParamPosition)));
+                    .getSubject(UUID.fromString(extracted));
             if (optSubject.isEmpty()) {
-                return getIncompatibleTypeResponse(ctx, startParamPosition);
+                return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
             }
-            ctx.putOrReplaceOne(parameterName, optSubject.get());
-            ctx.putOrReplaceOne(parameterName + "Id", optSubject.get().getUniqueID());
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), optSubject.get());
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName() + "Id", optSubject.get().getUniqueID());
+            ctx.getParameterIndex().getAndIncrement();
             return MatcherResponse.SUCCESS;
 
         } catch (IllegalArgumentException e) {
             String invalidArgumentMessage =
                     getLocaleUnit().getContext(ctx.getSender().getCountryCode())
                             .getMessage("matcher.type.incompatible", Map.of("type", UUID.class.getSimpleName()));
-            return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, invalidArgumentMessage);
+            return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), invalidArgumentMessage);
         }
     }
 }

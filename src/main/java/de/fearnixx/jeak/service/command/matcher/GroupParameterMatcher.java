@@ -4,6 +4,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 
@@ -18,13 +19,14 @@ public class GroupParameterMatcher extends AbstractTypeMatcher<IGroup> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
-        var optGroup = permService.getFrameworkProvider().findGroupByName(ctx.getArguments().get(startParamPosition));
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
+        var optGroup = permService.getFrameworkProvider().findGroupByName(extracted);
 
         if (optGroup.isEmpty()) {
-            return getIncompatibleTypeResponse(ctx, startParamPosition);
+            return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
         } else {
-            ctx.putOrReplaceOne(parameterName, optGroup.get());
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), optGroup.get());
+            ctx.getParameterIndex().incrementAndGet();
             return MatcherResponse.SUCCESS;
         }
     }

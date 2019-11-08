@@ -4,9 +4,22 @@ import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.antlr.CommandExecutionCtxLexer;
 import de.fearnixx.jeak.antlr.CommandExecutionCtxParser;
 import de.fearnixx.jeak.event.IQueryEvent;
-import de.fearnixx.jeak.reflect.FrameworkService;
-import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
+import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.service.command.matcher.*;
+import de.fearnixx.jeak.service.command.matcher.meta.OneOfMatcher;
+import de.fearnixx.jeak.service.command.matcher.meta.OptionalMatcher;
+import de.fearnixx.jeak.service.command.reg.CommandRegistration;
+import de.fearnixx.jeak.service.command.reg.MatchingContext;
+import de.fearnixx.jeak.service.command.spec.EvaluatedSpec;
+import de.fearnixx.jeak.service.command.spec.ICommandArgumentSpec;
+import de.fearnixx.jeak.service.command.spec.ICommandParamSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandSpec;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
+import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
+import de.fearnixx.jeak.service.locale.ILocaleContext;
+import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.mlessmann.confort.lang.ParseVisitException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -15,8 +28,13 @@ import org.antlr.v4.runtime.atn.PredictionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @FrameworkService(serviceInterface = ICommandService.class)
 public class TypedCommandService extends CommandService {
@@ -25,9 +43,20 @@ public class TypedCommandService extends CommandService {
     private static final boolean DISABLE_LEGACY_WARN = Main.getProperty("jeak.commandSvc.disableLegacyWarn", false);
     private static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.commandSvc.poolSize", 2);
     private static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.commandSvc.terminateDelay", 5000);
+    private static final String MSG_HAS_ERRORS = "execution.hasErrors";
 
     private static final Logger logger = LoggerFactory.getLogger(TypedCommandService.class);
-    private final Map<String, ICommandSpec> commandSpecs = new ConcurrentHashMap<>();
+    private final Map<String, CommandRegistration> typedCommands = new ConcurrentHashMap<>();
+
+    @Inject
+    private IMatcherRegistryService matcherRegistry;
+
+    @Inject
+    private IInjectionService injectionService;
+
+    @Inject
+    @LocaleUnit(value = "commandService", defaultResource = "/localization/commandService.json")
+    private ILocalizationUnit locales;
 
     @Override
     protected int getThreadPoolSize() {
@@ -39,22 +68,43 @@ public class TypedCommandService extends CommandService {
         return AWAIT_TERMINATION_DELAY;
     }
 
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onPreInitialize(IBotStateEvent.IPreInitializeEvent event) {
+        logger.debug("Registering default matchers.");
+        registerMatcher(new BigDecimalParameterMatcher());
+        registerMatcher(new BigIntegerParameterMatcher());
+        registerMatcher(new BooleanParamMatcher());
+        registerMatcher(new ChannelParameterMatcher());
+        registerMatcher(new ClientParameterMatcher());
+        registerMatcher(new DoubleParamMatcher());
+        registerMatcher(new GroupParameterMatcher());
+        registerMatcher(new IntegerParamMatcher());
+        registerMatcher(new StringParamMatcher());
+        registerMatcher(new SubjectParameterMatcher());
+        registerMatcher(new UserParameterMatcher());
+
+    }
+
+    private <T> void registerMatcher(IParameterMatcher<T> matcher) {
+        matcherRegistry.registerMatcher(injectionService.injectInto(matcher));
+    }
+
     @Override
     @Listener
-    public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
+    public void onTextMessage(IQueryEvent.INotification.IClientTextMessage event) {
         if (event.getMessage().startsWith(COMMAND_PREFIX)) {
             triggerCommand(event);
         }
     }
 
-    private synchronized void triggerCommand(IQueryEvent.INotification.ITextMessage txtEvent) {
+    private synchronized void triggerCommand(IQueryEvent.INotification.IClientTextMessage txtEvent) {
         String msg = txtEvent.getMessage();
         int firstSpace = msg.indexOf(' ');
         String command = msg.substring(COMMAND_PREFIX.length(), firstSpace);
         String arguments = msg.substring(firstSpace).trim();
 
-        if (commandSpecs.containsKey(command)) {
-            dispatchTyped(txtEvent, arguments, commandSpecs.get(command));
+        if (typedCommands.containsKey(command)) {
+            dispatchTyped(txtEvent, arguments, typedCommands.get(command));
 
         } else if (getLegacyReceivers().containsKey(command)) {
             if (!DISABLE_LEGACY_WARN) {
@@ -65,8 +115,56 @@ public class TypedCommandService extends CommandService {
         }
     }
 
-    private void dispatchTyped(IQueryEvent.INotification.ITextMessage txtEvent, String arguments, ICommandSpec iCommandSpec) {
+    private void dispatchTyped(IQueryEvent.INotification.IClientTextMessage txtEvent, String arguments, CommandRegistration registration) {
+        ILocaleContext langCtx = locales.getContext(txtEvent.getSender().getCountryCode());
+        CommandInfo info = parseCommandLine(arguments);
+        if (!info.getErrorMessages().isEmpty()) {
+            logger.info("Aborting command due to parsing errors.");
+            info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            sendErrorMessages(txtEvent, info);
+            return;
+        }
 
+        ICommandSpec spec = registration.getCommandSpec();
+        if (info.isArgumentized()) {
+            if (spec.getArguments().isEmpty()) {
+                info.getErrorMessages().add(langCtx.getMessage("command.notArgumented"));
+            }
+        } else if (info.isParameterized()) {
+            if (spec.getParameters().isEmpty()) {
+                info.getErrorMessages().add(langCtx.getMessage("command.notParameterized"));
+            }
+        }
+
+
+        CommandExecutionContext commCtx = new CommandExecutionContext(txtEvent.getTarget(), info);
+        registration.getMatchingContext()
+                .stream()
+                .map(ctx -> ctx.getMatcher().tryMatch(commCtx, ctx))
+                .forEach(response -> {
+                    if (response.getResponseType() == MatcherResponseType.ERROR) {
+                        info.getErrorMessages().add(response.getFailureMessage());
+                    }
+                });
+        if (!info.getErrorMessages().isEmpty()) {
+            logger.info("Aborting command due to matching errors.");
+            info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            sendErrorMessages(txtEvent, info);
+            return;
+        }
+
+        try {
+            spec.getExecutor().execute(commCtx);
+        } catch (CommandException e) {
+            logger.debug("Command executor returned an exception.", e);
+            info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            sendErrorMessages(txtEvent, info);
+        }
+    }
+
+    private void sendErrorMessages(IQueryEvent.INotification.IClientTextMessage txtEvent, CommandInfo info) {
+        info.getErrorMessages()
+                .forEach(msg -> txtEvent.getConnection().sendRequest(txtEvent.getSender().sendMessage(msg)));
     }
 
     protected CommandInfo parseCommandLine(String arguments) {
@@ -109,6 +207,62 @@ public class TypedCommandService extends CommandService {
                 treeVisitor.getInfo().getErrorMessages().add(e.getMessage());
             }
             return treeVisitor.getInfo();
+        }
+    }
+
+    @SuppressWarnings("squid:S3864")
+    @Override
+    public void registerCommand(ICommandSpec spec) {
+        List<ICommandParamSpec> parameters = spec.getParameters();
+        List<ICommandArgumentSpec> arguments = spec.getArguments();
+        if (!parameters.isEmpty() && !arguments.isEmpty()) {
+            throw new IllegalArgumentException("A command may not have arguments AND parameters!");
+        }
+
+        final String command = spec.getCommand();
+        List<MatchingContext> rootCtxs = new LinkedList<>();
+        final AtomicInteger paramPositions = new AtomicInteger();
+        parameters.forEach(par -> {
+            int pos = paramPositions.get();
+            IParameterMatcher<?> matcher = translateSpec(par, paramPositions);
+            String paramName = par.getName();
+            logger.trace("Adding parameter \"{}\" at expected position [{}] to command: \"{}\"", paramName, pos, command);
+            rootCtxs.add(new MatchingContext(paramName, matcher));
+        });
+        arguments.forEach(arg -> {
+            IParameterMatcher<?> matcher = translateSpec(arg, paramPositions);
+            String argumentName = arg.getName();
+            String argumentShorthand = arg.getShorthand();
+            logger.trace("Adding argument \"{}/{}\" to command: \"{}\"", argumentName, argumentShorthand, command);
+            rootCtxs.add(new MatchingContext(argumentName, argumentShorthand, matcher));
+        });
+
+        CommandRegistration registration = new CommandRegistration(spec, rootCtxs);
+        typedCommands.put(command, registration);
+        String aliasStr = spec.getAliases()
+                .stream()
+                .peek(alas -> typedCommands.put(alas, registration))
+                .collect(Collectors.joining(","));
+        logger.info("Registered command \"{}\" with aliases: [{}]", command, aliasStr);
+    }
+
+    private IParameterMatcher<?> translateSpec(EvaluatedSpec spec, AtomicInteger posTracker) {
+        EvaluatedSpec.SpecType type = spec.getSpecType();
+        switch (type) {
+            case TYPE:
+                Optional<IParameterMatcher<?>> optMatcher = matcherRegistry.findForType(spec.getValueType());
+                posTracker.incrementAndGet();
+                return optMatcher.orElseThrow(()
+                        -> new IllegalArgumentException("No matcher found for type: " + spec.getValueType().getName()));
+
+            case FIRST_OF:
+                return new OneOfMatcher();
+
+            case OPTIONAL:
+                return new OptionalMatcher();
+
+            default:
+                throw new IllegalArgumentException("Unknown spec type: " + type);
         }
     }
 }

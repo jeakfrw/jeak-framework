@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.command.matcher;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,15 +19,15 @@ public class BigDecimalParameterMatcher extends AbstractTypeMatcher<BigDecimal> 
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String argName) {
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
         BigDecimal number = null;
         try {
-            number = new BigDecimal(ctx.getArguments().get(startParamPosition));
-            ctx.putOrReplaceOne(argName, number);
+            number = new BigDecimal(extracted);
+            ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), number);
+            ctx.getParameterIndex().incrementAndGet();
             return MatcherResponse.SUCCESS;
-
         } catch (NumberFormatException e) {
-            return getIncompatibleTypeResponse(ctx, startParamPosition);
+            return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
         }
     }
 }

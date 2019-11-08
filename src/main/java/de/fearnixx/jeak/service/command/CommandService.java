@@ -68,7 +68,7 @@ public class CommandService implements ICommandService {
      * @param event The event
      */
     @Listener
-    public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
+    public void onTextMessage(IQueryEvent.INotification.IClientTextMessage event) {
         if (terminated) return;
         String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse(null);
         if (msg != null) {

@@ -3,9 +3,9 @@ package de.fearnixx.jeak.service.command.matcher;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 
-public class StringParamMatcher implements IParameterMatcher<String> {
+public class StringParamMatcher extends AbstractTypeMatcher<String> {
 
     @Override
     public Class<String> getSupportedType() {
@@ -13,8 +13,9 @@ public class StringParamMatcher implements IParameterMatcher<String> {
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String parameterName) {
-        ctx.putOrReplaceOne(parameterName, ctx.getArguments().get(0));
+    public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
+        ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), extracted);
+        ctx.getParameterIndex().getAndIncrement();
         return MatcherResponse.SUCCESS;
     }
 }

@@ -1,10 +1,12 @@
 package de.fearnixx.jeak.service.command;
 
+import de.fearnixx.jeak.service.command.spec.ICommandInfo;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public interface ICommandExecutionContext extends ICommandContext {
+public interface ICommandExecutionContext {
 
     Optional<Object> getOne(String fullName);
 
@@ -15,4 +17,8 @@ public interface ICommandExecutionContext extends ICommandContext {
     Object putOrReplaceOne(String fullName, Object value);
 
     IClient getSender();
+
+    ICommandInfo getCommandInfo();
+
+    AtomicInteger getParameterIndex();
 }

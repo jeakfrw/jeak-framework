@@ -4,17 +4,15 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class OneOfMatcher implements IParameterMatcher<Void> {
-
-    private final Map<String, IParameterMatcher<?>> matchers = new LinkedHashMap<>();
 
     @Inject
     @LocaleUnit("commandService")
@@ -22,26 +20,27 @@ public class OneOfMatcher implements IParameterMatcher<Void> {
 
     @Override
     public Class<Void> getSupportedType() {
-        return null;
+        return Void.class;
     }
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int startParamPosition, String name) {
-        for (var matcherEntry : matchers.entrySet()) {
-            var childResponse = matcherEntry.getValue().tryMatch(ctx, startParamPosition, matcherEntry.getKey());
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, IMatchingContext matchingContext) {
+        for (var child : matchingContext.getChildren()) {
+            var childResponse = child.getMatcher().tryMatch(ctx, child);
 
             if (childResponse.getResponseType().equals(MatcherResponseType.SUCCESS)) {
+                ctx.getParameterIndex().incrementAndGet();
                 return childResponse;
             }
         }
 
-        String typeList = matchers
-                .values()
+        String typeList = matchingContext
+                .getChildren()
                 .stream()
-                .map(m -> m.getSupportedType().getName())
+                .map(m -> m.getMatcher().getSupportedType().getName())
                 .collect(Collectors.joining(", "));
         String unmatchedMessage = localeUnit.getContext(ctx.getSender().getCountryCode())
                 .getMessage("matcher.oneOf.unmatched", Map.of("types", typeList));
-        return new MatcherResponse(MatcherResponseType.ERROR, startParamPosition, unmatchedMessage);
+        return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), unmatchedMessage);
     }
 }

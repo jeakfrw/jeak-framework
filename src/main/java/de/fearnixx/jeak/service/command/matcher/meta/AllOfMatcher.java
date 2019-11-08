@@ -4,35 +4,35 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class AllOfMatcher implements IParameterMatcher<Void> {
-
-    private final Map<String, IParameterMatcher<?>> parameters = new LinkedHashMap<>();
 
     @Inject
     @LocaleUnit("commandSvc")
     private ILocalizationUnit localeUnit;
 
     @Override
-    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, int paramStartIndex, String name) {
+    public IMatcherResponse tryMatch(ICommandExecutionContext ctx, IMatchingContext matchingContext) {
         List<String> notices = new LinkedList<>();
-        int matcherIndex = 0;
-        for (var paramEntry : parameters.entrySet()) {
-            IParameterMatcher<?> param = paramEntry.getValue();
 
-            var childResponse = param.tryMatch(ctx, paramStartIndex + matcherIndex, paramEntry.getKey());
+        for (var child : matchingContext.getChildren()) {
+            IParameterMatcher<?> param = child.getMatcher();
+
+            var childResponse = param.tryMatch(ctx, child);
             if (childResponse.getResponseType().equals(MatcherResponseType.ERROR)) {
                 return childResponse;
             } else if (childResponse.getResponseType().equals(MatcherResponseType.NOTICE)) {
                 notices.add(childResponse.getNoticeMessage());
             }
-
-            matcherIndex++;
         }
 
         if (notices.isEmpty()) {
@@ -47,6 +47,6 @@ public class AllOfMatcher implements IParameterMatcher<Void> {
 
     @Override
     public Class<Void> getSupportedType() {
-        return null;
+        return Void.class;
     }
 }
