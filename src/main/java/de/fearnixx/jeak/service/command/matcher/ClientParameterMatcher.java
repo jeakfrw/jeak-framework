@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.BasicMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class ClientParameterMatcher extends AbstractTypeMatcher<IClient> {
+public class ClientParameterMatcher extends AbstractFrameworkTypeMatcher<IClient> {
 
     private static final Pattern DBID_PATTERN = Pattern.compile("\\d+");
     private static final Pattern CLID_PATTERN = Pattern.compile("c:\\d+");
@@ -64,7 +64,7 @@ public class ClientParameterMatcher extends AbstractTypeMatcher<IClient> {
             ctx.putOrReplaceOne(parameterName, results.get(0));
             ctx.putOrReplaceOne(parameterName + "Id", results.get(0).getClientID());
             ctx.getParameterIndex().incrementAndGet();
-            return MatcherResponse.SUCCESS;
+            return BasicMatcherResponse.SUCCESS;
 
         } else if (!results.isEmpty()) {
             String names =
@@ -72,7 +72,7 @@ public class ClientParameterMatcher extends AbstractTypeMatcher<IClient> {
             String ambiguityMessage =
                     getLocaleUnit().getContext(ctx.getSender().getCountryCode())
                             .getMessage("matcher.type.ambiguousSearch", Map.of("results", names));
-            return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
+            return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
         }
         return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
     }

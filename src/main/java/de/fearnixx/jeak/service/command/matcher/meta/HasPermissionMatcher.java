@@ -3,10 +3,7 @@ package de.fearnixx.jeak.service.command.matcher.meta;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
-import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
+import de.fearnixx.jeak.service.command.spec.matcher.*;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
@@ -41,9 +38,9 @@ public class HasPermissionMatcher implements IParameterMatcher<Void> {
             var missingPermMessage =
                     localeUnit.getContext(sender.getCountryCode())
                             .getMessage("matcher.perm.missing", params);
-            return new MatcherResponse(MatcherResponseType.ERROR, -1, missingPermMessage);
+            return new BasicMatcherResponse(MatcherResponseType.ERROR, -1, missingPermMessage);
         }
 
-        return MatcherResponse.SUCCESS;
+        return BasicMatcherResponse.SUCCESS;
     }
 }

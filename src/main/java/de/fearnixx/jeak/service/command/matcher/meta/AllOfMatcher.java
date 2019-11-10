@@ -3,10 +3,7 @@ package de.fearnixx.jeak.service.command.matcher.meta;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
-import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
+import de.fearnixx.jeak.service.command.spec.matcher.*;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
 import java.util.HashMap;
@@ -36,12 +33,12 @@ public class AllOfMatcher implements IParameterMatcher<Void> {
         }
 
         if (notices.isEmpty()) {
-            return MatcherResponse.SUCCESS;
+            return BasicMatcherResponse.SUCCESS;
         } else {
             Map<String, String> params = new HashMap<>();
             String fullNotice = localeUnit.getContext(ctx.getSender().getCountryCode())
                     .getMessage("matcher.allOf.notices", params);
-            return new MatcherResponse(fullNotice);
+            return new BasicMatcherResponse(fullNotice);
         }
     }
 

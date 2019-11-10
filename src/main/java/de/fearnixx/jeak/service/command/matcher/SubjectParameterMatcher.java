@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.BasicMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -12,7 +12,7 @@ import de.fearnixx.jeak.service.permission.base.ISubject;
 import java.util.Map;
 import java.util.UUID;
 
-public class SubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
+public class SubjectParameterMatcher extends AbstractFrameworkTypeMatcher<ISubject> {
 
     @Inject
     private IPermissionService permissionService;
@@ -33,13 +33,13 @@ public class SubjectParameterMatcher extends AbstractTypeMatcher<ISubject> {
             ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), optSubject.get());
             ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName() + "Id", optSubject.get().getUniqueID());
             ctx.getParameterIndex().getAndIncrement();
-            return MatcherResponse.SUCCESS;
+            return BasicMatcherResponse.SUCCESS;
 
         } catch (IllegalArgumentException e) {
             String invalidArgumentMessage =
                     getLocaleUnit().getContext(ctx.getSender().getCountryCode())
                             .getMessage("matcher.type.incompatible", Map.of("type", UUID.class.getSimpleName()));
-            return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), invalidArgumentMessage);
+            return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), invalidArgumentMessage);
         }
     }
 }

@@ -11,10 +11,10 @@ import de.fearnixx.jeak.service.command.matcher.meta.OneOfMatcher;
 import de.fearnixx.jeak.service.command.matcher.meta.OptionalMatcher;
 import de.fearnixx.jeak.service.command.reg.CommandRegistration;
 import de.fearnixx.jeak.service.command.reg.MatchingContext;
-import de.fearnixx.jeak.service.command.spec.EvaluatedSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandArgumentSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandParamSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandSpec;
+import de.fearnixx.jeak.service.command.spec.IEvaluatedCriterion;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
 import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -147,7 +147,6 @@ public class TypedCommandService extends CommandService {
             return;
         }
 
-
         CommandExecutionContext commCtx = new CommandExecutionContext(txtEvent.getTarget(), info);
         registration.getMatchingContext()
                 .stream()
@@ -257,9 +256,9 @@ public class TypedCommandService extends CommandService {
         MatchingContext matcherCtx = new MatchingContext(argumentName, argumentShorthand, matcher);
         consumer.accept(matcherCtx);
 
-        if (arg.getSpecType() == EvaluatedSpec.SpecType.OPTIONAL) {
+        if (arg.getSpecType() == IEvaluatedCriterion.SpecType.OPTIONAL) {
             makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, arg.getOptional());
-        } else if (arg.getSpecType() == EvaluatedSpec.SpecType.FIRST_OF) {
+        } else if (arg.getSpecType() == IEvaluatedCriterion.SpecType.FIRST_OF) {
             arg.getFirstOfP().forEach(subArg -> {
                 makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, subArg);
             });
@@ -274,17 +273,17 @@ public class TypedCommandService extends CommandService {
         MatchingContext matchingCtx = new MatchingContext(paramName, matcher);
         consumer.accept(matchingCtx);
 
-        if (par.getSpecType() == EvaluatedSpec.SpecType.OPTIONAL) {
+        if (par.getSpecType() == IEvaluatedCriterion.SpecType.OPTIONAL) {
             makeParMatcherCtx(command, matchingCtx::addChild, paramPositions, par.getOptional());
-        } else if (par.getSpecType() == EvaluatedSpec.SpecType.FIRST_OF) {
+        } else if (par.getSpecType() == IEvaluatedCriterion.SpecType.FIRST_OF) {
             par.getFirstOfP().forEach(subPar -> {
                 makeParMatcherCtx(command, matchingCtx::addChild, paramPositions, subPar);
             });
         }
     }
 
-    private IParameterMatcher<?> translateSpec(EvaluatedSpec spec, AtomicInteger posTracker) {
-        EvaluatedSpec.SpecType type = spec.getSpecType();
+    private IParameterMatcher<?> translateSpec(IEvaluatedCriterion spec, AtomicInteger posTracker) {
+        IEvaluatedCriterion.SpecType type = spec.getSpecType();
         Objects.requireNonNull(type, "Spec type may not be null! Param: " + spec.getName());
         switch (type) {
             case TYPE:

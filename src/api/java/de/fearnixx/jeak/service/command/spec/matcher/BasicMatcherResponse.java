@@ -1,31 +1,28 @@
-package de.fearnixx.jeak.service.command.matcher.meta;
+package de.fearnixx.jeak.service.command.spec.matcher;
 
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
+public class BasicMatcherResponse implements IMatcherResponse {
 
-public class MatcherResponse implements IMatcherResponse {
-
-    public static final IMatcherResponse SUCCESS = new MatcherResponse();
+    public static final IMatcherResponse SUCCESS = new BasicMatcherResponse();
     private final MatcherResponseType type;
     private final String noticeMessage;
     private final int failedAtIndex;
     private final String failureMessage;
 
-    public MatcherResponse() {
+    public BasicMatcherResponse() {
         this.type = MatcherResponseType.SUCCESS;
         this.noticeMessage = null;
         this.failedAtIndex = -1;
         this.failureMessage = null;
     }
 
-    public MatcherResponse(MatcherResponseType type, int failedAtIndex, String failureMessage) {
+    public BasicMatcherResponse(MatcherResponseType type, int failedAtIndex, String failureMessage) {
         this.type = type;
         this.noticeMessage = null;
         this.failedAtIndex = failedAtIndex;
         this.failureMessage = failureMessage;
     }
 
-    public MatcherResponse(String noticeMessage) {
+    public BasicMatcherResponse(String noticeMessage) {
         this.type = MatcherResponseType.NOTICE;
         this.noticeMessage = noticeMessage;
         this.failedAtIndex = -1;

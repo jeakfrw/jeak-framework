@@ -7,7 +7,7 @@ public class ArgumentSpecBuilder {
     private String name;
     private String shorthand;
     private Class<?> type;
-    private EvaluatedSpec.SpecType specType;
+    private IEvaluatedCriterion.SpecType specType;
 
     ArgumentSpecBuilder() {
     }
@@ -24,7 +24,7 @@ public class ArgumentSpecBuilder {
 
     public ArgumentSpecBuilder type(Class<?> type) {
         this.type = type;
-        this.specType = EvaluatedSpec.SpecType.TYPE;
+        this.specType = IEvaluatedCriterion.SpecType.TYPE;
         return this;
     }
 

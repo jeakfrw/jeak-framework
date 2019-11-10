@@ -2,6 +2,9 @@ package de.fearnixx.jeak.service.command.spec;
 
 public class Commands {
 
+    private Commands() {
+    }
+
     public static CommandSpecBuilder commandSpec() {
         return new CommandSpecBuilder();
     }

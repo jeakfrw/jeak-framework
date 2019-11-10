@@ -3,10 +3,7 @@ package de.fearnixx.jeak.service.command.matcher.meta;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.LocaleUnit;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
-import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
+import de.fearnixx.jeak.service.command.spec.matcher.*;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
 import java.util.Map;
@@ -41,6 +38,6 @@ public class OneOfMatcher implements IParameterMatcher<Void> {
                 .collect(Collectors.joining(", "));
         String unmatchedMessage = localeUnit.getContext(ctx.getSender().getCountryCode())
                 .getMessage("matcher.oneOf.unmatched", Map.of("types", typeList));
-        return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), unmatchedMessage);
+        return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), unmatchedMessage);
     }
 }

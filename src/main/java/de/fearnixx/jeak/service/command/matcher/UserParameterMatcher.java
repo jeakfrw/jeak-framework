@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.BasicMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
+public class UserParameterMatcher extends AbstractFrameworkTypeMatcher<IUser> {
 
     private static final Pattern DBID_PATTERN = Pattern.compile("\\d+");
     private static final Pattern CLID_PATTERN = Pattern.compile("c:\\d+");
@@ -65,7 +65,7 @@ public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
             ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), user);
             ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName() + "Id", user);
             ctx.getParameterIndex().getAndIncrement();
-            return MatcherResponse.SUCCESS;
+            return BasicMatcherResponse.SUCCESS;
 
         } else if (!results.isEmpty()) {
             String names =
@@ -74,7 +74,7 @@ public class UserParameterMatcher extends AbstractTypeMatcher<IUser> {
                     getLocaleUnit().getContext(ctx.getSender().getCountryCode())
                             .getMessage("matcher.type.ambiguousSearch",
                                     Map.of("results", names, "param", matchingContext.getArgumentOrParamName()));
-            return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
+            return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
         }
 
         return getIncompatibleTypeResponse(ctx, matchingContext, extracted);

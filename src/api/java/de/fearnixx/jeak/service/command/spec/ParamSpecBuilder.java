@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ParamSpecBuilder {
 
-    private EvaluatedSpec.SpecType specType;
+    private IEvaluatedCriterion.SpecType specType;
     private ICommandParamSpec optionalSpec;
     private final List<ICommandParamSpec> firstOfSpecs = new LinkedList<>();
     private String name;
@@ -18,13 +18,13 @@ public class ParamSpecBuilder {
 
     public ICommandParamSpec firstMatching(ICommandParamSpec... parameters) {
         firstOfSpecs.addAll(Arrays.asList(parameters));
-        specType = EvaluatedSpec.SpecType.FIRST_OF;
+        specType = IEvaluatedCriterion.SpecType.FIRST_OF;
         return this.build();
     }
 
     public ICommandParamSpec optional(ICommandParamSpec param) {
         optionalSpec = param;
-        specType = EvaluatedSpec.SpecType.OPTIONAL;
+        specType = IEvaluatedCriterion.SpecType.OPTIONAL;
         return this.build();
     }
 
@@ -35,7 +35,7 @@ public class ParamSpecBuilder {
 
     public ParamSpecBuilder type(Class<?> type) {
         valueType = type;
-        specType = EvaluatedSpec.SpecType.TYPE;
+        specType = IEvaluatedCriterion.SpecType.TYPE;
         return this;
     }
 

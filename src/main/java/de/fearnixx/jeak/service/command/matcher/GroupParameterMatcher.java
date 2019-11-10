@@ -2,13 +2,13 @@ package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.BasicMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 
-public class GroupParameterMatcher extends AbstractTypeMatcher<IGroup> {
+public class GroupParameterMatcher extends AbstractFrameworkTypeMatcher<IGroup> {
 
     @Inject
     private IPermissionService permService;
@@ -27,7 +27,7 @@ public class GroupParameterMatcher extends AbstractTypeMatcher<IGroup> {
         } else {
             ctx.putOrReplaceOne(matchingContext.getArgumentOrParamName(), optGroup.get());
             ctx.getParameterIndex().incrementAndGet();
-            return MatcherResponse.SUCCESS;
+            return BasicMatcherResponse.SUCCESS;
         }
     }
 }

@@ -1,10 +1,7 @@
 package de.fearnixx.jeak.service.command.matcher.meta;
 
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
-import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
+import de.fearnixx.jeak.service.command.spec.matcher.*;
 
 public class OptionalMatcher implements IParameterMatcher<Void> {
 
@@ -21,7 +18,7 @@ public class OptionalMatcher implements IParameterMatcher<Void> {
         if (response.getResponseType() == MatcherResponseType.SUCCESS) {
             return response;
         } else {
-            return MatcherResponse.SUCCESS;
+            return BasicMatcherResponse.SUCCESS;
         }
     }
 }

@@ -1,26 +1,22 @@
-package de.fearnixx.jeak.service.command.matcher;
+package de.fearnixx.jeak.service.command.spec.matcher;
 
-import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.reflect.LocaleUnit;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
 import de.fearnixx.jeak.service.command.spec.ICommandInfo;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
-import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
 import java.util.Map;
 
 public abstract class AbstractTypeMatcher<T> implements IParameterMatcher<T> {
 
-    @Inject
-    @LocaleUnit("commandService")
-    private ILocalizationUnit localeUnit;
+    private static final String DEFAULT_INCOMPATIBLE_MSG = "matcher.type.incompatible";
+    private static final String DEFAULT_MISSING_MSG = "matcher.type.missing";
 
-    protected ILocalizationUnit getLocaleUnit() {
-        return localeUnit;
+    protected String getMissingMsgId() {
+        return DEFAULT_MISSING_MSG;
+    }
+
+    protected String getIncompatibleTypeMsgId() {
+        return DEFAULT_INCOMPATIBLE_MSG;
     }
 
     protected IMatcherResponse getIncompatibleTypeResponse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String input) {
@@ -32,18 +28,20 @@ public abstract class AbstractTypeMatcher<T> implements IParameterMatcher<T> {
         );
         var incompatibleMessage =
                 getLocaleUnit().getContext(ctx.getSender().getCountryCode())
-                        .getMessage("matcher.type.incompatible", messageParams);
-        return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), incompatibleMessage);
+                        .getMessage(getIncompatibleTypeMsgId(), messageParams);
+        return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), incompatibleMessage);
     }
 
     protected IMatcherResponse getMissingParameterResponse(ICommandExecutionContext ctx, String name) {
         var messageParams = Map.of(
-                "param", name
+                "type", getSupportedType().getSimpleName(),
+                "param", name,
+                "reportedBy", getClass().getSimpleName()
         );
         var message =
                 getLocaleUnit().getContext(ctx.getSender().getCountryCode())
-                        .getMessage("matcher.type.missing", messageParams);
-        return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), message);
+                        .getMessage(getMissingMsgId(), messageParams);
+        return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), message);
     }
 
     protected String extractArgument(ICommandInfo info, IMatchingContext matchingContext) {
@@ -72,6 +70,8 @@ public abstract class AbstractTypeMatcher<T> implements IParameterMatcher<T> {
 
         return parse(ctx, matchingContext, str);
     }
+
+    protected abstract ILocalizationUnit getLocaleUnit();
 
     protected abstract IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted);
 }

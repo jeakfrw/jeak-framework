@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command.matcher;
 
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
-import de.fearnixx.jeak.service.command.matcher.meta.MatcherResponse;
+import de.fearnixx.jeak.service.command.spec.matcher.BasicMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherResponse;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
+public class ChannelParameterMatcher extends AbstractFrameworkTypeMatcher<IChannel> {
 
     private static final Pattern ID_PATTERN = Pattern.compile("\\d+");
 
@@ -40,7 +40,7 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
                 ctx.putOrReplaceOne(name, channel);
                 ctx.putOrReplaceOne(name + "Id", channel.getID());
                 ctx.getParameterIndex().incrementAndGet();
-                return MatcherResponse.SUCCESS;
+                return BasicMatcherResponse.SUCCESS;
             }
         } else {
             List<IChannel> result = dataCache.getChannels()
@@ -54,7 +54,7 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
                 ctx.putOrReplaceOne(name, channel);
                 ctx.putOrReplaceOne(name + "Id", channel.getID());
                 ctx.getParameterIndex().incrementAndGet();
-                return MatcherResponse.SUCCESS;
+                return BasicMatcherResponse.SUCCESS;
 
             } else if (result.size() > 1) {
                 String allChannels =
@@ -66,7 +66,7 @@ public class ChannelParameterMatcher extends AbstractTypeMatcher<IChannel> {
                         .getContext(ctx.getSender().getCountryCode())
                         .getMessage("matcher.type.ambiguousSearch",
                                 Map.of("results", allChannels));
-                return new MatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
+                return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
             }
         }
 
