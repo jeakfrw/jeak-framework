@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.command;
 
-import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
+import de.fearnixx.jeak.event.query.QueryEvent;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.HashMap;
@@ -8,14 +9,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CommandExecutionContext extends BasicDataHolder implements ICommandExecutionContext {
+public class CommandExecutionContext extends QueryEvent.ClientTextMessage implements ICommandExecutionContext {
 
     private final Map<String, Object> parameters = new HashMap<>();
     private final IClient sender;
     private final CommandInfo info;
     private final AtomicInteger parameterIndex = new AtomicInteger();
 
-    public CommandExecutionContext(IClient sender, CommandInfo info) {
+    public CommandExecutionContext(IClient sender, CommandInfo info, IUserService userSvc) {
+        super(userSvc);
         this.sender = sender;
         this.info = info;
     }

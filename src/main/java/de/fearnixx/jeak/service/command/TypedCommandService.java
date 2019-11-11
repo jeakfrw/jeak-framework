@@ -6,6 +6,7 @@ import de.fearnixx.jeak.antlr.CommandExecutionCtxParser;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.service.command.cmds.HelpCommand;
 import de.fearnixx.jeak.service.command.matcher.*;
 import de.fearnixx.jeak.service.command.matcher.meta.OneOfMatcher;
 import de.fearnixx.jeak.service.command.matcher.meta.OptionalMatcher;
@@ -20,6 +21,7 @@ import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.mlessmann.confort.lang.ParseVisitException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -45,6 +47,7 @@ public class TypedCommandService extends CommandService {
 
     private static final Logger logger = LoggerFactory.getLogger(TypedCommandService.class);
     private final Map<String, CommandRegistration> typedCommands = new ConcurrentHashMap<>();
+    private final Map<String, CommandRegistration> typedAliases = new ConcurrentHashMap<>();
 
     @Inject
     private IMatcherRegistryService matcherRegistry;
@@ -55,6 +58,9 @@ public class TypedCommandService extends CommandService {
     @Inject
     @LocaleUnit(value = "commandService", defaultResource = "localization/commandService.json")
     private ILocalizationUnit locales;
+
+    @Inject
+    private IUserService userSvc;
 
     @Override
     protected int getThreadPoolSize() {
@@ -81,6 +87,7 @@ public class TypedCommandService extends CommandService {
         registerMatcher(new SubjectParameterMatcher());
         registerMatcher(new UserParameterMatcher());
 
+        registerCommand(HelpCommand.commandSpec(this, injectionService));
     }
 
     private <T> void registerMatcher(IParameterMatcher<T> matcher) {
@@ -107,9 +114,12 @@ public class TypedCommandService extends CommandService {
             command = msg.substring(COMMAND_PREFIX.length());
             arguments = msg.substring(COMMAND_PREFIX.length() + command.length()).trim();
         }
+        // TODO: Support "!command some-dashed-arg"
 
         if (typedCommands.containsKey(command)) {
             dispatchTyped(txtEvent, arguments, typedCommands.get(command));
+        } else if (typedAliases.containsKey(command)) {
+            dispatchTyped(txtEvent, arguments, typedAliases.get(command));
 
         } else if (getLegacyReceivers().containsKey(command)) {
             if (!DISABLE_LEGACY_WARN) {
@@ -147,7 +157,12 @@ public class TypedCommandService extends CommandService {
             return;
         }
 
-        CommandExecutionContext commCtx = new CommandExecutionContext(txtEvent.getTarget(), info);
+        CommandExecutionContext commCtx = new CommandExecutionContext(txtEvent.getTarget(), info, userSvc);
+        commCtx.copyFrom(txtEvent);
+        commCtx.setCaption(txtEvent.getCaption());
+        commCtx.setClient(txtEvent.getTarget());
+        commCtx.setConnection(txtEvent.getConnection());
+        commCtx.setRawReference(txtEvent.getRawReference());
         registration.getMatchingContext()
                 .stream()
                 .map(ctx -> ctx.getMatcher().tryMatch(commCtx, ctx))
@@ -243,7 +258,7 @@ public class TypedCommandService extends CommandService {
         typedCommands.put(command, registration);
         String aliasStr = spec.getAliases()
                 .stream()
-                .peek(alas -> typedCommands.put(alas, registration))
+                .peek(alas -> typedAliases.put(alas, registration))
                 .collect(Collectors.joining(","));
         logger.info("Registered command \"{}\" with aliases: [{}]", command, aliasStr);
     }
@@ -302,5 +317,15 @@ public class TypedCommandService extends CommandService {
             default:
                 throw new IllegalArgumentException("Unknown spec type: " + type);
         }
+    }
+
+    public List<CommandRegistration> getCommands() {
+        return typedCommands.values()
+                .stream()
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    public Optional<CommandRegistration> getCommand(String command) {
+        return Optional.ofNullable(typedCommands.getOrDefault(command, null));
     }
 }

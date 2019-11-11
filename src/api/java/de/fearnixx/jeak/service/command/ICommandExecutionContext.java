@@ -1,12 +1,13 @@
 package de.fearnixx.jeak.service.command;
 
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.service.command.spec.ICommandInfo;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public interface ICommandExecutionContext {
+public interface ICommandExecutionContext extends IQueryEvent.INotification.IClientTextMessage {
 
     Optional<Object> getOne(String fullName);
 

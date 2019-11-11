@@ -6,22 +6,10 @@
 // From: https://github.com/apache/groovy/blob/master/subprojects/parser-antlr4/build.gradle#L34
 final PARSER_PACKAGE_NAME = 'de.fearnixx.jeak.antlr'
 
-task deleteInvalidGrammarSource(type: Delete) {
-    def parserFilePattern = '*'
-    def outputPath = generateGrammarSource.outputDirectory
-    def parserPackagePath = "${outputPath}/${PARSER_PACKAGE_NAME.replace('.', '/')}"
-    delete {
-        fileTree((File) outputPath) {
-            include parserFilePattern
-        }
-    }
-}
-
 generateGrammarSource {
     outputDirectory = new File('build/generated-src/antlr/main')
     outputs.cacheIf { true }
     arguments += ["-visitor", "-no-listener", "-package", PARSER_PACKAGE_NAME]
-    dependsOn tasks.deleteInvalidGrammarSource
 }
 
 
@@ -40,8 +28,23 @@ task fixGrammarSourcePackage(type: Copy) {
 
     dependsOn tasks.generateGrammarSource
 }
-classes {
+
+task deleteInvalidGrammarSource(type: Delete) {
+    def parserFilePattern = '*'
+    def outputPath = generateGrammarSource.outputDirectory
+    def parserPackagePath = "${outputPath}/${PARSER_PACKAGE_NAME.replace('.', '/')}"
+    delete {
+        fileTree((File) outputPath) {
+            include parserFilePattern
+        }
+    }
+
     dependsOn tasks.fixGrammarSourcePackage
+}
+
+
+classes {
+    dependsOn tasks.deleteInvalidGrammarSource
 }
 
 // END Fix #2565
