@@ -12,7 +12,10 @@ import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.fearnixx.jeak.service.permission.base.ISubject;
-import de.fearnixx.jeak.service.permission.framework.commands.*;
+import de.fearnixx.jeak.service.permission.framework.commands.CreateGroupCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.GrantPermissionCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.LinkGroupCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.PermLookupCommand;
 import de.fearnixx.jeak.service.permission.framework.index.ConfigIndex;
 import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.mlessmann.confort.LoaderFactory;
@@ -56,17 +59,14 @@ public class InternalPermissionProvider implements IPermissionProvider {
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
 
-        final GroupSubjectMatcher groupSubjectMatcher = new GroupSubjectMatcher();
         final CreateGroupCommand crGrpCommand = new CreateGroupCommand();
         final LinkGroupCommand lnkGrpCommand = new LinkGroupCommand();
         final GrantPermissionCommand grntPermCommand = new GrantPermissionCommand();
         final PermLookupCommand permLookupCommand = new PermLookupCommand();
-        injectionService.injectInto(groupSubjectMatcher);
         injectionService.injectInto(crGrpCommand);
         injectionService.injectInto(lnkGrpCommand);
         injectionService.injectInto(grntPermCommand);
         injectionService.injectInto(permLookupCommand);
-        matcherRegistry.registerMatcher(groupSubjectMatcher);
         commandService.registerCommand("perm-group-create", crGrpCommand);
         commandService.registerCommand(crGrpCommand.getCommandSpec());
         commandService.registerCommand("perm-group-link", lnkGrpCommand);
@@ -75,6 +75,7 @@ public class InternalPermissionProvider implements IPermissionProvider {
         commandService.registerCommand(grntPermCommand.getCommandSpec());
         commandService.registerCommand("permuuid-lookup", permLookupCommand);
         commandService.registerCommand(permLookupCommand.getCommandSpec());
+        commandService.registerCommand(permLookupCommand.getArgumentCommandSpec());
     }
 
     @Override

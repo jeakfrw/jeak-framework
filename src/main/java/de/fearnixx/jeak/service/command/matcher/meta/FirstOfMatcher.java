@@ -28,6 +28,8 @@ public class FirstOfMatcher implements IParameterMatcher<Void> {
             if (childResponse.getResponseType().equals(MatcherResponseType.SUCCESS)) {
                 ctx.getParameterIndex().incrementAndGet();
                 return childResponse;
+            } else if (childResponse.getResponseType().equals(MatcherResponseType.NOTICE)) {
+                ctx.getCommandInfo().getErrorMessages().add(childResponse.getFailureMessage());
             }
         }
 

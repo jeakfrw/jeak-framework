@@ -22,6 +22,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static de.fearnixx.jeak.service.command.spec.Commands.argumentSpec;
 import static de.fearnixx.jeak.service.command.spec.Commands.paramSpec;
 
 public class PermLookupCommand implements ICommandReceiver {
@@ -118,11 +119,14 @@ public class PermLookupCommand implements ICommandReceiver {
     private void typedInvoke(ICommandExecutionContext ctx) {
         Optional<IGroup> group = ctx.getOne("group", IGroup.class);
         Optional<IUser> user = ctx.getOne("user", IUser.class);
+        Optional<IClient> client = ctx.getOne("client", IClient.class);
         Optional<Integer> sgid = ctx.getOne("sgid", Integer.class);
         if (group.isPresent()) {
             sendResult(ctx.getSender(), "group", group.get().getUniqueID().toString());
         } else if (user.isPresent()) {
-            sendResult(ctx.getSender(), "user", user.get().getUniqueID().toString());
+            sendResult(ctx.getSender(), "user", user.get().toString() + "/" + user.get().getUniqueID().toString());
+        } else if (client.isPresent()) {
+            sendResult(ctx.getSender(), "client", client.get().toString() + "/" + client.get().getUniqueID().toString());
         } else if (sgid.isPresent()) {
             IPermissionProvider frwProvider = permService.getFrameworkProvider();
             List<IGroup> grps = frwProvider.getGroupsLinkedToServerGroup(sgid.get());
@@ -140,6 +144,20 @@ public class PermLookupCommand implements ICommandReceiver {
                                 paramSpec("group", IGroup.class),
                                 paramSpec("user", IUser.class),
                                 paramSpec("sgid", Integer.class)
+                        )
+                )
+                .executor(this::typedInvoke)
+                .build();
+    }
+
+    public ICommandSpec getArgumentCommandSpec() {
+        return Commands.commandSpec("permuuid-lookup-arg", "frw:permuuid-lookup-arg")
+                .arguments(
+                        argumentSpec().firstMatching(
+                                argumentSpec("group", "g", IGroup.class),
+                                argumentSpec("user", "u", IUser.class),
+                                argumentSpec("client", "c", IClient.class),
+                                argumentSpec("sgid", "sg", Integer.class)
                         )
                 )
                 .executor(this::typedInvoke)

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 public class UserParameterMatcher extends AbstractFrameworkTypeMatcher<IUser> {
 
-    private static final Pattern DBID_PATTERN = Pattern.compile("\\d+");
+    private static final Pattern DBID_PATTERN = Pattern.compile("db:\\d+");
     private static final Pattern CLID_PATTERN = Pattern.compile("c:\\d+");
     private static final Pattern TSUID_PATTERN = Pattern.compile("[a-zA-Z0-9/_]{20,27}=");
     private static final Integer MAX_NICKNAME_LENGTH = 100;
@@ -43,10 +43,10 @@ public class UserParameterMatcher extends AbstractFrameworkTypeMatcher<IUser> {
     public IMatcherResponse parse(ICommandExecutionContext ctx, IMatchingContext matchingContext, String extracted) {
         List<IUser> results = Collections.emptyList();
         if (DBID_PATTERN.matcher(extracted).matches()) {
-            results = userService.findUserByDBID(Integer.parseInt(extracted));
+            results = userService.findUserByDBID(Integer.parseInt(extracted.substring(3)));
 
         } else if (CLID_PATTERN.matcher(extracted).matches()) {
-            IClient res = dataCache.getClientMap().getOrDefault(Integer.parseInt(extracted), null);
+            IClient res = dataCache.getClientMap().getOrDefault(Integer.parseInt(extracted.substring(2)), null);
             if (res != null) {
                 results = List.of(res);
             }
@@ -74,7 +74,7 @@ public class UserParameterMatcher extends AbstractFrameworkTypeMatcher<IUser> {
                     getLocaleUnit().getContext(ctx.getSender().getCountryCode())
                             .getMessage("matcher.type.ambiguousSearch",
                                     Map.of("results", names, "param", matchingContext.getArgumentOrParamName()));
-            return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), ambiguityMessage);
+            return new BasicMatcherResponse(MatcherResponseType.NOTICE, ctx.getParameterIndex().get(), ambiguityMessage);
         }
 
         return getIncompatibleTypeResponse(ctx, matchingContext, extracted);
