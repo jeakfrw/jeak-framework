@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.service.command.spec;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ArgumentSpecBuilder {
@@ -8,6 +10,8 @@ public class ArgumentSpecBuilder {
     private String shorthand;
     private Class<?> type;
     private IEvaluatedCriterion.SpecType specType;
+    private ICommandArgumentSpec optionalSpec;
+    private final List<ICommandArgumentSpec> firstOfSpecs = new ArrayList<>();
 
     ArgumentSpecBuilder() {
     }
@@ -28,12 +32,26 @@ public class ArgumentSpecBuilder {
         return this;
     }
 
+    public ICommandArgumentSpec optional(ICommandArgumentSpec spec) {
+        this.optionalSpec = spec;
+        this.specType = IEvaluatedCriterion.SpecType.OPTIONAL;
+        return build();
+    }
+
+    public ICommandArgumentSpec firstMatching(ICommandArgumentSpec... specs) {
+        this.firstOfSpecs.addAll(Arrays.asList(specs));
+        this.specType = IEvaluatedCriterion.SpecType.FIRST_OF;
+        return build();
+    }
+
     public ICommandArgumentSpec build() {
         return new ICommandArgumentSpec() {
             private final String fName = name;
             private final String fShorthand = shorthand;
             private final Class<?> fValueType = type;
             private final SpecType fSpecType = specType;
+            private final ICommandArgumentSpec fOptionalSpec = optionalSpec;
+            private final List<ICommandArgumentSpec> fFirstOfSpecs = new ArrayList<>(firstOfSpecs);
 
             @Override
             public String getName() {
@@ -52,12 +70,12 @@ public class ArgumentSpecBuilder {
 
             @Override
             public List<ICommandArgumentSpec> getFirstOfP() {
-                return null;
+                return fFirstOfSpecs;
             }
 
             @Override
             public ICommandArgumentSpec getOptional() {
-                return null;
+                return fOptionalSpec;
             }
 
             @Override

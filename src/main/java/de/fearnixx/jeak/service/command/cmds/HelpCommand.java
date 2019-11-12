@@ -163,6 +163,8 @@ public class HelpCommand {
 
     private void serializeArguments(List<String> messages, StringBuilder message, List<ICommandArgumentSpec> args) {
         args.forEach(arg -> {
+            rotateIfExeeding(messages, message, message.length() + 1);
+            message.append(" ");
             if (IEvaluatedCriterion.SpecType.TYPE.equals(arg.getSpecType())) {
                 addAndSerializeTypeArgument(messages, message, arg);
             } else if (IEvaluatedCriterion.SpecType.OPTIONAL.equals(arg.getSpecType())) {
@@ -203,7 +205,7 @@ public class HelpCommand {
     private void addAndSerializeTypeArgument(List<String> messages, StringBuilder message, ICommandArgumentSpec arg) {
         String argName = arg.getName();
         String argShort = arg.getShorthand();
-        rotateIfExeeding(messages, message, message.length() + 4 + argShort.length() + argName.length());
-        message.append("-").append(argShort).append("=").append("<").append(argName).append(">");
+        rotateIfExeeding(messages, message, message.length() + 5 + argShort.length() + argName.length());
+        message.append("--").append(argShort).append("=").append("<").append(argName).append(">");
     }
 }

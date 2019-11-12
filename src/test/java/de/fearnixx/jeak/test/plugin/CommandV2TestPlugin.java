@@ -7,8 +7,12 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.data.IChannel;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
+
+import java.util.Optional;
 
 import static de.fearnixx.jeak.service.command.spec.Commands.*;
 
@@ -24,6 +28,9 @@ public class CommandV2TestPlugin extends AbstractTestPlugin {
     public CommandV2TestPlugin() {
         addTest("outer_executed");
         addTest("inner_executed");
+        addTest("firstOf_executed");
+        addTest("clashed_name");
+        addTest("clashed_shorthand");
     }
 
     @Listener
@@ -60,5 +67,73 @@ public class CommandV2TestPlugin extends AbstractTestPlugin {
                 })
                 .build();
         commandService.registerCommand(spec2);
+
+        ICommandSpec spec3 = commandSpec("first-of", "commandv2test:first-of")
+                .parameters(
+                        paramSpec().firstMatching(
+                                paramSpec("client", IClient.class),
+                                paramSpec("user", IUser.class),
+                                paramSpec("channel", IChannel.class)
+                        )
+                )
+                .permission("test.thirdcommand")
+                .executor(ctx -> {
+                    success("firstOf_executed");
+                    Optional<IClient> client = ctx.getOne("client", IClient.class);
+                    Optional<IUser> user = ctx.getOne("user", IUser.class);
+                    Optional<IChannel> channel = ctx.getOne("channel", IChannel.class);
+                    client.ifPresent(c ->
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Client: " + c.toString()))
+                    );
+                    user.ifPresent(u ->
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("User: " + client.toString()))
+                    );
+                    channel.ifPresent(c ->
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Channel: " + channel.toString()))
+                    );
+                })
+                .build();
+        commandService.registerCommand(spec3);
+
+        ICommandSpec spec4 = commandSpec("argumentized", "commandv2test:argumentized")
+                .arguments(
+                        argumentSpec("name", "n", IClient.class),
+                        argumentSpec().optional(argumentSpec("channel", "c", IChannel.class))
+                )
+                .executor(ctx -> {
+                    Optional<IClient> optClient = ctx.getOne("name", IClient.class);
+                    optClient.ifPresent(c ->
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Client: " + c.toString()))
+                    );
+                    Optional<IChannel> optChannel = ctx.getOne("channel", IChannel.class);
+                    optChannel.ifPresent(c ->
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Channel: " + c.toString()))
+                    );
+                })
+                .build();
+        commandService.registerCommand(spec4);
+
+        ICommandSpec spec5 = commandSpec("clashed")
+                .arguments(
+                        argumentSpec("name", "n", IUser.class),
+                        argumentSpec("name", "s", IChannel.class)
+                )
+                .build();
+        try {
+            commandService.registerCommand(spec5);
+        } catch (IllegalArgumentException e) {
+            success("clashed_name");
+        }
+
+        ICommandSpec spec6 = commandSpec("clashed2")
+                .arguments(
+                        argumentSpec("name", "n", IUser.class),
+                        argumentSpec("neighbor", "n", IChannel.class)
+                )
+                .executor(ctx -> {
+                    success("clashed_shorthand");
+                })
+                .build();
+        commandService.registerCommand(spec6);
     }
 }

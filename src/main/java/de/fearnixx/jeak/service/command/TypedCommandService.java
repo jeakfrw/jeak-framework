@@ -8,7 +8,8 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.command.cmds.HelpCommand;
 import de.fearnixx.jeak.service.command.matcher.*;
-import de.fearnixx.jeak.service.command.matcher.meta.OneOfMatcher;
+import de.fearnixx.jeak.service.command.matcher.meta.FirstOfMatcher;
+import de.fearnixx.jeak.service.command.matcher.meta.HasPermissionMatcher;
 import de.fearnixx.jeak.service.command.matcher.meta.OptionalMatcher;
 import de.fearnixx.jeak.service.command.reg.CommandRegistration;
 import de.fearnixx.jeak.service.command.reg.MatchingContext;
@@ -62,6 +63,10 @@ public class TypedCommandService extends CommandService {
     @Inject
     private IUserService userSvc;
 
+    private FirstOfMatcher firstOfMatcher;
+    private HasPermissionMatcher hasPermissionMatcher;
+    private OptionalMatcher optionalMatcher;
+
     @Override
     protected int getThreadPoolSize() {
         return THREAD_POOL_SIZE;
@@ -86,6 +91,9 @@ public class TypedCommandService extends CommandService {
         registerMatcher(new StringParamMatcher());
         registerMatcher(new SubjectParameterMatcher());
         registerMatcher(new UserParameterMatcher());
+        firstOfMatcher = injectionService.injectInto(new FirstOfMatcher());
+        hasPermissionMatcher = injectionService.injectInto(new HasPermissionMatcher());
+        optionalMatcher = injectionService.injectInto(new OptionalMatcher());
 
         registerCommand(HelpCommand.commandSpec(this, injectionService));
     }
@@ -145,6 +153,21 @@ public class TypedCommandService extends CommandService {
             if (spec.getArguments().isEmpty()) {
                 info.getErrorMessages().add(langCtx.getMessage("command.notArgumented"));
             }
+            info.getArguments()
+                    .entrySet()
+                    .forEach(argE -> {
+                        if (registration.isClashed(argE.getKey())) {
+                            String msg = locales.getContext(txtEvent.getSender().getCountryCode())
+                                    .getMessage("command.argument.shorthandClashed", Map.of("shorthand", argE.getKey()));
+                            info.getErrorMessages().add(msg);
+                        } else {
+                            String longName = registration.getLongName(argE.getKey());
+                            if (longName != null) {
+                                info.getArguments().put(longName, argE.getValue());
+                            }
+                        }
+                    });
+
         } else if (info.isParameterized()) {
             if (spec.getParameters().isEmpty()) {
                 info.getErrorMessages().add(langCtx.getMessage("command.notParameterized"));
@@ -250,11 +273,19 @@ public class TypedCommandService extends CommandService {
         parameters.forEach(par -> {
             makeParMatcherCtx(command, rootCtxs::add, paramPositions, par);
         });
+        final Map<String, ICommandArgumentSpec> shortHands = new HashMap<>();
+        final List<String> clashedShorthands = new LinkedList<>();
         arguments.forEach(arg -> {
-            makeArgMatcherCtx(command, rootCtxs::add, paramPositions, arg);
+            makeArgMatcherCtx(command, rootCtxs::add, paramPositions, arg, shortHands, clashedShorthands);
         });
+        rootCtxs.forEach(ctx -> ctx.setCommandSpec(spec));
 
         CommandRegistration registration = new CommandRegistration(spec, rootCtxs);
+        shortHands.entrySet()
+                .stream()
+                .filter(e -> !e.getKey().equals(e.getValue().getName()))
+                .forEach(e -> registration.addShorthand(e.getKey(), e.getValue().getName()));
+        clashedShorthands.forEach(registration::addClashedShorthand);
         typedCommands.put(command, registration);
         String aliasStr = spec.getAliases()
                 .stream()
@@ -263,7 +294,9 @@ public class TypedCommandService extends CommandService {
         logger.info("Registered command \"{}\" with aliases: [{}]", command, aliasStr);
     }
 
-    private void makeArgMatcherCtx(String command, Consumer<MatchingContext> consumer, AtomicInteger paramPositions, ICommandArgumentSpec arg) {
+    private void makeArgMatcherCtx(String command, Consumer<MatchingContext> consumer, AtomicInteger paramPositions,
+                                   ICommandArgumentSpec arg,
+                                   Map<String, ICommandArgumentSpec> shortHands, List<String> clashedShorthands) {
         IParameterMatcher<?> matcher = translateSpec(arg, paramPositions);
         String argumentName = arg.getName();
         String argumentShorthand = arg.getShorthand();
@@ -271,12 +304,27 @@ public class TypedCommandService extends CommandService {
         MatchingContext matcherCtx = new MatchingContext(argumentName, argumentShorthand, matcher);
         consumer.accept(matcherCtx);
 
-        if (arg.getSpecType() == IEvaluatedCriterion.SpecType.OPTIONAL) {
-            makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, arg.getOptional());
-        } else if (arg.getSpecType() == IEvaluatedCriterion.SpecType.FIRST_OF) {
+        if (IEvaluatedCriterion.SpecType.OPTIONAL.equals(arg.getSpecType())) {
+            makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, arg.getOptional(), shortHands, clashedShorthands);
+        } else if (IEvaluatedCriterion.SpecType.FIRST_OF.equals(arg.getSpecType())) {
             arg.getFirstOfP().forEach(subArg -> {
-                makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, subArg);
+                makeArgMatcherCtx(command, matcherCtx::addChild, paramPositions, subArg, shortHands, clashedShorthands);
             });
+        } else if (IEvaluatedCriterion.SpecType.TYPE.equals(arg.getSpecType())) {
+            ICommandArgumentSpec replaced = shortHands.put(arg.getName(), arg);
+            if (replaced != null) {
+                String msg = String.format("Argument name \"%s\" of type \"%s clashes with another argument name of type: \"%s",
+                        arg.getName(), arg.getValueType().getName(), replaced.getValueType().getName());
+                throw new IllegalArgumentException(msg);
+            }
+
+            ICommandArgumentSpec replacedShorthand = shortHands.put(arg.getShorthand(), arg);
+            if (replacedShorthand != null) {
+                logger.warn("Argument shorthand \"{}\" of type \"{}\" clashes with another argument of type \"{}\". Users are forced to use the full name.",
+                        arg.getShorthand(), arg.getValueType().getName(), replacedShorthand.getValueType().getName(),
+                        new IllegalArgumentException());
+                clashedShorthands.add(arg.getShorthand());
+            }
         }
     }
 
@@ -309,10 +357,10 @@ public class TypedCommandService extends CommandService {
 
             case FIRST_OF:
                 posTracker.incrementAndGet();
-                return new OneOfMatcher();
+                return firstOfMatcher;
 
             case OPTIONAL:
-                return new OptionalMatcher();
+                return optionalMatcher;
 
             default:
                 throw new IllegalArgumentException("Unknown spec type: " + type);

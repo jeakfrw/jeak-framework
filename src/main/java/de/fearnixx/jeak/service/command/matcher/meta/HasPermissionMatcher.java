@@ -11,17 +11,9 @@ import java.util.Map;
 
 public class HasPermissionMatcher implements IParameterMatcher<Void> {
 
-    private final String requiredPermission;
-    private final int requiredValue;
-
     @Inject
     @LocaleUnit("commandService")
     private ILocalizationUnit localeUnit;
-
-    public HasPermissionMatcher(String requiredPermission, int requiredValue) {
-        this.requiredPermission = requiredPermission;
-        this.requiredValue = requiredValue;
-    }
 
     @Override
     public Class<Void> getSupportedType() {
@@ -31,6 +23,11 @@ public class HasPermissionMatcher implements IParameterMatcher<Void> {
     @Override
     public IMatcherResponse tryMatch(ICommandExecutionContext ctx, IMatchingContext matchingContext) {
         IClient sender = ctx.getSender();
+        String requiredPermission = matchingContext.getCommandSpec().getRequiredPermission().orElse(null);
+        int requiredValue = matchingContext.getCommandSpec().getRequiredPermissionValue();
+        if (requiredPermission == null) {
+            return BasicMatcherResponse.SUCCESS;
+        }
 
         var optPerm = sender.getPermission(requiredPermission);
         if (optPerm.map(permEntry -> permEntry.getValue() >= requiredValue).orElse(false)) {

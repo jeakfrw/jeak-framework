@@ -9,7 +9,7 @@ import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class OneOfMatcher implements IParameterMatcher<Void> {
+public class FirstOfMatcher implements IParameterMatcher<Void> {
 
     @Inject
     @LocaleUnit("commandService")
@@ -37,7 +37,10 @@ public class OneOfMatcher implements IParameterMatcher<Void> {
                 .map(m -> m.getMatcher().getSupportedType().getName())
                 .collect(Collectors.joining(", "));
         String unmatchedMessage = localeUnit.getContext(ctx.getSender().getCountryCode())
-                .getMessage("matcher.oneOf.unmatched", Map.of("types", typeList));
+                .getMessage("matcher.firstOf.unmatched",
+                        Map.of(
+                                "types", typeList
+                        ));
         return new BasicMatcherResponse(MatcherResponseType.ERROR, ctx.getParameterIndex().get(), unmatchedMessage);
     }
 }

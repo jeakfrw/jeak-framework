@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.service.command.spec.matcher;
 
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
+
 import java.util.List;
 
 public interface IMatchingContext {
@@ -14,4 +16,6 @@ public interface IMatchingContext {
     List<IMatchingContext> getChildren();
 
     IParameterMatcher<?> getMatcher();
+
+    ICommandSpec getCommandSpec();
 }

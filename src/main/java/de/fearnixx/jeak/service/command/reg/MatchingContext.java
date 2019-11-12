@@ -1,11 +1,10 @@
 package de.fearnixx.jeak.service.command.reg;
 
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatchingContext;
 import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
 
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class MatchingContext implements IMatchingContext {
 
@@ -13,6 +12,7 @@ public class MatchingContext implements IMatchingContext {
     private final String argShorthand;
     private final List<MatchingContext> children = new LinkedList<>();
     private final IParameterMatcher<?> matcher;
+    private ICommandSpec commandSpec;
 
     public MatchingContext(String argName, String argShorthand, IParameterMatcher<?> useMatcher) {
         this.paramName = argName;
@@ -54,6 +54,18 @@ public class MatchingContext implements IMatchingContext {
     @Override
     public IParameterMatcher<?> getMatcher() {
         return matcher;
+    }
+
+    @Override
+    public ICommandSpec getCommandSpec() {
+        return commandSpec;
+    }
+
+    public void setCommandSpec(ICommandSpec commandSpec) {
+        this.commandSpec = commandSpec;
+        if (!children.isEmpty()) {
+            children.forEach(c -> c.setCommandSpec(commandSpec));
+        }
     }
 
     public void addChild(MatchingContext child) {
