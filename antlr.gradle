@@ -5,6 +5,7 @@
 // Found via. https://github.com/gradle/gradle/issues/2565#issuecomment-417916273
 // From: https://github.com/apache/groovy/blob/master/subprojects/parser-antlr4/build.gradle#L34
 final PARSER_PACKAGE_NAME = 'de.fearnixx.jeak.antlr'
+
 generateGrammarSource {
     outputDirectory = new File('build/generated-src/antlr/main')
     outputs.cacheIf { true }
@@ -37,8 +38,10 @@ task deleteInvalidGrammarSource(type: Delete) {
             include parserFilePattern
         }
     }
+
     dependsOn tasks.fixGrammarSourcePackage
 }
+
 
 classes {
     dependsOn tasks.deleteInvalidGrammarSource
