@@ -9,6 +9,7 @@ import de.fearnixx.jeak.plugin.persistent.PluginRegistry;
 import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
+import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.command.TypedCommandService;
 import de.fearnixx.jeak.service.command.matcher.MatcherRegistry;
@@ -53,6 +54,7 @@ public class JeakBot implements Runnable, IBot {
     // * * * STATICS  * * * //
     public static final Charset CHAR_ENCODING = StandardCharsets.UTF_8;
     public static final String VERSION = "@VERSION@";
+    private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", false);
 
     private static final Logger logger = LoggerFactory.getLogger(JeakBot.class);
 
@@ -168,7 +170,11 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new DataCache());
         initializeService(new LocalizationService());
         initializeService(new MatcherRegistry());
-        initializeService(new TypedCommandService());
+        if (ENABLE_TYPED_COMMANDS) {
+            initializeService(new TypedCommandService());
+        } else {
+            initializeService(new CommandService());
+        }
         initializeService(new NotificationService());
         DatabaseService dbSvc = new DatabaseService(new File(confDir, "databases"));
         initializeService(dbSvc);

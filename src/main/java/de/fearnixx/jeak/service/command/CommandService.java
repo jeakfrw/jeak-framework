@@ -241,12 +241,14 @@ public class CommandService implements ICommandService {
 
     @Override
     public void registerCommand(ICommandSpec spec) {
-        throw new UnsupportedOperationException("LEGACY IMPLEMENTATION USED!");
+        logger.warn("Command \"{}\" has been registered with the deprecated command service." +
+                " Consider enabling the experimental command service for this command to work! " +
+                "Flag is: \"jeak.experimental.enable_typedCommands\"", spec.getCommand());
     }
 
     @Override
     public void unregisterCommand(ICommandSpec specInstance) {
-        throw new UnsupportedOperationException("LEGACY IMPLEMENTATION USED!");
+        // ignored - overwritten by actual implementation
     }
 
     protected Map<String, ICommandReceiver> getLegacyReceivers() {
