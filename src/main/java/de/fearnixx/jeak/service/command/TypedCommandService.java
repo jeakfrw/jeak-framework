@@ -280,6 +280,12 @@ public class TypedCommandService extends CommandService {
         });
         rootCtxs.forEach(ctx -> ctx.setCommandSpec(spec));
 
+        if (spec.getRequiredPermission().isPresent()) {
+            MatchingContext permCtx = new MatchingContext("frw:permCheck", hasPermissionMatcher);
+            permCtx.setCommandSpec(spec);
+            rootCtxs.add(0, permCtx);
+        }
+
         CommandRegistration registration = new CommandRegistration(spec, rootCtxs);
         shortHands.entrySet()
                 .stream()

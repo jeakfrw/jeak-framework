@@ -30,7 +30,7 @@ public class HasPermissionMatcher implements IParameterMatcher<Void> {
         }
 
         var optPerm = sender.getPermission(requiredPermission);
-        if (optPerm.map(permEntry -> permEntry.getValue() >= requiredValue).orElse(false)) {
+        if (optPerm.map(permEntry -> permEntry.getValue() < requiredValue).orElse(true)) {
             var params = Map.of("permName", requiredPermission, "permValue", Integer.toString(requiredValue));
             var missingPermMessage =
                     localeUnit.getContext(sender.getCountryCode())

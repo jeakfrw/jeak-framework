@@ -10,7 +10,7 @@ public class CommandSpecBuilder {
     private ICommandExecutor executor;
     private String name;
     private String requiredPerm;
-    private int requiredPermValue;
+    private int requiredPermValue = 1;
 
     CommandSpecBuilder() {
     }

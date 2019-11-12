@@ -6,6 +6,7 @@
       "matcher.type.incompatible": "Input string \"%[input]\" of param \"%[param]\" could not be translated to %[type] ",
       "matcher.type.missing": "Parameter \"%[param]\" is missing.",
       "matcher.firstOf.unmatched": "Could not match input to one of: %[types]",
+      "matcher.perm.missing": "You're not allowed to use this command! (Failed at %[permName] >= %[permValue])",
       "command.notArgumented": "This command does not accept any arguments.",
       "command.notParameterized": "This command does not accept any parameters.",
       "command.help.allCommands": "The following commands are registered.",
