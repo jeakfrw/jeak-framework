@@ -1,10 +1,9 @@
 package de.fearnixx.jeak.service.permission.framework.commands;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandException;
-import de.fearnixx.jeak.service.command.CommandParameterException;
-import de.fearnixx.jeak.service.command.ICommandContext;
-import de.fearnixx.jeak.service.command.ICommandReceiver;
+import de.fearnixx.jeak.service.command.*;
+import de.fearnixx.jeak.service.command.spec.Commands;
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
@@ -43,6 +42,10 @@ public class CreateGroupCommand implements ICommandReceiver {
 
         final String desiredName = ctx.getArguments().get(0);
 
+        createGroup(invoker, desiredName);
+    }
+
+    private void createGroup(IClient invoker, String desiredName) throws CommandException {
         if (permService.getFrameworkProvider().findGroupByName(desiredName).isPresent()) {
             throw new CommandParameterException("The given group already exists!", "group-name", desiredName);
         }
@@ -53,5 +56,18 @@ public class CreateGroupCommand implements ICommandReceiver {
         } else {
             throw new CommandException("Failed to create group. Consult logs for more information.");
         }
+    }
+
+    private void typedInvoke(ICommandExecutionContext ctx) throws CommandException {
+        String name = ctx.getRequiredOne("name", String.class);
+        createGroup(ctx.getSender(), name);
+    }
+
+    public ICommandSpec getCommandSpec() {
+        return Commands.commandSpec("perm-group-create", "frw:perm-group-create")
+                .parameters(Commands.paramSpec("name", String.class))
+                .permission("frw.permission.create_group")
+                .executor(this::typedInvoke)
+                .build();
     }
 }

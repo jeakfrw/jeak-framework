@@ -6,15 +6,13 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.command.ICommandService;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.fearnixx.jeak.service.permission.base.ISubject;
-import de.fearnixx.jeak.service.permission.framework.commands.CreateGroupCommand;
-import de.fearnixx.jeak.service.permission.framework.commands.GrantPermissionCommand;
-import de.fearnixx.jeak.service.permission.framework.commands.LinkGroupCommand;
-import de.fearnixx.jeak.service.permission.framework.commands.PermLookupCommand;
+import de.fearnixx.jeak.service.permission.framework.commands.*;
 import de.fearnixx.jeak.service.permission.framework.index.ConfigIndex;
 import de.fearnixx.jeak.service.permission.framework.index.SubjectIndex;
 import de.mlessmann.confort.LoaderFactory;
@@ -43,6 +41,9 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Inject
     private ICommandService commandService;
 
+    @Inject
+    private IMatcherRegistryService matcherRegistry;
+
     private final SubjectIndex subjectIndex = new ConfigIndex();
     private final SubjectCache subjectCache = new SubjectCache(this);
 
@@ -55,18 +56,25 @@ public class InternalPermissionProvider implements IPermissionProvider {
         eventService.registerListener(subjectCache);
         injectionService.injectInto(subjectCache);
 
+        final GroupSubjectMatcher groupSubjectMatcher = new GroupSubjectMatcher();
         final CreateGroupCommand crGrpCommand = new CreateGroupCommand();
         final LinkGroupCommand lnkGrpCommand = new LinkGroupCommand();
         final GrantPermissionCommand grntPermCommand = new GrantPermissionCommand();
         final PermLookupCommand permLookupCommand = new PermLookupCommand();
+        injectionService.injectInto(groupSubjectMatcher);
         injectionService.injectInto(crGrpCommand);
         injectionService.injectInto(lnkGrpCommand);
         injectionService.injectInto(grntPermCommand);
         injectionService.injectInto(permLookupCommand);
+        matcherRegistry.registerMatcher(groupSubjectMatcher);
         commandService.registerCommand("perm-group-create", crGrpCommand);
+        commandService.registerCommand(crGrpCommand.getCommandSpec());
         commandService.registerCommand("perm-group-link", lnkGrpCommand);
+        commandService.registerCommand(lnkGrpCommand.getCommandSpec());
         commandService.registerCommand("perm-group-grant", grntPermCommand);
+        commandService.registerCommand(grntPermCommand.getCommandSpec());
         commandService.registerCommand("permuuid-lookup", permLookupCommand);
+        commandService.registerCommand(permLookupCommand.getCommandSpec());
     }
 
     @Override

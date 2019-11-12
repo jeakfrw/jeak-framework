@@ -13,6 +13,8 @@ public interface ICommandExecutionContext extends IQueryEvent.INotification.ICli
 
     <T> Optional<T> getOne(String fullName, Class<T> hint);
 
+    <T> T getRequiredOne(String fullName, Class<T> hint);
+
     boolean hasOne(String fullName);
 
     Object putOrReplaceOne(String fullName, Object value);

@@ -35,6 +35,12 @@ public class CommandExecutionContext extends QueryEvent.ClientTextMessage implem
     }
 
     @Override
+    public <T> T getRequiredOne(String fullName, Class<T> hint) {
+        return getOne(fullName, hint)
+                .orElseThrow(() -> new IllegalStateException("Parameter \"" + fullName + "\" not set although indicated as required!"));
+    }
+
+    @Override
     public boolean hasOne(String fullName) {
         return getOne(fullName).isPresent();
     }
