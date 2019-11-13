@@ -175,24 +175,6 @@ public class CommandService implements ICommandService {
         server.getConnection().sendRequest(request.build());
     }
 
-    @Override
-    public void registerCommand(String command, ICommandReceiver receiver) {
-        if (receiver == null) {
-            throw new IllegalArgumentException("CommandReceiver may not be null!");
-        }
-        Class<? extends ICommandReceiver> rxClass = receiver.getClass();
-        Deprecated deprecated = rxClass.getAnnotation(Deprecated.class);
-        String supersededBy = deprecated != null ? getSuperseded(rxClass) : "";
-
-        synchronized (lock) {
-            commands.put(command, receiver);
-
-            if (deprecated != null) {
-                commandDeprecations.put(rxClass.getName(), supersededBy);
-            }
-        }
-    }
-
     private String getSuperseded(Class<? extends ICommandReceiver> rxClass) {
         try {
             Method supersededBy = rxClass.getDeclaredMethod("supersededBy");
@@ -211,6 +193,36 @@ public class CommandService implements ICommandService {
     }
 
     @Override
+    public void registerCommand(String command, ICommandReceiver receiver) {
+        if (receiver == null) {
+            throw new IllegalArgumentException("CommandReceiver may not be null!");
+        }
+        Class<? extends ICommandReceiver> rxClass = receiver.getClass();
+        Deprecated deprecated = rxClass.getAnnotation(Deprecated.class);
+        String supersededBy = deprecated != null ? getSuperseded(rxClass) : "";
+
+        synchronized (lock) {
+            commands.put(command, receiver);
+
+            if (deprecated != null) {
+                commandDeprecations.put(rxClass.getName(), supersededBy);
+            }
+        }
+    }
+
+    @Override
+    public void registerCommand(ICommandSpec spec) {
+        logger.warn("Command \"{}\" has been registered with the deprecated command service." +
+                " Consider enabling the experimental command service for this command to work! " +
+                "Flag is: \"jeak.experimental.enable_typedCommands\"", spec.getCommand());
+    }
+
+    @Override
+    public void unregisterCommand(ICommandSpec specInstance) {
+        // ignored - overwritten by actual implementation
+    }
+
+    @Override
     public void unregisterCommand(String command, ICommandReceiver receiver) {
         synchronized (lock) {
             ICommandReceiver storedReceiver = commands.get(command);
@@ -218,6 +230,10 @@ public class CommandService implements ICommandService {
                 commands.remove(command);
             }
         }
+    }
+
+    protected Map<String, ICommandReceiver> getLegacyReceivers() {
+        return commands;
     }
 
     @Listener
@@ -237,21 +253,5 @@ public class CommandService implements ICommandService {
             }
             event.addExecutor(executorSvc);
         }
-    }
-
-    @Override
-    public void registerCommand(ICommandSpec spec) {
-        logger.warn("Command \"{}\" has been registered with the deprecated command service." +
-                " Consider enabling the experimental command service for this command to work! " +
-                "Flag is: \"jeak.experimental.enable_typedCommands\"", spec.getCommand());
-    }
-
-    @Override
-    public void unregisterCommand(ICommandSpec specInstance) {
-        // ignored - overwritten by actual implementation
-    }
-
-    protected Map<String, ICommandReceiver> getLegacyReceivers() {
-        return commands;
     }
 }
