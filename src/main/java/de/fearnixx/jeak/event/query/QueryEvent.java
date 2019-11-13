@@ -4,6 +4,7 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.event.ITargetChannel;
 import de.fearnixx.jeak.event.ITargetClient;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.NotificationReason;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.TargetType;
@@ -250,6 +251,16 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
     }
 
     public static class ClientTextMessage extends TargetClient implements TextMessageEvent, INotification.IClientTextMessage {
+        private IUserService userSvc;
+
+        public ClientTextMessage(IUserService userSvc) {
+            this.userSvc = userSvc;
+        }
+
+        @Override
+        public IUserService getUserSvc() {
+            return userSvc;
+        }
     }
 
     public abstract static class TargetChannel extends Notification implements ITargetChannel {
@@ -334,15 +345,46 @@ public abstract class QueryEvent extends BasicDataHolder implements IQueryEvent 
         default TargetType getTargetMode() {
             return TargetType.fromQueryNum(getTargetModeId());
         }
+
+        @Override
+        default IClient getSender() {
+            return getUserSvc().getClientByID(getInvokerId())
+                    .orElseThrow(() -> new ConsistencyViolationException("TextMessage-Event is missing cached client!"));
+        }
+
+        IUserService getUserSvc();
     }
 
     public static class ChannelTextMessage extends TargetChannel implements TextMessageEvent, INotification.IChannelTextMessage {
+
+        private final IUserService userSvc;
+
+        public ChannelTextMessage(IUserService userSvc) {
+            this.userSvc = userSvc;
+        }
+
+        @Override
+        public IUserService getUserSvc() {
+            return userSvc;
+        }
     }
 
     public abstract static class TargetServer extends Notification {
+
     }
 
     public static class ServerTextMessage extends TargetServer implements TextMessageEvent, INotification.IServerTextMessage {
+
+        private final IUserService userSvc;
+
+        public ServerTextMessage(IUserService userSvc) {
+            this.userSvc = userSvc;
+        }
+
+        @Override
+        public IUserService getUserSvc() {
+            return userSvc;
+        }
     }
 
     public static class ChannelMoved extends ChannelEdit implements INotification.IChannelMoved {
