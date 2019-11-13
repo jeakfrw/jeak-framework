@@ -3,7 +3,7 @@ package de.fearnixx.jeak.service.command.matcher.meta;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 import de.fearnixx.jeak.service.command.spec.matcher.*;
 
-public class OptionalMatcher implements IParameterMatcher<Void> {
+public class OptionalMatcher implements ICriterionMatcher<Void> {
 
     @Override
     public Class<Void> getSupportedType() {

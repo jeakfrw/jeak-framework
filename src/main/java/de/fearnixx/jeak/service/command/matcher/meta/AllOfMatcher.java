@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class AllOfMatcher implements IParameterMatcher<Void> {
+public class AllOfMatcher implements ICriterionMatcher<Void> {
 
     @Inject
     @LocaleUnit("commandService")
@@ -22,7 +22,7 @@ public class AllOfMatcher implements IParameterMatcher<Void> {
         List<String> notices = new LinkedList<>();
 
         for (var child : matchingContext.getChildren()) {
-            IParameterMatcher<?> param = child.getMatcher();
+            ICriterionMatcher<?> param = child.getMatcher();
 
             var childResponse = param.tryMatch(ctx, child);
             if (childResponse.getResponseType().equals(MatcherResponseType.ERROR)) {

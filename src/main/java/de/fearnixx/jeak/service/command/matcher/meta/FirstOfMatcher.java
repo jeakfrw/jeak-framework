@@ -9,7 +9,7 @@ import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class FirstOfMatcher implements IParameterMatcher<Void> {
+public class FirstOfMatcher implements ICriterionMatcher<Void> {
 
     @Inject
     @LocaleUnit("commandService")

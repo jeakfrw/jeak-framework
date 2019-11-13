@@ -9,7 +9,7 @@ import de.fearnixx.jeak.teamspeak.data.IClient;
 
 import java.util.Map;
 
-public class HasPermissionMatcher implements IParameterMatcher<Void> {
+public class HasPermissionMatcher implements ICriterionMatcher<Void> {
 
     @Inject
     @LocaleUnit("commandService")

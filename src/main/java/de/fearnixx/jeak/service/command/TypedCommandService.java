@@ -18,7 +18,7 @@ import de.fearnixx.jeak.service.command.spec.ICommandParamSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.service.command.spec.IEvaluatedCriterion;
 import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
-import de.fearnixx.jeak.service.command.spec.matcher.IParameterMatcher;
+import de.fearnixx.jeak.service.command.spec.matcher.ICriterionMatcher;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
@@ -98,7 +98,7 @@ public class TypedCommandService extends CommandService {
         registerCommand(HelpCommand.commandSpec(this, injectionService));
     }
 
-    private <T> void registerMatcher(IParameterMatcher<T> matcher) {
+    private <T> void registerMatcher(ICriterionMatcher<T> matcher) {
         matcherRegistry.registerMatcher(injectionService.injectInto(matcher));
     }
 
@@ -303,7 +303,7 @@ public class TypedCommandService extends CommandService {
     private void makeArgMatcherCtx(String command, Consumer<MatchingContext> consumer, AtomicInteger paramPositions,
                                    ICommandArgumentSpec arg,
                                    Map<String, ICommandArgumentSpec> shortHands, List<String> clashedShorthands) {
-        IParameterMatcher<?> matcher = translateSpec(arg, paramPositions);
+        ICriterionMatcher<?> matcher = translateSpec(arg, paramPositions);
         String argumentName = arg.getName();
         String argumentShorthand = arg.getShorthand();
         logger.trace("Adding argument \"{}/{}\" to command: \"{}\"", argumentName, argumentShorthand, command);
@@ -336,7 +336,7 @@ public class TypedCommandService extends CommandService {
 
     private void makeParMatcherCtx(String command, Consumer<MatchingContext> consumer, AtomicInteger paramPositions, ICommandParamSpec par) {
         int pos = paramPositions.get();
-        IParameterMatcher<?> matcher = translateSpec(par, paramPositions);
+        ICriterionMatcher<?> matcher = translateSpec(par, paramPositions);
         String paramName = par.getName();
         logger.trace("Adding parameter \"{}\" at expected position [{}] to command: \"{}\"", paramName, pos, command);
         MatchingContext matchingCtx = new MatchingContext(paramName, matcher);
@@ -351,12 +351,12 @@ public class TypedCommandService extends CommandService {
         }
     }
 
-    private IParameterMatcher<?> translateSpec(IEvaluatedCriterion spec, AtomicInteger posTracker) {
+    private ICriterionMatcher<?> translateSpec(IEvaluatedCriterion spec, AtomicInteger posTracker) {
         IEvaluatedCriterion.SpecType type = spec.getSpecType();
         Objects.requireNonNull(type, "Spec type may not be null! Param: " + spec.getName());
         switch (type) {
             case TYPE:
-                Optional<IParameterMatcher<?>> optMatcher = matcherRegistry.findForType(spec.getValueType());
+                Optional<ICriterionMatcher<?>> optMatcher = matcherRegistry.findForType(spec.getValueType());
                 posTracker.incrementAndGet();
                 return optMatcher.orElseThrow(()
                         -> new IllegalArgumentException("No matcher found for type: " + spec.getValueType().getName()));

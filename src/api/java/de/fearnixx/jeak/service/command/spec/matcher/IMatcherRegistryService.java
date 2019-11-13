@@ -4,7 +4,7 @@ import java.util.Optional;
 
 public interface IMatcherRegistryService {
 
-    void registerMatcher(IParameterMatcher<?> matcher);
+    void registerMatcher(ICriterionMatcher<?> matcher);
 
-    <T> Optional<IParameterMatcher<T>> findForType(Class<T> matcher);
+    <T> Optional<ICriterionMatcher<T>> findForType(Class<T> matcher);
 }
