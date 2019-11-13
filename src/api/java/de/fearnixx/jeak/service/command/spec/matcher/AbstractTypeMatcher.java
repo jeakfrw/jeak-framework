@@ -6,7 +6,7 @@ import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
 import java.util.Map;
 
-public abstract class AbstractTypeMatcher<T> implements IParameterMatcher<T> {
+public abstract class AbstractTypeMatcher<T> implements ICriterionMatcher<T> {
 
     private static final String DEFAULT_INCOMPATIBLE_MSG = "matcher.type.incompatible";
     private static final String DEFAULT_MISSING_MSG = "matcher.type.missing";

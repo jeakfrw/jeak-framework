@@ -3,7 +3,7 @@ package de.fearnixx.jeak.service.command.spec.matcher;
 import de.fearnixx.jeak.service.command.ICommandExecutionContext;
 
 /**
- * After {{@link IParameterMatcher#tryMatch(ICommandExecutionContext, IMatchingContext)}}, this will tell the
+ * After {{@link ICriterionMatcher#tryMatch(ICommandExecutionContext, IMatchingContext)}}, this will tell the
  * command service implementation whether or not that matcher was applied successfully.
  * <p>Notes:
  * <ul>
