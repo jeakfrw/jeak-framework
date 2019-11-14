@@ -47,7 +47,7 @@ sourceSets {
 
     main {
         java {
-            srcDirs = ['src/api/java', 'src/main/java', 'build/generated-src/antlr/main']
+            srcDirs = ['src/api/java', 'src/main/java']
         }
         resources {
             srcDirs = ['src/api/resources', 'src/main/resources']
