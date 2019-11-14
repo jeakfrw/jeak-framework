@@ -19,15 +19,22 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class HHPersistenceUnit extends Configurable implements IPersistenceUnit, AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(HHPersistenceUnit.class);
     private static final String DEFAULT_DATASOURCE_CONFIG = "/database/defaultDS.json";
+
+    private static final Map<String, Method> HIKARI_CONF_SETTER = new HashMap<>();
+
+    static {
+        Arrays.stream(HikariConfig.class.getDeclaredMethods())
+                .filter(m -> m.getName().startsWith("set"))
+                .forEach(m -> HIKARI_CONF_SETTER.put(m.getName(), m));
+    }
 
     private final Map<String, String> dataSourceOpts = new HashMap<>();
     private final List<EntityManager> entityManagers = new LinkedList<>();
@@ -109,13 +116,44 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         hikariConfig.setUsername(getUsername());
         hikariConfig.setPassword(getPassword());
 
-        dataSourceOpts.forEach(hikariConfig::addDataSourceProperty);
         try {
+            dataSourceOpts.forEach((key, value) -> hardSetDSProperty(key, value, hikariConfig));
             hikariDS = new HikariDataSource(hikariConfig);
             return true;
         } catch (HikariPool.PoolInitializationException e) {
             logger.error("Could not create persistence unit: {}", unitId, e);
             return false;
+        }
+    }
+
+    private void hardSetDSProperty(String key, String value, HikariConfig hikariConfig) {
+        String methodName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
+        Method setter = HIKARI_CONF_SETTER.getOrDefault(methodName, null);
+        if (setter == null) {
+            NoSuchMethodException iA = new NoSuchMethodException("Hikari does not support setting the dataSource property: " + key);
+            throw new HikariPool.PoolInitializationException(iA);
+        }
+
+        try {
+            Class<?> paramType = setter.getParameterTypes()[0];
+            Object param = null;
+
+            if (paramType.isAssignableFrom(Integer.class) || paramType.equals(int.class)) {
+                param = Integer.parseInt(value);
+            } else if (paramType.isAssignableFrom(Long.class) || paramType.equals(long.class)) {
+                param = Long.parseLong(value);
+            } else if (paramType.isAssignableFrom(String.class)) {
+                param = value;
+            } else if (paramType.isAssignableFrom(Boolean.class) || paramType.equals(boolean.class)) {
+                param = "true".equalsIgnoreCase(value) || "1".equals(value);
+            }
+
+            logger.info("Setting bean property \"{}\" -> \"{}\" on HikariConfig of \"{}\"", key, value, unitId);
+            setter.invoke(hikariConfig, param);
+            hikariConfig.addDataSourceProperty(key, value);
+        } catch (IllegalAccessException | InvocationTargetException | NumberFormatException e) {
+            Throwable cause = e instanceof InvocationTargetException ? e.getCause() : e;
+            throw new HikariPool.PoolInitializationException(cause);
         }
     }
 
