@@ -106,8 +106,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
                 .optMap()
                 .ifPresent(map ->
                         map.forEach((key, value) ->
-                                value.optString().ifPresent(strVal ->
-                                        dataSourceOpts.put(key, strVal))));
+                                dataSourceOpts.put(key, value.asString())));
     }
 
     private boolean initializeHikariSource() {
