@@ -64,33 +64,17 @@ public class UserService implements IUserService {
     public List<IUser> findUserByUniqueID(String ts3uniqueID) {
         return computeIfNotCached(
                 u -> u.getClientUniqueID().equals(ts3uniqueID),
-                () -> serviceImplementation.findUserByUniqueID(ts3uniqueID)
+                () -> serviceImplementation.findUserByUniqueID(ts3uniqueID),
+                "uid:" + ts3uniqueID
         );
-    }
-
-    private List<IUser> computeIfNotCached(Predicate<IUser> matchBy, Supplier<List<IUser>> getBy) {
-        synchronized (userCache) {
-            final LocalDateTime now = LocalDateTime.now();
-            userCache.removeIf(entry -> entry.getExpiry().isBefore(now));
-            Optional<CachedUserResult> optResult = userCache.stream()
-                    .filter(entry -> entry.getUsers().stream().allMatch(matchBy))
-                    .findFirst();
-            return optResult.map(CachedUserResult::getUsers)
-                    .orElseGet(() -> {
-                        List<IUser> users = getBy.get();
-                        CachedUserResult result =
-                                new CachedUserResult(users, LocalDateTime.now().plusSeconds(USR_CACHE_TTL));
-                        userCache.add(result);
-                        return result.getUsers();
-                    });
-        }
     }
 
     @Override
     public List<IUser> findUserByDBID(int ts3dbID) {
         return computeIfNotCached(
                 u -> u.getClientDBID().equals(ts3dbID),
-                () -> serviceImplementation.findUserByDBID(ts3dbID)
+                () -> serviceImplementation.findUserByDBID(ts3dbID),
+                "dbid:" + ts3dbID
         );
     }
 
@@ -98,8 +82,30 @@ public class UserService implements IUserService {
     public List<IUser> findUserByNickname(String ts3nickname) {
         return computeIfNotCached(
                 u -> u.getNickName().contains(ts3nickname),
-                () -> serviceImplementation.findUserByNickname(ts3nickname)
+                () -> serviceImplementation.findUserByNickname(ts3nickname),
+                "nick:" + ts3nickname
         );
+    }
+
+    private List<IUser> computeIfNotCached(Predicate<IUser> matchBy, Supplier<List<IUser>> getBy, String searchHint) {
+        synchronized (userCache) {
+            final LocalDateTime now = LocalDateTime.now();
+            userCache.removeIf(entry -> entry.getExpiry().isBefore(now));
+            Optional<CachedUserResult> optResult = userCache.stream()
+                    .filter(entry -> entry.getUsers().stream().allMatch(matchBy))
+                    .findFirst();
+            return optResult.map(cachedUserResult -> {
+                logger.trace("Returning cached result for search: {}", searchHint);
+                return cachedUserResult.getUsers();
+            }).orElseGet(() -> {
+                logger.trace("Computing result for search: {}", searchHint);
+                List<IUser> users = getBy.get();
+                CachedUserResult result =
+                        new CachedUserResult(users, LocalDateTime.now().plusSeconds(USR_CACHE_TTL));
+                userCache.add(result);
+                return result.getUsers();
+            });
+        }
     }
 
     @Override
