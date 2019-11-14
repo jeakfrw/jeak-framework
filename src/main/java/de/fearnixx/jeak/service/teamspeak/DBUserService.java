@@ -6,7 +6,6 @@ import de.fearnixx.jeak.service.database.IPersistenceUnit;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
-import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.teamspeak.data.TS3User;
 import org.slf4j.Logger;
@@ -16,11 +15,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @FrameworkService(serviceInterface = IUserService.class)
 public class DBUserService extends AbstractUserService {
@@ -126,18 +123,32 @@ public class DBUserService extends AbstractUserService {
                 }
 
                 // Properties read - everything's fine.
-                return false;
             } catch (SQLException e) {
-                logger.error("Failed to get client properties for user: {}", user);
+                logger.error("Failed to get client properties for user: {}", user, e);
                 // This user could not be populated - remove it!
                 return true;
             }
-        });
-    }
 
-    @Override
-    public Optional<IClient> getClientByID(int clientId) {
-        return Optional.empty();
+            // Try reading server groups
+            String permQuery = "SELECT sg.group_id FROM group_server_to_client sg WHERE sg.server_id = ? AND sg.id1 = ?";
+            try (PreparedStatement statement = connection.prepareStatement(permQuery)) {
+                statement.setInt(1, server.getInstanceId());
+                statement.setInt(2, user.getClientDBID());
+                Set<String> groups = new HashSet<>();
+                try (ResultSet result = statement.executeQuery()) {
+                    while (result.next()) {
+                        groups.add(result.getString("group_id"));
+                    }
+                }
+                String serverGroups = groups.stream().collect(Collectors.joining(","));
+                user.setProperty(PropertyKeys.Client.GROUPS, serverGroups);
+
+            } catch (SQLException e) {
+                logger.error("Failed to get server groups for user: {}", user, e);
+                return true;
+            }
+            return false;
+        });
     }
 
     private synchronized void withConnection(Consumer<Connection> consumer) {
