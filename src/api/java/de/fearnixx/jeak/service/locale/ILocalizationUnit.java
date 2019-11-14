@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.locale;
 
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.mlessmann.confort.api.IConfigNode;
 
 import java.io.File;
@@ -18,6 +19,12 @@ public interface ILocalizationUnit {
     String getUnitId();
 
     /**
+     * Returns a context for the given client.
+     * This is the recommended way of doing so as this respects the clients custom language settings.
+     */
+    ILocaleContext getContext(IClient client);
+
+    /**
      * Returns a context for the given locale.
      * If a context for the locale is not available, the default context will be returned.
      */
@@ -26,6 +33,7 @@ public interface ILocalizationUnit {
     /**
      * Returns the context for the given country code.
      * If a context is not available or the code could not be translated into a {@link Locale}, the default context will be returned.
+     * <em>Please avoid using this from version 1.1.0 and up. Use {@link #getContext(IClient)} instead.</em>
      */
     ILocaleContext getContext(String ts3CountryCode);
 

@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.locale;
 
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
@@ -58,6 +59,12 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
             logger.warn("[{}] Failed to load default language as a fallback for: {}", unitId, languageTag);
             return new LocaleContext(unitId, locale, getConfig().createNewInstance());
         }
+    }
+
+    @Override
+    public ILocaleContext getContext(IClient client) {
+        Locale locale = localizationService.getLocaleOfClient(client);
+        return getContext(locale);
     }
 
     @Override

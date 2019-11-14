@@ -2,12 +2,11 @@ package de.fearnixx.jeak.service.locale;
 
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
-import de.fearnixx.jeak.reflect.Config;
-import de.fearnixx.jeak.reflect.FrameworkService;
-import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
@@ -36,6 +35,12 @@ public class LocalizationService extends Configurable implements ILocalizationSe
     @Config(id = "localization")
     private IConfig localizationConfig;
 
+    @Inject
+    private IInjectionService injectionService;
+
+    @Inject
+    private ICommandService commandService;
+
     private final Map<String, LocalizationUnit> registeredUnits = new ConcurrentHashMap<>();
 
     public LocalizationService() {
@@ -50,9 +55,13 @@ public class LocalizationService extends Configurable implements ILocalizationSe
             logger.debug("Creating localization directory.");
 
             if (!langConfigDir.mkdirs()) {
-                logger.warn("Failed to create localization directory! Expect errors!");
+                logger.error("Failed to create localization directory! Expect errors!");
             }
         }
+
+        LocaleCommand localeCommand = injectionService.injectInto(new LocaleCommand());
+        commandService.registerCommand(localeCommand.getCommandSpec());
+        commandService.registerCommand(localeCommand.getArgCommandSpec());
     }
 
     @Listener
@@ -106,6 +115,18 @@ public class LocalizationService extends Configurable implements ILocalizationSe
             return client.getProperty(PropertyKeys.Client.COUNTRY)
                     .map(this::getLocaleForCountryId)
                     .orElseGet(this::getFallbackLocale);
+        }
+    }
+
+    @Override
+    public Locale getLocaleOfUser(IUser user) {
+        IConfigNode customLangNode = getConfig().getNode("customLangs", user.getClientUniqueID());
+
+        if (!customLangNode.isVirtual()) {
+            return getLocaleForCountryId(customLangNode.asString());
+
+        } else {
+            return this.getFallbackLocale();
         }
     }
 
