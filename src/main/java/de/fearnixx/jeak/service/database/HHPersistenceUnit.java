@@ -105,8 +105,14 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         getConfig().getNode("dataSourceOpts")
                 .optMap()
                 .ifPresent(map ->
-                        map.forEach((key, value) ->
-                                dataSourceOpts.put(key, value.asString())));
+                        map.forEach((key, value) -> {
+                            Optional<String> optVal = value.optString();
+                            if (optVal.isEmpty()) {
+                                logger.error("Cannot set DS property that is not a string! {} => {}", unitId, key);
+                            } else {
+                                dataSourceOpts.put(key, value.asString());
+                            }
+                        }));
     }
 
     private boolean initializeHikariSource() {
