@@ -1,5 +1,5 @@
 group 'de.fearnixx'
-version '1.0.3'
+version '1.1.0'
 def projectVersion = project.version
 
 apply plugin: 'java'
@@ -47,7 +47,7 @@ sourceSets {
 
     main {
         java {
-            srcDirs = ['src/api/java', 'src/main/java', 'build/generated-src/antlr/main']
+            srcDirs = ['src/api/java', 'src/main/java']
         }
         resources {
             srcDirs = ['src/api/resources', 'src/main/resources']
