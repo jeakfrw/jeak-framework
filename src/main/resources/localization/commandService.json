@@ -2,6 +2,7 @@
   "langs": {
     "en": {
       "execution.hasErrors": "There was an error executing your command.",
+      "execution.hasException": "There was an error executing your command: %[exceptionName] - %[exceptionMessage]",
       "matcher.type.ambiguousSearch": "Could not determine what to use for param \"%[param]\": %[results]",
       "matcher.type.incompatible": "Input string \"%[input]\" of param \"%[param]\" could not be translated to %[type] ",
       "matcher.type.missing": "Parameter \"%[param]\" is missing.",

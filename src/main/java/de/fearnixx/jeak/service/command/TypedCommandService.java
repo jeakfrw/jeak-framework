@@ -17,8 +17,8 @@ import de.fearnixx.jeak.service.command.spec.ICommandArgumentSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandParamSpec;
 import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.service.command.spec.IEvaluatedCriterion;
-import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
 import de.fearnixx.jeak.service.command.spec.matcher.ICriterionMatcher;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
 import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
@@ -45,6 +45,7 @@ public class TypedCommandService extends CommandService {
     private static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.commandSvc.poolSize", 2);
     private static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.commandSvc.terminateDelay", 5000);
     private static final String MSG_HAS_ERRORS = "execution.hasErrors";
+    private static final String MSG_HAS_EXCEPT = "execution.hasException";
 
     private static final Logger logger = LoggerFactory.getLogger(TypedCommandService.class);
     private final Map<String, CommandRegistration> typedCommands = new ConcurrentHashMap<>();
@@ -206,8 +207,22 @@ public class TypedCommandService extends CommandService {
         } catch (CommandException e) {
             logger.debug("Command executor returned an exception.", e);
             info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
-            sendErrorMessages(txtEvent, info);
+        } catch (RuntimeException e) {
+            logger.warn("Uncaught exception while executing command \"{}\" (executor: {})",
+                    spec.getCommand(), spec.getExecutor().getClass().getName(), e);
+            info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_EXCEPT, Map.of(
+                    "exceptionName", e.getClass().getSimpleName(),
+                    "exceptionMessage", e.getMessage()
+            )));
+        } catch (Exception e) {
+            logger.error("Uncaught checked exception while executing command \"{}\" (executor: {})",
+                    spec.getCommand(), spec.getExecutor().getClass().getName(), e);
+            info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_EXCEPT, Map.of(
+                    "exceptionName", e.getClass().getSimpleName(),
+                    "exceptionMessage", e.getMessage()
+            )));
         }
+        sendErrorMessages(txtEvent, info);
     }
 
     private void sendErrorMessages(IQueryEvent.INotification.IClientTextMessage txtEvent, CommandInfo info) {
