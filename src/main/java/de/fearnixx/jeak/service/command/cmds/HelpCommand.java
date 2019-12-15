@@ -10,7 +10,6 @@ import de.fearnixx.jeak.service.command.spec.*;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class HelpCommand {
 
@@ -49,7 +48,6 @@ public class HelpCommand {
     private void sendAllCommands(ICommandExecutionContext commandCtx) {
         List<String> messages = new LinkedList<>();
         final StringBuilder builder = new StringBuilder();
-        // TODO: Filter commands only registered via aliases
         List<CommandRegistration> commands = new ArrayList<>(commandSvcImpl.getCommands());
         commands.sort(Comparator.comparing(c -> c.getCommandSpec().getCommand()));
         commands.forEach(cmd -> {
