@@ -90,7 +90,7 @@ dependencies {
     runtime 'com.sun.mail:smtp:1.6.4'
     runtime 'com.sun.mail:dsn:1.6.4'
     
-    testCompile 'junit:junit:4.12'
+    testCompile 'junit:junit:4.13'
 }
 
 apply from: './artifacts.gradle'
