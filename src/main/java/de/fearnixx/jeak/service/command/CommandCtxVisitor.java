@@ -2,7 +2,7 @@ package de.fearnixx.jeak.service.command;
 
 import de.fearnixx.jeak.antlr.CommandExecutionCtxParser;
 import de.fearnixx.jeak.antlr.CommandExecutionCtxParserBaseVisitor;
-import de.mlessmann.confort.lang.ParseVisitException;
+import de.mlessmann.confort.lang.RuntimeParseException;
 
 import java.util.Arrays;
 
@@ -81,7 +81,12 @@ public class CommandCtxVisitor extends CommandExecutionCtxParserBaseVisitor<Void
     public Void visitParameter(CommandExecutionCtxParser.ParameterContext ctx) {
         String value = extractParamStr(ctx);
         if (value == null) {
-            throw new ParseVisitException("Cannot read non quouted/unquoted parameter!");
+            throw new RuntimeParseException(
+                    ctx.getStart().getLine(),
+                    ctx.getStart().getCharPositionInLine(),
+                    ctx.getStart().getTokenSource().getSourceName(),
+                    "Cannot read non quouted/unquoted parameter!"
+            );
         }
         commInfo.getParameters().add(value);
         return null;

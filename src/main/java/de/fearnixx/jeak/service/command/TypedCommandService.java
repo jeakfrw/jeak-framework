@@ -23,7 +23,7 @@ import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
-import de.mlessmann.confort.lang.ParseVisitException;
+import de.mlessmann.confort.lang.RuntimeParseException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -266,7 +266,7 @@ public class TypedCommandService extends CommandService {
             try {
                 var grammarContext = parser.commandExecution();
                 treeVisitor.visitCommandExecution(grammarContext);
-            } catch (ParseVisitException e) {
+            } catch (RuntimeParseException e) {
                 treeVisitor.getInfo().getErrorMessages().add(e.getMessage());
             }
             return treeVisitor.getInfo();

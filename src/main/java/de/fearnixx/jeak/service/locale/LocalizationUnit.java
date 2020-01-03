@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URI;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
@@ -76,8 +77,9 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         InputStream inputStream = classLoader.getResourceAsStream(resourceURI);
         if (inputStream != null) {
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
+                final URI sourceLocator = URI.create("resource:" + resourceURI);
                 logger.debug("[{}] Loading language definition defaults from: {}", unitId, resourceURI);
-                loadDefaultsFromStream(reader);
+                loadDefaultsFromStream(reader, sourceLocator);
             } catch (IOException | ParseException e) {
                 logger.error("[{}] Failed to load default configuration from resource URI: {}", unitId, resourceURI, e);
             }
@@ -92,7 +94,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
 
         try (FileReader fileReader = new FileReader(file)) {
             logger.debug("[{}] Loading language definition defaults from: {}", unitId, file.getPath());
-            loadDefaultsFromStream(fileReader);
+            loadDefaultsFromStream(fileReader, file.toURI());
         } catch (ParseException | IOException e) {
             logger.error("[{}] Failed to load default configuration from file: {}", unitId, file.getAbsoluteFile().getPath(), e);
         }
@@ -131,9 +133,9 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         save();
     }
 
-    private void loadDefaultsFromStream(Reader reader) throws IOException, ParseException {
+    private void loadDefaultsFromStream(Reader reader, URI locator) throws IOException, ParseException {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
-        loadDefaultsFromNode(loader.parse(reader));
+        loadDefaultsFromNode(loader.parse(reader, locator));
     }
 
     @Override
