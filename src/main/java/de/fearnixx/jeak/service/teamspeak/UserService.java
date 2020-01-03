@@ -100,10 +100,13 @@ public class UserService implements IUserService {
             }).orElseGet(() -> {
                 logger.trace("Computing result for search: {}", searchHint);
                 List<IUser> users = getBy.get();
-                CachedUserResult result =
-                        new CachedUserResult(users, LocalDateTime.now().plusSeconds(USR_CACHE_TTL));
-                userCache.add(result);
-                return result.getUsers();
+                if (!users.isEmpty()) {
+                    CachedUserResult result =
+                            new CachedUserResult(users, LocalDateTime.now().plusSeconds(USR_CACHE_TTL));
+                    userCache.add(result);
+                    users = result.getUsers();
+                }
+                return users;
             });
         }
     }

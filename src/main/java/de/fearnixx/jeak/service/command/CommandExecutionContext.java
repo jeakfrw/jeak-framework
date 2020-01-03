@@ -36,8 +36,15 @@ public class CommandExecutionContext extends QueryEvent.ClientTextMessage implem
 
     @Override
     public <T> T getRequiredOne(String fullName, Class<T> hint) {
-        return getOne(fullName, hint)
-                .orElseThrow(() -> new IllegalStateException("Parameter \"" + fullName + "\" not set although indicated as required!"));
+        Object value = parameters.getOrDefault(fullName, null);
+        if (value == null) {
+            throw new IllegalArgumentException(String.format("Parameter \"%s\" not set although indicated as required!", fullName));
+        }
+        if (!hint.isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException(String.format("Value stored for parameter \"%s\" is not assignable to: %s",
+                    fullName, hint.getName()));
+        }
+        return hint.cast(value);
     }
 
     @Override
