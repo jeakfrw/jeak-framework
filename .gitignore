@@ -11,5 +11,8 @@ build/
 ## Plugins (Added using submodules) ##
 plugins/
 
+## Test output ##
+logs/
+
 # File managers #
 .directory
