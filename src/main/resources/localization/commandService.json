@@ -8,6 +8,7 @@
       "matcher.type.missing": "Parameter \"%[param]\" is missing.",
       "matcher.firstOf.unmatched": "Could not match input to one of: %[types]",
       "matcher.perm.missing": "You're not allowed to use this command! (Failed at %[permName] >= %[permValue])",
+      "command.notFound": "That command does not exist.",
       "command.notArgumented": "This command does not accept any arguments.",
       "command.notParameterized": "This command does not accept any parameters.",
       "command.help.allCommands": "The following commands are registered.",
