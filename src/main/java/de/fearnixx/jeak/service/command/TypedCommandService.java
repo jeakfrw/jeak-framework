@@ -213,6 +213,7 @@ public class TypedCommandService extends CommandService {
         } catch (CommandException e) {
             logger.debug("Command executor returned an exception.", e);
             info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            info.getErrorMessages().add(e.getMessage());
         } catch (RuntimeException e) {
             logger.warn("Uncaught exception while executing command \"{}\" (executor: {})",
                     spec.getCommand(), spec.getExecutor().getClass().getName(), e);
