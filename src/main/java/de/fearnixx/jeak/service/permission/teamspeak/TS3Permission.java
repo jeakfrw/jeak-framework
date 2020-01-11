@@ -2,6 +2,8 @@ package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.profile.IUserIdentity;
 import de.fearnixx.jeak.service.permission.base.Permission;
+import de.fearnixx.jeak.teamspeak.PermissionSID;
+import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 
 /**
  * Created by MarkL4YG on 07-Feb-18
@@ -33,6 +35,13 @@ public class TS3Permission extends Permission implements ITS3Permission {
     @Override
     public Boolean getSkip() {
         return "1".equals(getProperty("permskip").orElse(null));
+    }
+
+    @Override
+    public PermissionSID getSIDRef() {
+        return PermissionSID.getSID(getSID())
+                .orElseThrow(() -> new ConsistencyViolationException("TeamSpeak SID \""
+                        + getSID() + "\" is not registered! New permission?"));
     }
 
     public void setValue(Integer value) {
