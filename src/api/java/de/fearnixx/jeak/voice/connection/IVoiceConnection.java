@@ -1,12 +1,18 @@
 package de.fearnixx.jeak.voice.connection;
 
-import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
+import de.fearnixx.jeak.voice.sound.AudioType;
+import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
 import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Represents a voice connection
+ * Represents a voice connection.
+ *
+ * A VoiceConnection may be requested by using {@link IVoiceConnectionService#getVoiceConnection(String)}.
+ *
+ * The retrieved connection will be not connected to the server, but it will already own a valid
+ * teamspeak identity and can be connected to the server by calling {@link #connect()}.
  */
 public interface IVoiceConnection {
 
@@ -56,9 +62,9 @@ public interface IVoiceConnection {
     void sendToChannel(int channelId, String password);
 
     /**
-     * Registers an Mp3-Audio-Player for the client-connection if the client is connected
+     * Registers an Audio-Player with the respective type for the client-connection if the client is connected
      *
-     * @return mp3AudioPlayer the audio player
+     * @return the audio player
      */
-    IMp3AudioPlayer registerMp3AudioPlayer();
+    IAudioPlayer registerAudioPlayer(AudioType audioType);
 }

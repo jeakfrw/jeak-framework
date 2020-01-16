@@ -20,6 +20,7 @@ import java.io.File;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
 public class VoiceConnectionService implements IVoiceConnectionService {
@@ -37,25 +38,17 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     private Map<String, VoiceConnection> clientConnections = new HashMap<>();
 
-
     @Override
-    public boolean isConnectionAvailable(String identifier) {
-        final VoiceConnection connection = clientConnections.get(identifier);
-        return connection == null || !connection.isLocked();
-    }
-
-    @Override
-    public IVoiceConnection getVoiceConnection(String identifier) {
+    public Optional<IVoiceConnection> getVoiceConnection(String identifier) {
         if (clientConnections.containsKey(identifier)) {
             final VoiceConnection clientConnection = clientConnections.get(identifier);
 
             if (clientConnection.isLocked()) {
-                throw new IllegalStateException("Tried to access a locked client connection!");
+                return Optional.empty();
             }
 
-            return clientConnection;
+            return Optional.of(clientConnection);
         }
-
 
         final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
 
@@ -83,7 +76,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
         clientConnections.put(identifier, clientConnection);
 
-        return clientConnection;
+        return Optional.of(clientConnection);
     }
 
     @Listener

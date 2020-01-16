@@ -7,9 +7,11 @@ import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSoc
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
+import de.fearnixx.jeak.teamspeak.voice.sound.AudioPlayer;
 import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
-import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
+import de.fearnixx.jeak.voice.sound.AudioType;
+import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -69,8 +71,8 @@ public class VoiceConnection implements IVoiceConnection {
     public void disconnect(String reason) {
         try {
             if (ts3jClientSocket.getMicrophone() != null
-                    && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(Mp3AudioPlayer.class)) {
-                ((Mp3AudioPlayer) ts3jClientSocket.getMicrophone()).stop();
+                    && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(IAudioPlayer.class)) {
+                ((IAudioPlayer) ts3jClientSocket.getMicrophone()).stop();
             }
 
             ts3jClientSocket.disconnect(reason);
@@ -108,15 +110,24 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public IMp3AudioPlayer registerMp3AudioPlayer() {
+    public IAudioPlayer registerAudioPlayer(AudioType audioType) {
         if (!connected) {
-            throw new IllegalStateException("An Mp3AudioPlayer can only be registered when the client connection is connected");
+            throw new IllegalStateException("An audio player can only be registered when the client connection is connected");
         }
 
-        Mp3AudioPlayer mp3AudioPlayer = new Mp3AudioPlayer();
-        ts3jClientSocket.setMicrophone(mp3AudioPlayer);
+        AudioPlayer audioPlayer;
 
-        return mp3AudioPlayer;
+        switch (audioType) {
+            case MP3:
+                audioPlayer = new Mp3AudioPlayer();
+                break;
+            default:
+                throw new IllegalArgumentException("The audio type is currently not supported!");
+        }
+
+        ts3jClientSocket.setMicrophone(audioPlayer);
+
+        return audioPlayer;
     }
 
     boolean isLocked() {

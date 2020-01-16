@@ -5,9 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 /**
- * Represents an audio-player that can play mp3-files
+ * Represents an audio-player that is able to play audio files. Currently, only mp3-files are supported
  */
-public interface IMp3AudioPlayer {
+public interface IAudioPlayer {
 
     /**
      * Stops playing the current file
@@ -48,4 +48,9 @@ public interface IMp3AudioPlayer {
      * @return whether the audio-player is currently playing
      */
     boolean isPlaying();
+
+    /**
+     * @return the type which the audio player is designated for
+     */
+    AudioType getAudioType();
 }

@@ -5,13 +5,13 @@ import com.github.manevolent.ffmpeg4j.filter.audio.FFmpegAudioResampleFilter;
 import com.github.manevolent.ffmpeg4j.source.FFmpegAudioSourceSubstream;
 import com.github.manevolent.ffmpeg4j.stream.source.FFmpegSourceStream;
 import de.fearnixx.jeak.teamspeak.voice.sound.opus.OpusParameters;
-import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
+import de.fearnixx.jeak.voice.sound.AudioType;
 
 import java.io.*;
 import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioPlayer {
+public class Mp3AudioPlayer extends AudioPlayer {
 
     private static final String MP3_EXTENSION = "mp3";
 
@@ -162,7 +162,7 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
     }
 
     @Override
-    public byte[] provide() {
+    public synchronized byte[] provide() {
         if (!paused) {
             return super.provide();
         } else {
@@ -205,6 +205,11 @@ public class Mp3AudioPlayer extends TeamspeakFastMixerSink implements IMp3AudioP
     @Override
     public boolean isPlaying() {
         return !paused;
+    }
+
+    @Override
+    public AudioType getAudioType() {
+        return AudioType.MP3;
     }
 
     private String getFilenameExtension() {

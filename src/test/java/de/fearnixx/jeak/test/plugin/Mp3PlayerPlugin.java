@@ -12,7 +12,8 @@ import de.fearnixx.jeak.test.AbstractTestPlugin;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
 import de.fearnixx.jeak.voice.event.IVoiceConnectionTextMessageEvent;
-import de.fearnixx.jeak.voice.sound.IMp3AudioPlayer;
+import de.fearnixx.jeak.voice.sound.AudioType;
+import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -43,7 +44,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
         addTest("Mp3-Player");
     }
 
-    private Map<String, Pair<IVoiceConnection, IMp3AudioPlayer>> connectionsAndMp3Players = new HashMap<>();
+    private Map<String, Pair<IVoiceConnection, IAudioPlayer>> connectionsAndMp3Players = new HashMap<>();
 
     private int nextPlayerIndex = 1;
     private static final int MAX_PLAYER_COUNT = 5;
@@ -69,7 +70,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
             }
 
             final String identifier = "Mp3-Player - " + nextPlayerIndex++;
-            connection = connectionService.getVoiceConnection(identifier);
+            connection = connectionService.getVoiceConnection(identifier).orElseThrow();
 
             try {
                 connection.connect();
@@ -77,7 +78,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                 //
             }
 
-            final IMp3AudioPlayer mp3AudioPlayer = connection.registerMp3AudioPlayer();
+            final IAudioPlayer mp3AudioPlayer = connection.registerAudioPlayer(AudioType.MP3);
 
             connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, mp3AudioPlayer));
 
@@ -108,7 +109,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
             param = msgSplit[1];
         }
 
-        IMp3AudioPlayer mp3AudioPlayer = connectionsAndMp3Players.get(event.getVoiceConnectionIdentifier()).getValue();
+        IAudioPlayer mp3AudioPlayer = connectionsAndMp3Players.get(event.getVoiceConnectionIdentifier()).getValue();
 
         switch (cmd) {
 
