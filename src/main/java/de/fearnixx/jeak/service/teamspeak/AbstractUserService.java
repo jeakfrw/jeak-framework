@@ -8,6 +8,7 @@ import de.fearnixx.jeak.service.permission.teamspeak.TS3UserSubject;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.TS3User;
+import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,16 +59,17 @@ public abstract class AbstractUserService implements IUserService {
         return Optional.ofNullable(dataCache.getClientMap().getOrDefault(clientId, null));
     }
 
-    protected void applyPermissions(TS3User client) {
-        String ts3uid = client.getClientUniqueID();
-        UUID uuid = profileService.getProfile(ts3uid)
+    protected void applyPermissions(TS3User user) {
+        String ts3uid = user.getClientUniqueID();
+        UUID uuid = profileService.getOrCreateProfile(ts3uid)
                 .map(IUserProfile::getUniqueId)
-                .orElseGet(UUID::randomUUID);
-        logger.debug("Client {} got permission UUID: {}", client, uuid);
+                .orElseThrow(() -> new ConsistencyViolationException(
+                        String.format("Profile service did not create a profile for me :(: %s", user)));
+        logger.debug("Client {} got permission UUID: {}", user, uuid);
 
-        final Integer tsSubject = client.getClientDBID();
-        client.setTs3PermSubject(new TS3UserSubject(permService.getTS3Provider(), tsSubject));
-        client.setFrameworkSubjectUUID(uuid);
-        client.setFrwPermProvider(permService.getFrameworkProvider());
+        final Integer tsSubject = user.getClientDBID();
+        user.setTs3PermSubject(new TS3UserSubject(permService.getTS3Provider(), tsSubject));
+        user.setFrameworkSubjectUUID(uuid);
+        user.setFrwPermProvider(permService.getFrameworkProvider());
     }
 }

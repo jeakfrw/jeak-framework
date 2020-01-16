@@ -200,6 +200,13 @@ public interface IQueryEvent extends IEvent {
              * Whether or not the text message was private (client), channel or server scoped.
              */
             TargetType getTargetMode();
+
+            /**
+             * Shorthand for the {@link IClient} that sent the message.
+             *
+             * @see #getInvokerId()
+             */
+            IClient getSender();
         }
 
         interface IClientTextMessage extends ITextMessage,ITargetClient {

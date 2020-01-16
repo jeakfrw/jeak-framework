@@ -1,0 +1,21 @@
+/// ===== ANTLR 4 ===== ///
+
+// BEGIN Fix for Gradle bug #2565
+// "cannot find tokens"-bug with packaged grammar
+// Found via. https://github.com/gradle/gradle/issues/2565#issuecomment-417916273
+// From: https://github.com/apache/groovy/blob/master/subprojects/parser-antlr4/build.gradle#L34
+final PARSER_PACKAGE_NAME = 'de.fearnixx.jeak.antlr'
+generateGrammarSource {
+    def subDir = PARSER_PACKAGE_NAME.replace('.', '/')
+    outputDirectory = new File("build/generated-src/antlr/main/$subDir")
+    outputs.cacheIf { false }
+    arguments += ["-visitor", "-no-listener", "-package", PARSER_PACKAGE_NAME]
+}
+
+classes {
+    dependsOn tasks.generateGrammarSource
+}
+
+// END Fix #2565
+
+/// ===== Generic gradle settings ===== ///

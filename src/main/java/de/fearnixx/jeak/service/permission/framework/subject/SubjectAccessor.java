@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.permission.framework.subject;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
 import de.fearnixx.jeak.service.permission.base.ISubject;
+import de.fearnixx.jeak.service.permission.framework.FrameworkPermission;
 import de.fearnixx.jeak.service.permission.framework.InternalPermissionProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,15 @@ public abstract class SubjectAccessor implements ISubject, IGroup {
 
     @Override
     public Optional<IPermission> getPermission(String permission, boolean allowTransitive) {
+        return getPermission(permission, allowTransitive, true);
+    }
+
+    @Override
+    public Optional<IPermission> getPermission(String permission, boolean allowTransitive, boolean allowAdmin) {
+        boolean isNegative = permission.startsWith("-");
+        if (allowAdmin && !isNegative && getProvider().getIndex().isAdmin(getUniqueID())) {
+            return Optional.of(new FrameworkPermission(permission, Integer.MAX_VALUE));
+        }
         if (allowTransitive) {
             return getPermissionFromSelf(permission)
                     .or(() -> getPermissionFromParents(permission));

@@ -1,10 +1,9 @@
 package de.fearnixx.jeak.service.permission.framework.commands;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandException;
-import de.fearnixx.jeak.service.command.CommandParameterException;
-import de.fearnixx.jeak.service.command.ICommandContext;
-import de.fearnixx.jeak.service.command.ICommandReceiver;
+import de.fearnixx.jeak.service.command.*;
+import de.fearnixx.jeak.service.command.spec.Commands;
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermissionProvider;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
@@ -13,6 +12,7 @@ import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +21,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static de.fearnixx.jeak.service.command.spec.Commands.argumentSpec;
+import static de.fearnixx.jeak.service.command.spec.Commands.paramSpec;
 
 public class PermLookupCommand implements ICommandReceiver {
 
@@ -101,11 +104,63 @@ public class PermLookupCommand implements ICommandReceiver {
                 throw new CommandParameterException("Unknown lookup classification!", "search", lookupStr);
             }
 
-            logger.info("Perm lookup for: {} with {} -> {}", client, lookupStr, resultStr);
-            server.getConnection().sendRequest(client.sendMessage("Lookup result: " + resultStr));
+            sendResult(client, lookupStr, resultStr);
             return;
         }
 
         throw new CommandException("Unknown arguments! Usage: \"!permuuid-lookup [g:<group_name>|u:<user_name>|sg:<servergroup_id>]");
+    }
+
+    private void sendResult(IClient client, String lookupStr, String resultStr) {
+        logger.info("Perm lookup for: {} with {} -> {}", client, lookupStr, resultStr);
+        server.getConnection().sendRequest(client.sendMessage("Lookup result: " + resultStr));
+    }
+
+    private void typedInvoke(ICommandExecutionContext ctx) {
+        Optional<IGroup> group = ctx.getOne("group", IGroup.class);
+        Optional<IUser> user = ctx.getOne("user", IUser.class);
+        Optional<IClient> client = ctx.getOne("client", IClient.class);
+        Optional<Integer> sgid = ctx.getOne("sgid", Integer.class);
+        if (group.isPresent()) {
+            sendResult(ctx.getSender(), "group", group.get().getUniqueID().toString());
+        } else if (user.isPresent()) {
+            sendResult(ctx.getSender(), "user", user.get().toString() + "/" + user.get().getUniqueID().toString());
+        } else if (client.isPresent()) {
+            sendResult(ctx.getSender(), "client", client.get().toString() + "/" + client.get().getUniqueID().toString());
+        } else if (sgid.isPresent()) {
+            IPermissionProvider frwProvider = permService.getFrameworkProvider();
+            List<IGroup> grps = frwProvider.getGroupsLinkedToServerGroup(sgid.get());
+            String groupsStr = grps.stream()
+                    .map(g -> g.getName() + "{" + g.getUniqueID().toString() + "}")
+                    .collect(Collectors.joining(","));
+            sendResult(ctx.getSender(), "sgid", "[" + groupsStr + "]");
+        }
+    }
+
+    public ICommandSpec getCommandSpec() {
+        return Commands.commandSpec("permuuid-lookup", "frw:permuuid-lookup")
+                .parameters(
+                        paramSpec().firstMatching(
+                                paramSpec("group", IGroup.class),
+                                paramSpec("user", IUser.class),
+                                paramSpec("sgid", Integer.class)
+                        )
+                )
+                .executor(this::typedInvoke)
+                .build();
+    }
+
+    public ICommandSpec getArgumentCommandSpec() {
+        return Commands.commandSpec("permuuid-lookup-arg", "frw:permuuid-lookup-arg")
+                .arguments(
+                        argumentSpec().firstMatching(
+                                argumentSpec("group", "g", IGroup.class),
+                                argumentSpec("user", "u", IUser.class),
+                                argumentSpec("client", "c", IClient.class),
+                                argumentSpec("sgid", "sg", Integer.class)
+                        )
+                )
+                .executor(this::typedInvoke)
+                .build();
     }
 }

@@ -50,6 +50,11 @@ public interface ISubject {
     Optional<IPermission> getPermission(String permission, boolean allowTransitive);
 
     /**
+     * Same as {@link #getPermission(String, boolean)} but with more control over whether or not being administrator should be evaluated.
+     */
+    Optional<IPermission> getPermission(String permission, boolean allowTransitive, boolean allowAdmin);
+
+    /**
      * Returns all permissions directly assigned to this subject.
      * This does not include transitive permissions.
      */

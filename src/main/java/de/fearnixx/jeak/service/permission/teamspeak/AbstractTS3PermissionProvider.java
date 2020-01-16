@@ -17,8 +17,6 @@ import java.util.Optional;
 
 public abstract class AbstractTS3PermissionProvider implements ITS3PermissionProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractTS3PermissionProvider.class);
-
     private final PermIdCache permIdCache = new PermIdCache();
 
     @Inject
@@ -40,9 +38,6 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     protected IServer getServer() {
         return server;
     }
-
-    @Override
-    public abstract void clearCache(ITS3Permission.PriorityType type, Integer optClientOrGroupID, Integer optChannelID);
 
     @Override
     public Optional<ITS3Permission> getActivePermission(String permSID, String clientTS3UniqueID) {
@@ -103,7 +98,7 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     protected List<ITS3Permission> getActiveContext(Integer clientID, String permSID) {
         final List<ITS3Permission> result = new ArrayList<>();
         Optional<IClient> optClient = userService.getClientByID(clientID);
-        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Given client ID is not online: " + clientID));
+        IClient client = optClient.orElseThrow(() -> new IllegalStateException("Cannot check permissions: Given client ID is not online: " + clientID));
 
         client.getGroupIDs().forEach(gid -> getServerGroupPermission(gid, permSID).ifPresent(result::add));
         getClientPermission(client.getClientDBID(), permSID).ifPresent(result::add);

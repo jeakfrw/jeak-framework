@@ -1,5 +1,17 @@
 ## 1.0.3
+~ Changed: HikariCP ``#getConnection`` timeout to 4 minutes (from the default - 30 seconds)
+~ Changed: Relaxed restrictions to plugin IDs. They now only must match ``^[a-zA-Z.][a-zA-Z0-9.&+#]+$``
+~ Changed: Clients will always be associated with a profile when discovered once
 ~ Fixed: A bug that caused the DB-based implementation of the ``UserService`` not to find clients
+~ Fixed: A bug that caused users retrieved from the user service not to have server groups associated
+~ Fixed: A bug where retrieving a nonexistent profile via. ``#getProfile`` resulted in an exception
+~ Fixed: A bug where clients that just connected would not have permissions until cached at least once
+~ Fixed: User-service not creating profiles when asking for them
+~ Fixed: DB-based user service not setting the internal permission reference on users.
+~ Updated dependencies:
+  * slf4j-api 1.7.28 -> 1.7.29
+  * hibernate-core 5.4.7.Final -> 5.4.8.Final
+  * jackson 2.10.0.pr3 -> 2.10.0
 
 ## 1.0.2
 ~ Fixed: Fast tracked db-based user service wasn't available
