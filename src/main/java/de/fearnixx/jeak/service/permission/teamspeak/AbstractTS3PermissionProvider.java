@@ -17,8 +17,6 @@ import java.util.Optional;
 
 public abstract class AbstractTS3PermissionProvider implements ITS3PermissionProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractTS3PermissionProvider.class);
-
     private final PermIdCache permIdCache = new PermIdCache();
 
     @Inject
@@ -40,9 +38,6 @@ public abstract class AbstractTS3PermissionProvider implements ITS3PermissionPro
     protected IServer getServer() {
         return server;
     }
-
-    @Override
-    public abstract void clearCache(ITS3Permission.PriorityType type, Integer optClientOrGroupID, Integer optChannelID);
 
     @Override
     public Optional<ITS3Permission> getActivePermission(String permSID, String clientTS3UniqueID) {

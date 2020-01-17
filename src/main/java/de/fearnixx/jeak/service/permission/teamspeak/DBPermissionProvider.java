@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.PersistenceUnit;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -57,30 +58,31 @@ public class DBPermissionProvider extends AbstractTS3PermissionProvider {
             sql += " AND id2 = ?";
         }
 
-        try (PreparedStatement statement = persistenceUnit.getDataSource()
-                .getConnection()
-                .prepareStatement(sql)) {
-            statement.setInt(1, getServerId());
-            statement.setString(2, permSID);
-            statement.setInt(3, idOne);
-            if (idTwo != null) {
-                statement.setInt(4, idTwo);
-            }
+        try (Connection dbConnection = persistenceUnit.getDataSource().getConnection()) {
+            try (PreparedStatement statement = dbConnection
+                    .prepareStatement(sql)) {
+                statement.setInt(1, getServerId());
+                statement.setString(2, permSID);
+                statement.setInt(3, idOne);
+                if (idTwo != null) {
+                    statement.setInt(4, idTwo);
+                }
 
-            ResultSet res = statement.executeQuery();
-            TS3Permission perm = new TS3Permission(ITS3Permission.PriorityType.CLIENT, permSID);
-            if (res.isBeforeFirst()) {
-                res.next();
-                perm.setValue(res.getInt(1));
-                perm.setNegated(res.getInt(2) == 1);
-                perm.setSkipped(res.getInt(3) == 1);
-            } else {
-                perm.setValue(0);
-                perm.setNegated(false);
-                perm.setSkipped(false);
+                TS3Permission perm;
+                try (ResultSet res = statement.executeQuery()) {
+                    perm = new TS3Permission(ITS3Permission.PriorityType.CLIENT, permSID);
+                    if (res.next()) {
+                        perm.setValue(res.getInt(1));
+                        perm.setNegated(res.getInt(2) == 1);
+                        perm.setSkipped(res.getInt(3) == 1);
+                    } else {
+                        perm.setValue(0);
+                        perm.setNegated(false);
+                        perm.setSkipped(false);
+                    }
+                }
+                return Optional.of(perm);
             }
-            return Optional.of(perm);
-
         } catch (SQLException e) {
             logger.error("Failed to get permission value from database! {} for {}", permSID, idOne, e);
             return Optional.empty();
