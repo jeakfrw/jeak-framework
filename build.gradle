@@ -78,7 +78,7 @@ dependencies {
     compile 'com.sun.mail:mailapi:1.6.4'
     compile 'com.sparkjava:spark-core:2.9.1'
     compile 'com.fasterxml.jackson.core:jackson-core:2.10.2'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.10.1'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.10.2'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.10.2'
 
     runtime 'org.antlr:antlr4-runtime:4.7.2'
