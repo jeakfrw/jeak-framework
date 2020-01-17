@@ -83,7 +83,7 @@ dependencies {
 
     runtime 'org.antlr:antlr4-runtime:4.7.2'
     runtime 'org.apache.logging.log4j:log4j-api:2.13.0'
-    runtime 'org.apache.logging.log4j:log4j-core:2.12.1'
+    runtime 'org.apache.logging.log4j:log4j-core:2.13.0'
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.12.1'
     runtime 'mysql:mysql-connector-java:8.0.18'
     runtime 'org.mariadb.jdbc:mariadb-java-client:2.5.2'
