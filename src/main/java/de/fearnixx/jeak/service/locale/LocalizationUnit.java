@@ -15,7 +15,9 @@ import java.io.*;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@inheritDoc}
@@ -23,10 +25,12 @@ import java.util.Objects;
 public class LocalizationUnit extends Configurable implements ILocalizationUnit {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalizationUnit.class);
+    private static final String LANG_NODE_NAME = "langs";
 
     private final String unitId;
     private final IConfig configRef;
     private final ILocalizationService localizationService;
+    private final Map<String, LocaleContext> contextCache = new ConcurrentHashMap<>();
 
     public LocalizationUnit(String unitId, IConfig configRef, ILocalizationService localizationService) {
         super(LocalizationUnit.class);
@@ -46,19 +50,28 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
     @Override
     public ILocaleContext getContext(Locale locale) {
         Objects.requireNonNull(locale, "Locale must not be null!");
-
         String languageTag = locale.toLanguageTag();
-        IConfigNode langNode = getConfig().getNode("langs", languageTag);
 
-        if (!langNode.isVirtual()) {
-            return new LocaleContext(unitId, locale, langNode);
+        synchronized (contextCache) {
+            LocaleContext cached = contextCache.getOrDefault(languageTag, null);
+            if (cached != null) {
+                return cached;
+            } else {
+                IConfigNode langNode = getConfig().getNode(LANG_NODE_NAME, languageTag);
 
-        } else if (!localizationService.getFallbackLocale().toLanguageTag().equals(languageTag)) {
-            return getContext(localizationService.getFallbackLocale());
+                if (!langNode.isVirtual()) {
+                    var localeCtx = new LocaleContext(unitId, locale, langNode);
+                    contextCache.put(languageTag, localeCtx);
+                    return localeCtx;
 
-        } else {
-            logger.warn("[{}] Failed to load default language as a fallback for: {}", unitId, languageTag);
-            return new LocaleContext(unitId, locale, getConfig().createNewInstance());
+                } else if (!localizationService.getFallbackLocale().toLanguageTag().equals(languageTag)) {
+                    return getContext(localizationService.getFallbackLocale());
+
+                } else {
+                    logger.warn("[{}] Failed to load default language as a fallback for: {}", unitId, languageTag);
+                    return new LocaleContext(unitId, locale, getConfig().createNewInstance());
+                }
+            }
         }
     }
 
@@ -119,7 +132,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         Objects.requireNonNull(configNode, "Defaults definition node must not be null!");
 
         logger.debug("[{}] Attempting to load language definition defaults from config node.", unitId);
-        configNode.getNode("langs")
+        configNode.getNode(LANG_NODE_NAME)
                 .optMap()
                 .orElseGet(Collections::emptyMap)
                 .forEach((defLanguageKey, defLanguageEntries) -> {
@@ -128,7 +141,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
                         logger.warn("[{}] Non-map language node found: {}", unitId, defLanguageKey);
                     } else {
                         defLanguageEntries.asMap().forEach((defTemplateId, defTemplate) -> {
-                            IConfigNode storedTemplateNode = getConfig().getNode("langs", defLanguageKey, defTemplateId);
+                            IConfigNode storedTemplateNode = getConfig().getNode(LANG_NODE_NAME, defLanguageKey, defTemplateId);
 
                             if (storedTemplateNode.isVirtual()) {
                                 String templateStr = defTemplate.optString(null);
@@ -164,7 +177,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
 
     @Override
     protected boolean populateDefaultConf(IConfigNode root) {
-        root.getNode("langs").setMap();
+        root.getNode(LANG_NODE_NAME).setMap();
         return true;
     }
 
