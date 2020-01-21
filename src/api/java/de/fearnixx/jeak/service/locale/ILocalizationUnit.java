@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.locale;
 
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.mlessmann.confort.api.IConfigNode;
 
 import java.io.File;
@@ -23,6 +24,12 @@ public interface ILocalizationUnit {
      * This is the recommended way of doing so as this respects the clients custom language settings.
      */
     ILocaleContext getContext(IClient client);
+
+    /**
+     * Returns a context for the given user.
+     * This is the recommended way of doing so as this respects the users custom language settings.
+     */
+    ILocaleContext getContext(IUser user);
 
     /**
      * Returns a context for the given locale.

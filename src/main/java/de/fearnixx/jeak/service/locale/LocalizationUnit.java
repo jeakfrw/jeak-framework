@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.service.locale;
 
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
@@ -64,6 +65,12 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
     @Override
     public ILocaleContext getContext(IClient client) {
         Locale locale = localizationService.getLocaleOfClient(client);
+        return getContext(locale);
+    }
+
+    @Override
+    public ILocaleContext getContext(IUser user) {
+        Locale locale = localizationService.getLocaleOfUser(user);
         return getContext(locale);
     }
 
