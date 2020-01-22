@@ -1,3 +1,21 @@
+## 1.0.4
+~ Changed: user-service performance improved by caching results for 30 seconds
+~ Changed: Non-string dataSourceOptions now cause an exception
+~ Fixed: A bug that caused dataSourceOpts not to be applied to Hikari
+~ Fixed: db-based permission service not returning its connections to pool resulting in a connection leak
+~ Fixed: Clients not having any description causing ``ConsistencyViolationException``
+~ Fixed: Main class causing an unintended dependency link to google common util via. org.reflections
+~ Updated dependencies:
+  * jackson 2.10.0 -> 2.10.2
+  * mariadb-java-client 2.5.1 -> 2.5.3
+  * mysql-java-client 8.0.18 -> 8.0.19
+  * hibernate-core 5.4.8.Final -> 5.4.10.Final
+  * log4j 2.12.1 -> 2.13.0
+  * slf4j 1.7.29 -> 1.7.30
+  * antlr4 4.7.2 -> 4.8-1
+  * hikaricp 3.4.1 -> 3.4.2
+  * Test-Src: junit 4.12 -> 4.13
+
 ## 1.0.3
 ~ Changed: HikariCP ``#getConnection`` timeout to 4 minutes (from the default - 30 seconds)
 ~ Changed: Relaxed restrictions to plugin IDs. They now only must match ``^[a-zA-Z.][a-zA-Z0-9.&+#]+$``
