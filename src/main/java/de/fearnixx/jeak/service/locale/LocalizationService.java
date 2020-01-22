@@ -3,7 +3,9 @@ package de.fearnixx.jeak.service.locale;
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.command.ICommandService;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
@@ -39,6 +41,7 @@ public class LocalizationService extends Configurable implements ILocalizationSe
     private IInjectionService injectionService;
 
     @Inject
+    private IServiceManager serviceManager;
     private ICommandService commandService;
 
     private final Map<String, LocalizationUnit> registeredUnits = new ConcurrentHashMap<>();
@@ -49,6 +52,10 @@ public class LocalizationService extends Configurable implements ILocalizationSe
 
     @Listener(order = Listener.Orders.SYSTEM)
     public void onPreInitialize(IBotStateEvent.IPluginsLoaded event) {
+        commandService = serviceManager.provideUnchecked(ICommandService.class);
+        LocaleMatcher localeMatcher = injectionService.injectInto(new LocaleMatcher());
+        IMatcherRegistryService matcherRegistry = serviceManager.provideUnchecked(IMatcherRegistryService.class);
+        matcherRegistry.registerMatcher(localeMatcher);
         File langConfigDir = new File(bot.getConfigDirectory(), "lang");
 
         if (!langConfigDir.exists() || !langConfigDir.isDirectory()) {
@@ -58,7 +65,10 @@ public class LocalizationService extends Configurable implements ILocalizationSe
                 logger.error("Failed to create localization directory! Expect errors!");
             }
         }
+    }
 
+    @Listener(order = Listener.Orders.SYSTEM)
+    public void onInitialize(IBotStateEvent.IInitializeEvent event) {
         LocaleCommand localeCommand = injectionService.injectInto(new LocaleCommand());
         commandService.registerCommand(localeCommand.getCommandSpec());
         commandService.registerCommand(localeCommand.getArgCommandSpec());

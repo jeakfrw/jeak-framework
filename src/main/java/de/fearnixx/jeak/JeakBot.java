@@ -168,8 +168,8 @@ public class JeakBot implements Runnable, IBot {
         server = initializeService(new Server());
         initializeService(new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10));
         initializeService(new DataCache());
-        initializeService(new LocalizationService());
         initializeService(new MatcherRegistry());
+        initializeService(new LocalizationService());
         if (ENABLE_TYPED_COMMANDS) {
             initializeService(new TypedCommandService());
         } else {

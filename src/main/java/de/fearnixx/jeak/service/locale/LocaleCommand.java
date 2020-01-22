@@ -50,8 +50,12 @@ public class LocaleCommand {
 
             if ("XX".equals(selectedLocale.getLanguage())) {
                 localeService.setLocaleForClient(target.getClientUniqueID(), null);
+                final String msg = "Chosen locale reset to default.";
+                ctx.getConnection().sendRequest(ctx.getSender().sendMessage(msg));
             } else {
                 localeService.setLocaleForClient(target.getClientUniqueID(), selectedLocale);
+                final String msg = "Chosen locale set to: " + selectedLocale.toLanguageTag();
+                ctx.getConnection().sendRequest(ctx.getSender().sendMessage(msg));
             }
         } else {
             Locale currentLocale =
