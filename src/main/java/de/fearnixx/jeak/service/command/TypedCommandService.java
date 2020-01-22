@@ -23,6 +23,7 @@ import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.mlessmann.confort.lang.RuntimeParseException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -136,6 +137,11 @@ public class TypedCommandService extends CommandService {
                         "These will only continue to work in Jeak version 1.X", command);
             }
             super.onTextMessage(txtEvent);
+        } else {
+            IClient sender = txtEvent.getSender();
+            String message = locales.getContext(sender.getCountryCode())
+                    .getMessage("command.notFound", Map.of("command", command));
+            sender.sendMessage(message);
         }
     }
 
@@ -207,6 +213,7 @@ public class TypedCommandService extends CommandService {
         } catch (CommandException e) {
             logger.debug("Command executor returned an exception.", e);
             info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            info.getErrorMessages().add(e.getMessage());
         } catch (RuntimeException e) {
             logger.warn("Uncaught exception while executing command \"{}\" (executor: {})",
                     spec.getCommand(), spec.getExecutor().getClass().getName(), e);
