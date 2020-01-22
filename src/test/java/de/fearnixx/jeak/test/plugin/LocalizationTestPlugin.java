@@ -50,11 +50,14 @@ public class LocalizationTestPlugin extends AbstractTestPlugin implements IComma
 
             String enTPL = testUnit.getContext("en").uncheckedGetMessage("test.message");
             String deTPL = testUnit.getContext("de").uncheckedGetMessage("test.message");
+            String chosenTPL = testUnit.getContext(client).uncheckedGetMessage("test.message");
 
             String enMsg = String.format("Testing localization. Next should be in English: %s", enTPL);
             String deMsg = String.format("Testing localization. Next should be in German: %s", deTPL);
+            String chosenMsg = String.format("Testing localization. Next should be in your selected: %s", chosenTPL);
             ctx.getRawEvent().getConnection().sendRequest(client.sendMessage(enMsg));
             ctx.getRawEvent().getConnection().sendRequest(client.sendMessage(deMsg));
+            ctx.getRawEvent().getConnection().sendRequest(client.sendMessage(chosenMsg));
         }
     }
 }
