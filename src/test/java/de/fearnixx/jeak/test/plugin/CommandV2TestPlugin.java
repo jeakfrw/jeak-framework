@@ -86,10 +86,10 @@ public class CommandV2TestPlugin extends AbstractTestPlugin {
                             ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Client: " + c.toString()))
                     );
                     user.ifPresent(u ->
-                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("User: " + client.toString()))
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("User: " + u.toString()))
                     );
                     channel.ifPresent(c ->
-                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Channel: " + channel.toString()))
+                            ctx.getConnection().sendRequest(ctx.getSender().sendMessage("Channel: " + c.toString()))
                     );
                 })
                 .build();
