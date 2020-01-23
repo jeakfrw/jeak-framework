@@ -23,7 +23,9 @@ import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
+import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.mlessmann.confort.lang.RuntimeParseException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -64,6 +66,9 @@ public class TypedCommandService extends CommandService {
 
     @Inject
     private IUserService userSvc;
+
+    @Inject
+    private IServer server;
 
     private FirstOfMatcher firstOfMatcher;
     private HasPermissionMatcher hasPermissionMatcher;
@@ -107,7 +112,11 @@ public class TypedCommandService extends CommandService {
     @Override
     @Listener
     public void onTextMessage(IQueryEvent.INotification.IClientTextMessage event) {
-        if (event.getMessage().startsWith(COMMAND_PREFIX)) {
+        IDataHolder whoAmI = server.getConnection().getWhoAmI();
+        int myId = whoAmI.getProperty("client_id")
+                .map(Integer::parseInt)
+                .orElse(0);
+        if (event.getInvokerId() != myId && event.getMessage().startsWith(COMMAND_PREFIX)) {
             triggerCommand(event);
         }
     }
