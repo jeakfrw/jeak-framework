@@ -133,7 +133,6 @@ public class TypedCommandService extends CommandService {
             command = msg.substring(COMMAND_PREFIX.length());
             arguments = msg.substring(COMMAND_PREFIX.length() + command.length()).trim();
         }
-        // TODO: Support "!command some-dashed-arg"
 
         if (typedCommands.containsKey(command)) {
             dispatchTyped(txtEvent, arguments, typedCommands.get(command));
