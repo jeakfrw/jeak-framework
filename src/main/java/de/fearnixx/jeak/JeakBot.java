@@ -11,6 +11,8 @@ import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.ServiceManager;
 import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
+import de.fearnixx.jeak.service.command.TypedCommandService;
+import de.fearnixx.jeak.service.command.matcher.MatcherRegistry;
 import de.fearnixx.jeak.service.controller.RestControllerService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
@@ -38,6 +40,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -49,8 +52,9 @@ import java.util.function.Consumer;
 public class JeakBot implements Runnable, IBot {
 
     // * * * STATICS  * * * //
-    public static final Charset CHAR_ENCODING = Charset.forName("UTF-8");
+    public static final Charset CHAR_ENCODING = StandardCharsets.UTF_8;
     public static final String VERSION = "@VERSION@";
+    private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", false);
 
     private static final Logger logger = LoggerFactory.getLogger(JeakBot.class);
 
@@ -164,8 +168,13 @@ public class JeakBot implements Runnable, IBot {
         server = initializeService(new Server());
         initializeService(new TaskService((pMgr.estimateCount() > 0 ? pMgr.estimateCount() : 10) * 10));
         initializeService(new DataCache());
+        initializeService(new MatcherRegistry());
         initializeService(new LocalizationService());
-        initializeService(new CommandService());
+        if (ENABLE_TYPED_COMMANDS) {
+            initializeService(new TypedCommandService());
+        } else {
+            initializeService(new CommandService());
+        }
         initializeService(new NotificationService());
         DatabaseService dbSvc = new DatabaseService(new File(confDir, "databases"));
         initializeService(dbSvc);

@@ -70,4 +70,9 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
         }
         return List.of(ids);
     }
+
+    @Override
+    public String toString() {
+        return getNickName() + "/db" + getClientDBID();
+    }
 }

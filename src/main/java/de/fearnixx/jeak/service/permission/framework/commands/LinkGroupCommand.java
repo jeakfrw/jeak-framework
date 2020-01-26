@@ -1,10 +1,9 @@
 package de.fearnixx.jeak.service.permission.framework.commands;
 
 import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.service.command.CommandException;
-import de.fearnixx.jeak.service.command.CommandParameterException;
-import de.fearnixx.jeak.service.command.ICommandContext;
-import de.fearnixx.jeak.service.command.ICommandReceiver;
+import de.fearnixx.jeak.service.command.*;
+import de.fearnixx.jeak.service.command.spec.Commands;
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermissionService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
@@ -49,10 +48,32 @@ public class LinkGroupCommand implements ICommandReceiver {
         }
 
         final int serverGroupId = Integer.parseInt(ctx.getArguments().get(1));
-        if (optGroup.get().linkServerGroup(serverGroupId)) {
-            server.getConnection().sendRequest(invoker.sendMessage("Linked group \"" + optGroup.get().getName() + "\" to sgID: " + serverGroupId));
+        IGroup group = optGroup.get();
+        linkGroupToServerGroup(invoker, serverGroupId, group);
+    }
+
+    private void linkGroupToServerGroup(IClient invoker, int serverGroupId, IGroup group) throws CommandException {
+        if (group.linkServerGroup(serverGroupId)) {
+            server.getConnection().sendRequest(invoker.sendMessage("Linked group \"" + group.getName() + "\" to sgID: " + serverGroupId));
         } else {
-            throw new CommandException("Failed to link server group: " + optGroup.get().getName() + " to server group id; " + serverGroupId);
+            throw new CommandException("Failed to link server group: " + group.getName() + " to server group id; " + serverGroupId);
         }
+    }
+
+    private void typedInvoke(ICommandExecutionContext ctx) throws CommandException {
+        IGroup group = ctx.getRequiredOne("group", IGroup.class);
+        int serverGroupId = ctx.getRequiredOne("sgid", Integer.class);
+        linkGroupToServerGroup(ctx.getSender(), serverGroupId, group);
+    }
+
+    public ICommandSpec getCommandSpec() {
+        return Commands.commandSpec("perm-group-link", "frw:perm-group-link")
+                .parameters(
+                        Commands.paramSpec("group", IGroup.class),
+                        Commands.paramSpec("sgid", Integer.class)
+                )
+                .permission("frw.permission.link_group")
+                .executor(this::typedInvoke)
+                .build();
     }
 }

@@ -85,6 +85,11 @@ public class TS3User extends TS3UserHolder {
     }
 
     @Override
+    public Optional<IPermission> getPermission(String permission, boolean allowTransitive, boolean allowAdmin) {
+        return getSubject().getPermission(permission, allowTransitive, allowAdmin);
+    }
+
+    @Override
     public boolean setPermission(String permission, int value) {
         return getSubject().setPermission(permission, value);
     }

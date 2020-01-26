@@ -5,6 +5,7 @@ import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
@@ -31,7 +32,10 @@ public class QueryEventDispatcher {
     );
 
     @Inject
-    public IEventService eventService;
+    private IEventService eventService;
+
+    @Inject
+    private IUserService userSvc;
 
     private int lastNotificationHash;
     private IRawQueryEvent.IMessage.INotification lastEditEvent;
@@ -100,13 +104,13 @@ public class QueryEventDispatcher {
                 int mode = Integer.parseInt(strMode);
                 switch (mode) {
                     case 1:
-                        notification = new QueryEvent.ClientTextMessage();
+                        notification = new QueryEvent.ClientTextMessage(userSvc);
                         break;
                     case 2:
-                        notification = new QueryEvent.ChannelTextMessage();
+                        notification = new QueryEvent.ChannelTextMessage(userSvc);
                         break;
                     case 3:
-                        notification = new QueryEvent.ServerTextMessage();
+                        notification = new QueryEvent.ServerTextMessage(userSvc);
                         break;
                     default:
                         throw new QueryException("Unknown message targetMode: " + mode);
