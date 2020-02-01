@@ -24,7 +24,7 @@ public class TestController {
     }
 
     @RequestMapping(method = RequestMethod.POST, endpoint = "/body")
-    public String sendBody(@RequestBody(type = String.class) String string) {
+    public String sendBody(@RequestBody() String string) {
         return "this is the body " + string;
     }
 
