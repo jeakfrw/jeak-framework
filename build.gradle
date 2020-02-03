@@ -90,7 +90,7 @@ dependencies {
     compile 'org.antlr:antlr4:4.7.2'
     antlr 'org.antlr:antlr4:4.7.2'
 
-    compile 'com.github.manevolent:ts3j:master-SNAPSHOT'
+    compile 'com.github.manevolent:ts3j:1.0'
     compile 'org.apache.commons:commons-lang3:3.9'
     compile 'net.tomp2p:opus-wrapper:1.4'
     compile 'com.sun.jna:jna:3.0.9'

@@ -14,6 +14,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Mp3AudioPlayer extends AudioPlayer {
 
     private static final String MP3_EXTENSION = "mp3";
+    private double volume = 0.5D;
+    private static final long DELAY = 150 * 1_000_000L; // 50ms interval
 
     static {
         try {
@@ -40,8 +42,6 @@ public class Mp3AudioPlayer extends AudioPlayer {
                         true // OPUS MUSIC - channel doesn't have to be Opus Music ;)
                 )
         );
-
-        startWrite();
     }
 
     public Mp3AudioPlayer(InputStream fileInputStream) {
@@ -63,6 +63,14 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void play() {
+        new Thread(this::handlePlay).start();
+    }
+
+    private void handlePlay() {
+        stop();
+
+        startWrite();
+
         int bufferSize = AUDIO_FORMAT.getChannels() * (int) AUDIO_FORMAT.getSampleRate(); // Just to keep it orderly
         try (
                 FFmpegAudioResampleFilter resampleFilter = new FFmpegAudioResampleFilter(
@@ -80,9 +88,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
             int frameOffset = 0; // offset within current frame
 
             long wake = System.nanoTime();
-            long delay = 150 * 1_000_000L; // 50ms interval
             long sleep;
-            double volume = 0.5D;
 
             paused = false;
 
@@ -125,7 +131,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
                     continue;
                 }
 
-                wake += delay;
+                wake += DELAY;
                 sleep = (wake - System.nanoTime()) / 1_000_000;
 
                 if (sleep > 0) {
@@ -137,13 +143,14 @@ public class Mp3AudioPlayer extends AudioPlayer {
                 }
 
                 if (available < 0) {
-                    paused = true;
+                    stop();
                     break;
                 }
             }
 
             try {
                 drain();
+                stop();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -152,11 +159,18 @@ public class Mp3AudioPlayer extends AudioPlayer {
         }
     }
 
+    public void setVolume(double volume) {
+        this.volume = volume;
+    }
+
     public void pause() {
-        frameQueue.clear();
+        if (frameQueue != null) {
+            frameQueue.clear();
+        }
         paused = true;
     }
 
+    @Override
     public void resume() {
         paused = false;
     }
@@ -189,6 +203,16 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void setAudioFile(InputStream inputStream) {
+
+        if (audioSourceSubstream != null) {
+            try {
+                audioSourceSubstream.close();
+            } catch (Exception e) {
+                throw new IllegalStateException(e);
+            }
+        }
+
+        stop();
         audioSourceSubstream = createAudioInputStream(inputStream);
     }
 

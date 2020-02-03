@@ -50,6 +50,13 @@ public interface IAudioPlayer {
     boolean isPlaying();
 
     /**
+     * Sets the volume of the audio player
+     *
+     * @param volume Permitted values: 0 - 1
+     */
+    void setVolume(double volume);
+
+    /**
      * @return the type which the audio player is designated for
      */
     AudioType getAudioType();

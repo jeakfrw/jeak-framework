@@ -20,6 +20,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
@@ -64,36 +65,49 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                     .forEach(sounds::add);
         }
 
-        commandService.registerCommand("mp3-player", ctx -> {
+        commandService.registerCommand("mp3-file-player", ctx -> {
             if (nextPlayerIndex > MAX_PLAYER_COUNT) {
-                throw new CommandException("Already reached the maximum amount of mp3-players!");
+                throw new CommandException("Already reached the maximum amount of audio-players!");
             }
 
-            final String identifier = "Mp3-Player - " + nextPlayerIndex++;
-            connection = connectionService.getVoiceConnection(identifier).orElseThrow();
+            createVoiceConnection(
+                    "Mp3-Player - " + nextPlayerIndex++, ctx.getRawEvent().getInvokerUID(), AudioType.MP3
+            );
+        });
 
-            try {
-                connection.connect();
-            } catch (IOException | TimeoutException e) {
-                //
+        commandService.registerCommand("web-radio-player", ctx -> {
+            if (nextPlayerIndex > MAX_PLAYER_COUNT) {
+                throw new CommandException("Already reached the maximum amount of audio-players!");
             }
 
-            final IAudioPlayer mp3AudioPlayer = connection.registerAudioPlayer(AudioType.MP3);
-
-            connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, mp3AudioPlayer));
-
-            connection.sendToChannel(
-                    dataCache.findClientByUniqueId(ctx.getRawEvent().getInvokerUID())
-                            .orElseThrow(() -> new IllegalStateException("Client not found in cache"))
-                            .getChannelID()
+            createVoiceConnection(
+                    "Web-Radio-Player - " + nextPlayerIndex++, ctx.getRawEvent().getInvokerUID(), AudioType.WEBRADIO
             );
         });
 
         success("test");
     }
 
+    private void createVoiceConnection(String identifier, String uuid, AudioType audioType) {
+        connection = connectionService.getVoiceConnection(identifier).orElseThrow();
+
+        try {
+            connection.connect();
+        } catch (IOException | TimeoutException e) {
+            //
+        }
+
+        final IAudioPlayer audioPlayer = connection.registerAudioPlayer(audioType);
+
+        connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, audioPlayer));
+
+        dataCache.findClientByUniqueId(uuid).ifPresent(
+                client -> connection.sendToChannel(client.getChannelID())
+        );
+    }
+
     @Listener
-    public void textMessageToMp3Player(IVoiceConnectionTextMessageEvent event) {
+    public void textMessageToAudioPlayer(IVoiceConnectionTextMessageEvent event) {
         String message = event.getMessage();
 
         if (!message.startsWith("!")) {
@@ -114,36 +128,52 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
         switch (cmd) {
 
             case "play":
-                String fileName;
-                if (param.isEmpty()) {
-                    fileName = sounds.get(new Random().nextInt(sounds.size()));
-                } else {
-                    String soundToPlay = param;
 
-                    if (!soundToPlay.toLowerCase().endsWith(".mp3")) {
-                        soundToPlay += ".mp3";
-                    }
-
-                    if (sounds.contains(soundToPlay)) {
-                        fileName = soundToPlay;
+                if (mp3AudioPlayer.getAudioType() == AudioType.MP3) {
+                    String fileName;
+                    if (param.isEmpty()) {
+                        fileName = sounds.get(new Random().nextInt(sounds.size()));
                     } else {
-                        return;
+                        String soundToPlay = param;
+
+                        if (!soundToPlay.toLowerCase().endsWith(".mp3")) {
+                            soundToPlay += ".mp3";
+                        }
+
+                        if (sounds.contains(soundToPlay)) {
+                            fileName = soundToPlay;
+                        } else {
+                            return;
+                        }
                     }
+
+                    try {
+                        mp3AudioPlayer.setAudioFile(soundDir, fileName);
+                    } catch (FileNotFoundException e) {
+                        //This is not possible
+                    }
+                } else if (mp3AudioPlayer.getAudioType() == AudioType.WEBRADIO) {
+                    try {
+                        if (param.startsWith("[URL]")) {
+                            param = param.substring(5, param.length() - 6);
+                        }
+
+                        mp3AudioPlayer.setAudioFile(new URL(param).openStream());
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException("The given string is not a valid URL!");
+                    }
+                } else {
+                    throw new UnsupportedOperationException(
+                            "The audio type " + mp3AudioPlayer.getAudioType()
+                                    + " is not supported by this plugin!"
+                    );
                 }
 
-                try {
-                    mp3AudioPlayer.setAudioFile(soundDir, fileName);
-
-                    if (!mp3AudioPlayer.isPlaying()) {
-                        mp3AudioPlayer.play();
-                    }
-
-                } catch (FileNotFoundException e) {
-                    //This is not possible
-                }
-
+                mp3AudioPlayer.play();
                 break;
-
+            case "volume":
+                mp3AudioPlayer.setVolume(Double.valueOf(param));
+                break;
             case "pause":
                 mp3AudioPlayer.pause();
                 break;
