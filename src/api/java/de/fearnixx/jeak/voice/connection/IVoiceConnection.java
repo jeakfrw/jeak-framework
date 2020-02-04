@@ -3,46 +3,41 @@ package de.fearnixx.jeak.voice.connection;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
-import java.io.IOException;
-import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 /**
  * Represents a voice connection.
- *
- * A VoiceConnection may be requested by using {@link IVoiceConnectionService#getVoiceConnection(String)}.
- *
+ * <p>
+ * A VoiceConnection may be requested by using {@link IVoiceConnectionService#requestVoiceConnection(String, Consumer)}.
+ * <p>
  * The retrieved connection will be not connected to the server, but it will already own a valid
- * teamspeak identity and can be connected to the server by calling {@link #connect()}.
+ * teamspeak identity and can be connected to the server by calling {@link #connect(Runnable, Runnable)}.
  */
 public interface IVoiceConnection {
 
     /**
-     * Connects the client to the server
-     *
-     * @throws IOException      If the server hostname is invalid or cant be resolved
-     * @throws TimeoutException on a timeout
+     * Connects the client to the server. Depending on the result of the connection process
+     * the respective callback will be executed.
+     * <p>
+     * <b>This call is blocking!</b>
+     * </p>
      */
-    void connect() throws IOException, TimeoutException;
+    void connect(Runnable onSuccess, Runnable onError);
 
     /**
-     * Disconnects the client from the server
-     *
-     * @throws TimeoutException on a timeout
+     * Disconnects the client from the server. Any timeouts while disconnecting are getting ignored.
      */
-    void disconnect() throws TimeoutException;
+    void disconnect();
 
     /**
-     * Disconnects the client from the server with a reason
+     * Disconnects the client from the server with a reason. Any timeouts while disconnecting are getting ignored.
      *
      * @param reason reason of the disconnect
-     * @throws TimeoutException on a timeout
      */
-    void disconnect(String reason) throws TimeoutException;
+    void disconnect(String reason);
 
     /**
-     * Check whether the client connection is connected to the server
-     *
-     * @return connected or not
+     * @return whether the client connection is connected to the server
      */
     boolean isConnected();
 
@@ -67,4 +62,16 @@ public interface IVoiceConnection {
      * @return the audio player
      */
     IAudioPlayer registerAudioPlayer(AudioType audioType);
+
+    /**
+     * @return information regarding the voice connection
+     */
+    IVoiceConnectionInformation getVoiceConnectionInformation();
+
+    /**
+     * Alters the voice connection information of the voice connection and sets the nickname of the client.
+     *
+     * @param nickname new nickname (may equal the old, but not null or an empty string)
+     */
+    void setClientNickname(String nickname);
 }

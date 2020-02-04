@@ -11,6 +11,7 @@ import de.fearnixx.jeak.teamspeak.voice.sound.AudioPlayer;
 import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
 import de.fearnixx.jeak.teamspeak.voice.sound.WebRadioPlayer;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionInformation;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
@@ -40,7 +41,7 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public void connect() throws IOException, TimeoutException {
+    public void connect(Runnable onSuccess, Runnable onError) {
         this.ts3jClientSocket = new LocalTeamspeakClientSocket();
 
         ts3jClientSocket.setNickname(clientConnectionInformation.getClientNickname());
@@ -58,9 +59,15 @@ public class VoiceConnection implements IVoiceConnection {
         );
 
         InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
-        ts3jClientSocket.connect(inetSocketAddress, null, 10000L);
+        try {
+            ts3jClientSocket.connect(inetSocketAddress, null, 10000L);
+        } catch (IOException | TimeoutException e) {
+            onError.run();
+            return;
+        }
 
         this.connected = true;
+        onSuccess.run();
     }
 
     @Override
@@ -132,6 +139,24 @@ public class VoiceConnection implements IVoiceConnection {
         ts3jClientSocket.setMicrophone(audioPlayer);
 
         return audioPlayer;
+    }
+
+    @Override
+    public IVoiceConnectionInformation getVoiceConnectionInformation() {
+        return clientConnectionInformation;
+    }
+
+    @Override
+    public void setClientNickname(String nickname) {
+        if (nickname == null || nickname.isEmpty()) {
+            throw new IllegalArgumentException("The nickname of a client connection must be not empty!");
+        }
+
+        clientConnectionInformation.setClientNickname(nickname);
+
+        if (connected) {
+            ts3jClientSocket.setNickname(nickname);
+        }
     }
 
     boolean isLocked() {

@@ -22,7 +22,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.TimeoutException;
 
 @JeakBotPlugin(id = "mpThreePlayer")
 public class Mp3PlayerPlugin extends AbstractTestPlugin {
@@ -91,18 +90,19 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
 
                     IVoiceConnection connection = optConnection.orElseThrow();
 
-                    try {
-                        connection.connect();
-                    } catch (IOException | TimeoutException e) {
-                        //
+            connection.connect(
+                    () -> {
+                        final IAudioPlayer audioPlayer = connection.registerAudioPlayer(audioType);
+
+                        connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, audioPlayer));
+
+                        dataCache.findClientByUniqueId(uuid).ifPresent(
+                                client -> connection.sendToChannel(client.getChannelID())
+                        );
+                    },
+                    () -> {
+                        throw new IllegalStateException("Could not connect!");
                     }
-
-                    final IAudioPlayer audioPlayer = connection.registerAudioPlayer(audioType);
-
-                    connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, audioPlayer));
-
-                    dataCache.findClientByUniqueId(uuid).ifPresent(
-                            client -> connection.sendToChannel(client.getChannelID())
                     );
                 }
         );
