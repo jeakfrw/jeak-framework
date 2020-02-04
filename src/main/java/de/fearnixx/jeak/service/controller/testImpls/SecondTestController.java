@@ -20,7 +20,7 @@ public class SecondTestController {
     }
 
     @RequestMapping(method = RequestMethod.POST, endpoint = "/body")
-    public String sendBody(@RequestBody(type = String.class, name = "string") String string) {
+    public String sendBody(@RequestBody() String string) {
         return "second body " + string;
     }
 }

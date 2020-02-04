@@ -8,14 +8,8 @@ import java.lang.annotation.Target;
 /**
  * Mark a parameter to be filled by the request body of a call.
  *
- * type(): REQUIRED Specify the class of the used variable.
- *
- * name(): REQUIRED Specify the name of the used variable.
- *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.PARAMETER)
 public @interface RequestBody {
-    Class<?> type();
-    String name();
 }
