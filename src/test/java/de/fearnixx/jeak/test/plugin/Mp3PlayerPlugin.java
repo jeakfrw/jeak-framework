@@ -39,8 +39,6 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
     @Inject
     private IBot bot;
 
-    private IVoiceConnection connection;
-
     public Mp3PlayerPlugin() {
         addTest("Mp3-Player");
     }
@@ -89,20 +87,24 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
     }
 
     private void createVoiceConnection(String identifier, String uuid, AudioType audioType) {
-        connection = connectionService.getVoiceConnection(identifier).orElseThrow();
+        connectionService.requestVoiceConnection(identifier, optConnection -> {
 
-        try {
-            connection.connect();
-        } catch (IOException | TimeoutException e) {
-            //
-        }
+                    IVoiceConnection connection = optConnection.orElseThrow();
 
-        final IAudioPlayer audioPlayer = connection.registerAudioPlayer(audioType);
+                    try {
+                        connection.connect();
+                    } catch (IOException | TimeoutException e) {
+                        //
+                    }
 
-        connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, audioPlayer));
+                    final IAudioPlayer audioPlayer = connection.registerAudioPlayer(audioType);
 
-        dataCache.findClientByUniqueId(uuid).ifPresent(
-                client -> connection.sendToChannel(client.getChannelID())
+                    connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, audioPlayer));
+
+                    dataCache.findClientByUniqueId(uuid).ifPresent(
+                            client -> connection.sendToChannel(client.getChannelID())
+                    );
+                }
         );
     }
 

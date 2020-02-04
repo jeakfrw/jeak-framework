@@ -21,6 +21,7 @@ import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
 public class VoiceConnectionService implements IVoiceConnectionService {
@@ -39,44 +40,50 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     private Map<String, VoiceConnection> clientConnections = new HashMap<>();
 
     @Override
-    public Optional<IVoiceConnection> getVoiceConnection(String identifier) {
-        if (clientConnections.containsKey(identifier)) {
-            final VoiceConnection clientConnection = clientConnections.get(identifier);
+    public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
+        new Thread(
+                () -> {
+                    if (clientConnections.containsKey(identifier)) {
+                        final VoiceConnection clientConnection = clientConnections.get(identifier);
 
-            if (clientConnection.isLocked()) {
-                return Optional.empty();
-            }
+                        if (clientConnection.isLocked()) {
+                            onRequestFinished.accept(Optional.empty());
+                            return;
+                        }
 
-            return Optional.of(clientConnection);
-        }
+                        onRequestFinished.accept(Optional.of(clientConnection));
+                        return;
+                    }
 
-        final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
+                    final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
 
-        AbstractVoiceConnectionInformation newClientConnectionInformation;
+                    AbstractVoiceConnectionInformation newClientConnectionInformation;
 
-        if (isDatabaseConnected) {
-            //TODO: Store client connection information in database
-            newClientConnectionInformation = new DbVoiceConnectionInformation();
-        } else {
-            newClientConnectionInformation = new ConfigVoiceConnectionInformation(
-                    new FileConfig(LoaderFactory.getLoader("application/json"),
-                            new File(bot.getConfigDirectory(), "frw/voice/" + identifier + ".json")),
-                    identifier
-            );
-            newClientConnectionInformation.setClientNickname(identifier);
-            newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
-        }
+                    if (isDatabaseConnected) {
+                        //TODO: Store client connection information in database
+                        newClientConnectionInformation = new DbVoiceConnectionInformation();
+                    } else {
+                        newClientConnectionInformation = new ConfigVoiceConnectionInformation(
+                                new FileConfig(LoaderFactory.getLoader("application/json"),
+                                        new File(bot.getConfigDirectory(), "frw/voice/" + identifier + ".json")),
+                                identifier
+                        );
+                        newClientConnectionInformation.setClientNickname(identifier);
+                        newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
+                    }
 
-        final VoiceConnection clientConnection = new VoiceConnection(
-                newClientConnectionInformation,
-                server.getHost(),
-                server.getPort(),
-                eventService
-        );
+                    final VoiceConnection clientConnection = new VoiceConnection(
+                            newClientConnectionInformation,
+                            server.getHost(),
+                            server.getPort(),
+                            eventService
+                    );
 
-        clientConnections.put(identifier, clientConnection);
+                    clientConnections.put(identifier, clientConnection);
 
-        return Optional.of(clientConnection);
+                    onRequestFinished.accept(Optional.of(clientConnection));
+                }
+        ).start();
     }
 
     @Listener
