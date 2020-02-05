@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.voice.connection;
 
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
@@ -80,4 +81,13 @@ public interface IVoiceConnection {
      * @param nickname new nickname (may equal the old, but not null or an empty string)
      */
     void setClientNickname(String nickname);
+
+    /**
+     * Sets a flag for this voice connection whether incoming text messages should be forwarded
+     * as {@link IQueryEvent.INotification.ITextMessage} to the framework to mimic text messages
+     * that have been sent via the query connection
+     *
+     * @param shouldForwardTextMessages whether incoming text messages should be forwarded
+     */
+    void setShouldForwardTextMessages(boolean shouldForwardTextMessages);
 }

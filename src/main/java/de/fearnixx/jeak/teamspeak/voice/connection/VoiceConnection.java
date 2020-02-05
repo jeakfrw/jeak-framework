@@ -4,7 +4,13 @@ import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.event.TS3Listener;
 import com.github.manevolent.ts3j.event.TextMessageEvent;
 import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSocket;
+import de.fearnixx.jeak.IBot;
+import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.teamspeak.IUserService;
+import de.fearnixx.jeak.teamspeak.EventCaptions;
+import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.sound.AudioPlayer;
@@ -33,11 +39,19 @@ public class VoiceConnection implements IVoiceConnection {
 
     private boolean connected;
 
-    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService) {
+    private IUserService userService;
+
+    private IBot bot;
+
+    private boolean shouldForwardTextMessages;
+
+    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;
         this.eventService = eventService;
+        this.userService = userService;
+        this.bot = bot;
         locked = true;
     }
 
@@ -61,6 +75,24 @@ public class VoiceConnection implements IVoiceConnection {
                                     eventService.fireEvent(
                                             new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
                                     );
+
+                                    if (shouldForwardTextMessages) {
+                                        final QueryEvent.ClientTextMessage clientTextMessage = new QueryEvent.ClientTextMessage(userService);
+
+                                        final int invokerId = e.getInvokerId();
+                                        final IClient client = userService.getClientByID(invokerId).orElseThrow();
+
+                                        clientTextMessage.setClient(client);
+                                        clientTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
+                                        clientTextMessage.setConnection(bot.getServer().getConnection());
+                                        clientTextMessage.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
+                                        clientTextMessage.setProperty("invokerid", invokerId);
+                                        clientTextMessage.setProperty("invokeruid", client.getClientUniqueID());
+                                        clientTextMessage.setProperty("invokername", client.getNickName());
+                                        clientTextMessage.setProperty("targetmode", e.getTargetMode());
+
+                                        eventService.fireEvent(clientTextMessage);
+                                    }
                                 }
                             }
                     );
@@ -175,6 +207,11 @@ public class VoiceConnection implements IVoiceConnection {
         if (connected) {
             ts3jClientSocket.setNickname(nickname);
         }
+    }
+
+    @Override
+    public void setShouldForwardTextMessages(boolean shouldForwardTextMessages) {
+        this.shouldForwardTextMessages = shouldForwardTextMessages;
     }
 
     boolean isLocked() {

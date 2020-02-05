@@ -91,6 +91,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                         voiceConnection.connect(
                                 () -> {
                                     voiceConnection.registerAudioPlayer(audioType);
+                                    voiceConnection.setShouldForwardTextMessages(true);
 
                                     dataCache.findClientByUniqueId(uuid).ifPresent(
                                             client -> voiceConnection.sendToChannel(client.getChannelID())
