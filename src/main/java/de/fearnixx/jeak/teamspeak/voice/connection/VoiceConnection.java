@@ -17,6 +17,7 @@ import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -42,32 +43,40 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public void connect(Runnable onSuccess, Runnable onError) {
-        this.ts3jClientSocket = new LocalTeamspeakClientSocket();
-
-        ts3jClientSocket.setNickname(clientConnectionInformation.getClientNickname());
-        ts3jClientSocket.setIdentity(clientConnectionInformation.getTeamspeakIdentity());
-
-        ts3jClientSocket.addListener(
-                new TS3Listener() {
-                    @Override
-                    public void onTextMessage(TextMessageEvent e) {
-                        eventService.fireEvent(
-                                new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
-                        );
-                    }
-                }
-        );
-
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
-        try {
-            ts3jClientSocket.connect(inetSocketAddress, null, 10000L);
-        } catch (IOException | TimeoutException e) {
-            onError.run();
+        if (connected) {
             return;
         }
 
-        this.connected = true;
-        onSuccess.run();
+        new Thread(
+                () -> {
+                    this.ts3jClientSocket = new LocalTeamspeakClientSocket();
+
+                    ts3jClientSocket.setNickname(clientConnectionInformation.getClientNickname());
+                    ts3jClientSocket.setIdentity(clientConnectionInformation.getTeamspeakIdentity());
+
+                    ts3jClientSocket.addListener(
+                            new TS3Listener() {
+                                @Override
+                                public void onTextMessage(TextMessageEvent e) {
+                                    eventService.fireEvent(
+                                            new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
+                                    );
+                                }
+                            }
+                    );
+
+                    InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
+                    try {
+                        ts3jClientSocket.connect(inetSocketAddress, null, 10000L);
+                    } catch (IOException | TimeoutException e) {
+                        onError.run();
+                        return;
+                    }
+
+                    this.connected = true;
+                    onSuccess.run();
+                }
+        ).start();
     }
 
     @Override
@@ -139,6 +148,15 @@ public class VoiceConnection implements IVoiceConnection {
         ts3jClientSocket.setMicrophone(audioPlayer);
 
         return audioPlayer;
+    }
+
+    @Override
+    public Optional<IAudioPlayer> getRegisteredAudioPlayer() {
+        if (ts3jClientSocket == null || ts3jClientSocket.getMicrophone() == null) {
+            return Optional.empty();
+        } else {
+            return Optional.of((IAudioPlayer) ts3jClientSocket.getMicrophone());
+        }
     }
 
     @Override

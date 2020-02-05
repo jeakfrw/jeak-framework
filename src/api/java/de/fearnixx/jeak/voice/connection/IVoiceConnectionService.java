@@ -22,4 +22,11 @@ public interface IVoiceConnectionService {
      * @param onRequestFinished callback to handle the requested voice connection
      */
     void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished);
+
+    /**
+     * Creates a new {@link IVoiceConnectionPool} which will be using this service for requesting {@link IVoiceConnection}.
+     *
+     * @return a new pool
+     */
+    IVoiceConnectionPool createVoiceConnectionPool();
 }

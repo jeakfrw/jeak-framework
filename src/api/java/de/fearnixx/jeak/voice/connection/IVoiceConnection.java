@@ -3,6 +3,7 @@ package de.fearnixx.jeak.voice.connection;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
+import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -19,8 +20,8 @@ public interface IVoiceConnection {
      * Connects the client to the server. Depending on the result of the connection process
      * the respective callback will be executed.
      * <p>
-     * <b>This call is blocking!</b>
-     * </p>
+     * If the connection is already connected to the server no callback will be executed since there is no
+     * result of a non-existing operation!
      */
     void connect(Runnable onSuccess, Runnable onError);
 
@@ -62,6 +63,11 @@ public interface IVoiceConnection {
      * @return the audio player
      */
     IAudioPlayer registerAudioPlayer(AudioType audioType);
+
+    /**
+     * @return the audio player that was registered for the voice connection using {@link #registerAudioPlayer(AudioType)}
+     */
+    Optional<IAudioPlayer> getRegisteredAudioPlayer();
 
     /**
      * @return information regarding the voice connection

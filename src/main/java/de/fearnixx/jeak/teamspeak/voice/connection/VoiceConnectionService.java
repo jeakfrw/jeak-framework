@@ -12,15 +12,16 @@ import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionI
 import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionPool;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.config.FileConfig;
 
 import java.io.File;
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
@@ -37,51 +38,53 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     private boolean isDatabaseConnected = false;
 
-    private Map<String, VoiceConnection> clientConnections = new HashMap<>();
+    private final Map<String, VoiceConnection> clientConnections = new ConcurrentHashMap<>();
 
     @Override
     public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
         new Thread(
                 () -> {
-                    if (clientConnections.containsKey(identifier)) {
-                        final VoiceConnection clientConnection = clientConnections.get(identifier);
+                    synchronized (clientConnections) {
+                        if (clientConnections.containsKey(identifier)) {
+                            final VoiceConnection clientConnection = clientConnections.get(identifier);
 
-                        if (clientConnection.isLocked()) {
-                            onRequestFinished.accept(Optional.empty());
+                            if (clientConnection.isLocked()) {
+                                onRequestFinished.accept(Optional.empty());
+                                return;
+                            }
+
+                            onRequestFinished.accept(Optional.of(clientConnection));
                             return;
                         }
 
-                        onRequestFinished.accept(Optional.of(clientConnection));
-                        return;
-                    }
+                        final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
 
-                    final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
+                        AbstractVoiceConnectionInformation newClientConnectionInformation;
 
-                    AbstractVoiceConnectionInformation newClientConnectionInformation;
+                        if (isDatabaseConnected) {
+                            //TODO: Store client connection information in database
+                            newClientConnectionInformation = new DbVoiceConnectionInformation();
+                        } else {
+                            newClientConnectionInformation = new ConfigVoiceConnectionInformation(
+                                    new FileConfig(LoaderFactory.getLoader("application/json"),
+                                            new File(bot.getConfigDirectory(), "frw/voice/" + identifier + ".json")),
+                                    identifier
+                            );
+                            newClientConnectionInformation.setClientNickname(identifier);
+                            newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
+                        }
 
-                    if (isDatabaseConnected) {
-                        //TODO: Store client connection information in database
-                        newClientConnectionInformation = new DbVoiceConnectionInformation();
-                    } else {
-                        newClientConnectionInformation = new ConfigVoiceConnectionInformation(
-                                new FileConfig(LoaderFactory.getLoader("application/json"),
-                                        new File(bot.getConfigDirectory(), "frw/voice/" + identifier + ".json")),
-                                identifier
+                        final VoiceConnection clientConnection = new VoiceConnection(
+                                newClientConnectionInformation,
+                                server.getHost(),
+                                server.getPort(),
+                                eventService
                         );
-                        newClientConnectionInformation.setClientNickname(identifier);
-                        newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
+
+                        clientConnections.put(identifier, clientConnection);
+
+                        onRequestFinished.accept(Optional.of(clientConnection));
                     }
-
-                    final VoiceConnection clientConnection = new VoiceConnection(
-                            newClientConnectionInformation,
-                            server.getHost(),
-                            server.getPort(),
-                            eventService
-                    );
-
-                    clientConnections.put(identifier, clientConnection);
-
-                    onRequestFinished.accept(Optional.of(clientConnection));
                 }
         ).start();
     }
@@ -110,5 +113,10 @@ public class VoiceConnectionService implements IVoiceConnectionService {
             throw new IllegalStateException("Failed to create local identity");
         }
         return localIdentity;
+    }
+
+    @Override
+    public IVoiceConnectionPool createVoiceConnectionPool() {
+        return new VoiceConnectionPool(this);
     }
 }

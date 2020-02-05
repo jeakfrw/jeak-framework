@@ -9,13 +9,11 @@ import de.fearnixx.jeak.service.command.CommandException;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
-import de.fearnixx.jeak.voice.connection.IVoiceConnection;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionPool;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
 import de.fearnixx.jeak.voice.event.IVoiceConnectionTextMessageEvent;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,7 +40,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
         addTest("Mp3-Player");
     }
 
-    private Map<String, Pair<IVoiceConnection, IAudioPlayer>> connectionsAndMp3Players = new HashMap<>();
+    private IVoiceConnectionPool voiceConnectionPool;
 
     private int nextPlayerIndex = 1;
     private static final int MAX_PLAYER_COUNT = 5;
@@ -61,6 +59,8 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                     .map(File::getName)
                     .forEach(sounds::add);
         }
+
+        voiceConnectionPool = connectionService.createVoiceConnectionPool();
 
         commandService.registerCommand("mp3-file-player", ctx -> {
             if (nextPlayerIndex > MAX_PLAYER_COUNT) {
@@ -86,25 +86,20 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
     }
 
     private void createVoiceConnection(String identifier, String uuid, AudioType audioType) {
-        connectionService.requestVoiceConnection(identifier, optConnection -> {
+        voiceConnectionPool.registerVoiceConnection(identifier,
+                voiceConnection ->
+                        voiceConnection.connect(
+                                () -> {
+                                    voiceConnection.registerAudioPlayer(audioType);
 
-                    IVoiceConnection connection = optConnection.orElseThrow();
-
-            connection.connect(
-                    () -> {
-                        final IAudioPlayer audioPlayer = connection.registerAudioPlayer(audioType);
-
-                        connectionsAndMp3Players.put(identifier, new ImmutablePair<>(connection, audioPlayer));
-
-                        dataCache.findClientByUniqueId(uuid).ifPresent(
-                                client -> connection.sendToChannel(client.getChannelID())
-                        );
-                    },
-                    () -> {
-                        throw new IllegalStateException("Could not connect!");
-                    }
-                    );
-                }
+                                    dataCache.findClientByUniqueId(uuid).ifPresent(
+                                            client -> voiceConnection.sendToChannel(client.getChannelID())
+                                    );
+                                },
+                                () -> {
+                                    throw new IllegalStateException("Could not connect!");
+                                }
+                        )
         );
     }
 
@@ -125,7 +120,9 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
             param = msgSplit[1];
         }
 
-        IAudioPlayer mp3AudioPlayer = connectionsAndMp3Players.get(event.getVoiceConnectionIdentifier()).getValue();
+        IAudioPlayer mp3AudioPlayer = voiceConnectionPool.getVoiceConnection(event.getVoiceConnectionIdentifier())
+                .getRegisteredAudioPlayer()
+                .orElseThrow();
 
         switch (cmd) {
 
