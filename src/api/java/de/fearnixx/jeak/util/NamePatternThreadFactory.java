@@ -14,6 +14,6 @@ public class NamePatternThreadFactory extends NamingThreadFactory {
     }
 
     private String supplyName() {
-        return String.format(namePattern, threadCounter.getAndDecrement());
+        return String.format(namePattern, threadCounter.getAndIncrement());
     }
 }

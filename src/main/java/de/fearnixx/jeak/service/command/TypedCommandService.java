@@ -23,6 +23,9 @@ import de.fearnixx.jeak.service.command.spec.matcher.MatcherResponseType;
 import de.fearnixx.jeak.service.locale.ILocaleContext;
 import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
+import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.mlessmann.confort.lang.RuntimeParseException;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CodePointCharStream;
@@ -63,6 +66,9 @@ public class TypedCommandService extends CommandService {
 
     @Inject
     private IUserService userSvc;
+
+    @Inject
+    private IServer server;
 
     private FirstOfMatcher firstOfMatcher;
     private HasPermissionMatcher hasPermissionMatcher;
@@ -106,7 +112,11 @@ public class TypedCommandService extends CommandService {
     @Override
     @Listener
     public void onTextMessage(IQueryEvent.INotification.IClientTextMessage event) {
-        if (event.getMessage().startsWith(COMMAND_PREFIX)) {
+        IDataHolder whoAmI = server.getConnection().getWhoAmI();
+        int myId = whoAmI.getProperty("client_id")
+                .map(Integer::parseInt)
+                .orElse(0);
+        if (event.getInvokerId() != myId && event.getMessage().startsWith(COMMAND_PREFIX)) {
             triggerCommand(event);
         }
     }
@@ -123,7 +133,6 @@ public class TypedCommandService extends CommandService {
             command = msg.substring(COMMAND_PREFIX.length());
             arguments = msg.substring(COMMAND_PREFIX.length() + command.length()).trim();
         }
-        // TODO: Support "!command some-dashed-arg"
 
         if (typedCommands.containsKey(command)) {
             dispatchTyped(txtEvent, arguments, typedCommands.get(command));
@@ -136,6 +145,11 @@ public class TypedCommandService extends CommandService {
                         "These will only continue to work in Jeak version 1.X", command);
             }
             super.onTextMessage(txtEvent);
+        } else {
+            IClient sender = txtEvent.getSender();
+            String message = locales.getContext(sender.getCountryCode())
+                    .getMessage("command.notFound", Map.of("command", command));
+            txtEvent.getConnection().sendRequest(sender.sendMessage(message));
         }
     }
 
@@ -207,6 +221,7 @@ public class TypedCommandService extends CommandService {
         } catch (CommandException e) {
             logger.debug("Command executor returned an exception.", e);
             info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
+            info.getErrorMessages().add(e.getMessage());
         } catch (RuntimeException e) {
             logger.warn("Uncaught exception while executing command \"{}\" (executor: {})",
                     spec.getCommand(), spec.getExecutor().getClass().getName(), e);

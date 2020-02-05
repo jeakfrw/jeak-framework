@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.locale;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 
 import java.util.Locale;
 
@@ -31,9 +32,20 @@ public interface ILocalizationService {
      * <ul>
      *     <li>The clients custom language setting, if defined.</li>
      *     <li>The clients country flag from TS3.</li>
+     *     <li>The configured fallback locale.</li>
      * </ul>
      */
     Locale getLocaleOfClient(IClient client);
+
+    /**
+     * Returns the locale associated with a specific client.
+     * Two values will be taken into account for this:
+     * <ul>
+     *     <li>The users custom language setting, if defined.</li>
+     *     <li>The configured fallback locale.</li>
+     * </ul>
+     */
+    Locale getLocaleOfUser(IUser user);
 
     /**
      * Sets the custom language setting for the given client.

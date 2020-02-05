@@ -1,10 +1,10 @@
 package de.fearnixx.jeak;
 
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import de.fearnixx.jeak.commandline.CommandLine;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
+import de.fearnixx.jeak.util.NamePatternThreadFactory;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.lang.IConfigLoader;
@@ -31,12 +31,7 @@ public class Main implements Runnable {
     private final PluginManager pluginManager = new PluginManager();
 
     private final Executor mainExecutor = Executors.newSingleThreadExecutor(
-            new ThreadFactoryBuilder()
-                    .setDaemon(false)
-                    .setNameFormat("main-%d")
-                    .setThreadFactory(Executors.defaultThreadFactory())
-                    .build()
-    );
+            new NamePatternThreadFactory("main-%d"));
     private final JeakBot jeakBot = new JeakBot();
     private final CommandLine cmd = new CommandLine(System.in, System.out);
 

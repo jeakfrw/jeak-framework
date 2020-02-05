@@ -36,12 +36,18 @@ public class SmtpTransportUnit implements ITransportUnit {
     public void load(IConfigNode configuration) throws MessagingException {
         jMailProperties = new Properties();
 
-        configuration.getNode("username").optString().ifPresent(user -> {
-            jMailProperties.setProperty("mail.smtp.auth", "true");
-            jMailProperties.setProperty("mail.smtp.user", user);
-        });
+        configuration.getNode("username").optString()
+                .or(() -> configuration.getNode("user").optString())
+                .ifPresent(user -> {
+                    jMailProperties.setProperty("mail.smtp.auth", "true");
+                    jMailProperties.setProperty("mail.smtp.user", user);
+                });
 
-        jMailProperties.setProperty("mail.smtp.pass", configuration.getNode("pass").optString("webmaster"));
+        String authPassword = configuration.getNode("pass")
+                .optString()
+                .or(() -> configuration.getNode("password").optString())
+                .orElse("webmaster");
+        jMailProperties.setProperty("mail.smtp.pass", authPassword);
         jMailProperties.setProperty("mail.smtp.starttls.enable", configuration.getNode("starttls").optString("true"));
         jMailProperties.setProperty("mail.smtp.host", configuration.getNode("host").optString("localhost"));
         jMailProperties.setProperty("mail.smtp.port", configuration.getNode("port").optString("25"));
