@@ -6,8 +6,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.Assert.assertThat;
 
 public class TestCommandParser {
 
@@ -31,6 +31,15 @@ public class TestCommandParser {
         assertThat(info.isParameterized(), is(true));
         assertThat(info.isArgumentized(), is(false));
         assertThat(info.getParameters(), contains("there", "are", "quoted params"));
+    }
+
+    @Test
+    public void testNonQuotedDashedParameters() {
+        String params = "there-is a non-quoted param";
+        CommandInfo commandInfo = svcStub.parseLine(params);
+        assertThat(commandInfo.isParameterized(), is(true));
+        assertThat(commandInfo.isArgumentized(), is(false));
+        assertThat(commandInfo.getParameters(), contains("there-is", "a", "non-quoted", "param"));
     }
 
     @Test
@@ -77,6 +86,18 @@ public class TestCommandParser {
         String params = "this --shouldnt --work=now";
         CommandInfo info = svcStub.parseLine(params);
         assertThat(info.getErrorMessages().size(), greaterThan(0));
+    }
+
+    @Test
+    public void testNonQuotedDashedArguments() {
+        String params = "--this=there-is --a=true --b=\"non-quoted\" --param";
+        CommandInfo commandInfo = svcStub.parseLine(params);
+        assertThat(commandInfo.isParameterized(), is(false));
+        assertThat(commandInfo.isArgumentized(), is(true));
+        assertThat(commandInfo.getArguments().get("this"), is("there-is"));
+        assertThat(commandInfo.getArguments().get("a"), is("true"));
+        assertThat(commandInfo.getArguments().get("b"), is("non-quoted"));
+        assertThat(commandInfo.getArguments().get("param"), is("true"));
     }
 
     private static class StubCommandSvc extends TypedCommandService {
