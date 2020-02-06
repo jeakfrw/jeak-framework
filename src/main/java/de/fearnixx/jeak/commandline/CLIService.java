@@ -68,7 +68,7 @@ public class CLIService {
 
         Consumer<CLICommandContext> cliConsumer = cliCommands.getOrDefault(command, null);
         if (cliConsumer != null) {
-            CommandInfo commandInfo = parseCommandLine(contextPart, logger);
+            CommandInfo commandInfo = parseCommandLine(contextPart != null ? contextPart : "", logger);
             CLICommandContext cliContext = new CLICommandContext(commandInfo, getMessageConsumer());
             cliConsumer.accept(cliContext);
 

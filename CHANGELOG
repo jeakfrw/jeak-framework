@@ -1,3 +1,21 @@
+## 1.1.0 (Typed commands, Language selection)
++ Added a new command service that allows for declarative commands and typed parameters
++ Added the ability to create custom matchers for plugin specific types in command parameters
++ Added a ``!help`` command that lists commands registered to the new implementation
++ Added a ``!help <command>`` command that shows another commands signature
++ Added a ``!locale`` command that shows the current custom locale
++ Added a ``!locale <short-ident>`` command that allows users to select another locale as their default
++ Added a new ``CLIService`` available to framework components to register cli-commands to
++ Added a ``sysInfo`` cli-command that prints system information
+~ Changed: Sanctions on plugin IDs are less strict now. (Regex: ``"^[a-zA-Z.][a-zA-Z0-9.&+#]+$"``)
+~ Downgraded dependencies:
+  * antlr 4.8-1 -> 4.7.1: Antlr gradle plugin is not updated yet and produces incompatible parsers.
+~ Changed: REST-service now deals correctly with ``OPTIONS`` requests
+~ Changed: REST-service now supports ``CORS``
+~ Changed: REST-service now supports custom headers
+~ Changed: TS3PermProvider now holds internal cache of all permission IDs (when retrievable)
+~ Changed: Properly set log levels in the default Log4J2 configuration
+
 ## 1.0.4
 ~ Changed: user-service performance improved by caching results for 30 seconds
 ~ Changed: Non-string dataSourceOptions now cause an exception

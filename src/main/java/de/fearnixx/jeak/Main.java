@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
+import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.util.*;
@@ -110,7 +111,6 @@ public class Main implements Runnable {
         });
 
         ExecutorService execSvc = Executors.newSingleThreadExecutor();
-
 
 
         try (Scanner sysInScanner = new Scanner(System.in)) {
@@ -225,10 +225,12 @@ public class Main implements Runnable {
                 NetworkInterface netIf = netIfIterator.next();
                 dump.accept(String.format("[IF] Name=%s MAC=%s", netIf.getDisplayName(), Arrays.toString(netIf.getHardwareAddress())));
                 for (InterfaceAddress ifAddr : netIf.getInterfaceAddresses()) {
-                    String addrStr = Arrays.toString(ifAddr.getAddress().getAddress());
+                    String addrStr = ifAddr.getAddress().getHostAddress();
                     String prefix = Integer.toString(ifAddr.getNetworkPrefixLength());
                     String hostname = ifAddr.getAddress().getHostName();
-                    String broadcast = Arrays.toString(ifAddr.getBroadcast().getAddress());
+                    String broadcast = Optional.ofNullable(ifAddr.getBroadcast())
+                            .map(InetAddress::getHostAddress)
+                            .orElse("-");
                     dump.accept(String.format("IP: %s/%s [%s] BR: %s", addrStr, prefix, hostname, broadcast));
                 }
             }
