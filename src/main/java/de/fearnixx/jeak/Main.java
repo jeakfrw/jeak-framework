@@ -1,6 +1,6 @@
 package de.fearnixx.jeak;
 
-import de.fearnixx.jeak.commandline.CommandLine;
+import de.fearnixx.jeak.commandline.CLIService;
 import de.fearnixx.jeak.plugin.persistent.PluginManager;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
@@ -15,11 +15,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class Main implements Runnable {
 
@@ -32,7 +33,7 @@ public class Main implements Runnable {
     private final Executor mainExecutor = Executors.newSingleThreadExecutor(
             new NamePatternThreadFactory("main-%d"));
     private final JeakBot jeakBot = new JeakBot();
-    private final CommandLine cmd = new CommandLine(System.in, System.out);
+    private boolean cliTerminated = false;
 
     public static void main(String[] arguments) {
         for (String arg : arguments) {
@@ -93,12 +94,52 @@ public class Main implements Runnable {
     }
 
     public void run() {
-        discoverPlugins();
+        populatePluginSources();
         startBot();
-        runLoop();
+
+        CLIService cliService = CLIService.getInstance();
+        cliService.registerCommand("stop", ctx -> {
+            ctx.getMessageConsumer().accept("Bye bye!");
+            synchronized (this) {
+                cliTerminated = true;
+                jeakBot.shutdown();
+            }
+        });
+        cliService.registerCommand("sysInfo", ctx -> {
+            dumpSysInfo(ctx.getMessageConsumer());
+        });
+
+        ExecutorService execSvc = Executors.newSingleThreadExecutor();
+
+
+
+        try (Scanner sysInScanner = new Scanner(System.in)) {
+            Supplier<Future<String>> next = () -> execSvc.submit(sysInScanner::nextLine);
+            Future<String> futConsoleLine = next.get();
+            while (true) {
+                synchronized (this) {
+                    if (cliTerminated) break;
+                }
+
+                try {
+                    String line = futConsoleLine.get(1, TimeUnit.SECONDS);
+                    CLIService.getInstance().receiveLine(line);
+                    futConsoleLine = next.get();
+
+                } catch (InterruptedException e) {
+                    logger.warn("Interrupted while reading system in? Shutting down...");
+                    jeakBot.shutdown();
+                } catch (ExecutionException e) {
+                    logger.error("PANIC! Failed to read from system in!", e);
+                    jeakBot.shutdown();
+                } catch (TimeoutException e) {
+                    // We're just going to ignore this ^^. Probably the admin doesn't want to talk with us anyways.
+                }
+            }
+        }
     }
 
-    private void discoverPlugins() {
+    private void populatePluginSources() {
         pluginManager.addSource(new File("plugins"));
         pluginManager.addSource(new File("libraries"));
     }
@@ -114,9 +155,7 @@ public class Main implements Runnable {
         jeakBot.setConfig(botConfig);
         jeakBot.setPluginManager(pluginManager);
 
-
-        jeakBot.onShutdown(this::onBotShutdown);
-
+        jeakBot.onShutdown(bot -> internalShutdown());
         mainExecutor.execute(jeakBot);
     }
 
@@ -126,21 +165,13 @@ public class Main implements Runnable {
         return new FileConfig(configLoader, confFile);
     }
 
-    private void runLoop() {
-        cmd.run();
-    }
-
-    private void onBotShutdown(JeakBot bot) {
-        internalShutdown();
-    }
-
     public void shutdown() {
         jeakBot.shutdown();
         internalShutdown();
     }
 
     private void internalShutdown() {
-        cmd.kill();
+        cliTerminated = true;
         try {
             Thread.sleep(1200);
         } catch (InterruptedException e) {
@@ -180,5 +211,30 @@ public class Main implements Runnable {
         }
 
         System.exit(0);
+    }
+
+    public void dumpSysInfo(Consumer<String> acceptor) {
+        final Consumer<String> dump = str -> {
+            acceptor.accept(str);
+            logger.info("[SysInfo] {}", str);
+        };
+
+        try {
+            var netIfIterator = NetworkInterface.getNetworkInterfaces().asIterator();
+            while (netIfIterator.hasNext()) {
+                NetworkInterface netIf = netIfIterator.next();
+                dump.accept(String.format("[IF] Name=%s MAC=%s", netIf.getDisplayName(), Arrays.toString(netIf.getHardwareAddress())));
+                for (InterfaceAddress ifAddr : netIf.getInterfaceAddresses()) {
+                    String addrStr = Arrays.toString(ifAddr.getAddress().getAddress());
+                    String prefix = Integer.toString(ifAddr.getNetworkPrefixLength());
+                    String hostname = ifAddr.getAddress().getHostName();
+                    String broadcast = Arrays.toString(ifAddr.getBroadcast().getAddress());
+                    dump.accept(String.format("IP: %s/%s [%s] BR: %s", addrStr, prefix, hostname, broadcast));
+                }
+            }
+
+        } catch (Exception e) {
+            logger.error("Could not retrieve system information!", e);
+        }
     }
 }

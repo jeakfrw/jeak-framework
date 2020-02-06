@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static de.fearnixx.jeak.antlr.CommandParserUtil.parseCommandLine;
+
 @FrameworkService(serviceInterface = ICommandService.class)
 public class TypedCommandService extends CommandService {
 
@@ -155,7 +157,7 @@ public class TypedCommandService extends CommandService {
 
     private void dispatchTyped(IQueryEvent.INotification.IClientTextMessage txtEvent, String arguments, CommandRegistration registration) {
         ILocaleContext langCtx = locales.getContext(txtEvent.getSender().getCountryCode());
-        CommandInfo info = parseCommandLine(arguments);
+        CommandInfo info = parseCommandLine(arguments, logger);
         if (!info.getErrorMessages().isEmpty()) {
             logger.info("Aborting command due to parsing errors.");
             info.getErrorMessages().add(0, langCtx.getMessage(MSG_HAS_ERRORS));
@@ -243,49 +245,6 @@ public class TypedCommandService extends CommandService {
     private void sendErrorMessages(IQueryEvent.INotification.IClientTextMessage txtEvent, CommandInfo info) {
         info.getErrorMessages()
                 .forEach(msg -> txtEvent.getConnection().sendRequest(txtEvent.getSender().sendMessage(msg)));
-    }
-
-    protected CommandInfo parseCommandLine(String arguments) {
-        CodePointCharStream charStream = CharStreams.fromString(arguments);
-        var lexer = new CommandExecutionCtxLexer(charStream);
-        var tokenStream = new CommonTokenStream(lexer);
-        var parser = new CommandExecutionCtxParser(tokenStream);
-
-
-        // Use 2-stage parsing for expression performance
-        // https://github.com/antlr/antlr4/blob/master/doc/faq/general.md#why-is-my-expression-parser-slow
-        try {
-            // STAGE 1
-            var treeVisitor = new CommandCtxVisitor();
-            var errorListener = new SyntaxErrorListener(treeVisitor.getInfo().getErrorMessages()::add);
-
-            logger.debug("Trying to run STAGE 1 parsing. (SSL prediction)");
-            parser.getInterpreter().setPredictionMode(PredictionMode.SLL);
-            parser.removeErrorListeners();
-            parser.addErrorListener(errorListener);
-            var grammarContext = parser.commandExecution();
-            treeVisitor.visitCommandExecution(grammarContext);
-            return treeVisitor.getInfo();
-        } catch (Exception ex) {
-            // STAGE 2
-            var treeVisitor = new CommandCtxVisitor();
-            var errorListener = new SyntaxErrorListener(treeVisitor.getInfo().getErrorMessages()::add);
-
-            logger.debug("Trying to run STAGE 2 parsing. (LL prediction)", ex);
-            tokenStream.seek(0);
-            parser.reset();
-            parser.getInterpreter().setPredictionMode(PredictionMode.LL);
-            parser.removeErrorListeners();
-            parser.addErrorListener(errorListener);
-
-            try {
-                var grammarContext = parser.commandExecution();
-                treeVisitor.visitCommandExecution(grammarContext);
-            } catch (RuntimeParseException e) {
-                treeVisitor.getInfo().getErrorMessages().add(e.getMessage());
-            }
-            return treeVisitor.getInfo();
-        }
     }
 
     @SuppressWarnings("squid:S3864")
