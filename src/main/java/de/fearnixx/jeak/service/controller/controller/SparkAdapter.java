@@ -1,10 +1,7 @@
 package de.fearnixx.jeak.service.controller.controller;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.reflect.PathParam;
-import de.fearnixx.jeak.reflect.RequestBody;
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RequestParam;
+import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.controller.RequestMethod;
 import de.fearnixx.jeak.service.controller.ResponseEntity;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
@@ -103,7 +100,7 @@ public class SparkAdapter extends HttpServer {
     /**
      * Generate a Spark specific {@link Route} for the provided controller and method.
      *
-     * @param path The path for the specified route
+     * @param path                The path for the specified route
      * @param controllerContainer The {@link ControllerContainer} of the controller.
      * @param controllerMethod    The {@link ControllerMethod} of the method.
      * @return A {@link Route} containing the actions of the {@link ControllerMethod}.
@@ -111,12 +108,20 @@ public class SparkAdapter extends HttpServer {
     private Route generateRoute(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
         before(path, (request, response) -> {
-            if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
-                boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
-                if (!isAuthorized) {
-                    halt(401);
+            controllerContainer.getAnnotation(RestController.class).ifPresent(restController -> {
+                if (restController.httpsEnforced() && !request.protocol().contains("HTTPS")) {
+                    halt(403);
                 }
-            }
+            });
+            controllerMethod.getAnnotation(RequestMapping.class).ifPresent(requestMapping -> {
+                if (requestMapping.isSecured()) {
+                    boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
+                    if (!isAuthorized) {
+                        halt(401);
+                    }
+                }
+            });
+
         });
         return (request, response) -> {
             Object[] methodParameters = new Object[methodParameterList.size()];
