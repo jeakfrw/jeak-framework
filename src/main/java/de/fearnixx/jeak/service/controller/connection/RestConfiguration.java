@@ -16,7 +16,17 @@ import java.util.Optional;
 public class RestConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(RestConfiguration.class);
     private static final String DEFAULT_TOKEN_CONFIG = "/restService/config.json";
+
+    private static final String HTTPS_ENABLED = "https-enabled";
+    private static final String HTTPS_REJECT_UNENCRYPTED = "reject-unencrypted";
+    private static final String HTTPS_KEYSTORE_PATH = "keystore-path";
+    private static final String HTTPS_KEYSTORE_PASSWORD = "keystore-password";
+
+    private static final String HTTPS_TRUSTSTORE_PATH = "truststore-path";
+    private static final String HTTPS_TRUSTSTORE_PASSWORD = "truststore-password";
+
     private static final String HEADER_CONFIG = "headers";
+
     private static final String CORS_CONFIG = "cors";
     private static final String CORS_CONFIG_ENABLED = "enabled";
 
@@ -65,6 +75,30 @@ public class RestConfiguration extends Configurable {
                 .orElseGet(Collections::emptyMap)
                 .forEach((s, iConfigNode) -> header.put(s, iConfigNode.asString()));
         return header;
+    }
+
+    public Optional<Boolean> isHttpsEnabled() {
+        return getConfig().getNode(HTTPS_ENABLED).optBoolean();
+    }
+
+    public Optional<Boolean> rejectUnencryptedTraffic() {
+        return getConfig().getNode(HTTPS_REJECT_UNENCRYPTED).optBoolean();
+    }
+
+    public Optional<String> getHttpsKeystorePath() {
+        return getConfig().getNode(HTTPS_KEYSTORE_PATH).optString();
+    }
+
+    public Optional<String> getHttpsKeystorePassword() {
+        return getConfig().getNode(HTTPS_KEYSTORE_PASSWORD).optString();
+    }
+
+    public Optional<String> getHttpsTruststorePath() {
+        return getConfig().getNode(HTTPS_TRUSTSTORE_PATH).optString();
+    }
+
+    public Optional<String> getHttpsTruststorePassword() {
+        return getConfig().getNode(HTTPS_TRUSTSTORE_PASSWORD).optString();
     }
 
     public boolean isCorsEnabled() {

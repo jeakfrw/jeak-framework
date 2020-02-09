@@ -13,10 +13,13 @@ import java.lang.annotation.Target;
  *
  * pluginId(): Specify the id of the used plugin. This is independent of the pluginId specified in {@link de.fearnixx.jeak.reflect.JeakBotPlugin}.
  *
+ * httpsEnforced(): Specify whether the usage of https should be enforced.
+ *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface RestController {
     String pluginId();
     String endpoint();
+    boolean httpsEnforced() default true;
 }
