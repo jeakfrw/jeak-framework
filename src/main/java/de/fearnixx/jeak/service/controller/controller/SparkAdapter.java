@@ -135,8 +135,11 @@ public class SparkAdapter extends HttpServer {
             Map<String, String> additionalHeaders = new HashMap<>();
             if (returnValue instanceof ResponseEntity) {
                 ResponseEntity responseEntity = (ResponseEntity) returnValue;
+                if (responseEntity.getStatus() > 0) {
+                    response.status(responseEntity.getStatus());
+                }
                 additionalHeaders.putAll(responseEntity.getHeaders());
-                returnValue = responseEntity.getResponseEntity();
+                returnValue = responseEntity.getEntity();
             }
             headers = setHeaders(response, additionalHeaders);
 
