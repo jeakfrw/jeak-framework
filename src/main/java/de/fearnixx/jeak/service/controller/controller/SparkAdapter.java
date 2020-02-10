@@ -10,6 +10,7 @@ import de.fearnixx.jeak.service.controller.ResponseEntity;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.connection.IConnectionVerifier;
 import de.fearnixx.jeak.service.controller.connection.RestConfiguration;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Response;
@@ -131,7 +132,13 @@ public class SparkAdapter extends HttpServer {
                 }
                 methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
-            Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
+            Object returnValue = null;
+            try {
+                returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
+            } catch (Exception e) {
+                response.status(HttpStatus.INTERNAL_SERVER_ERROR_500);
+                logger.warn(e.getMessage(), e);
+            }
             Map<String, String> additionalHeaders = new HashMap<>();
             if (returnValue instanceof ResponseEntity) {
                 ResponseEntity responseEntity = (ResponseEntity) returnValue;
