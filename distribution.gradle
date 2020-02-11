@@ -55,7 +55,8 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
         commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
 
         environment = [
-                "DIST_NEXUS_USER": fngNexusUser, "DIST_NEXUS_PASS": fngNexusPass
+                "DIST_NEXUS_USER": project.findProperty('fngNexusUser'),
+                "DIST_NEXUS_PASS": project.findProperty('fngNexusPass')
         ]
         dependsOn zipDistribution
     }
@@ -67,7 +68,8 @@ if (Os.isFamily(Os.FAMILY_MAC) || Os.isFamily(Os.FAMILY_UNIX)) {
         commandLine 'sh', '-c', "./upload_archive.sh '${file}' '${repoPath}'"
 
         environment = [
-                "DIST_USER": fngNexusUser, "DIST_PASS": fngNexusPass
+                "DIST_USER": project.findProperty('fngNexusUser'),
+                "DIST_PASS": project.findProperty('fngNexusPass')
         ]
         dependsOn tarDistribution
     }

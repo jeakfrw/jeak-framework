@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.charset.Charset;
 
 /**
@@ -106,7 +107,8 @@ public abstract class Configurable  {
         }
 
         try (InputStreamReader reader = new InputStreamReader(in, RESOURCE_CHARSET)) {
-            IConfigNode defRoot = LoaderFactory.getLoader("application/json").parse(reader);
+            final URI locator = URI.create("resource:" + resourceURI);
+            IConfigNode defRoot = LoaderFactory.getLoader("application/json").parse(reader, locator);
             getConfigRef().setRoot(defRoot);
             config = defRoot;
 

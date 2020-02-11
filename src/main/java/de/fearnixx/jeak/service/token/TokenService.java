@@ -5,7 +5,7 @@ import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.controller.InvokationBeforeInitializationException;
+import de.fearnixx.jeak.except.InvokationBeforeInitializationException;
 
 import java.util.Set;
 

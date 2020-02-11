@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.service.locale;
 
+import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfig;
@@ -10,9 +12,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URI;
 import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@inheritDoc}
@@ -20,10 +25,12 @@ import java.util.Objects;
 public class LocalizationUnit extends Configurable implements ILocalizationUnit {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalizationUnit.class);
+    private static final String LANG_NODE_NAME = "langs";
 
     private final String unitId;
     private final IConfig configRef;
     private final ILocalizationService localizationService;
+    private final Map<String, LocaleContext> contextCache = new ConcurrentHashMap<>();
 
     public LocalizationUnit(String unitId, IConfig configRef, ILocalizationService localizationService) {
         super(LocalizationUnit.class);
@@ -43,20 +50,41 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
     @Override
     public ILocaleContext getContext(Locale locale) {
         Objects.requireNonNull(locale, "Locale must not be null!");
-
         String languageTag = locale.toLanguageTag();
-        IConfigNode langNode = getConfig().getNode("langs", languageTag);
 
-        if (!langNode.isVirtual()) {
-            return new LocaleContext(unitId, locale, langNode);
+        synchronized (contextCache) {
+            LocaleContext cached = contextCache.getOrDefault(languageTag, null);
+            if (cached != null) {
+                return cached;
+            } else {
+                IConfigNode langNode = getConfig().getNode(LANG_NODE_NAME, languageTag);
 
-        } else if (!localizationService.getFallbackLocale().toLanguageTag().equals(languageTag)) {
-            return getContext(localizationService.getFallbackLocale());
+                if (!langNode.isVirtual()) {
+                    var localeCtx = new LocaleContext(unitId, locale, langNode);
+                    contextCache.put(languageTag, localeCtx);
+                    return localeCtx;
 
-        } else {
-            logger.warn("[{}] Failed to load default language as a fallback for: {}", unitId, languageTag);
-            return new LocaleContext(unitId, locale, getConfig().createNewInstance());
+                } else if (!localizationService.getFallbackLocale().toLanguageTag().equals(languageTag)) {
+                    return getContext(localizationService.getFallbackLocale());
+
+                } else {
+                    logger.warn("[{}] Failed to load default language as a fallback for: {}", unitId, languageTag);
+                    return new LocaleContext(unitId, locale, getConfig().createNewInstance());
+                }
+            }
         }
+    }
+
+    @Override
+    public ILocaleContext getContext(IClient client) {
+        Locale locale = localizationService.getLocaleOfClient(client);
+        return getContext(locale);
+    }
+
+    @Override
+    public ILocaleContext getContext(IUser user) {
+        Locale locale = localizationService.getLocaleOfUser(user);
+        return getContext(locale);
     }
 
     @Override
@@ -76,8 +104,9 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         InputStream inputStream = classLoader.getResourceAsStream(resourceURI);
         if (inputStream != null) {
             try (InputStreamReader reader = new InputStreamReader(inputStream)) {
+                final URI sourceLocator = URI.create("resource:" + resourceURI);
                 logger.debug("[{}] Loading language definition defaults from: {}", unitId, resourceURI);
-                loadDefaultsFromStream(reader);
+                loadDefaultsFromStream(reader, sourceLocator);
             } catch (IOException | ParseException e) {
                 logger.error("[{}] Failed to load default configuration from resource URI: {}", unitId, resourceURI, e);
             }
@@ -92,7 +121,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
 
         try (FileReader fileReader = new FileReader(file)) {
             logger.debug("[{}] Loading language definition defaults from: {}", unitId, file.getPath());
-            loadDefaultsFromStream(fileReader);
+            loadDefaultsFromStream(fileReader, file.toURI());
         } catch (ParseException | IOException e) {
             logger.error("[{}] Failed to load default configuration from file: {}", unitId, file.getAbsoluteFile().getPath(), e);
         }
@@ -103,7 +132,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         Objects.requireNonNull(configNode, "Defaults definition node must not be null!");
 
         logger.debug("[{}] Attempting to load language definition defaults from config node.", unitId);
-        configNode.getNode("langs")
+        configNode.getNode(LANG_NODE_NAME)
                 .optMap()
                 .orElseGet(Collections::emptyMap)
                 .forEach((defLanguageKey, defLanguageEntries) -> {
@@ -112,7 +141,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
                         logger.warn("[{}] Non-map language node found: {}", unitId, defLanguageKey);
                     } else {
                         defLanguageEntries.asMap().forEach((defTemplateId, defTemplate) -> {
-                            IConfigNode storedTemplateNode = getConfig().getNode("langs", defLanguageKey, defTemplateId);
+                            IConfigNode storedTemplateNode = getConfig().getNode(LANG_NODE_NAME, defLanguageKey, defTemplateId);
 
                             if (storedTemplateNode.isVirtual()) {
                                 String templateStr = defTemplate.optString(null);
@@ -131,9 +160,9 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
         save();
     }
 
-    private void loadDefaultsFromStream(Reader reader) throws IOException, ParseException {
+    private void loadDefaultsFromStream(Reader reader, URI locator) throws IOException, ParseException {
         IConfigLoader loader = LoaderFactory.getLoader("application/json");
-        loadDefaultsFromNode(loader.parse(reader));
+        loadDefaultsFromNode(loader.parse(reader, locator));
     }
 
     @Override
@@ -148,7 +177,7 @@ public class LocalizationUnit extends Configurable implements ILocalizationUnit 
 
     @Override
     protected boolean populateDefaultConf(IConfigNode root) {
-        root.getNode("langs").setMap();
+        root.getNode(LANG_NODE_NAME).setMap();
         return true;
     }
 

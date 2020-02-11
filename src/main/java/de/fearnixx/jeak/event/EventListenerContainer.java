@@ -118,10 +118,13 @@ public class EventListenerContainer {
         }
         try {
             eventConsumer.accept(victim, event);
-        } catch (EventAbortException | ConsistencyViolationException e) {
-            throw e;
         } catch (RelayedInvokationException e) {
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e.getCause());
+            Throwable cause = e.getCause();
+            if (cause instanceof EventAbortException || cause instanceof ConsistencyViolationException) {
+                throw e;
+            }
+
+            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, cause);
         } catch (Exception e) {
             throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e);
         }

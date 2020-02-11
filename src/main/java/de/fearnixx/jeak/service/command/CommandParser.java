@@ -4,7 +4,10 @@ import java.util.Optional;
 
 /**
  * Created by MarkL4YG on 15-Feb-18
+ *
+ * @deprecated see {@link ICommandReceiver}
  */
+@Deprecated
 public class CommandParser {
 
     public Optional<CommandContext> parseLine(String commandLine) throws CommandParserException {

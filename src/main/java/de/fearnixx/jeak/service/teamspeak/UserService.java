@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.teamspeak;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
@@ -13,8 +14,12 @@ import de.fearnixx.jeak.teamspeak.data.IUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Small loader around the user service that decides whether or not to use direct DB access or queries.
@@ -23,6 +28,7 @@ import java.util.Optional;
 public class UserService implements IUserService {
 
     public static final String PERSISTENCE_UNIT_NAME = "teamspeak";
+    private static final int USR_CACHE_TTL = Main.getProperty("jeak.cache.keepUsersSecs", 30);
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Inject
@@ -33,6 +39,8 @@ public class UserService implements IUserService {
 
     @Inject
     private IInjectionService injectionService;
+
+    private final List<CachedUserResult> userCache = new CopyOnWriteArrayList<>();
 
     private IUserService serviceImplementation;
 
@@ -54,17 +62,53 @@ public class UserService implements IUserService {
 
     @Override
     public List<IUser> findUserByUniqueID(String ts3uniqueID) {
-        return serviceImplementation.findUserByUniqueID(ts3uniqueID);
+        return computeIfNotCached(
+                u -> u.getClientUniqueID().equals(ts3uniqueID),
+                () -> serviceImplementation.findUserByUniqueID(ts3uniqueID),
+                "uid:" + ts3uniqueID
+        );
     }
 
     @Override
     public List<IUser> findUserByDBID(int ts3dbID) {
-        return serviceImplementation.findUserByDBID(ts3dbID);
+        return computeIfNotCached(
+                u -> u.getClientDBID().equals(ts3dbID),
+                () -> serviceImplementation.findUserByDBID(ts3dbID),
+                "dbid:" + ts3dbID
+        );
     }
 
     @Override
     public List<IUser> findUserByNickname(String ts3nickname) {
-        return serviceImplementation.findUserByNickname(ts3nickname);
+        return computeIfNotCached(
+                u -> u.getNickName().contains(ts3nickname),
+                () -> serviceImplementation.findUserByNickname(ts3nickname),
+                "nick:" + ts3nickname
+        );
+    }
+
+    private List<IUser> computeIfNotCached(Predicate<IUser> matchBy, Supplier<List<IUser>> getBy, String searchHint) {
+        synchronized (userCache) {
+            final LocalDateTime now = LocalDateTime.now();
+            userCache.removeIf(entry -> entry.getExpiry().isBefore(now));
+            Optional<CachedUserResult> optResult = userCache.stream()
+                    .filter(entry -> entry.getUsers().stream().allMatch(matchBy))
+                    .findFirst();
+            return optResult.map(cachedUserResult -> {
+                logger.trace("Returning cached result for search: {}", searchHint);
+                return cachedUserResult.getUsers();
+            }).orElseGet(() -> {
+                logger.trace("Computing result for search: {}", searchHint);
+                List<IUser> users = getBy.get();
+                if (!users.isEmpty()) {
+                    CachedUserResult result =
+                            new CachedUserResult(users, LocalDateTime.now().plusSeconds(USR_CACHE_TTL));
+                    userCache.add(result);
+                    users = result.getUsers();
+                }
+                return users;
+            });
+        }
     }
 
     @Override

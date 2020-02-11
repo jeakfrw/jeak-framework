@@ -1,11 +1,14 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
 import de.fearnixx.jeak.service.permission.base.IPermission;
+import de.fearnixx.jeak.teamspeak.PermissionSID;
 
 /**
  * Representation of permission entries of TS3
  */
 public interface ITS3Permission extends IPermission {
+
+    PermissionSID getSIDRef();
 
     Boolean getSkip();
 

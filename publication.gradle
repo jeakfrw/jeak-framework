@@ -12,8 +12,8 @@ publishing {
 
             if (project.hasProperty('fngNexusUser') && project.hasProperty('fngNexusPass')) {
                 credentials {
-                    username "$fngNexusUser"
-                    password "$fngNexusPass"
+                    username "${project.findProperty('fngNexusUser')}"
+                    password "${project.findProperty('fngNexusPass')}"
                 }
             }
         }

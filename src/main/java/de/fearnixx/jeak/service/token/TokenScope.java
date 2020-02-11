@@ -49,14 +49,4 @@ public class TokenScope {
     private String[] splitScope(String scope) {
         return scope.split("/");
     }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        scopeSet.forEach(s -> {
-            sb.append("\\/");
-            sb.append(s);
-        });
-        return sb.toString();
-    }
 }

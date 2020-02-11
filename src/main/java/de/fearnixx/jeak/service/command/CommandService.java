@@ -6,6 +6,7 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.command.spec.ICommandSpec;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
@@ -15,6 +16,8 @@ import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -22,13 +25,15 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by MarkL4YG on 08-Nov-17
+ * @deprecated see {@link ICommandReceiver}
  */
+@Deprecated
 @FrameworkService(serviceInterface = ICommandService.class)
 public class CommandService implements ICommandService {
 
     public static final String COMMAND_PREFIX = "!";
-    public static final Integer THREAD_POOL_SIZE = Main.getProperty("bot.commandmgr.poolsize", 5);
-    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("bot.commandmgr.terminatedelay", 5000);
+    public static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.commandmgr.poolsize", 5);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.commandmgr.terminatedelay", 5000);
 
     private static final Logger logger = LoggerFactory.getLogger(CommandService.class);
 
@@ -36,6 +41,7 @@ public class CommandService implements ICommandService {
     public IServer server;
 
     private final Map<String, ICommandReceiver> commands = new HashMap<>();
+    private final Map<String, String> commandDeprecations = new HashMap<>();
     private final CommandParser parser = new CommandParser();
     private final Object lock = new Object();
     private boolean terminated = false;
@@ -43,7 +49,15 @@ public class CommandService implements ICommandService {
     private final ExecutorService executorSvc;
 
     public CommandService() {
-        executorSvc = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
+        executorSvc = Executors.newFixedThreadPool(getThreadPoolSize());
+    }
+
+    protected int getThreadPoolSize() {
+        return THREAD_POOL_SIZE;
+    }
+
+    protected int getTerminateDelay() {
+        return AWAIT_TERMINATION_DELAY;
     }
 
     /**
@@ -54,7 +68,7 @@ public class CommandService implements ICommandService {
      * @param event The event
      */
     @Listener
-    public void onTextMessage(IQueryEvent.INotification.ITextMessage event) {
+    public void onTextMessage(IQueryEvent.INotification.IClientTextMessage event) {
         if (terminated) return;
         String msg = event.getProperty(PropertyKeys.TextMessage.MESSAGE).orElse(null);
         if (msg != null) {
@@ -161,13 +175,51 @@ public class CommandService implements ICommandService {
         server.getConnection().sendRequest(request.build());
     }
 
+    private String getSuperseded(Class<? extends ICommandReceiver> rxClass) {
+        try {
+            Method supersededBy = rxClass.getDeclaredMethod("supersededBy");
+            Object successorNameObj = supersededBy.invoke(rxClass);
+            if (successorNameObj instanceof String) {
+                return (String) successorNameObj;
+            }
+            logger.warn("Deprecated command listener returns invalid data for #supersededBy: {} - {}", rxClass.getName(), successorNameObj);
+
+        } catch (NoSuchMethodException e) {
+            logger.info("Deprecated command listener lists no successor: {}", rxClass.getName());
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            logger.warn("Could not retrieve successor name for deprecated command listener: {}", rxClass.getName(), e);
+        }
+        return "";
+    }
+
     @Override
     public void registerCommand(String command, ICommandReceiver receiver) {
-        if (receiver == null)
+        if (receiver == null) {
             throw new IllegalArgumentException("CommandReceiver may not be null!");
+        }
+        Class<? extends ICommandReceiver> rxClass = receiver.getClass();
+        Deprecated deprecated = rxClass.getAnnotation(Deprecated.class);
+        String supersededBy = deprecated != null ? getSuperseded(rxClass) : "";
+
         synchronized (lock) {
             commands.put(command, receiver);
+
+            if (deprecated != null) {
+                commandDeprecations.put(rxClass.getName(), supersededBy);
+            }
         }
+    }
+
+    @Override
+    public void registerCommand(ICommandSpec spec) {
+        logger.warn("Command \"{}\" has been registered with the deprecated command service." +
+                " Consider enabling the experimental command service for this command to work! " +
+                "Flag is: \"jeak.experimental.enable_typedCommands\"", spec.getCommand());
+    }
+
+    @Override
+    public void unregisterCommand(ICommandSpec specInstance) {
+        // ignored - overwritten by actual implementation
     }
 
     @Override
@@ -178,6 +230,10 @@ public class CommandService implements ICommandService {
                 commands.remove(command);
             }
         }
+    }
+
+    protected Map<String, ICommandReceiver> getLegacyReceivers() {
+        return commands;
     }
 
     @Listener

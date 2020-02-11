@@ -26,6 +26,7 @@ public class EventService implements IEventService {
 
     public static final Integer THREAD_POOL_SIZE = Main.getProperty("jeak.eventmgr.poolsize", 10);
     public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.eventmgr.terminatedelay", 10000);
+    private static final boolean ENABLE_LISTENER_INTERRUPT = Main.getProperty("jeak.eventmgr.interruptListeners", true);
 
     private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
@@ -161,7 +162,7 @@ public class EventService implements IEventService {
 
             synchronized (runningEvents) {
                 runningEvents.stream()
-                        .filter(container -> container.getListenerRuntime() > 10000)
+                        .filter(container -> container.getListenerRuntime() > 10000 && ENABLE_LISTENER_INTERRUPT)
                         .forEach(container -> {
                             logger.debug("Attempting to interrupt listener for event: {}", container.getEvent().getClass().getSimpleName());
                             container.interruptReceiver();

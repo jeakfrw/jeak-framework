@@ -32,8 +32,7 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
     @Override
     public String getDescription() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.DESCRIPTION);
-        return optProperty.orElseThrow(
-                () -> new ConsistencyViolationException("Client is missing description!").setSourceObject(this));
+        return optProperty.orElse("");
     }
 
     public String getIconID() {
@@ -70,5 +69,10 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
             ids[i] = Integer.parseInt(sIDs[i]);
         }
         return List.of(ids);
+    }
+
+    @Override
+    public String toString() {
+        return getNickName() + "/db" + getClientDBID();
     }
 }

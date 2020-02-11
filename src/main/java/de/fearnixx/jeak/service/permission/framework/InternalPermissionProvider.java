@@ -6,6 +6,7 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.command.ICommandService;
+import de.fearnixx.jeak.service.command.spec.matcher.IMatcherRegistryService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.permission.base.IGroup;
 import de.fearnixx.jeak.service.permission.base.IPermission;
@@ -43,6 +44,9 @@ public class InternalPermissionProvider implements IPermissionProvider {
     @Inject
     private ICommandService commandService;
 
+    @Inject
+    private IMatcherRegistryService matcherRegistry;
+
     private final SubjectIndex subjectIndex = new ConfigIndex();
     private final SubjectCache subjectCache = new SubjectCache(this);
 
@@ -64,9 +68,14 @@ public class InternalPermissionProvider implements IPermissionProvider {
         injectionService.injectInto(grntPermCommand);
         injectionService.injectInto(permLookupCommand);
         commandService.registerCommand("perm-group-create", crGrpCommand);
+        commandService.registerCommand(crGrpCommand.getCommandSpec());
         commandService.registerCommand("perm-group-link", lnkGrpCommand);
+        commandService.registerCommand(lnkGrpCommand.getCommandSpec());
         commandService.registerCommand("perm-group-grant", grntPermCommand);
+        commandService.registerCommand(grntPermCommand.getCommandSpec());
         commandService.registerCommand("permuuid-lookup", permLookupCommand);
+        commandService.registerCommand(permLookupCommand.getCommandSpec());
+        commandService.registerCommand(permLookupCommand.getArgumentCommandSpec());
     }
 
     @Override

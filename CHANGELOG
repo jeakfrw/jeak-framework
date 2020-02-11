@@ -1,19 +1,90 @@
-# 1.0.1
-~ Query-Fix: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
-~ Fix: It was possible to create multiple groups with the same name
-~ Fix: EventAbortException not aborting events leading to exceptions being logged by plugins consuming inconsistent events
-+ Add command: !permuuid-lookup to look up the permission subject UUIDs for different subjects
-+ Add a constant vor the "permvalue" key on "*perm*add" commands which is for some reason yet another different key
+## 1.1.0 (Typed commands, Language selection)
++ Added a new command service that allows for declarative commands and typed parameters
++ Added the ability to create custom matchers for plugin specific types in command parameters
++ Added a ``!help`` command that lists commands registered to the new implementation
++ Added a ``!help <command>`` command that shows another commands signature
++ Added a ``!locale`` command that shows the current custom locale
++ Added a ``!locale <short-ident>`` command that allows users to select another locale as their default
++ Added a new ``CLIService`` available to framework components to register cli-commands to
++ Added a ``sysInfo`` cli-command that prints system information
+~ Changed: Sanctions on plugin IDs are less strict now. (Regex: ``"^[a-zA-Z.][a-zA-Z0-9.&+#]+$"``)
+~ Downgraded dependencies:
+  * antlr 4.8-1 -> 4.7.1: Antlr gradle plugin is not updated yet and produces incompatible parsers.
+~ Changed: REST-service now deals correctly with ``OPTIONS`` requests
+~ Changed: REST-service now supports ``CORS``
+~ Changed: REST-service now supports custom headers
+~ Changed: TS3PermProvider now holds internal cache of all permission IDs (when retrievable)
+~ Changed: Properly set log levels in the default Log4J2 configuration
 
-# 1.0.0-RC1
-+ Query connection 
-  + Send commands to the server
-  + Receive answers (with and w/o callbacks)
-+ API with Javadoc available
-+ Event service  
-+ Service management
-+ Task management
-+ Configuration
-+ Injections (injects everything stored as a service)
-+ Hibernate integration (Rough. But works!)
-+ Commandline ``stop`` support (graceful shutdown)
+## 1.0.4
+~ Changed: user-service performance improved by caching results for 30 seconds
+~ Changed: Non-string dataSourceOptions now cause an exception
+~ Fixed: A bug that caused dataSourceOpts not to be applied to Hikari
+~ Fixed: db-based permission service not returning its connections to pool resulting in a connection leak
+~ Fixed: Clients not having any description causing ``ConsistencyViolationException``
+~ Fixed: Main class causing an unintended dependency link to google common util via. org.reflections
+~ Updated dependencies:
+  * jackson 2.10.0 -> 2.10.2
+  * mariadb-java-client 2.5.1 -> 2.5.3
+  * mysql-java-client 8.0.18 -> 8.0.19
+  * hibernate-core 5.4.8.Final -> 5.4.10.Final
+  * log4j 2.12.1 -> 2.13.0
+  * slf4j 1.7.29 -> 1.7.30
+  * antlr4 4.7.2 -> 4.8-1
+  * hikaricp 3.4.1 -> 3.4.2
+  * Test-Src: junit 4.12 -> 4.13
+
+## 1.0.3
+~ Changed: HikariCP ``#getConnection`` timeout to 4 minutes (from the default - 30 seconds)
+~ Changed: Relaxed restrictions to plugin IDs. They now only must match ``^[a-zA-Z.][a-zA-Z0-9.&+#]+$``
+~ Changed: Clients will always be associated with a profile when discovered once
+~ Fixed: A bug that caused the DB-based implementation of the ``UserService`` not to find clients
+~ Fixed: A bug that caused users retrieved from the user service not to have server groups associated
+~ Fixed: A bug where retrieving a nonexistent profile via. ``#getProfile`` resulted in an exception
+~ Fixed: A bug where clients that just connected would not have permissions until cached at least once
+~ Fixed: User-service not creating profiles when asking for them
+~ Fixed: DB-based user service not setting the internal permission reference on users.
+~ Updated dependencies:
+  * slf4j-api 1.7.28 -> 1.7.29
+  * hibernate-core 5.4.7.Final -> 5.4.8.Final
+  * jackson 2.10.0.pr3 -> 2.10.0
+
+## 1.0.2
+~ Fixed: Fast tracked db-based user service wasn't available
+~ Fixed: User service wrongly set ``client_id`` instead of ``client_db_id``
+~ Fixed: Serialization of response objects when no content-type request header is present
+~ Updated dependencies:
+  * jackson 2.9.9.1 -> 2.10.0.pr3
+  * JavaMail (dsn, smtp, mailapi) 1.6.3 -> 1.6.4
+  * slf4j-api 1.7.27 -> 1.7.28
+  * log4j2 1.6.3 -> 1.6.4
+~ Fixed: Some parsing bugs with external services were fixed where the services failed to read the build configuration properly
+
+## 1.0.1
+~ Fixed: Empty command chain elements are no longer rendered (compat. w/ some weird TS3 server versions)
+~ Fixed: It was possible to create multiple groups with the same name
+~ Fixed: EventAbortException not aborting events leading to exceptions being logged by plugins consuming inconsistent events
++ Added command: !permuuid-lookup to look up the permission subject UUIDs for different subjects
++ Added a constant vor the "permvalue" key on "*perm*add" commands which is for some reason yet another different key
+~ Deprecated ``ICommandReceiver`` to prepare for the new command implementation. See the interface for more info.
++ Added support for deprecated command listeners which will trigger a warning to users (and optionally display the given alternative)
+
+## 1.0.0
++ Added request-based connection abstraction for TS3 query connections
++ Added event abstractions for query notifications
++ Added caching for clients and channels currently on the server
++ Added support for getting user information about clients that are offline
++ Added support for persistently storing information about users in their profiles
++ Added support for TeamSpeak 3's permission system
++ Added support for an internal permission system
++ Added support for configuration files for plugins & services
++ Added support for language files & thus localization based on the country flag of a client
++ Added support for notifications
++ Added support for sending mails via. SMTP
++ Added database support via. both JPAs DataSource and Hibernates EntityManager
++ Added injection service to provide plugins with the service instances they need
++ Added rough support for chat commands
++ Added support for dispatching and catching of events within the framework
++ Added support for (a)synchronous tasks
++ Added logging via. SLF4J & implementation via. Log4J2
++ Added a bunch of test plugins for our testing environment
