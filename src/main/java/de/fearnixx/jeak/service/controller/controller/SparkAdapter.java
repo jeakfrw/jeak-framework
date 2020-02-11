@@ -12,15 +12,15 @@ import de.fearnixx.jeak.service.controller.connection.IConnectionVerifier;
 import de.fearnixx.jeak.service.controller.connection.RestConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Request;
 import spark.Response;
 import spark.Route;
-import spark.Spark;
+import spark.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static spark.Spark.*;
 
 public class SparkAdapter extends HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(SparkAdapter.class);
@@ -30,14 +30,16 @@ public class SparkAdapter extends HttpServer {
     public static final int TIMEOUT_MILLIS = 30000;
     private IConnectionVerifier connectionVerifier;
     private Map<String, String> headers;
+    private Service service;
 
     public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
         super(restConfiguration);
+        service = Service.ignite();
         // only use NUM_THREADS, if it was configured
         if (NUM_THREADS > 0) {
-            threadPool(NUM_THREADS, NUM_THREADS, TIMEOUT_MILLIS);
+            service.threadPool(NUM_THREADS, NUM_THREADS, TIMEOUT_MILLIS);
         } else {
-            threadPool(MAX_THREADS, MIN_THREADS, TIMEOUT_MILLIS);
+            service.threadPool(MAX_THREADS, MIN_THREADS, TIMEOUT_MILLIS);
         }
         this.connectionVerifier = connectionVerifier;
     }
@@ -68,32 +70,32 @@ public class SparkAdapter extends HttpServer {
         checkAndSetCors(path);
         switch (httpMethod) {
             case GET:
-                Spark.get(path, route);
+                service.get(path, route);
                 break;
             case PUT:
-                Spark.put(path, route);
+                service.put(path, route);
                 break;
             case POST:
-                Spark.post(path, route);
+                service.post(path, route);
                 break;
             case PATCH:
-                Spark.patch(path, route);
+                service.patch(path, route);
                 break;
             case DELETE:
-                Spark.delete(path, route);
+                service.delete(path, route);
                 break;
             case HEAD:
-                Spark.head(path, route);
+                service.head(path, route);
                 break;
             default:
-                logger.warn("Failed to register the route for: " + path);
+                logger.warn("Failed to register the route for: {}", path);
                 break;
         }
     }
 
     private void checkAndSetCors(String path) {
         if (isCorsEnabled()) {
-            Spark.options(path, (request, response) -> {
+            service.options(path, (request, response) -> {
                 headers = setHeaders(response, new HashMap<>());
                 return "";
             });
@@ -103,23 +105,40 @@ public class SparkAdapter extends HttpServer {
     /**
      * Generate a Spark specific {@link Route} for the provided controller and method.
      *
-     * @param path The path for the specified route
+     * @param path                The path for the specified route
      * @param controllerContainer The {@link ControllerContainer} of the controller.
      * @param controllerMethod    The {@link ControllerMethod} of the method.
      * @return A {@link Route} containing the actions of the {@link ControllerMethod}.
      */
     private Route generateRoute(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
-        before(path, (request, response) -> {
-            if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
-                boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
-                if (!isAuthorized) {
-                    halt(401);
-                }
-            }
-        });
+        addBeforeHandlingCheck(path, controllerMethod);
         return (request, response) -> {
-            Object[] methodParameters = new Object[methodParameterList.size()];
+            Object[] methodParameters = extractParameters(methodParameterList, request);
+            Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
+            Map<String, String> additionalHeaders = new HashMap<>();
+            if (returnValue instanceof ResponseEntity) {
+                ResponseEntity responseEntity = (ResponseEntity) returnValue;
+                additionalHeaders.putAll(responseEntity.getHeaders());
+                returnValue = responseEntity.getResponseEntity();
+            }
+            headers = setHeaders(response, additionalHeaders);
+
+            String contentType = headers.get("Content-Type");
+            if (contentType == null || ("application/json".equals(contentType))) {
+                response.type("application/json");
+                returnValue = toJson(returnValue);
+            }
+            return returnValue;
+        };
+    }
+
+    private Object[] extractParameters(List<MethodParameter> methodParameterList, Request request) {
+        Object[] methodParameters;
+        if (methodParameterList == null) {
+            methodParameters = new Object[0];
+        } else {
+            methodParameters = new Object[methodParameterList.size()];
             for (MethodParameter methodParameter : methodParameterList) {
                 Object retrievedParameter = null;
                 if (methodParameter.hasAnnotation(PathParam.class)) {
@@ -131,23 +150,24 @@ public class SparkAdapter extends HttpServer {
                 }
                 methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
-            Object returnValue = controllerContainer.invoke(controllerMethod, methodParameters);
-            Map<String, String> additionalHeaders = new HashMap<>();
-            if (returnValue instanceof ResponseEntity) {
-                ResponseEntity responseEntity = (ResponseEntity) returnValue;
-                additionalHeaders.putAll(responseEntity.getHeaders());
-                returnValue = responseEntity.getResponseEntity();
-            }
-            headers = setHeaders(response, additionalHeaders);
+        }
+        return methodParameters;
+    }
 
-
-            String contentType = headers.get("Content-Type");
-            if (contentType == null || ("application/json".equals(contentType))) {
-                response.type("application/json");
-                returnValue = toJson(returnValue);
+    private void addBeforeHandlingCheck(String path, ControllerMethod controllerMethod) {
+        service.before(path, (request, response) -> {
+            if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
+                boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
+                if (!isAuthorized) {
+                    service.halt(401);
+                }
             }
-            return returnValue;
-        };
+        });
+    }
+
+    @Override
+    public void start() {
+        getRestConfiguration().getPort().ifPresent(service::port);
     }
 
     /**
