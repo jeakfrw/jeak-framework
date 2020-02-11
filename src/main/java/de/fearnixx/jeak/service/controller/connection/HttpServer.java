@@ -12,7 +12,6 @@ import de.fearnixx.jeak.service.controller.controller.MethodParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
-import spark.Spark;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -38,34 +37,15 @@ public abstract class HttpServer {
         this.restConfiguration = restConfiguration;
     }
 
+    public RestConfiguration getRestConfiguration() {
+        return restConfiguration;
+    }
+
     /**
      * Start the http server.
      *
      */
-    public void start() {
-        // toDo: move this to SparkAdapter when other PR is merged
-        restConfiguration.getPort().ifPresent(Spark::port);
-        if (restConfiguration.isHttpsEnabled().orElseGet(() -> false)) {
-            logger.info("Https enabled");
-            initHttps();
-        } else {
-            logger.info("HTTPS disabled");
-        }
-    }
-
-    private void initHttps() {
-        Optional<String> httpsKeystorePath = restConfiguration.getHttpsKeystorePath();
-        Optional<String> httpsKeystorePassword = restConfiguration.getHttpsKeystorePassword();
-        Optional<String> httpsTruststorePath = restConfiguration.getHttpsTruststorePath();
-        Optional<String> httpsTruststorePassword = restConfiguration.getHttpsTruststorePassword();
-
-        if (httpsKeystorePath.isPresent() && httpsKeystorePassword.isPresent()) {
-            Spark.secure(httpsKeystorePath.get(), httpsKeystorePassword.get(), null, null);
-            if (httpsTruststorePath.isPresent() && httpsTruststorePassword.isPresent()) {
-                Spark.secure(httpsKeystorePath.get(), httpsKeystorePassword.get(), httpsTruststorePath.get(), httpsTruststorePassword.get());
-            }
-        }
-    }
+    public abstract void start();
 
     /**
      * Register a provided controller at the Server.
