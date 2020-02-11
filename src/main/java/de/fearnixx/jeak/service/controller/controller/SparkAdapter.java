@@ -177,7 +177,7 @@ public class SparkAdapter extends HttpServer {
     public void start() {
         getRestConfiguration().getPort().ifPresent(service::port);
         getRestConfiguration().isHttpsEnabled().ifPresent(isHttpsEnabled -> {
-            if (isHttpsEnabled) {
+            if (Boolean.TRUE.equals(isHttpsEnabled)) {
                 logger.info("Https enabled");
                 initHttps();
             } else {
