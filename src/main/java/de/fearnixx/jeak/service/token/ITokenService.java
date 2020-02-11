@@ -22,7 +22,7 @@ public interface ITokenService {
     String generateToken(Set<String> endpointSet);
 
     /**
-     * Revoke and token.
+     * Revoke a token.
      *
      * @param token The token to be revoked.
      * @return true if the token was successfully revoked,
