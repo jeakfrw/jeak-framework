@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.teamspeak;
 
 import de.fearnixx.jeak.IBot;
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.BotStateEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
@@ -9,10 +10,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
-import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
-import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.query.QueryConnectionAccessor;
-import de.fearnixx.jeak.teamspeak.query.TS3Connection;
+import de.fearnixx.jeak.teamspeak.query.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +33,7 @@ public class Server implements IServer {
 
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final AtomicInteger connectionCounter = new AtomicInteger();
+    private static final boolean USE_VOICE_PORT_FOR_SELECTION = Main.getProperty("jeak.ts3.connectByVoicePort", false);
 
     @Inject
     public IEventService eventService;
@@ -159,10 +158,16 @@ public class Server implements IServer {
 
     private void login(String user, String pass, int instID, Consumer<Boolean> resultCallback) {
         AtomicBoolean useResult = new AtomicBoolean(true);
+        QueryBuilder useCommandBuilder = IQueryRequest.builder()
+                .command(QueryCommands.SERVER.USE_INSTANCE);
+        if (USE_VOICE_PORT_FOR_SELECTION) {
+            useCommandBuilder.addKey("port", instID);
+        } else {
+            useCommandBuilder.addOption(Integer.toString(instID));
+        }
+
         mainConnection.sendRequest(
-                IQueryRequest.builder()
-                        .command(QueryCommands.SERVER.USE_INSTANCE)
-                        .addOption(Integer.toString(instID))
+                useCommandBuilder
                         .onError(answer -> {
                             logger.error("Failed to use desired instance: {}", answer.getError().getMessage());
                             ensureClosed(false);
