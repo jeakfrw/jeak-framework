@@ -17,8 +17,10 @@ public class RestConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(RestConfiguration.class);
     private static final String DEFAULT_TOKEN_CONFIG = "/restService/config.json";
 
+    public static final String HTTPS_CONFIG = "https";
     private static final String HTTPS_ENABLED = "https-enabled";
     private static final String HTTPS_REJECT_UNENCRYPTED = "reject-unencrypted";
+    public static final String HTTPS_BEHIND_PROXY = "behind-ssl-proxy";
     private static final String HTTPS_KEYSTORE_PATH = "keystore-path";
     private static final String HTTPS_KEYSTORE_PASSWORD = "keystore-password";
 
@@ -77,28 +79,36 @@ public class RestConfiguration extends Configurable {
         return header;
     }
 
+    private <T> Optional<T> getValueFromHttpsConfig(String value, Class<T> type) {
+        return Optional.ofNullable(getConfig().getNode(HTTPS_CONFIG).optValueMap(type).get(value));
+    }
+
     public Optional<Boolean> isHttpsEnabled() {
-        return getConfig().getNode(HTTPS_ENABLED).optBoolean();
+        return getValueFromHttpsConfig(HTTPS_ENABLED, Boolean.class);
+    }
+
+    public Optional<Boolean> isBehindSslProxy() {
+        return getValueFromHttpsConfig(HTTPS_BEHIND_PROXY, Boolean.class);
     }
 
     public Optional<Boolean> rejectUnencryptedTraffic() {
-        return getConfig().getNode(HTTPS_REJECT_UNENCRYPTED).optBoolean();
+        return getValueFromHttpsConfig(HTTPS_REJECT_UNENCRYPTED, Boolean.class);
     }
 
     public Optional<String> getHttpsKeystorePath() {
-        return getConfig().getNode(HTTPS_KEYSTORE_PATH).optString();
+        return getValueFromHttpsConfig(HTTPS_KEYSTORE_PATH, String.class);
     }
 
     public Optional<String> getHttpsKeystorePassword() {
-        return getConfig().getNode(HTTPS_KEYSTORE_PASSWORD).optString();
+        return getValueFromHttpsConfig(HTTPS_KEYSTORE_PASSWORD, String.class);
     }
 
     public Optional<String> getHttpsTruststorePath() {
-        return getConfig().getNode(HTTPS_TRUSTSTORE_PATH).optString();
+        return getValueFromHttpsConfig(HTTPS_KEYSTORE_PATH, String.class);
     }
 
     public Optional<String> getHttpsTruststorePassword() {
-        return getConfig().getNode(HTTPS_TRUSTSTORE_PASSWORD).optString();
+        return getValueFromHttpsConfig(HTTPS_KEYSTORE_PASSWORD, String.class);
     }
 
     public boolean isCorsEnabled() {

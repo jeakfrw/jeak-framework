@@ -155,7 +155,7 @@ public class SparkAdapter extends HttpServer {
     private void addBeforeHandlingCheck(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         service.before(path, (request, response) -> {
             controllerContainer.getAnnotation(RestController.class).ifPresent(restController -> {
-                if (restController.httpsEnforced() && isProtocolHttps(request)) {
+                if (restController.httpsEnforced() && !isProtocolHttps(request)) {
                     logger.debug("HTTPS enforcement enabled, non HTTPS request for {} blocked", path);
                     service.halt(403);
                 }
@@ -174,7 +174,8 @@ public class SparkAdapter extends HttpServer {
 
     private boolean isProtocolHttps(Request request) {
         return request.protocol().contains(HTTPS_PROTOCOL) ||
-                (request.headers(X_FORWARDED_PROTO_HEADER) != null &&
+                (getRestConfiguration().isBehindSslProxy().orElse(false)
+                        && request.headers(X_FORWARDED_PROTO_HEADER) != null &&
                         !request.headers(X_FORWARDED_PROTO_HEADER).isBlank() &&
                         request.headers(X_FORWARDED_PROTO_HEADER).contains(HTTPS_PROTOCOL));
     }
