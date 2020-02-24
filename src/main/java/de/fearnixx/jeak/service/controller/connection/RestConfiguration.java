@@ -17,10 +17,11 @@ public class RestConfiguration extends Configurable {
     private static final Logger logger = LoggerFactory.getLogger(RestConfiguration.class);
     private static final String DEFAULT_TOKEN_CONFIG = "/restService/config.json";
 
-    public static final String HTTPS_CONFIG = "https";
+    private static final String HTTPS_CONFIG = "https";
     private static final String HTTPS_ENABLED = "https-enabled";
     private static final String HTTPS_REJECT_UNENCRYPTED = "reject-unencrypted";
-    public static final String HTTPS_BEHIND_PROXY = "behind-ssl-proxy";
+    public static final boolean DEFAULT_HTTPS_REJECT_UNENCRYPTED = true;
+    private static final String HTTPS_BEHIND_PROXY = "behind-ssl-proxy";
     private static final String HTTPS_KEYSTORE_PATH = "keystore-path";
     private static final String HTTPS_KEYSTORE_PASSWORD = "keystore-password";
 
@@ -104,11 +105,11 @@ public class RestConfiguration extends Configurable {
     }
 
     public Optional<String> getHttpsTruststorePath() {
-        return getValueFromHttpsConfig(HTTPS_KEYSTORE_PATH, String.class);
+        return getValueFromHttpsConfig(HTTPS_TRUSTSTORE_PATH, String.class);
     }
 
     public Optional<String> getHttpsTruststorePassword() {
-        return getValueFromHttpsConfig(HTTPS_KEYSTORE_PASSWORD, String.class);
+        return getValueFromHttpsConfig(HTTPS_TRUSTSTORE_PASSWORD, String.class);
     }
 
     public boolean isCorsEnabled() {
