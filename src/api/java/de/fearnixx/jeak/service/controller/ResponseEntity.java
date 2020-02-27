@@ -73,10 +73,6 @@ public class ResponseEntity<T> implements IResponseEntity<T> {
             this.headers = new HashMap<>();
         }
 
-        public Builder<T> withHeader(Map.Entry<String, String> header) {
-            return withHeader(header.getKey(), header.getValue());
-        }
-
         public Builder<T> withHeader(String fieldName, String value) {
             headers.put(fieldName, value);
             return this;
