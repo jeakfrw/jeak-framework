@@ -31,6 +31,12 @@
         <Logger name="de.fearnixx.jeak.teamspeak.query.Netlog" level="warn">
             <AppenderRef ref="Console" />
         </Logger>
+        <Logger name="de.fearnixx.jeak.service.token" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.controller" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
 
         <!-- File logging -->
         <Logger name="org.reflections.Reflections" level="info">
@@ -44,6 +50,12 @@
         </Logger>
         <Logger name="de.fearnixx.jeak.teamspeak.query.Netlog" level="info">
             <AppenderRef ref="LogFile" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.token" level="debug">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.controller" level="debug">
+            <AppenderRef ref="Console" />
         </Logger>
     </Loggers>
 </Configuration>
