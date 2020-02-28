@@ -126,8 +126,11 @@ public class SparkAdapter extends HttpServer {
             Map<String, String> additionalHeaders = new HashMap<>();
             if (returnValue instanceof ResponseEntity) {
                 ResponseEntity responseEntity = (ResponseEntity) returnValue;
+                if (responseEntity.getStatus() > 0) {
+                    response.status(responseEntity.getStatus());
+                }
                 additionalHeaders.putAll(responseEntity.getHeaders());
-                returnValue = responseEntity.getResponseEntity();
+                returnValue = responseEntity.getEntity();
             }
             headers = setHeaders(response, additionalHeaders);
 
@@ -181,8 +184,9 @@ public class SparkAdapter extends HttpServer {
      * This method adds the provided {@link Map} of headers to the provided {@link Response}.
      *
      * @param response
-     * @param additionalHeaders
-     * @return
+     * @param additionalHeaders Some additional headers specified by the developer. Can override the configured default
+     *                          headers - also the CORS headers.
+     * @return A combination of all headers.
      */
     private Map<String, String> setHeaders(Response response, Map<String, String> additionalHeaders) {
         Map<String, String> headerMap = loadHeaders();
