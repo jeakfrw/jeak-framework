@@ -97,8 +97,8 @@ public class TokenConfiguration extends Configurable {
      * false otherwise
      */
     public boolean deleteToken(String token) {
-        boolean deleteSuccessful = false;
-        if (getConfig().getNode(token) != null && !getConfig().getNode(token).isVirtual()) {
+        boolean deleteSuccessful = true;
+        if (!getConfig().getNode(token).isVirtual()) {
             deleteSuccessful = getConfig().remove(token) != null;
         }
         return deleteSuccessful;
