@@ -34,7 +34,7 @@ public abstract class AbstractUserService implements IUserService {
     public List<IClient> findClientByUniqueID(String ts3uniqueID) {
         return dataCache.getClients()
                 .stream()
-                .filter(client -> client.getClientUniqueID().startsWith(ts3uniqueID))
+                .filter(client -> client.getClientUniqueID().equals(ts3uniqueID))
                 .collect(Collectors.toList());
     }
 
