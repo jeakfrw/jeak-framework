@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 public class UserService implements IUserService {
 
     public static final String PERSISTENCE_UNIT_NAME = "teamspeak";
-    private static final int USR_CACHE_TTL = Main.getProperty("jeak.cache.keepUsersSecs", 30);
+    private static final int USR_CACHE_TTL = Main.getProperty("jeak.cache.keepUsersSecs", 120);
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Inject
