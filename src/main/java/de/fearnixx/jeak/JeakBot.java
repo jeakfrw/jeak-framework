@@ -54,7 +54,7 @@ public class JeakBot implements Runnable, IBot {
     // * * * STATICS  * * * //
     public static final Charset CHAR_ENCODING = StandardCharsets.UTF_8;
     public static final String VERSION = "@VERSION@";
-    private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", false);
+    private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", true);
 
     private static final Logger logger = LoggerFactory.getLogger(JeakBot.class);
 
