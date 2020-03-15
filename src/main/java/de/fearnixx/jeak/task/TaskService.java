@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -26,20 +26,18 @@ import java.util.concurrent.ThreadFactory;
 @FrameworkService(serviceInterface = ITaskService.class)
 public class TaskService extends Thread implements ITaskService {
 
+    public static final Integer THREAD_POOL_SIZE = Main.getProperty("bot.taskmgr.poolsize", 10);
     private static final Logger logger = LoggerFactory.getLogger(TaskService.class);
 
-    public static final Integer THREAD_POOL_SIZE = Main.getProperty("bot.taskmgr.poolsize", 10);
-
     private final Map<ITask, Long> tasks;
-    private boolean terminated = false;
-
     private final ExecutorService taskExecutor;
+    private boolean terminated = false;
 
     @Inject
     private IEventService eventService;
 
     public TaskService(int capacity) {
-        tasks = new HashMap<>(capacity, 0.8f);
+        tasks = new IdentityHashMap<>(capacity);
         ThreadFactory threadFactory = new NamePatternThreadFactory("task-scheduler-%d");
         taskExecutor = Executors.newFixedThreadPool(THREAD_POOL_SIZE, threadFactory);
     }
