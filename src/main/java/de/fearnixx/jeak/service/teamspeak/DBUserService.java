@@ -38,6 +38,10 @@ public class DBUserService extends AbstractUserService {
 
     @Override
     public List<IUser> findUserByUniqueID(String ts3uniqueID) {
+        if (ts3uniqueID == null || ts3uniqueID.isBlank()) {
+            throw new IllegalArgumentException("TS3 unique ID may not be null, blank or empty!");
+        }
+
         List<TS3User> results = new LinkedList<>();
         withConnection(conn -> {
             String query = "SELECT * FROM clients c WHERE c.client_unique_id = ? AND c.server_id = ?";
@@ -52,7 +56,7 @@ public class DBUserService extends AbstractUserService {
         List<TS3User> results = new LinkedList<>();
         withConnection(conn -> {
             String query = "SELECT * FROM clients c WHERE c.client_id = ? AND c.server_id = ?";
-            getUsersFromDB(results, conn, query, ts3dbID);
+            getUsersFromDB(results, conn, query, Integer.toString(ts3dbID));
             populateOrRemoveUsers(results, conn);
         });
         return new ArrayList<>(results);
@@ -60,18 +64,22 @@ public class DBUserService extends AbstractUserService {
 
     @Override
     public List<IUser> findUserByNickname(String ts3nickname) {
+        if (ts3nickname == null || ts3nickname.isBlank()) {
+            throw new IllegalArgumentException("Nickname to search for may not be null, blank or empty!");
+        }
+
         List<TS3User> results = new LinkedList<>();
         withConnection(conn -> {
-            String query = "SELECT * FROM clients c WHERE c.client_nickname LIKE ? AND c.server_id = ?";
-            getUsersFromDB(results, conn, query, "%" + ts3nickname + "%");
+            String query = "SELECT * FROM clients c WHERE c.client_nickname LIKE %?% AND c.server_id = ?";
+            getUsersFromDB(results, conn, query, ts3nickname);
             populateOrRemoveUsers(results, conn);
         });
         return new ArrayList<>(results);
     }
 
-    private void getUsersFromDB(List<TS3User> results, Connection conn, String query, Object search) {
+    private void getUsersFromDB(List<TS3User> results, Connection conn, String query, String search) {
         try (PreparedStatement statement = conn.prepareStatement(query)) {
-            statement.setObject(1, search);
+            statement.setString(1, search);
             statement.setInt(2, server.getInstanceId());
             try (ResultSet result = statement.executeQuery()) {
                 if (!result.isBeforeFirst()) {

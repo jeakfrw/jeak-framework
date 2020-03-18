@@ -30,6 +30,10 @@ public class QueryUserService extends AbstractUserService {
 
     @Override
     public List<IUser> findUserByUniqueID(String ts3uniqueID) {
+        if (ts3uniqueID == null || ts3uniqueID.isBlank()) {
+            throw new IllegalArgumentException("TS3 unique ID may not be null, blank or empty!");
+        }
+
         List<IClient> onlineClients = findClientByUniqueID(ts3uniqueID);
         if (!onlineClients.isEmpty()) {
             return new LinkedList<>(onlineClients);
@@ -122,6 +126,10 @@ public class QueryUserService extends AbstractUserService {
 
     @Override
     public List<IUser> findUserByNickname(String ts3nickname) {
+        if (ts3nickname == null || ts3nickname.isBlank()) {
+            throw new IllegalArgumentException("Nickname to search for may not be null, blank or empty!");
+        }
+
         List<IClient> onlineClients = findClientByNickname(ts3nickname);
         if (!onlineClients.isEmpty()) {
             return new LinkedList<>(onlineClients);

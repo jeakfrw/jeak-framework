@@ -18,6 +18,11 @@ public class IncapableDummyAdapter extends HttpServer {
     }
 
     @Override
+    public void start() {
+        logger.warn("Start doesnt work since REST functionality is experimental and therefore disabled by default. Enable with \"jeak.experimental.enable_rest\"");
+    }
+
+    @Override
     public void registerController(ControllerContainer controllerContainer) {
         // This adapter is just a dummy until the REST service has been released.
     }

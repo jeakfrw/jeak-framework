@@ -4,8 +4,7 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <RollingFile name="LogFile" fileName="logs/latest.log"
-                     filePattern="logs/%d{yyyy-MM-dd}.log">
+        <RollingFile name="LogFile" fileName="logs/latest.log" filePattern="logs/%d{yyyy-MM-dd}.log">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
             <Policies>
                 <TimeBasedTriggeringPolicy interval="1" modulate="true" />
@@ -13,35 +12,50 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <Root level="debug">
+        <!-- Root logger / default log level -->
+        <Root level="info">
             <AppenderRef ref="Console" />
             <AppenderRef ref="LogFile" />
         </Root>
 
+        <!-- Console logging -->
         <Logger name="org.reflections.Reflections" level="warn">
             <AppenderRef ref="Console" />
         </Logger>
-        <Logger name="org.reflections.Reflections" level="info">
-            <AppenderRef ref="LogFile" />
-        </Logger>
-
-        <Logger name="de.mlessmann.confort.lang" level="info">
-            <AppenderRef ref="Console" />
-            <AppenderRef ref="LogFile" />
-        </Logger>
-
-        <!-- Mute Hibernate and its companions -->
         <Logger name="org.hibernate" level="warn">
             <AppenderRef ref="Console" />
         </Logger>
         <Logger name="com.mchange" level="warn">
             <AppenderRef ref="Console" />
         </Logger>
-        <Logger name="org.hibernate" level="info">
+        <Logger name="de.fearnixx.jeak.teamspeak.query.Netlog" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.token" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.controller" level="warn">
+            <AppenderRef ref="Console" />
+        </Logger>
+
+        <!-- File logging -->
+        <Logger name="org.reflections.Reflections" level="info">
             <AppenderRef ref="LogFile" />
         </Logger>
-        <Logger name="com.mchange" level="info">
+        <Logger name="de.mlessmann.confort.lang" level="debug">
             <AppenderRef ref="LogFile" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak" level="debug">
+            <AppenderRef ref="LogFile" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.teamspeak.query.Netlog" level="info">
+            <AppenderRef ref="LogFile" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.token" level="debug">
+            <AppenderRef ref="Console" />
+        </Logger>
+        <Logger name="de.fearnixx.jeak.service.controller" level="debug">
+            <AppenderRef ref="Console" />
         </Logger>
     </Loggers>
 </Configuration>
