@@ -7,6 +7,7 @@ import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.command.CommandException;
 import de.fearnixx.jeak.service.command.ICommandService;
+import de.fearnixx.jeak.service.command.spec.Commands;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionPool;
@@ -62,27 +63,41 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
 
         voiceConnectionPool = connectionService.createVoiceConnectionPool();
 
-        commandService.registerCommand("mp3-file-player", ctx -> {
-            if (nextPlayerIndex > MAX_PLAYER_COUNT) {
-                throw new CommandException("Already reached the maximum amount of audio-players!");
-            }
+        commandService.registerCommand(
+                Commands.commandSpec("mp3-file-player")
+                        .executor(
+                                executor -> {
+                                    checkPlayerCount();
 
-            createVoiceConnection(
-                    "Mp3-Player - " + nextPlayerIndex++, ctx.getRawEvent().getInvokerUID(), AudioType.MP3
-            );
-        });
+                                    createVoiceConnection(
+                                            "Mp3-Player - " + nextPlayerIndex++, executor.getInvokerUID(),
+                                            AudioType.MP3
+                                    );
+                                }
+                        )
+                        .build()
+        );
 
-        commandService.registerCommand("web-radio-player", ctx -> {
-            if (nextPlayerIndex > MAX_PLAYER_COUNT) {
-                throw new CommandException("Already reached the maximum amount of audio-players!");
-            }
+        commandService.registerCommand(
+                Commands.commandSpec("web-radio-player")
+                        .executor(executor -> {
+                                    checkPlayerCount();
 
-            createVoiceConnection(
-                    "Web-Radio-Player - " + nextPlayerIndex++, ctx.getRawEvent().getInvokerUID(), AudioType.WEBRADIO
-            );
-        });
+                                    createVoiceConnection(
+                                            "Web-Radio-Player - " + nextPlayerIndex++, executor.getInvokerUID(),
+                                            AudioType.WEBRADIO
+                                    );
+                                }
+                        ).build()
+        );
 
         success("test");
+    }
+
+    private void checkPlayerCount() throws CommandException {
+        if (nextPlayerIndex > MAX_PLAYER_COUNT) {
+            throw new CommandException("Already reached the maximum amount of audio-players!");
+        }
     }
 
     private void createVoiceConnection(String identifier, String uuid, AudioType audioType) {
@@ -121,9 +136,9 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
             param = msgSplit[1];
         }
 
-        IAudioPlayer mp3AudioPlayer = voiceConnectionPool.getVoiceConnection(event.getVoiceConnectionIdentifier())
-                .getRegisteredAudioPlayer()
-                .orElseThrow();
+        IAudioPlayer mp3AudioPlayer = voiceConnectionPool
+                .getVoiceConnection(event.getVoiceConnectionIdentifier())
+                .getRegisteredAudioPlayer();
 
         switch (cmd) {
 
@@ -151,6 +166,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                         mp3AudioPlayer.setAudioFile(soundDir, fileName);
                     } catch (FileNotFoundException e) {
                         //This is not possible
+                        throw new RuntimeException(e);
                     }
                 } else if (mp3AudioPlayer.getAudioType() == AudioType.WEBRADIO) {
                     try {

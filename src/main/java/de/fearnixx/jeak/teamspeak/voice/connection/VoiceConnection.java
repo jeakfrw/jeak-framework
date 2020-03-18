@@ -183,12 +183,19 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public Optional<IAudioPlayer> getRegisteredAudioPlayer() {
+    public Optional<IAudioPlayer> optRegisteredAudioPlayer() {
         if (ts3jClientSocket == null || ts3jClientSocket.getMicrophone() == null) {
             return Optional.empty();
         } else {
             return Optional.of((IAudioPlayer) ts3jClientSocket.getMicrophone());
         }
+    }
+
+    @Override
+    public IAudioPlayer getRegisteredAudioPlayer() {
+        return optRegisteredAudioPlayer().orElseThrow(
+                () -> new IllegalStateException("The voice connection had no registered audio player!")
+        );
     }
 
     @Override

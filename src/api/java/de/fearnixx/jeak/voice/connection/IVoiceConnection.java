@@ -66,9 +66,17 @@ public interface IVoiceConnection {
     IAudioPlayer registerAudioPlayer(AudioType audioType);
 
     /**
-     * @return the audio player that was registered for the voice connection using {@link #registerAudioPlayer(AudioType)}
+     * @return the audio player that was registered for the voice connection if it is was registered
+     * using {@link #registerAudioPlayer(AudioType)}
      */
-    Optional<IAudioPlayer> getRegisteredAudioPlayer();
+    Optional<IAudioPlayer> optRegisteredAudioPlayer();
+
+    /**
+     * @return the audio player that was registered for the voice connection using
+     * {@link #registerAudioPlayer(AudioType)}. Throws an {@link IllegalStateException} if
+     * no audio player was registered.
+     */
+    IAudioPlayer getRegisteredAudioPlayer();
 
     /**
      * @return information regarding the voice connection
