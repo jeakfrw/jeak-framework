@@ -70,8 +70,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                                     checkPlayerCount();
 
                                     createVoiceConnection(
-                                            "Mp3-Player - " + nextPlayerIndex++, executor.getInvokerUID(),
-                                            AudioType.MP3
+                                            "Mp3-Player - " + nextPlayerIndex++, executor.getInvokerUID()
                                     );
                                 }
                         )
@@ -84,8 +83,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                                     checkPlayerCount();
 
                                     createVoiceConnection(
-                                            "Web-Radio-Player - " + nextPlayerIndex++, executor.getInvokerUID(),
-                                            AudioType.WEBRADIO
+                                            "Web-Radio-Player - " + nextPlayerIndex++, executor.getInvokerUID()
                                     );
                                 }
                         ).build()
@@ -100,12 +98,12 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
         }
     }
 
-    private void createVoiceConnection(String identifier, String uuid, AudioType audioType) {
+    private void createVoiceConnection(String identifier, String uuid) {
         voiceConnectionPool.registerVoiceConnection(identifier,
                 voiceConnection ->
                         voiceConnection.connect(
                                 () -> {
-                                    voiceConnection.registerAudioPlayer(audioType);
+                                    voiceConnection.registerAudioPlayer(AudioType.MP3);
                                     voiceConnection.setShouldForwardTextMessages(true);
 
                                     dataCache.findClientByUniqueId(uuid).ifPresent(
@@ -136,15 +134,15 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
             param = msgSplit[1];
         }
 
-        IAudioPlayer mp3AudioPlayer = voiceConnectionPool
-                .getVoiceConnection(event.getVoiceConnectionIdentifier())
-                .getRegisteredAudioPlayer();
+        final String identifier = event.getVoiceConnectionIdentifier();
+
+        IAudioPlayer mp3AudioPlayer = voiceConnectionPool.getVoiceConnection(identifier).getRegisteredAudioPlayer();
 
         switch (cmd) {
 
             case "play":
 
-                if (mp3AudioPlayer.getAudioType() == AudioType.MP3) {
+                if (identifier.toLowerCase().startsWith("mp3")) {
                     String fileName;
                     if (param.isEmpty()) {
                         fileName = sounds.get(new Random().nextInt(sounds.size()));
@@ -168,7 +166,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                         //This is not possible
                         throw new RuntimeException(e);
                     }
-                } else if (mp3AudioPlayer.getAudioType() == AudioType.WEBRADIO) {
+                } else if (identifier.toLowerCase().startsWith("web")) {
                     try {
                         if (param.startsWith("[URL]")) {
                             param = param.substring(5, param.length() - 6);

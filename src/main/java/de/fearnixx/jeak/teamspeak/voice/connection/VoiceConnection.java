@@ -15,7 +15,6 @@ import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMess
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.sound.AudioPlayer;
 import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
-import de.fearnixx.jeak.teamspeak.voice.sound.WebRadioPlayer;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionInformation;
 import de.fearnixx.jeak.voice.sound.AudioType;
@@ -169,9 +168,6 @@ public class VoiceConnection implements IVoiceConnection {
         switch (audioType) {
             case MP3:
                 audioPlayer = new Mp3AudioPlayer();
-                break;
-            case WEBRADIO:
-                audioPlayer = new WebRadioPlayer();
                 break;
             default:
                 throw new IllegalArgumentException("The audio type is currently not supported!");
