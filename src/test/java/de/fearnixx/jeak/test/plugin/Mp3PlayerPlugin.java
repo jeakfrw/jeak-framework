@@ -10,8 +10,8 @@ import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.command.spec.Commands;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
-import de.fearnixx.jeak.voice.connection.IVoiceConnectionPool;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionStore;
 import de.fearnixx.jeak.voice.event.IVoiceConnectionTextMessageEvent;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
@@ -41,7 +41,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
         addTest("Mp3-Player");
     }
 
-    private IVoiceConnectionPool voiceConnectionPool;
+    private IVoiceConnectionStore voiceConnectionPool;
 
     private int nextPlayerIndex = 1;
     private static final int MAX_PLAYER_COUNT = 5;
@@ -61,7 +61,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                     .forEach(sounds::add);
         }
 
-        voiceConnectionPool = connectionService.createVoiceConnectionPool();
+        voiceConnectionPool = connectionService.createVoiceConnectionStore();
 
         commandService.registerCommand(
                 Commands.commandSpec("mp3-file-player")
@@ -99,7 +99,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
     }
 
     private void createVoiceConnection(String identifier, String uuid) {
-        voiceConnectionPool.registerVoiceConnection(identifier,
+        voiceConnectionPool.prepareVoiceConnection(identifier,
                 voiceConnection ->
                         voiceConnection.connect(
                                 () -> {
@@ -172,7 +172,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                             param = param.substring(5, param.length() - 6);
                         }
 
-                        mp3AudioPlayer.setAudioFile(new URL(param).openStream());
+                        mp3AudioPlayer.setAudioStream(new URL(param).openStream());
                     } catch (IOException e) {
                         throw new IllegalArgumentException("The given string is not a valid URL!");
                     }

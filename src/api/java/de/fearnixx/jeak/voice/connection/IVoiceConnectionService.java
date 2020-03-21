@@ -24,9 +24,18 @@ public interface IVoiceConnectionService {
     void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished);
 
     /**
-     * Creates a new {@link IVoiceConnectionPool} which will be using this service for requesting {@link IVoiceConnection}.
+     * Creates a new {@link IVoiceConnectionStore} which will be using this service for requesting {@link IVoiceConnection}.
      *
      * @return a new pool
      */
-    IVoiceConnectionPool createVoiceConnectionPool();
+    IVoiceConnectionStore createVoiceConnectionStore();
+
+    /**
+     * Creates a new {@link IVoiceConnectionStore} which will be using this service for requesting
+     * {@link IVoiceConnection}. For given identifiers a voice connection will be prepared for the store.
+     *
+     * @param identifiers all identifiers to prepare voice connections for. Must contain only unique values.
+     * @return a new pool with prepared voice connections for every identifier
+     */
+    IVoiceConnectionStore createVoiceConnectionStore(String... identifiers);
 }

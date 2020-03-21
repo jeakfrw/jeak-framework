@@ -7,7 +7,8 @@ import com.github.manevolent.ffmpeg4j.stream.source.FFmpegSourceStream;
 import de.fearnixx.jeak.teamspeak.voice.sound.opus.OpusParameters;
 import de.fearnixx.jeak.voice.sound.AudioType;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -202,7 +203,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     @Override
-    public void setAudioFile(InputStream inputStream) {
+    public void setAudioStream(InputStream inputStream) {
 
         if (audioSourceSubstream != null) {
             try {
@@ -217,16 +218,6 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     @Override
-    public void setAudioFile(File parentDir, String filename) throws FileNotFoundException {
-        String filepath = filename;
-        if (!filepath.toLowerCase().endsWith(getFilenameExtension())) {
-            filepath += "." + getFilenameExtension();
-        }
-
-        setAudioFile(new FileInputStream(new File(parentDir, filepath)));
-    }
-
-    @Override
     public boolean isPlaying() {
         return !paused;
     }
@@ -236,7 +227,8 @@ public class Mp3AudioPlayer extends AudioPlayer {
         return AudioType.MP3;
     }
 
-    private String getFilenameExtension() {
+    @Override
+    String getFilenameExtension() {
         return MP3_EXTENSION;
     }
 }

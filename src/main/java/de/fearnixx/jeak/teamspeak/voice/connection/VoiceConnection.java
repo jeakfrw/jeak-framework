@@ -105,6 +105,8 @@ public class VoiceConnection implements IVoiceConnection {
                     }
 
                     this.connected = true;
+                    clientConnectionInformation.setClientId(ts3jClientSocket.getClientId());
+
                     onSuccess.run();
                 }
         ).start();

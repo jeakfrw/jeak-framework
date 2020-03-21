@@ -13,13 +13,14 @@ import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionI
 import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
-import de.fearnixx.jeak.voice.connection.IVoiceConnectionPool;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
+import de.fearnixx.jeak.voice.connection.IVoiceConnectionStore;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.config.FileConfig;
 
 import java.io.File;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -116,13 +117,33 @@ public class VoiceConnectionService implements IVoiceConnectionService {
         try {
             localIdentity = LocalIdentity.generateNew(15);
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Failed to create local identity");
+            throw new IllegalStateException("Failed to create local identity!");
         }
         return localIdentity;
     }
 
     @Override
-    public IVoiceConnectionPool createVoiceConnectionPool() {
-        return new VoiceConnectionPool(this);
+    public IVoiceConnectionStore createVoiceConnectionStore() {
+        return new VoiceConnectionStore(this);
+    }
+
+    @Override
+    public IVoiceConnectionStore createVoiceConnectionStore(String... identifiers) {
+        for (int i = 0; i < identifiers.length - 1; i++) {
+            String identifier = identifiers[i];
+
+            for (int j = i + 1; j < identifiers.length; j++) {
+                if (identifiers[j].equals(identifier)) {
+                    throw new IllegalArgumentException(
+                            "The given identifiers were not unique! Duplicate: " + identifier
+                    );
+                }
+            }
+        }
+
+        final VoiceConnectionStore voiceConnectionStore = new VoiceConnectionStore(this);
+        Arrays.stream(identifiers).forEach(voiceConnectionStore::prepareVoiceConnection);
+
+        return voiceConnectionStore;
     }
 }

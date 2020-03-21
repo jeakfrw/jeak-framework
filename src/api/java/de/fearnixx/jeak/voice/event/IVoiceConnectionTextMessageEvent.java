@@ -16,9 +16,9 @@ public interface IVoiceConnectionTextMessageEvent extends IVoiceConnectionEvent 
     String getMessage();
 
     /**
-     * @return the source id of the message
+     * @return the invoker id of the message
      */
-    Integer getSourceId();
+    Integer getInvokerId();
 
     /**
      * @return the target type of the message

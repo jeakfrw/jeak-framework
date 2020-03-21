@@ -29,7 +29,7 @@ public class VoiceConnectionTextMessageEvent implements IVoiceConnectionTextMess
     }
 
     @Override
-    public Integer getSourceId() {
+    public Integer getInvokerId() {
         return ts3jTextMessageEvent.getInvokerId();
     }
 
