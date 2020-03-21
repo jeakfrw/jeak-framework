@@ -195,8 +195,9 @@ public class Mp3AudioPlayer extends AudioPlayer {
             return (FFmpegAudioSourceSubstream) stream.registerStreams()
                     .stream()
                     .filter(x -> x.getMediaType() == MediaType.AUDIO)
-                    .findFirst().orElse(null);
-
+                    .findFirst().orElseThrow(
+                            () -> new IllegalArgumentException("The supplied input stream did not contain an audio stream!")
+                    );
         } catch (FFmpegException e) {
             throw new IllegalStateException(e);
         }

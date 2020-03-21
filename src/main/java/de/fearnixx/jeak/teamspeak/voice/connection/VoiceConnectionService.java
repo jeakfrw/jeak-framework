@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
@@ -47,7 +48,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     @Override
     public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
-        new Thread(
+        Executors.newSingleThreadExecutor().execute(
                 () -> {
                     synchronized (clientConnections) {
                         if (clientConnections.containsKey(identifier)) {
@@ -93,7 +94,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                         onRequestFinished.accept(Optional.of(clientConnection));
                     }
                 }
-        ).start();
+        );
     }
 
     @Listener
@@ -117,7 +118,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
         try {
             localIdentity = LocalIdentity.generateNew(15);
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("Failed to create local identity!");
+            throw new IllegalStateException("Failed to create local identity!", e);
         }
         return localIdentity;
     }

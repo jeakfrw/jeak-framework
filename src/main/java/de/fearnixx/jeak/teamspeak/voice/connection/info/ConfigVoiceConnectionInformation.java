@@ -4,12 +4,16 @@ import com.github.manevolent.ts3j.identity.LocalIdentity;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInformation {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigVoiceConnectionInformation.class);
 
     private static final String NICKNAME_NODE = "nickname";
     private static final String IDENTITY_NODE = "identity";
@@ -59,7 +63,7 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
         try {
             localIdentity.save(outputStream);
         } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to save identity!");
+            throw new IllegalArgumentException("Failed to save identity!", e);
         }
 
         getInfoNode().getNode(IDENTITY_NODE).setString(outputStream.toString());
@@ -79,7 +83,7 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
         try {
             return LocalIdentity.read(new ByteArrayInputStream(identityString.getBytes()));
         } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to load identity!");
+            throw new IllegalArgumentException("Failed to load identity!", e);
         }
     }
 
@@ -93,6 +97,7 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
             configRef.save();
         } catch (IOException e) {
             //Saving next time
+            LOGGER.warn("An exception occurred while trying to save the config for identifier {}", identifier, e);
         }
     }
 }
