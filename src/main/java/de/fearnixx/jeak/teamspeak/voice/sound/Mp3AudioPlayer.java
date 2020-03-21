@@ -12,6 +12,11 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * Handling the playing of audio is extracted from an example by manevolent.
+ * <p>
+ * URL: https://github.com/Manevolent/ts3j/blob/master/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/MusicPlayer.java
+ */
 public class Mp3AudioPlayer extends AudioPlayer {
 
     private static final String MP3_EXTENSION = "mp3";

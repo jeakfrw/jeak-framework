@@ -5,18 +5,23 @@ import com.github.manevolent.ts3j.enums.CodecType;
 import de.fearnixx.jeak.teamspeak.voice.sound.opus.OpusEncoder;
 import de.fearnixx.jeak.teamspeak.voice.sound.opus.OpusParameters;
 import net.tomp2p.opuswrapper.Opus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sound.sampled.AudioFormat;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
- * This class was extracted from an example by manevolent
+ * This class was extracted from an example by manevolent. Only logging statements were replaced.
+ * <p>
+ * URL: https://github.com/Manevolent/ts3j/blob/master/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/TeamspeakFastMixerSink.java
  */
 public class TeamspeakFastMixerSink implements Microphone {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeamspeakFastMixerSink.class);
+
     static final AudioFormat AUDIO_FORMAT =
             new AudioFormat(48000, 32, 2, true, false);
 
@@ -121,7 +126,7 @@ public class TeamspeakFastMixerSink implements Microphone {
      * @return Packets encoded
      */
     private synchronized int encode(boolean flush) {
-        if (flush) Logger.getGlobal().log(Level.FINE, "Flushing TeamspeakFastMixerSink...");
+        if (flush) LOGGER.info("Flushing TeamspeakFastMixerSink...");
 
         int written = 0;
         int frameSize = opusFrameSize * getChannels();
@@ -154,7 +159,7 @@ public class TeamspeakFastMixerSink implements Microphone {
 
         if (written > 0) opening = false;
 
-        if (flush) Logger.getGlobal().log(Level.FINE, "Flushed TeamspeakFastMixerSink.");
+        if (flush) LOGGER.info("Flushed TeamspeakFastMixerSink.");
 
         return written;
     }
@@ -206,7 +211,7 @@ public class TeamspeakFastMixerSink implements Microphone {
     private void openOpusEncoder() {
         synchronized (stateLock) {
             if (encoder != null) return;
-            Logger.getGlobal().log(Level.FINE, "Opening TeamspeakFastMixerSink encoder...");
+            LOGGER.info("Opening TeamspeakFastMixerSink encoder...");
 
             encoder = new OpusEncoder(
                     (int) getAudioFormat().getSampleRate(), // smp rate (always 48kHz)
@@ -227,17 +232,17 @@ public class TeamspeakFastMixerSink implements Microphone {
             encoder.setEncoderValue(Opus.OPUS_SET_VBR_REQUEST, opusParameters.isOpusVbr() ? 1 : 0);
             encoder.setEncoderValue(Opus.OPUS_SET_INBAND_FEC_REQUEST, opusParameters.isOpusFec() ? 1 : 0);
 
-            Logger.getGlobal().log(Level.FINE, "Opened TeamspeakFastMixerSink encoder.");
+            LOGGER.info("Opened TeamspeakFastMixerSink encoder.");
         }
     }
 
     private void closeOpusEncoder() {
         synchronized (stateLock) {
             if (encoder != null) {
-                Logger.getGlobal().log(Level.FINE, "Closing TeamspeakFastMixerSink encoder...");
+                LOGGER.info("Closing TeamspeakFastMixerSink encoder...");
                 encoder.close();
                 encoder = null;
-                Logger.getGlobal().log(Level.FINE, "Closed TeamspeakFastMixerSink encoder.");
+                LOGGER.info("Closed TeamspeakFastMixerSink encoder.");
             }
         }
     }
@@ -252,7 +257,7 @@ public class TeamspeakFastMixerSink implements Microphone {
         synchronized (stateLock) {
             if (running) return false;
 
-            Logger.getGlobal().log(Level.FINE, "Starting TeamspeakFastMixerSink...");
+            LOGGER.info("Starting TeamspeakFastMixerSink...");
 
             // Flush buffers, clear outgoing packet queues.
             for (int i = 0; i < sampleBuffer.length; i++) sampleBuffer[i] = 0f;
@@ -265,16 +270,16 @@ public class TeamspeakFastMixerSink implements Microphone {
 
             // Reset the encoder
             if (encoder != null) {
-                Logger.getGlobal().log(Level.FINE, "Resetting TeamspeakFastMixerSink...");
+                LOGGER.info("Resetting TeamspeakFastMixerSink...");
                 encoder.reset(); // Reset encoder output
-                Logger.getGlobal().log(Level.FINE, "Reset TeamspeakFastMixerSink.");
+                LOGGER.info("Reset TeamspeakFastMixerSink.");
             }
 
             // Mark as running.
             opening = true;
             running = true;
 
-            Logger.getGlobal().log(Level.FINE, "Started TeamspeakFastMixerSink.");
+            LOGGER.info("Started TeamspeakFastMixerSink.");
 
             return true;
         }
@@ -297,16 +302,16 @@ public class TeamspeakFastMixerSink implements Microphone {
         synchronized (stateLock) {
             if (!running) return false;
 
-            Logger.getGlobal().log(Level.FINE, "Stopping TeamspeakFastMixerSink...");
+            LOGGER.info("Stopping TeamspeakFastMixerSink...");
 
             try {
                 encode(true);
             } catch (RuntimeException e) {
-                Logger.getGlobal().log(Level.WARNING, "Problem flushing audio buffer upon close", e);
+                LOGGER.warn("Problem flushing audio buffer upon close", e);
             }
 
             running = false;
-            Logger.getGlobal().log(Level.FINE, "Stopped TeamspeakFastMixerSink.");
+            LOGGER.info("Stopped TeamspeakFastMixerSink.");
 
             return true;
         }
@@ -379,8 +384,8 @@ public class TeamspeakFastMixerSink implements Microphone {
             if (currentNetworkTime >= (opusParameters.getOpusFrameTime() * 1000000L)) {
                 underflowed++;
 
-                Logger.getGlobal().warning("[TeamspeakFastMixerSink] provide() took longer than the expected " +
-                        opusParameters.getOpusFrameTime() + "ms: " + ((double) networkTime / 1_000_000D) + "ms");
+                LOGGER.warn("[TeamspeakFastMixerSink] provide() took longer than the expected" +
+                        "{} ms: {} ms", opusParameters.getOpusFrameTime(), ((double) networkTime / 1_000_000D));
             }
 
             this.networkTime += currentNetworkTime;

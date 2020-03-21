@@ -33,7 +33,7 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
             }
 
         } catch (IOException | ParseException e) {
-            throw new IllegalStateException("Could not read voice connection info config!");
+            throw new IllegalStateException("Could not read voice connection info config!", e);
         }
     }
 
