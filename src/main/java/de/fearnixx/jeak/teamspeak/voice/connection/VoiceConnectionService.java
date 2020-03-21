@@ -9,6 +9,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
@@ -38,6 +39,9 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     @Inject
     private IUserService userService;
+
+    @Inject
+    private IDataCache cache;
 
     @Inject
     private IEventService eventService;
@@ -86,7 +90,8 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                                 server.getPort(),
                                 eventService,
                                 bot,
-                                userService
+                                userService,
+                                cache
                         );
 
                         clientConnections.put(identifier, clientConnection);
