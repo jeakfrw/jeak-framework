@@ -33,12 +33,6 @@ repositories {
     maven {
         url uri('https://nexus.fearnixx.de/repository/maven-public')
     }
-    maven {
-        url uri('https://jitpack.io')
-    }
-    maven {
-        url uri('http://tomp2p.net/dev/mvn/')
-    }
 }
 
 sourceSets {
