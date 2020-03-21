@@ -1,5 +1,7 @@
 package de.fearnixx.jeak.voice.event;
 
+import de.fearnixx.jeak.teamspeak.TargetType;
+
 /**
  * Represents the event that occurs when a voice connection receives a text message
  */
@@ -23,5 +25,5 @@ public interface IVoiceConnectionTextMessageEvent extends IVoiceConnectionEvent 
     /**
      * @return the target type of the message
      */
-    Integer getTargetType();
+    TargetType getTargetType();
 }

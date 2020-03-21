@@ -1,6 +1,7 @@
 package de.fearnixx.jeak.teamspeak.voice.connection.event;
 
 import com.github.manevolent.ts3j.event.TextMessageEvent;
+import de.fearnixx.jeak.teamspeak.TargetType;
 import de.fearnixx.jeak.voice.event.IVoiceConnectionTextMessageEvent;
 
 public class VoiceConnectionTextMessageEvent implements IVoiceConnectionTextMessageEvent {
@@ -34,7 +35,7 @@ public class VoiceConnectionTextMessageEvent implements IVoiceConnectionTextMess
     }
 
     @Override
-    public Integer getTargetType() {
-        return ts3jTextMessageEvent.getTargetMode().getIndex();
+    public TargetType getTargetType() {
+        return TargetType.fromQueryNum(ts3jTextMessageEvent.getTargetMode().getIndex());
     }
 }

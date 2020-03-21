@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak.voice.connection;
 
+import com.github.manevolent.ts3j.api.ChannelProperty;
 import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.event.TS3Listener;
 import com.github.manevolent.ts3j.event.TextMessageEvent;
@@ -11,6 +12,7 @@ import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
@@ -48,17 +50,19 @@ public class VoiceConnection implements IVoiceConnection {
     private boolean connected;
 
     private IUserService userService;
+    private IDataCache cache;
 
     private IBot bot;
 
     private boolean shouldForwardTextMessages;
 
-    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService) {
+    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService, IDataCache cache) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;
         this.eventService = eventService;
         this.userService = userService;
+        this.cache = cache;
         this.bot = bot;
     }
 
@@ -83,50 +87,7 @@ public class VoiceConnection implements IVoiceConnection {
                             new TS3Listener() {
                                 @Override
                                 public void onTextMessage(TextMessageEvent e) {
-                                    final IQueryConnection connection;
-
-                                    try {
-                                        connection = bot.getServer().getConnection();
-                                    } catch (NoSuchElementException nse) {
-                                        LOGGER.warn("The voice connection with the identifier {} received a " +
-                                                "text message that should be forwarded, but the query connection " +
-                                                "was not available!", clientConnectionInformation.getIdentifier()
-                                        );
-                                        return;
-                                    }
-
-                                    eventService.fireEvent(
-                                            new VoiceConnectionTextMessageEvent(
-                                                    clientConnectionInformation.getIdentifier(), e
-                                            )
-                                    );
-
-                                    if (shouldForwardTextMessages) {
-                                        final QueryEvent.ClientTextMessage clientTextMessage =
-                                                new QueryEvent.ClientTextMessage(userService);
-
-                                        final int invokerId = e.getInvokerId();
-                                        final IClient client = userService.getClientByID(invokerId).orElseThrow();
-
-                                        clientTextMessage.setClient(client);
-                                        clientTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
-                                        clientTextMessage.setConnection(connection);
-                                        clientTextMessage.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
-                                        clientTextMessage.setProperty(PropertyKeys.TextMessage.SOURCE_ID, invokerId);
-                                        clientTextMessage.setProperty(
-                                                PropertyKeys.TextMessage.SOURCE_UID,
-                                                client.getClientUniqueID()
-                                        );
-                                        clientTextMessage.setProperty(
-                                                PropertyKeys.TextMessage.SOURCE_NICKNAME,
-                                                client.getNickName()
-                                        );
-                                        clientTextMessage.setProperty(
-                                                PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode()
-                                        );
-
-                                        eventService.fireEvent(clientTextMessage);
-                                    }
+                                    handleTextMessageEvent(e);
                                 }
                             }
                     );
@@ -159,6 +120,86 @@ public class VoiceConnection implements IVoiceConnection {
                     onSuccess.run();
                 }
         );
+    }
+
+    private void handleTextMessageEvent(TextMessageEvent e) {
+        final IQueryConnection connection;
+
+        try {
+            connection = bot.getServer().getConnection();
+        } catch (NoSuchElementException nse) {
+            LOGGER.warn("The voice connection with the identifier {} received a " +
+                    "text message that should be forwarded, but the query connection " +
+                    "was not available!", clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
+        eventService.fireEvent(
+                new VoiceConnectionTextMessageEvent(
+                        clientConnectionInformation.getIdentifier(), e
+                )
+        );
+
+        if (shouldForwardTextMessages) {
+            final QueryEvent.TextMessageEvent textMessageEvent;
+            final int invokerId = e.getInvokerId();
+            final IClient client = userService.getClientByID(invokerId).orElseThrow();
+
+            switch (e.getTargetMode()) {
+                case CLIENT:
+                    QueryEvent.ClientTextMessage clientTextMessage =
+                            new QueryEvent.ClientTextMessage(userService);
+
+                    clientTextMessage.setClient(client);
+                    clientTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
+                    clientTextMessage.setConnection(connection);
+
+                    textMessageEvent = clientTextMessage;
+                    break;
+                case CHANNEL:
+                    QueryEvent.ChannelTextMessage channelTextMessage =
+                            new QueryEvent.ChannelTextMessage(userService);
+                    channelTextMessage.setChannel(cache.getChannels().stream()
+                            .filter(ch -> ch.getID().equals(Integer.valueOf(e.get(ChannelProperty.CID))))
+                            .findFirst()
+                            .orElseThrow()
+                    );
+                    channelTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
+                    channelTextMessage.setConnection(connection);
+                    textMessageEvent = channelTextMessage;
+                    break;
+                case SERVER:
+                    QueryEvent.ServerTextMessage serverTextMessage =
+                            new QueryEvent.ServerTextMessage(userService);
+
+                    serverTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
+                    serverTextMessage.setConnection(connection);
+                    textMessageEvent = serverTextMessage;
+                    break;
+                default:
+                    throw new IllegalStateException(
+                            "Received text message event with unsupported target mode "
+                                    + e.getTargetMode() + "!"
+                    );
+            }
+
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_ID, invokerId);
+            textMessageEvent.setProperty(
+                    PropertyKeys.TextMessage.SOURCE_UID,
+                    client.getClientUniqueID()
+            );
+            textMessageEvent.setProperty(
+                    PropertyKeys.TextMessage.SOURCE_NICKNAME,
+                    client.getNickName()
+            );
+            textMessageEvent.setProperty(
+                    PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode()
+            );
+
+            eventService.fireEvent(textMessageEvent);
+        }
     }
 
     @Override
@@ -284,8 +325,10 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public synchronized void setClientNickname(String nickname) {
-        if (nickname == null || nickname.isEmpty()) {
-            throw new IllegalArgumentException("The nickname of a client connection must be not empty!");
+        if (nickname == null || nickname.isEmpty() || nickname.length() > 30) {
+            throw new IllegalArgumentException(
+                    "The nickname of a client connection must be not empty and short than 30 characters!"
+            );
         }
 
         clientConnectionInformation.setClientNickname(nickname);
