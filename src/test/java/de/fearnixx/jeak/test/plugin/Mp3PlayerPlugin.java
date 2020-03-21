@@ -110,7 +110,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                                             client -> voiceConnection.sendToChannel(client.getChannelID())
                                     );
                                 },
-                                () -> {
+                                connectionFailure -> {
                                     throw new IllegalStateException("Could not connect!");
                                 }
                         )
