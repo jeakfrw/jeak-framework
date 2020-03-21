@@ -5,28 +5,38 @@ import com.github.manevolent.ts3j.event.TS3Listener;
 import com.github.manevolent.ts3j.event.TextMessageEvent;
 import com.github.manevolent.ts3j.protocol.socket.client.LocalTeamspeakClientSocket;
 import de.fearnixx.jeak.IBot;
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.sound.AudioPlayer;
 import de.fearnixx.jeak.teamspeak.voice.sound.Mp3AudioPlayer;
+import de.fearnixx.jeak.voice.connection.ConnectionFailure;
 import de.fearnixx.jeak.voice.connection.IVoiceConnection;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionInformation;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 public class VoiceConnection implements IVoiceConnection {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(VoiceConnection.class);
 
     private final AbstractVoiceConnectionInformation clientConnectionInformation;
     private final String hostname;
@@ -34,7 +44,6 @@ public class VoiceConnection implements IVoiceConnection {
     private final IEventService eventService;
 
     private LocalTeamspeakClientSocket ts3jClientSocket;
-    private boolean locked;
 
     private boolean connected;
 
@@ -51,16 +60,19 @@ public class VoiceConnection implements IVoiceConnection {
         this.eventService = eventService;
         this.userService = userService;
         this.bot = bot;
-        locked = true;
     }
 
     @Override
-    public void connect(Runnable onSuccess, Runnable onError) {
+    public synchronized void connect(Runnable onSuccess, Consumer<ConnectionFailure> onError) {
         if (connected) {
+            LOGGER.warn(
+                    "Tried to connect an already connected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
             return;
         }
 
-        new Thread(
+        Executors.newSingleThreadExecutor().execute(
                 () -> {
                     this.ts3jClientSocket = new LocalTeamspeakClientSocket();
 
@@ -71,24 +83,47 @@ public class VoiceConnection implements IVoiceConnection {
                             new TS3Listener() {
                                 @Override
                                 public void onTextMessage(TextMessageEvent e) {
+                                    final IQueryConnection connection;
+
+                                    try {
+                                        connection = bot.getServer().getConnection();
+                                    } catch (NoSuchElementException nse) {
+                                        LOGGER.warn("The voice connection with the identifier {} received a " +
+                                                "text message that should be forwarded, but the query connection " +
+                                                "was not available!", clientConnectionInformation.getIdentifier()
+                                        );
+                                        return;
+                                    }
+
                                     eventService.fireEvent(
-                                            new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
+                                            new VoiceConnectionTextMessageEvent(
+                                                    clientConnectionInformation.getIdentifier(), e
+                                            )
                                     );
 
                                     if (shouldForwardTextMessages) {
-                                        final QueryEvent.ClientTextMessage clientTextMessage = new QueryEvent.ClientTextMessage(userService);
+                                        final QueryEvent.ClientTextMessage clientTextMessage =
+                                                new QueryEvent.ClientTextMessage(userService);
 
                                         final int invokerId = e.getInvokerId();
                                         final IClient client = userService.getClientByID(invokerId).orElseThrow();
 
                                         clientTextMessage.setClient(client);
                                         clientTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
-                                        clientTextMessage.setConnection(bot.getServer().getConnection());
+                                        clientTextMessage.setConnection(connection);
                                         clientTextMessage.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
-                                        clientTextMessage.setProperty("invokerid", invokerId);
-                                        clientTextMessage.setProperty("invokeruid", client.getClientUniqueID());
-                                        clientTextMessage.setProperty("invokername", client.getNickName());
-                                        clientTextMessage.setProperty("targetmode", e.getTargetMode());
+                                        clientTextMessage.setProperty(PropertyKeys.TextMessage.SOURCE_ID, invokerId);
+                                        clientTextMessage.setProperty(
+                                                PropertyKeys.TextMessage.SOURCE_UID,
+                                                client.getClientUniqueID()
+                                        );
+                                        clientTextMessage.setProperty(
+                                                PropertyKeys.TextMessage.SOURCE_NICKNAME,
+                                                client.getNickName()
+                                        );
+                                        clientTextMessage.setProperty(
+                                                PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode()
+                                        );
 
                                         eventService.fireEvent(clientTextMessage);
                                     }
@@ -98,9 +133,23 @@ public class VoiceConnection implements IVoiceConnection {
 
                     InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port);
                     try {
-                        ts3jClientSocket.connect(inetSocketAddress, null, 10000L);
-                    } catch (IOException | TimeoutException e) {
-                        onError.run();
+                        final Long timeout = Main.getProperty("jeak.voice_connection.connection_timeout", 10000L);
+                        ts3jClientSocket.connect(inetSocketAddress, null, timeout);
+                    } catch (IOException e) {
+                        LOGGER.error(
+                                "An unspecified error occurred while trying to connect the voice connection with " +
+                                        "the identifier {}!",
+                                clientConnectionInformation.getIdentifier(), e
+                        );
+                        onError.accept(ConnectionFailure.UNSPECIFIED);
+                        return;
+                    } catch (TimeoutException e) {
+                        LOGGER.error(
+                                "A timeout occurred while trying to connect the voice connection with " +
+                                        "the identifier {}!",
+                                clientConnectionInformation.getIdentifier()
+                        );
+                        onError.accept(ConnectionFailure.TIMEOUT);
                         return;
                     }
 
@@ -109,7 +158,7 @@ public class VoiceConnection implements IVoiceConnection {
 
                     onSuccess.run();
                 }
-        ).start();
+        );
     }
 
     @Override
@@ -118,7 +167,7 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public void disconnect(String reason) {
+    public synchronized void disconnect(String reason) {
         try {
             if (ts3jClientSocket.getMicrophone() != null
                     && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(IAudioPlayer.class)) {
@@ -130,39 +179,67 @@ public class VoiceConnection implements IVoiceConnection {
             Thread.currentThread().interrupt();
         } catch (IOException | ExecutionException | TimeoutException e) {
             //We assume that the server is not reachable for this connection. Therefor it is declared disconnected
+            LOGGER.warn("An exception occurred while the voice connection with the identifier {} " +
+                    "tried to disconnect from the server.", clientConnectionInformation.getIdentifier(), e
+            );
         }
 
-        locked = false;
         connected = false;
     }
 
     @Override
-    public boolean isConnected() {
+    public synchronized boolean isConnected() {
         return connected;
     }
 
     @Override
-    public void sendToChannel(int channelId) {
-        sendToChannel(channelId, null);
+    public boolean sendToChannel(int channelId) {
+        return sendToChannel(channelId, null);
     }
 
     @Override
-    public void sendToChannel(int channelId, String password) {
+    public boolean sendToChannel(int channelId, String password) {
         try {
             ts3jClientSocket.clientMove(ts3jClientSocket.getClientId(), channelId, password);
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-        } catch (IOException | TimeoutException | CommandException e) {
-            //The client movement failed
+            return false;
+        } catch (IOException e) {
+            //The client movement failed due to an unspecified exception
+            LOGGER.error("An unspecified exception occurred while the voice connection with the identifier {} " +
+                            "tried to move to the channel with the id {}.", clientConnectionInformation.getIdentifier(),
+                    channelId, e
+            );
 
-            //TODO: return the result of an action performed on the connection
+            return false;
+        } catch (TimeoutException e) {
+            //The client movement failed due to a timeout
+            LOGGER.warn("A timeout occurred while the voice connection with the identifier {} " +
+                            "tried to move to the channel with the id {}.", clientConnectionInformation.getIdentifier(),
+                    channelId
+            );
+
+            return false;
+        } catch (CommandException e) {
+            //The client movement failed due to an error regarding teamspeak
+            LOGGER.warn("An error occurred while the voice connection with the identifier {} " +
+                            "tried to move to the channel with the id {}. Error code {}",
+                    clientConnectionInformation.getIdentifier(),
+                    channelId, e.getErrorId()
+            );
+
+            return false;
         }
+
+        return true;
     }
 
     @Override
-    public IAudioPlayer registerAudioPlayer(AudioType audioType) {
+    public synchronized IAudioPlayer registerAudioPlayer(AudioType audioType) {
         if (!connected) {
-            throw new IllegalStateException("An audio player can only be registered when the client connection is connected");
+            throw new IllegalStateException(
+                    "An audio player can only be registered when the client connection is connected!"
+            );
         }
 
         AudioPlayer audioPlayer;
@@ -172,7 +249,9 @@ public class VoiceConnection implements IVoiceConnection {
                 audioPlayer = new Mp3AudioPlayer();
                 break;
             default:
-                throw new IllegalArgumentException("The audio type is currently not supported!");
+                throw new IllegalArgumentException(
+                        "The audio type " + audioType.toString() + "is currently not supported!"
+                );
         }
 
         ts3jClientSocket.setMicrophone(audioPlayer);
@@ -182,17 +261,19 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public Optional<IAudioPlayer> optRegisteredAudioPlayer() {
-        if (ts3jClientSocket == null || ts3jClientSocket.getMicrophone() == null) {
+        if (ts3jClientSocket == null) {
             return Optional.empty();
         } else {
-            return Optional.of((IAudioPlayer) ts3jClientSocket.getMicrophone());
+            return Optional.ofNullable(ts3jClientSocket.getMicrophone()).map(mic -> (IAudioPlayer) mic);
         }
     }
 
     @Override
     public IAudioPlayer getRegisteredAudioPlayer() {
         return optRegisteredAudioPlayer().orElseThrow(
-                () -> new IllegalStateException("The voice connection had no registered audio player!")
+                () -> new IllegalStateException("The voice connection with the identifier "
+                        + clientConnectionInformation.getIdentifier() + " had no registered audio player!"
+                )
         );
     }
 
@@ -202,7 +283,7 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public void setClientNickname(String nickname) {
+    public synchronized void setClientNickname(String nickname) {
         if (nickname == null || nickname.isEmpty()) {
             throw new IllegalArgumentException("The nickname of a client connection must be not empty!");
         }
@@ -217,9 +298,5 @@ public class VoiceConnection implements IVoiceConnection {
     @Override
     public void setShouldForwardTextMessages(boolean shouldForwardTextMessages) {
         this.shouldForwardTextMessages = shouldForwardTextMessages;
-    }
-
-    boolean isLocked() {
-        return locked;
     }
 }

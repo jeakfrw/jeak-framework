@@ -53,7 +53,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                         if (clientConnections.containsKey(identifier)) {
                             final VoiceConnection clientConnection = clientConnections.get(identifier);
 
-                            if (clientConnection.isLocked()) {
+                            if (clientConnection.isConnected()) {
                                 onRequestFinished.accept(Optional.empty());
                                 return;
                             }

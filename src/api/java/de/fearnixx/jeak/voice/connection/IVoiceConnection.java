@@ -24,7 +24,7 @@ public interface IVoiceConnection {
      * If the connection is already connected to the server no callback will be executed since there is no
      * result of a non-existing operation!
      */
-    void connect(Runnable onSuccess, Runnable onError);
+    void connect(Runnable onSuccess, Consumer<ConnectionFailure> onError);
 
     /**
      * Disconnects the client from the server. Any timeouts while disconnecting are getting ignored.
@@ -47,16 +47,18 @@ public interface IVoiceConnection {
      * Sends the client to the given channel
      *
      * @param channelId id of the desired channel
+     * @return whether the client was successfully sent to another channel
      */
-    void sendToChannel(int channelId);
+    boolean sendToChannel(int channelId);
 
     /**
      * Sends the client to the given channel
      *
      * @param channelId id of the desired channel
      * @param password  password of the channel
+     * @return whether the client was successfully sent to another channel
      */
-    void sendToChannel(int channelId, String password);
+    boolean sendToChannel(int channelId, String password);
 
     /**
      * Registers an Audio-Player with the respective type for the client-connection if the client is connected
