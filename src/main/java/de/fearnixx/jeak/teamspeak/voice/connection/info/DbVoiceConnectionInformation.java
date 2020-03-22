@@ -3,7 +3,7 @@ package de.fearnixx.jeak.teamspeak.voice.connection.info;
 import com.github.manevolent.ts3j.identity.LocalIdentity;
 
 /**
- * STUB
+ * STUB for future implementation
  */
 public class DbVoiceConnectionInformation extends AbstractVoiceConnectionInformation {
 

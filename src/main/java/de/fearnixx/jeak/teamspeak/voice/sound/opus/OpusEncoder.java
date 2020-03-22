@@ -12,7 +12,7 @@ import java.nio.ShortBuffer;
 /**
  * Thread-safe opus encoder
  * <p>
- * This class was extracted from an example by manevolent
+ * This class was extracted from an example by manevolent. Applied some linting suggestions.
  * <p>
  * URL: https://github.com/Manevolent/ts3j/blob/9d602a8f98480c2c434fa1b7c6b9b0ae893f967f/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/OpusEncoder.java
  */
@@ -25,9 +25,12 @@ public class OpusEncoder implements AutoCloseable {
 
     private static final int[] OPUS_PERMITTED_CHANNEL_COUNTS =
             {1, 2};
+    private static final String ENCODER_CLOSED = "encoder closed";
 
     private final PointerByReference encoder;
-    private final int sampleRate, frameSize, channels;
+    private final int sampleRate;
+    private final int frameSize;
+    private final int channels;
     private final int expectedByteSize;
     private final boolean bigEndian;
 
@@ -95,7 +98,7 @@ public class OpusEncoder implements AutoCloseable {
 
     public int setEncoderValue(int field, Object... values) {
         synchronized (encoderLock) {
-            if (closed) throw new IllegalStateException("encoder closed");
+            if (closed) throw new IllegalStateException(ENCODER_CLOSED);
 
             return OpusUtil.checkError(
                     "opus_encoder_ctl/" + field,
@@ -112,7 +115,7 @@ public class OpusEncoder implements AutoCloseable {
 
         int result;
         synchronized (encoderLock) {
-            if (closed) throw new IllegalStateException("encoder closed");
+            if (closed) throw new IllegalStateException(ENCODER_CLOSED);
 
             if (encoder == null) throw new IllegalStateException("encoder is null");
 
@@ -165,7 +168,7 @@ public class OpusEncoder implements AutoCloseable {
         int result;
 
         synchronized (encoderLock) {
-            if (closed) throw new IllegalStateException("encoder closed");
+            if (closed) throw new IllegalStateException(ENCODER_CLOSED);
 
             result = Opus.INSTANCE.opus_encode(
                     encoder,

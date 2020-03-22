@@ -72,7 +72,6 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                         AbstractVoiceConnectionInformation newClientConnectionInformation;
 
                         if (isDatabaseConnected) {
-                            //TODO: Store client connection information in database
                             newClientConnectionInformation = new DbVoiceConnectionInformation();
                         } else {
                             newClientConnectionInformation = new ConfigVoiceConnectionInformation(
