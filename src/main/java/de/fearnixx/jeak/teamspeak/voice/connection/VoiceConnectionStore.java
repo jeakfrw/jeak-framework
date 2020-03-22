@@ -43,7 +43,7 @@ public class VoiceConnectionStore implements IVoiceConnectionStore {
         return optVoiceConnection(identifier).orElseThrow(
                 () -> new IllegalArgumentException(
                         "The requested voice connection with the identifier " + identifier +
-                                " was not registered in this pool!"
+                                " was not registered in this store!"
                 )
         );
     }

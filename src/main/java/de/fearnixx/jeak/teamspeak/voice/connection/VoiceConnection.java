@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -125,15 +124,16 @@ public class VoiceConnection implements IVoiceConnection {
     private void handleTextMessageEvent(TextMessageEvent e) {
         final IQueryConnection connection;
 
-        try {
-            connection = bot.getServer().getConnection();
-        } catch (NoSuchElementException nse) {
+        Optional<IQueryConnection> optConnection = bot.getServer().optConnection();
+        if (optConnection.isEmpty()) {
             LOGGER.warn("The voice connection with the identifier {} received a " +
                     "text message that should be forwarded, but the query connection " +
                     "was not available!", clientConnectionInformation.getIdentifier()
             );
             return;
         }
+
+        connection = optConnection.get();
 
         eventService.fireEvent(
                 new VoiceConnectionTextMessageEvent(

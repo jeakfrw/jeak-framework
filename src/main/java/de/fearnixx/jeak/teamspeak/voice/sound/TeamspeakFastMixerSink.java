@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * This class was extracted from an example by manevolent. Only logging statements were replaced.
  * <p>
- * URL: https://github.com/Manevolent/ts3j/blob/master/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/TeamspeakFastMixerSink.java
+ * URL: https://github.com/Manevolent/ts3j/blob/941308d67b10ca866bb3f3825a124a07ec471397/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/TeamspeakFastMixerSink.java
  */
 public class TeamspeakFastMixerSink implements Microphone {
 

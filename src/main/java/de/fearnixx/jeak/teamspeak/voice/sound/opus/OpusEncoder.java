@@ -14,7 +14,7 @@ import java.nio.ShortBuffer;
  * <p>
  * This class was extracted from an example by manevolent
  * <p>
- * URL: https://github.com/Manevolent/ts3j/blob/master/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/OpusEncoder.java
+ * URL: https://github.com/Manevolent/ts3j/blob/9d602a8f98480c2c434fa1b7c6b9b0ae893f967f/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/OpusEncoder.java
  */
 public class OpusEncoder implements AutoCloseable {
     private static final int[] OPUS_PERMITTED_SAMPLE_RATES =

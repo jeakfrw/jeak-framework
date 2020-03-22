@@ -3,7 +3,7 @@ package de.fearnixx.jeak.teamspeak.voice.sound.opus;
 /**
  * This class was extracted from an example by manevolent.
  * <p>
- * URL: https://github.com/Manevolent/ts3j/blob/master/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/OpusParameters.java
+ * URL: https://github.com/Manevolent/ts3j/blob/9d602a8f98480c2c434fa1b7c6b9b0ae893f967f/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/OpusParameters.java
  */
 public class OpusParameters {
     private final int opusFrameRate;

@@ -15,7 +15,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * Handling the playing of audio is extracted from an example by manevolent.
  * <p>
- * URL: https://github.com/Manevolent/ts3j/blob/master/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/MusicPlayer.java
+ * URL: https://github.com/Manevolent/ts3j/blob/55b10d6ba5d116769d4ef256d763beed9993fd56/examples/audio/src/main/java/com/github/manevolent/ts3j/examples/audio/MusicPlayer.java
  */
 public class Mp3AudioPlayer extends AudioPlayer {
 

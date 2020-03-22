@@ -31,7 +31,7 @@ public interface IVoiceConnectionInformation {
     /**
      * @return the client id of the voice connection.
      * <p>
-     * {@link IllegalStateException} when trying to access the client id for a voice connection that is not connected.
+     * @throws IllegalStateException when trying to access the client id for a voice connection that is not connected.
      */
     Integer getClientId();
 }
