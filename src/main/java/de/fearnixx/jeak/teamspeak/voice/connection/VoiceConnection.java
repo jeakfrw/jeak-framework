@@ -142,7 +142,7 @@ public class VoiceConnection implements IVoiceConnection {
         );
 
         if (shouldForwardTextMessages) {
-            final QueryEvent.TextMessageEvent textMessageEvent;
+            final QueryEvent.Notification textMessageEvent;
             final int invokerId = e.getInvokerId();
             final IClient client = userService.getClientByID(invokerId).orElseThrow();
 
@@ -152,9 +152,6 @@ public class VoiceConnection implements IVoiceConnection {
                             new QueryEvent.ClientTextMessage(userService);
 
                     clientTextMessage.setClient(client);
-                    clientTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
-                    clientTextMessage.setConnection(connection);
-
                     textMessageEvent = clientTextMessage;
                     break;
                 case CHANNEL:
@@ -165,17 +162,10 @@ public class VoiceConnection implements IVoiceConnection {
                             .findFirst()
                             .orElseThrow()
                     );
-                    channelTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
-                    channelTextMessage.setConnection(connection);
                     textMessageEvent = channelTextMessage;
                     break;
                 case SERVER:
-                    QueryEvent.ServerTextMessage serverTextMessage =
-                            new QueryEvent.ServerTextMessage(userService);
-
-                    serverTextMessage.setCaption(EventCaptions.TEXT_MESSAGE);
-                    serverTextMessage.setConnection(connection);
-                    textMessageEvent = serverTextMessage;
+                    textMessageEvent = new QueryEvent.ServerTextMessage(userService);
                     break;
                 default:
                     throw new IllegalStateException(
@@ -184,6 +174,8 @@ public class VoiceConnection implements IVoiceConnection {
                     );
             }
 
+            textMessageEvent.setCaption(EventCaptions.TEXT_MESSAGE);
+            textMessageEvent.setConnection(connection);
             textMessageEvent.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
             textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_ID, invokerId);
             textMessageEvent.setProperty(
