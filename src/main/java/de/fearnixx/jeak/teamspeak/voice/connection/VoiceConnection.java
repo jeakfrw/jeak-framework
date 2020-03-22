@@ -1,6 +1,5 @@
 package de.fearnixx.jeak.teamspeak.voice.connection;
 
-import com.github.manevolent.ts3j.api.ChannelProperty;
 import com.github.manevolent.ts3j.command.CommandException;
 import com.github.manevolent.ts3j.event.TS3Listener;
 import com.github.manevolent.ts3j.event.TextMessageEvent;
@@ -155,18 +154,16 @@ public class VoiceConnection implements IVoiceConnection {
                     textMessageEvent = clientTextMessage;
                     break;
                 case CHANNEL:
-                    QueryEvent.ChannelTextMessage channelTextMessage =
-                            new QueryEvent.ChannelTextMessage(userService);
-                    channelTextMessage.setChannel(cache.getChannels().stream()
-                            .filter(ch -> ch.getID().equals(Integer.valueOf(e.get(ChannelProperty.CID))))
-                            .findFirst()
-                            .orElseThrow()
+                    LOGGER.info(
+                            "The voice connection with the identifier {} received a ChannelTextMessageEvent," +
+                                    " which will not be forwarded!",
+                            getVoiceConnectionInformation().getIdentifier()
                     );
-                    textMessageEvent = channelTextMessage;
-                    break;
+                    //This feature might be included in a future version and probably will be an own event listener
+                    return;
                 case SERVER:
-                    textMessageEvent = new QueryEvent.ServerTextMessage(userService);
-                    break;
+                    //Server text messages are already handled hence no forwarding is required
+                    return;
                 default:
                     throw new IllegalStateException(
                             "Received text message event with unsupported target mode "
