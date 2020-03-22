@@ -61,6 +61,13 @@ public interface IAudioPlayer {
     void setAudioFile(Path audioFilePath) throws FileNotFoundException;
 
     /**
+     * Callback that will be executed when the end of the stream is reached. Stopping the audio
+     *
+     * @param endOfStreamCallback callback
+     */
+    void setEndOfStreamCallback(Runnable endOfStreamCallback);
+
+    /**
      * @return whether the audio-player is currently playing
      */
     boolean isPlaying();

@@ -162,6 +162,14 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
 
                     try {
                         mp3AudioPlayer.setAudioFile(soundDir, fileName);
+                        mp3AudioPlayer.setEndOfStreamCallback(() -> {
+                            try {
+                                mp3AudioPlayer.setAudioFile(soundDir, fileName);
+                                mp3AudioPlayer.play();
+                            } catch (FileNotFoundException e) {
+                                //This is also not possible
+                            }
+                        });
                     } catch (FileNotFoundException e) {
                         //This is not possible
                         throw new RuntimeException(e);

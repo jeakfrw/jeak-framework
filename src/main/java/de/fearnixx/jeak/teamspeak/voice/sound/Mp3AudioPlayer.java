@@ -32,8 +32,11 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     private boolean paused = true;
+    private boolean stopped = false;
+
     private FFmpegAudioSourceSubstream audioSourceSubstream;
     private LinkedBlockingQueue<AudioFrame> frameQueue;
+    private Runnable endOfStreamCallback;
 
     public Mp3AudioPlayer() {
         super(AUDIO_FORMAT,
@@ -50,12 +53,17 @@ public class Mp3AudioPlayer extends AudioPlayer {
         );
     }
 
-    public Mp3AudioPlayer(InputStream fileInputStream) {
+    public Mp3AudioPlayer(InputStream inputStream) {
         this();
 
-        if (fileInputStream != null) {
-            audioSourceSubstream = createAudioInputStream(fileInputStream);
+        if (inputStream != null) {
+            audioSourceSubstream = createAudioInputStream(inputStream);
         }
+    }
+
+    @Override
+    public void setEndOfStreamCallback(Runnable endOfStreamCallback) {
+        this.endOfStreamCallback = endOfStreamCallback;
     }
 
     @Override
@@ -64,7 +72,17 @@ public class Mp3AudioPlayer extends AudioPlayer {
             pause();
         }
 
-        stopWrite();
+        try {
+            audioSourceSubstream.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Audio stream could not be closed!");
+        }
+
+        stopped = true;
+
+        if (endOfStreamCallback != null) {
+            endOfStreamCallback.run();
+        }
     }
 
     @Override
@@ -73,7 +91,9 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     private void handlePlay() {
-        stop();
+        if (frameQueue != null) {
+            frameQueue.clear();
+        }
 
         startWrite();
 
@@ -150,7 +170,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
                 if (available < 0) {
                     stop();
-                    break;
+                    return;
                 }
             }
 
@@ -211,7 +231,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
     @Override
     public void setAudioStream(InputStream inputStream) {
 
-        if (audioSourceSubstream != null) {
+        if (audioSourceSubstream != null && !stopped) {
             try {
                 audioSourceSubstream.close();
             } catch (Exception e) {
@@ -219,7 +239,6 @@ public class Mp3AudioPlayer extends AudioPlayer {
             }
         }
 
-        stop();
         audioSourceSubstream = createAudioInputStream(inputStream);
     }
 
