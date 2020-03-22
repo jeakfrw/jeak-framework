@@ -102,7 +102,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     }
 
     @Listener
-    public void preShutdown(IBotStateEvent.IPreShutdown event) {
+    public void postShutdown(IBotStateEvent.IPreShutdown event) {
         clientConnections.values().stream()
                 .filter(VoiceConnection::isConnected)
                 .forEach(VoiceConnection::disconnect);
