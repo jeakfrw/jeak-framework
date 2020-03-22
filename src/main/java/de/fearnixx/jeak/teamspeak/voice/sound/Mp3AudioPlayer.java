@@ -10,6 +10,7 @@ import de.fearnixx.jeak.voice.sound.AudioType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 /**
@@ -87,7 +88,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void play() {
-        new Thread(this::handlePlay).start();
+        Executors.newSingleThreadExecutor().execute(this::handlePlay);
     }
 
     private void handlePlay() {

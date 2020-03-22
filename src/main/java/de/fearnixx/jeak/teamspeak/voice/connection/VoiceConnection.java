@@ -11,7 +11,6 @@ import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
@@ -48,19 +47,17 @@ public class VoiceConnection implements IVoiceConnection {
     private boolean connected;
 
     private IUserService userService;
-    private IDataCache cache;
 
     private IBot bot;
 
     private boolean shouldForwardTextMessages;
 
-    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService, IDataCache cache) {
+    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;
         this.eventService = eventService;
         this.userService = userService;
-        this.cache = cache;
         this.bot = bot;
     }
 

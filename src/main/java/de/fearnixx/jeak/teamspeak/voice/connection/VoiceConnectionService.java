@@ -2,6 +2,7 @@ package de.fearnixx.jeak.teamspeak.voice.connection;
 
 import com.github.manevolent.ts3j.identity.LocalIdentity;
 import de.fearnixx.jeak.IBot;
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
@@ -9,7 +10,6 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
@@ -41,9 +41,6 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     private IUserService userService;
 
     @Inject
-    private IDataCache cache;
-
-    @Inject
     private IEventService eventService;
 
     private boolean isDatabaseConnected = false;
@@ -67,8 +64,6 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                             return;
                         }
 
-                        final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
-
                         AbstractVoiceConnectionInformation newClientConnectionInformation;
 
                         if (isDatabaseConnected) {
@@ -79,8 +74,11 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                                             new File(bot.getConfigDirectory(), "frw/voice/" + identifier + ".json")),
                                     identifier
                             );
-                            newClientConnectionInformation.setClientNickname(identifier);
-                            newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
+
+                            if (newClientConnectionInformation.getTeamspeakIdentity() == null) {
+                                final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
+                                newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
+                            }
                         }
 
                         final VoiceConnection clientConnection = new VoiceConnection(
@@ -89,8 +87,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                                 server.getPort(),
                                 eventService,
                                 bot,
-                                userService,
-                                cache
+                                userService
                         );
 
                         clientConnections.put(identifier, clientConnection);
@@ -120,7 +117,8 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     private LocalIdentity createTeamspeakIdentity() {
         LocalIdentity localIdentity;
         try {
-            localIdentity = LocalIdentity.generateNew(15);
+            final Integer securityLevel = Main.getProperty("jeak.voice_connection.security_level", 15);
+            localIdentity = LocalIdentity.generateNew(securityLevel);
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException("Failed to create local identity!", e);
         }
