@@ -17,8 +17,7 @@ public abstract class AbstractVoiceConnectionInformation implements IVoiceConnec
 
     @Override
     public String getClientUniqueId() {
-        //TODO: Check whether this is the correct uuid
-        return getTeamspeakIdentity().getUid().toString();
+        return getTeamspeakIdentity().getUid().toBase64();
     }
 
     public void setClientId(Integer clientId) {

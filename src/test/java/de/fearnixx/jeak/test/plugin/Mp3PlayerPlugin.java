@@ -41,7 +41,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
         addTest("Mp3-Player");
     }
 
-    private IVoiceConnectionStore voiceConnectionPool;
+    private IVoiceConnectionStore voiceConnectionStore;
 
     private int nextPlayerIndex = 1;
     private static final int MAX_PLAYER_COUNT = 5;
@@ -61,7 +61,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
                     .forEach(sounds::add);
         }
 
-        voiceConnectionPool = connectionService.createVoiceConnectionStore();
+        voiceConnectionStore = connectionService.createVoiceConnectionStore();
 
         commandService.registerCommand(
                 Commands.commandSpec("mp3-file-player")
@@ -99,7 +99,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
     }
 
     private void createVoiceConnection(String identifier, String uuid) {
-        voiceConnectionPool.prepareVoiceConnection(identifier,
+        voiceConnectionStore.prepareVoiceConnection(identifier,
                 voiceConnection ->
                         voiceConnection.connect(
                                 () -> {
@@ -136,7 +136,7 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
 
         final String identifier = event.getVoiceConnectionIdentifier();
 
-        IAudioPlayer mp3AudioPlayer = voiceConnectionPool.getVoiceConnection(identifier).getRegisteredAudioPlayer();
+        IAudioPlayer mp3AudioPlayer = voiceConnectionStore.getVoiceConnection(identifier).getRegisteredAudioPlayer();
 
         switch (cmd) {
 
