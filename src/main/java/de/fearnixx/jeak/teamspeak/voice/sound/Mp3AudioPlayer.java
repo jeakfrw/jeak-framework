@@ -6,10 +6,13 @@ import com.github.manevolent.ffmpeg4j.source.FFmpegAudioSourceSubstream;
 import com.github.manevolent.ffmpeg4j.stream.source.FFmpegSourceStream;
 import de.fearnixx.jeak.teamspeak.voice.sound.opus.OpusParameters;
 import de.fearnixx.jeak.voice.sound.AudioType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -20,7 +23,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class Mp3AudioPlayer extends AudioPlayer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Mp3AudioPlayer.class);
+
     private static final String MP3_EXTENSION = "mp3";
+    private final ExecutorService playExecutorService = Executors.newSingleThreadExecutor();
     private double volume = 0.5D;
     private static final long DELAY = 150 * 1_000_000L; // 50ms interval
 
@@ -32,7 +38,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
         }
     }
 
-    private boolean paused = true;
+    private boolean playing = false;
     private boolean stopped = false;
 
     private FFmpegAudioSourceSubstream audioSourceSubstream;
@@ -69,7 +75,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void stop() {
-        if (!paused) {
+        if (playing) {
             pause();
         }
 
@@ -81,14 +87,23 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
         stopped = true;
 
-        if (endOfStreamCallback != null) {
-            endOfStreamCallback.run();
+        try {
+            if (endOfStreamCallback != null) {
+                endOfStreamCallback.run();
+            }
+        } catch (Exception e) {
+            LOGGER.error("An exception occurred in an end-of-stream callback of an Mp3-Audio-Player!", e);
         }
     }
 
     @Override
-    public void play() {
-        Executors.newSingleThreadExecutor().execute(this::handlePlay);
+    public synchronized void play() {
+        if (isPlaying()) {
+            LOGGER.warn("#play call on already playing mp3-audio player! Ignoring most recent call.");
+            return;
+        }
+
+        playExecutorService.execute(this::handlePlay);
     }
 
     private void handlePlay() {
@@ -117,7 +132,9 @@ public class Mp3AudioPlayer extends AudioPlayer {
             long wake = System.nanoTime();
             long sleep;
 
-            paused = false;
+            synchronized (this) {
+                playing = true;
+            }
 
             while (true) {
 
@@ -194,17 +211,17 @@ public class Mp3AudioPlayer extends AudioPlayer {
         if (frameQueue != null) {
             frameQueue.clear();
         }
-        paused = true;
+        playing = false;
     }
 
     @Override
     public void resume() {
-        paused = false;
+        playing = true;
     }
 
     @Override
     public synchronized byte[] provide() {
-        if (!paused) {
+        if (playing) {
             return super.provide();
         } else {
             return new byte[0];
@@ -244,8 +261,8 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     @Override
-    public boolean isPlaying() {
-        return !paused;
+    public synchronized boolean isPlaying() {
+        return playing;
     }
 
     @Override

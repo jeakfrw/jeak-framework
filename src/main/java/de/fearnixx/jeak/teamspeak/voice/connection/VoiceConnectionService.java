@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
@@ -43,13 +44,15 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     @Inject
     private IEventService eventService;
 
+    private final ExecutorService requestExecutorService = Executors.newSingleThreadExecutor();
+
     private boolean isDatabaseConnected = false;
 
     private final Map<String, VoiceConnection> clientConnections = new ConcurrentHashMap<>();
 
     @Override
     public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
-        Executors.newSingleThreadExecutor().execute(
+        requestExecutorService.execute(
                 () -> {
                     synchronized (clientConnections) {
                         if (clientConnections.containsKey(identifier)) {

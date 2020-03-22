@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -41,6 +42,7 @@ public class VoiceConnection implements IVoiceConnection {
     private final String hostname;
     private final int port;
     private final IEventService eventService;
+    private final ExecutorService connectionExecutorService = Executors.newSingleThreadExecutor();
 
     private LocalTeamspeakClientSocket ts3jClientSocket;
 
@@ -71,7 +73,7 @@ public class VoiceConnection implements IVoiceConnection {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(
+        connectionExecutorService.execute(
                 () -> {
                     this.ts3jClientSocket = new LocalTeamspeakClientSocket();
 
