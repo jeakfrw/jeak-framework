@@ -75,10 +75,32 @@ public class TokenConfiguration extends Configurable {
         return new TokenScope(tokenScopes);
     }
 
+    /**
+     * Save the provided token for the provided scope.
+     *
+     * @param token The token as {@link String} to save.
+     * @param tokenScope The scope as {@link TokenScope} the token is valid for.
+     */
     public void saveToken(String token, TokenScope tokenScope) {
         ConfigNode child = new ConfigNode();
         child.setList();
         child.appendValue(tokenScope.getScopeSet());
         getConfig().put(token, child);
+    }
+
+    /**
+     * Delete the provided token. Deleting a not existing token is considered a successful removal,
+     * since the token isn't existing after the {@link TokenConfiguration#deleteToken} method call.
+     *
+     * @param token The token as {@link String} to be deleted.
+     * @return true if the token was successfully deleted or doesn't exist,
+     * false otherwise
+     */
+    public boolean deleteToken(String token) {
+        boolean deleteSuccessful = true;
+        if (!getConfig().getNode(token).isVirtual()) {
+            deleteSuccessful = getConfig().remove(token) != null;
+        }
+        return deleteSuccessful;
     }
 }
