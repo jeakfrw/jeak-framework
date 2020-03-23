@@ -78,7 +78,13 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
 
     @Override
     public LocalIdentity getTeamspeakIdentity() {
-        final String identityString = getInfoNode().getNode(IDENTITY_NODE).asString();
+        final IConfigNode node = getInfoNode().getNode(IDENTITY_NODE);
+
+        if (node.isVirtual()) {
+            return null;
+        }
+
+        final String identityString = node.asString();
 
         try {
             return LocalIdentity.read(new ByteArrayInputStream(identityString.getBytes()));
@@ -89,7 +95,13 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
 
     @Override
     public String getClientNickname() {
-        return getInfoNode().getNode(NICKNAME_NODE).asString();
+        final IConfigNode node = getInfoNode().getNode(NICKNAME_NODE);
+
+        if (node.isVirtual()) {
+            return identifier;
+        }
+
+        return node.asString();
     }
 
     private void save() {

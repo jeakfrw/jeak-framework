@@ -11,7 +11,6 @@ import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -42,25 +42,24 @@ public class VoiceConnection implements IVoiceConnection {
     private final String hostname;
     private final int port;
     private final IEventService eventService;
+    private final ExecutorService connectionExecutorService = Executors.newSingleThreadExecutor();
 
     private LocalTeamspeakClientSocket ts3jClientSocket;
 
     private boolean connected;
 
     private IUserService userService;
-    private IDataCache cache;
 
     private IBot bot;
 
     private boolean shouldForwardTextMessages;
 
-    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService, IDataCache cache) {
+    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
         this.port = port;
         this.eventService = eventService;
         this.userService = userService;
-        this.cache = cache;
         this.bot = bot;
     }
 
@@ -74,7 +73,7 @@ public class VoiceConnection implements IVoiceConnection {
             return;
         }
 
-        Executors.newSingleThreadExecutor().execute(
+        connectionExecutorService.execute(
                 () -> {
                     this.ts3jClientSocket = new LocalTeamspeakClientSocket();
 
