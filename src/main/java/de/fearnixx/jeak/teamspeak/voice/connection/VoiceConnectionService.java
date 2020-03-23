@@ -28,9 +28,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
 public class VoiceConnectionService implements IVoiceConnectionService {
+
+    private static final int CONNECTION_FACTORY_POOL_SIZE = Main.getProperty("jeak.voice_connection.construction_poolSize", 2);
 
     @Inject
     private IServer server;
@@ -44,7 +47,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     @Inject
     private IEventService eventService;
 
-    private final ExecutorService requestExecutorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService requestExecutorService = Executors.newFixedThreadPool(CONNECTION_FACTORY_POOL_SIZE);
 
     private boolean isDatabaseConnected = false;
 
@@ -52,6 +55,10 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     @Override
     public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
+        if (!server.isConnected()) {
+            throw new IllegalStateException("Cannot request connections when server is not yet connected!");
+        }
+
         requestExecutorService.execute(
                 () -> {
                     synchronized (clientConnections) {
@@ -84,10 +91,12 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                             }
                         }
 
+                        final IntSupplier portSupplier = () -> server.optVoicePort()
+                                .orElseThrow(() -> new IllegalStateException("Couldn't get voice port! Query not connected yet?"));
                         final VoiceConnection clientConnection = new VoiceConnection(
                                 newClientConnectionInformation,
                                 server.getHost(),
-                                server.getPort(),
+                                portSupplier,
                                 eventService,
                                 bot,
                                 userService

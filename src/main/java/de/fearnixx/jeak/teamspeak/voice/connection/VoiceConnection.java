@@ -33,6 +33,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 
 public class VoiceConnection implements IVoiceConnection {
 
@@ -40,7 +41,7 @@ public class VoiceConnection implements IVoiceConnection {
 
     private final AbstractVoiceConnectionInformation clientConnectionInformation;
     private final String hostname;
-    private final int port;
+    private final IntSupplier portSupplier;
     private final IEventService eventService;
     private final ExecutorService connectionExecutorService = Executors.newSingleThreadExecutor();
 
@@ -54,10 +55,10 @@ public class VoiceConnection implements IVoiceConnection {
 
     private boolean shouldForwardTextMessages;
 
-    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, int port, IEventService eventService, IBot bot, IUserService userService) {
+    VoiceConnection(AbstractVoiceConnectionInformation clientConnectionInformation, String hostname, IntSupplier portSupplier, IEventService eventService, IBot bot, IUserService userService) {
         this.clientConnectionInformation = clientConnectionInformation;
         this.hostname = hostname;
-        this.port = port;
+        this.portSupplier = portSupplier;
         this.eventService = eventService;
         this.userService = userService;
         this.bot = bot;
@@ -72,6 +73,7 @@ public class VoiceConnection implements IVoiceConnection {
             );
             return;
         }
+        final int port = portSupplier.getAsInt();
 
         connectionExecutorService.execute(
                 () -> {
@@ -313,15 +315,15 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public synchronized void setClientNickname(String nickname) {
-        if (nickname == null || nickname.isEmpty() || nickname.length() > 30) {
+        if (nickname == null || nickname.length() < 3 || nickname.length() > 31) {
             throw new IllegalArgumentException(
-                    "The nickname of a client connection must be not empty and short than 30 characters!"
+                    "The nickname of a client connection must be longer than 2 and shorter than 31 characters!"
             );
         }
 
         clientConnectionInformation.setClientNickname(nickname);
 
-        if (connected) {
+        if (connected && !ts3jClientSocket.getNickname().equals(nickname)) {
             ts3jClientSocket.setNickname(nickname);
         }
     }
