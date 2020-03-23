@@ -74,7 +74,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     @Override
-    public void stop() {
+    public synchronized void stop() {
         if (playing) {
             pause();
         }
@@ -207,15 +207,16 @@ public class Mp3AudioPlayer extends AudioPlayer {
         this.volume = volume;
     }
 
-    public void pause() {
+    public synchronized void pause() {
         if (frameQueue != null) {
             frameQueue.clear();
         }
+
         playing = false;
     }
 
     @Override
-    public void resume() {
+    public synchronized void resume() {
         playing = true;
     }
 
