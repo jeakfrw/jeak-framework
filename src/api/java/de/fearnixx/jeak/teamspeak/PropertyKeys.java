@@ -153,4 +153,133 @@ public abstract class PropertyKeys {
         public static final String FLAG_SKIP = "permskip";
         public static final String FLAG_SKIP_SHORT = "s";
     }
+
+    /**
+     * Properties available in the <em>serverinfo</em> response.
+     */
+    public abstract static class ServerInfo {
+
+        private ServerInfo() {
+        }
+
+        public static final String ID = "virtualserver_id";
+        public static final String MACHINE_ID = "virtualserver_machine_id";
+        public static final String UNIQUE_IDENTIFIER = "virtualserver_unique_identifier";
+        public static final String AUTOSTART = "virtualserver_autostart";
+        public static final String NEEDED_IDENTITY_SECURITY_LEVEL = "virtualserver_needed_identity_security_level";
+        public static final String ASK_PRIVILEGE_KEY = "virtualserver_ask_for_privilegekey";
+
+        public static final String IP = "virtualserver_ip";
+        public static final String PORT = "virtualserver_port";
+        public static final String NICKNAME = "virtualserver_nickname";
+        public static final String STATUS = "virtualserver_status";
+
+        public static final String NAME = "virtualserver_name";
+        public static final String NAME_PHONETIC = "virtualserver_name_phonetic";
+        public static final String WELCOME_MESSAGE = "virtualserver_welcomemessage";
+        public static final String PLATFORM = "virtualserver_platform";
+        public static final String VERSION = "virtualserver_version";
+        public static final String MIN_CLIENT_VERSION = "virtualserver_min_client_version";
+        public static final String MIN_ANDROID_VERSION = "virtualserver_min_android_version";
+        public static final String MIN_IOS_VERSION = "virtualserver_min_ios_version";
+        public static final String MAX_CLIENTS = "virtualserver_maxclients";
+        public static final String RESERVED_SLOTS = "virtualserver_reserved_slots";
+        public static final String PASSWORD = "virtualserver_password";
+        public static final String CLIENTS_ONLINE = "virtualserver_clientsonline";
+        public static final String CHANNELS_ONLINE = "virtualserver_channelsonline";
+        public static final String CREATED_TSP = "virtualserver_created";
+        public static final String UPTIME_SECS = "virtualserver_uptime";
+        public static final String CODEC_ENCRYPTION_MODE = "virtualserver_codec_encryption_mode";
+        public static final String TEMP_CHANNEL_DEFAULT_DELETE_DELAY = "virtualserver_channel_temp_delete_delay_default";
+
+        public static final String SHOW_ON_WEBLIST = "virtualserver_weblist_enabled";
+        public static final String ICON_ID = "virtualserver_icon_id";
+        public static final String HOST_MESSAGE = "virtualserver_hostmessage";
+        public static final String HOST_MESSAGE_MODE = "virtualserver_hostmessage_mode";
+
+        public static final String HOST_BANNER_URL = "virtualserver_hostbanner_url";
+        public static final String HOST_BANNER_GFX_URL = "virtualserver_hostbanner_gfx_url";
+        public static final String HOST_BANNER_GFX_INTERVAL = "virtualserver_hostbanner_gfx_interval";
+        public static final String HOST_BANNER_MODE = "virtualserver_hostbanner_mode";
+
+        public static final String HOST_BUTTON_TOOLTIP = "virtualserver_hostbutton_tooltip";
+        public static final String HOST_BUTTON_URL = "virtualserver_hostbutton_url";
+        public static final String HOST_BUTTON_GFX_URL = "virtualserver_hostbutton_gfx_url";
+
+        public static final String FILETRANSFER_BASE_DIRECTORY = "virtualserver_filebase";
+        public static final String DEFAULT_SERVER_GROUP = "virtualserver_default_server_group";
+        public static final String DEFAULT_CHANNEL_GROUP = "virtualserver_default_channel_group";
+        public static final String DEFAULT_CHANNEL_ADMIN_GROUP = "virtualserver_default_channel_admin_group";
+
+        public static final String MAX_DOWNLOAD_TOTAL = "virtualserver_max_download_total_bandwidth";
+        public static final String MAX_UPLOAD_TOTAL = "virtualserver_max_upload_total_bandwidth";
+        public static final String DOWNLOAD_QUOTA = "virtualserver_download_quota";
+        public static final String UPLOAD_QUOTA = "virtualserver_upload_quota";
+        public static final String MONTH_BYTES_DOWNLOAD = "virtualserver_month_bytes_downloaded";
+        public static final String MONTH_BYTES_UPLOAD = "virtualserver_month_bytes_uploaded";
+        public static final String TOTAL_BYTES_DOWNLOAD = "virtualserver_total_bytes_downloaded";
+        public static final String TOTAL_BYTES_UPLOAD = "virtualserver_total_bytes_uploaded";
+
+        public static final String COMPLAIN_AUTOBAN_THRESHOLD = "virtualserver_complain_autoban_count";
+        public static final String COMPLAIN_AUTOBAN_TIME = "virtualserver_complain_autoban_time";
+        public static final String COMPLAIN_AUTOBAN_REMOVE_TIME = "virtualserver_complain_remove_time";
+
+        public static final String FORCED_SILENCE_THRESHOLD = "virtualserver_min_clients_in_channel_before_forced_silence";
+        public static final String PRIORITY_SPEAKER_DIMMING_DB = "virtualserver_priority_speaker_dimm_modificator";
+
+        public static final String FLAG_PASSWORD = "virtualserver_flag_password";
+
+        public static final String ANTIFLOOD_TICK_REDUCTION = "virtualserver_antiflood_points_tick_reduce";
+        public static final String ANTIFLOOD_BLOCK_THRESHOLD = "virtualserver_antiflood_points_needed_command_block";
+        public static final String ANTIFLOOD_BLOCK_THRESHOLD_PER_IP = "virtualserver_antiflood_points_needed_ip_block";
+        public static final String ANTIFLOOD_BLOCK_THRESHOLD_PLUGIN = "virtualserver_antiflood_points_needed_plugin_block";
+
+        public static final String CLIENT_CONNECTIONS = "virtualserver_client_connections";
+        public static final String QUERY_CONNECTIONS = "virtualserver_query_client_connections";
+        public static final String QUERY_CONNECTIONS_ONLINE = "virtualserver_queryclientsonline";
+
+        public static final String LOG_CLIENT = "virtualserver_log_client";
+        public static final String LOG_QUERY = "virtualserver_log_query";
+        public static final String LOG_CHANNEL = "virtualserver_log_channel";
+        public static final String LOG_PERMISSIONS = "virtualserver_log_permissions";
+        public static final String LOG_SERVER = "virtualserver_log_server";
+        public static final String LOG_FILETRANSFER = "virtualserver_log_filetransfer";
+
+        public static final String PACKETLOSS_SPEECH_TOTAL = "virtualserver_total_packetloss_speech";
+        public static final String PACKETLOSS_KEEPALIVE = "virtualserver_total_packetloss_keepalive";
+        public static final String PACKETLOSS_CONTROL = "virtualserver_total_packetloss_control";
+        public static final String PACKETLOSS_TOTAL = "virtualserver_total_packetloss_total";
+        public static final String PING = "virtualserver_total_ping";
+
+        public abstract static class Connection {
+
+            private Connection() {
+            }
+
+            public static final String FILETRANSFER_BANDWIDTH_SENT = "connection_filetransfer_bandwidth_sent";
+            public static final String FILETRANSFER_BANDWIDTH_RECEIVED = "connection_filetransfer_bandwidth_received";
+            public static final String FILETRANSFER_BYTES_SENT = "connection_filetransfer_bytes_sent_total";
+            public static final String FILETRANSFER_BYTES_RECEIVED = "connection_filetransfer_bytes_received_total";
+            public static final String SPEECH_SENT_PACKETS = "connection_packets_sent_speech";
+            public static final String SPEECH_SENT_BYTES = "connection_bytes_sent_speech";
+            public static final String KEEPALIVE_SENT_BYTES = "connection_bytes_sent_keepalive";
+            public static final String KEEPALIVE_SENT_PACKETS = "connection_packets_sent_keepalive";
+            public static final String KEEPALIVE_RECEIVED_BYTES = "connection_bytes_received_keepalive";
+            public static final String KEEPALIVE_RECEIVED_PACKETS = "connection_packets_received_keepalive";
+            public static final String CONTROL_SENT_PACKETS = "connection_packets_sent_control";
+            public static final String CONTROL_SENT_BYTES = "connection_bytes_sent_control";
+            public static final String CONTROL_RECEIVED_PACKETS = "connection_packets_received_control";
+            public static final String CONTROL_RECEIVED_BYTES = "connection_bytes_received_control";
+
+            public static final String SENT_PACKETS_TOTAL = "connection_packets_sent_total";
+            public static final String SENT_BYTES_TOTAL = "connection_bytes_sent_total";
+            public static final String RECEIVED_PACKETS_TOTAL = "connection_packets_received_total";
+            public static final String RECEIVED_BYTES_TOTAL = "connection_bytes_received_total";
+
+            public static final String BANDWIDTH_SENT_LAST_SECOND = "connection_bandwidth_sent_last_second_total";
+            public static final String BANDWIDTH_SENT_LAST_MINUTE = "connection_bandwidth_sent_last_minute_total";
+            public static final String BANDWIDTH_RECEIVED_LAST_SECOND = "connection_bandwidth_received_last_second_total";
+            public static final String BANDWIDTH_RECEIVED_LAST_MINUTE = "connection_bandwidth_received_last_minute_total";
+        }
+    }
 }
