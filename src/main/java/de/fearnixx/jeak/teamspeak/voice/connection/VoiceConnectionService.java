@@ -55,10 +55,6 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     @Override
     public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
-        if (!server.isConnected()) {
-            throw new IllegalStateException("Cannot request connections when server is not yet connected!");
-        }
-
         requestExecutorService.execute(
                 () -> {
                     synchronized (clientConnections) {
