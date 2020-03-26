@@ -122,18 +122,6 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     private void handleTextMessageEvent(TextMessageEvent e) {
-        final IQueryConnection connection;
-
-        Optional<IQueryConnection> optConnection = bot.getServer().optConnection();
-        if (optConnection.isEmpty()) {
-            LOGGER.warn("The voice connection with the identifier {} received a " +
-                    "text message that should be forwarded, but the query connection " +
-                    "was not available!", clientConnectionInformation.getIdentifier()
-            );
-            return;
-        }
-
-        connection = optConnection.get();
 
         eventService.fireEvent(
                 new VoiceConnectionTextMessageEvent(
@@ -142,6 +130,17 @@ public class VoiceConnection implements IVoiceConnection {
         );
 
         if (shouldForwardTextMessages) {
+            final IQueryConnection connection;
+            Optional<IQueryConnection> optConnection = bot.getServer().optConnection();
+            if (optConnection.isEmpty()) {
+                LOGGER.warn("The voice connection with the identifier {} received a " +
+                        "text message that should be forwarded, but the query connection " +
+                        "was not available!", clientConnectionInformation.getIdentifier()
+                );
+                return;
+            }
+            connection = optConnection.get();
+
             final QueryEvent.Notification textMessageEvent;
             final int invokerId = e.getInvokerId();
             final IClient client = userService.getClientByID(invokerId).orElseThrow();

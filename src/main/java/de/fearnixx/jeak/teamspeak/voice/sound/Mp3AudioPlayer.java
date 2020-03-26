@@ -26,8 +26,10 @@ public class Mp3AudioPlayer extends AudioPlayer {
     private static final Logger LOGGER = LoggerFactory.getLogger(Mp3AudioPlayer.class);
 
     private static final String MP3_EXTENSION = "mp3";
+    private static final double VOLUME_EXPONENT = 2;
     private final ExecutorService playExecutorService = Executors.newSingleThreadExecutor();
     private double volume = 0.5D;
+    private double volumeSampleFactor = Math.pow(volume, VOLUME_EXPONENT);
     private static final long DELAY = 150 * 1_000_000L; // 50ms interval
 
     static {
@@ -146,7 +148,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
                             try {
                                 AudioFrame frame = audioSourceSubstream.next();
                                 for (int i = 0; i < frame.getLength(); i++)
-                                    frame.getSamples()[i] *= volume;
+                                    frame.getSamples()[i] *= volumeSampleFactor;
 
                                 Collection<AudioFrame> frameList = resampleFilter.apply(frame);
                                 frameQueue.addAll(frameList);
@@ -204,7 +206,11 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     public void setVolume(double volume) {
+        if (volume < 0 || volume > 1) {
+            throw new IllegalArgumentException("Volume out of range: " + volume);
+        }
         this.volume = volume;
+        this.volumeSampleFactor = Math.pow(volume, VOLUME_EXPONENT);
     }
 
     public synchronized void pause() {
