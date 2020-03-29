@@ -157,7 +157,7 @@ public class SparkAdapter extends HttpServer {
             controllerContainer.getAnnotation(RestController.class).ifPresent(restController -> {
                 if (getRestConfiguration().rejectUnencryptedTraffic().orElse(RestConfiguration.DEFAULT_HTTPS_REJECT_UNENCRYPTED) && !isProtocolHttps(request)) {
                     logger.debug("HTTPS enforcement enabled, non HTTPS request for {} blocked", path);
-                    service.halt(403);
+                    service.halt(426, "{\"errors\": [\"Use of HTTPS is mandatory for this endpoint\"]}");
                 }
             });
             controllerMethod.getAnnotation(RequestMapping.class).ifPresent(requestMapping -> {
