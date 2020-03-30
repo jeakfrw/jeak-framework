@@ -6,10 +6,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class ControllerMethod {
     private final Method method;
@@ -71,7 +68,7 @@ public class ControllerMethod {
      * @param <T>
      * @return
      */
-    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-        return method.getAnnotation(annotationClass);
+    public <T extends Annotation> Optional<T> getAnnotation(Class<T> annotationClass) {
+        return Optional.ofNullable(method.getAnnotation(annotationClass));
     }
 }

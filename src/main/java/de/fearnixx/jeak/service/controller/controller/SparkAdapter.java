@@ -1,10 +1,7 @@
 package de.fearnixx.jeak.service.controller.controller;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.reflect.PathParam;
-import de.fearnixx.jeak.reflect.RequestBody;
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RequestParam;
+import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.controller.RequestMethod;
 import de.fearnixx.jeak.service.controller.ResponseEntity;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
@@ -21,6 +18,7 @@ import spark.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 public class SparkAdapter extends HttpServer {
@@ -113,7 +111,7 @@ public class SparkAdapter extends HttpServer {
      */
     private Route generateRoute(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         List<MethodParameter> methodParameterList = controllerMethod.getMethodParameters();
-        addBeforeHandlingCheck(path, controllerMethod);
+        addBeforeHandlingCheck(path, controllerContainer, controllerMethod);
         return (request, response) -> {
             Object[] methodParameters = extractParameters(methodParameterList, request);
             Object returnValue = null;
@@ -164,20 +162,60 @@ public class SparkAdapter extends HttpServer {
         return methodParameters;
     }
 
-    private void addBeforeHandlingCheck(String path, ControllerMethod controllerMethod) {
+    private void addBeforeHandlingCheck(String path, ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
         service.before(path, (request, response) -> {
-            if (controllerMethod.getAnnotation(RequestMapping.class).isSecured()) {
-                boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
-                if (!isAuthorized) {
-                    service.halt(401);
+            controllerContainer.getAnnotation(RestController.class).ifPresent(restController -> {
+                if (getRestConfiguration().rejectUnencryptedTraffic().orElse(RestConfiguration.DEFAULT_HTTPS_REJECT_UNENCRYPTED) && !isProtocolHttps(request)) {
+                    logger.debug("HTTPS enforcement enabled, non HTTPS request for {} blocked", path);
+                    service.halt(426, "{\"errors\": [\"Use of HTTPS is mandatory for this endpoint\"]}");
                 }
-            }
+            });
+            controllerMethod.getAnnotation(RequestMapping.class).ifPresent(requestMapping -> {
+                if (requestMapping.isSecured()) {
+                    boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
+                    if (!isAuthorized) {
+                        logger.debug("Authorization for Request to {} failed", path);
+                        service.halt(401);
+                    }
+                }
+            });
         });
+    }
+
+    private boolean isProtocolHttps(Request request) {
+        return request.protocol().contains(HTTPS_PROTOCOL) ||
+                (getRestConfiguration().isBehindSslProxy().orElse(false)
+                        && request.headers(X_FORWARDED_PROTO_HEADER) != null &&
+                        !request.headers(X_FORWARDED_PROTO_HEADER).isBlank() &&
+                        request.headers(X_FORWARDED_PROTO_HEADER).contains(HTTPS_PROTOCOL));
     }
 
     @Override
     public void start() {
         getRestConfiguration().getPort().ifPresent(service::port);
+        getRestConfiguration().isHttpsEnabled().ifPresent(isHttpsEnabled -> {
+            if (Boolean.TRUE.equals(isHttpsEnabled)) {
+                logger.info("Https enabled");
+                initHttps();
+            } else {
+                logger.info("HTTPS disabled");
+            }
+        });
+
+    }
+
+    private void initHttps() {
+        Optional<String> httpsKeystorePath = getRestConfiguration().getHttpsKeystorePath();
+        Optional<String> httpsKeystorePassword = getRestConfiguration().getHttpsKeystorePassword();
+        Optional<String> httpsTruststorePath = getRestConfiguration().getHttpsTruststorePath();
+        Optional<String> httpsTruststorePassword = getRestConfiguration().getHttpsTruststorePassword();
+
+        if (httpsKeystorePath.isPresent() && httpsKeystorePassword.isPresent()) {
+            service.secure(httpsKeystorePath.get(), httpsKeystorePassword.get(), null, null);
+            if (httpsTruststorePath.isPresent() && httpsTruststorePassword.isPresent()) {
+                service.secure(httpsKeystorePath.get(), httpsKeystorePassword.get(), httpsTruststorePath.get(), httpsTruststorePassword.get());
+            }
+        }
     }
 
     /**

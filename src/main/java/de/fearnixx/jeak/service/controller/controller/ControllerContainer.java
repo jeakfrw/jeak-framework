@@ -5,10 +5,12 @@ import de.fearnixx.jeak.reflect.RestController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ControllerContainer {
@@ -41,6 +43,10 @@ public class ControllerContainer {
                     return new ControllerMethod(method, mapping.method(), mapping.endpoint());
                 })
                 .collect(Collectors.toList());
+    }
+
+    public <T extends Annotation> Optional<T> getAnnotation(Class<T> annotationClass) {
+        return Optional.ofNullable(controllerObject.getClass().getAnnotation(annotationClass));
     }
 
     private String extractControllerRoute(Object o) {

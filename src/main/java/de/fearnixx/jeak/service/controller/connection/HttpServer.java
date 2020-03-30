@@ -25,6 +25,8 @@ public abstract class HttpServer {
     private static final Logger logger = LoggerFactory.getLogger(HttpServer.class);
     private static final String API_ENDPOINT = "/api";
     private ObjectMapper objectMapper;
+    public static final String HTTPS_PROTOCOL = "HTTPS";
+    public static final String X_FORWARDED_PROTO_HEADER = "X-Forwarded-Proto";
 
     private RestConfiguration restConfiguration;
 
@@ -42,7 +44,6 @@ public abstract class HttpServer {
 
     /**
      * Start the http server.
-     *
      */
     public abstract void start();
 
@@ -57,7 +58,7 @@ public abstract class HttpServer {
      * Build the endpoint.
      *
      * @param controllerContainer The controller as {@link ControllerContainer}.
-     * @param controllerMethod The method as {@link ControllerMethod}.
+     * @param controllerMethod    The method as {@link ControllerMethod}.
      * @return The endpoint as {@link String} created from the {@link ControllerContainer} and {@link ControllerMethod}.
      */
     protected String buildEndpoint(ControllerContainer controllerContainer, ControllerMethod controllerMethod) {
@@ -146,7 +147,7 @@ public abstract class HttpServer {
         try {
             deserializedObject = objectMapper.readValue(json, clazz);
         } catch (IOException e) {
-            logger.error("There was an error while trying to deserialize json",e);
+            logger.error("There was an error while trying to deserialize json", e);
         }
         return deserializedObject;
     }

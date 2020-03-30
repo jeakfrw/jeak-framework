@@ -3,6 +3,11 @@
   "headers": {
     "Access-Control-Allow-Origin": "*"
   },
+  "https": {
+    "behind-ssl-proxy": true,
+    "reject-unencrypted": true,
+    "keystore-path": ""
+  },
   "cors": {
     "enabled": true,
     "headers": {
