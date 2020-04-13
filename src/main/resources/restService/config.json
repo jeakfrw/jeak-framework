@@ -4,16 +4,17 @@
     "Access-Control-Allow-Origin": "*"
   },
   "https": {
-    "behind-ssl-proxy": true,
-    "reject-unencrypted": true,
+    "https-enabled": false,
+    "behind-ssl-proxy": false,
+    "reject-unencrypted": false,
     "keystore-path": ""
   },
   "cors": {
     "enabled": true,
     "headers": {
-      "Access-Control-Allow-Methods": "POST, PUT, PATCH, OPTIONS",
+      "Access-Control-Allow-Methods": "POST, PUT, PATCH, OPTIONS, DELETE",
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type"
+      "Access-Control-Allow-Headers": "Content-Type, X-Requested-With, Authorization, Accept"
     }
   }
 }
