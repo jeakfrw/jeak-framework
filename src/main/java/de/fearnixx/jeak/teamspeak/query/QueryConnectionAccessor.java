@@ -39,6 +39,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         }
 
         dispatcher = injectionService.injectInto(new QueryEventDispatcher());
+        eventService.registerListener(dispatcher);
         connection = new TS3Connection(in, out, this::onAnswer, this::onNotification);
         injectionService.injectInto(connection);
     }

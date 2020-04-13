@@ -1,9 +1,13 @@
 package de.fearnixx.jeak.teamspeak.query;
 
+import de.fearnixx.jeak.Main;
+import de.fearnixx.jeak.event.IEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
+import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
@@ -11,10 +15,15 @@ import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.jeak.teamspeak.except.QueryException;
+import de.fearnixx.jeak.util.NamePatternThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Dispatches events based on incoming {@link de.fearnixx.jeak.event.IRawQueryEvent}s.
@@ -22,6 +31,9 @@ import java.util.*;
 public class QueryEventDispatcher {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryEventDispatcher.class);
+    private static final int FAILED_PERM_ID = Main.getProperty("jeak.queryDispatcher.insuffClientPermId", 2568);
+    private static final int DISPATCHER_POOL_SIZE = Main.getProperty("jeak.queryDispatcher.poolSize", 5);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.queryDispatcher.terminatedelay", 10000);
 
     private static final List<String> STD_CHANNELEDIT_PROPS = Arrays.asList(
             PropertyKeys.Channel.ID,
@@ -30,6 +42,7 @@ public class QueryEventDispatcher {
             PropertyKeys.TextMessage.SOURCE_UID,
             "reasonid"
     );
+    private static final List<String> permFails = new LinkedList<>();
 
     @Inject
     private IEventService eventService;
@@ -37,9 +50,16 @@ public class QueryEventDispatcher {
     @Inject
     private IUserService userSvc;
 
+    private final ExecutorService executor =
+            Executors.newFixedThreadPool(DISPATCHER_POOL_SIZE, new NamePatternThreadFactory("querydispatcher-%d"));
     private int lastNotificationHash;
     private IRawQueryEvent.IMessage.INotification lastEditEvent;
 
+    /**
+     * Not dispatched asynchronously as the event is passed on the event service which is already parallel implemented.
+     *
+     * @see de.fearnixx.jeak.event.EventService#fireEvent(IEvent)
+     */
     public void dispatchNotification(IRawQueryEvent.IMessage.INotification event) {
         QueryEvent.Notification notification;
         String caption = event.getCaption().toLowerCase();
@@ -177,6 +197,9 @@ public class QueryEventDispatcher {
         }
     }
 
+    /**
+     * Asynchronously dispatches done, success and error callbacks on {@link IQueryRequest} objects.
+     */
     public void dispatchAnswer(IRawQueryEvent.IMessage.IAnswer event) {
         IQueryRequest request = event.getRequest();
 
@@ -189,11 +212,23 @@ public class QueryEventDispatcher {
         List<IDataHolder> dataHolders = new ArrayList<>(event.toList());
         answer.setChain(Collections.unmodifiableList(dataHolders));
 
-        // Callbacks are prioritized to event listeners
-        invokeCallbacks(event, request, answer);
+        if (answer.getErrorCode() == FAILED_PERM_ID) {
+            logger.warn("Insufficient permission error detected: {} - {}",
+                    answer.getErrorCode(), answer.getErrorMessage());
+            permFails.add(String.format("\t%s: %s -> [%s]%s",
+                    LocalDateTime.now().withNano(0).toString(), request.getCommand(),
+                    answer.getErrorCode(), answer.getErrorMessage()));
+        }
 
-        // Fire the processed event
-        eventService.fireEvent(answer);
+        executor.submit(() -> {
+            logger.trace("Working on reqest callback. {}", request.getCommand());
+            // Callbacks are prioritized to event listeners
+            invokeCallbacks(event, request, answer);
+
+            logger.trace("Submitting to event service. {}", request.getCommand());
+            // Fire the processed event
+            eventService.fireEvent(answer);
+        });
     }
 
     private void invokeCallbacks(IRawQueryEvent.IMessage.IAnswer event, IQueryRequest request, QueryEvent.Answer answer) {
@@ -206,6 +241,27 @@ public class QueryEventDispatcher {
 
         if (request.onDone() != null) {
             request.onDone().accept(answer);
+        }
+    }
+
+    @Listener(order = Listener.Orders.LATER)
+    public void onShutdown(IBotStateEvent.IPostShutdown event) {
+        if (!permFails.isEmpty()) {
+            logger.warn("There were missing permissions encountered at runtime. Here's a list of them:\n{}",
+                    String.join("\n", permFails));
+        }
+
+        boolean terminated_successfully = false;
+        try {
+            executor.shutdown();
+            terminated_successfully = executor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            logger.error("Got interrupted while awaiting thread termination!", e);
+            Thread.currentThread().interrupt();
+        }
+        if (!terminated_successfully) {
+            logger.warn("Some dispatched callbacks did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
+            logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
         }
     }
 }
