@@ -12,7 +12,7 @@
     "enabled": true,
     "headers": {
       "Access-Control-Allow-Methods": "POST, PUT, PATCH, OPTIONS",
-      "Access-Control-Allow-Origin": "GET, POST, PUT, PATCH",
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Headers": "Content-Type"
     }
   }
