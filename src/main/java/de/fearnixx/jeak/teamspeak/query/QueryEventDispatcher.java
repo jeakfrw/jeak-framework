@@ -33,7 +33,7 @@ public class QueryEventDispatcher {
     private static final Logger logger = LoggerFactory.getLogger(QueryEventDispatcher.class);
     private static final int FAILED_PERM_ID = Main.getProperty("jeak.queryDispatcher.insuffClientPermId", 2568);
     private static final int DISPATCHER_POOL_SIZE = Main.getProperty("jeak.queryDispatcher.poolSize", 5);
-    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.queryDispatcher.terminatedelay", 10000);
+    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.queryDispatcher.terminateDelay", 10000);
 
     private static final List<String> STD_CHANNELEDIT_PROPS = Arrays.asList(
             PropertyKeys.Channel.ID,
