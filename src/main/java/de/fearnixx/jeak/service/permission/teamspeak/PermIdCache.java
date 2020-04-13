@@ -84,9 +84,9 @@ public class PermIdCache {
             logger.info("Cache-miss for \"{}\". Attempting lazy retrieval.", permSID);
             Optional<Integer> optPermId = lazilyGetPermId(permSID);
 
-             permId = optPermId.orElseThrow(() -> new IllegalArgumentException("Unknown permSID: " + permSID));
-             logger.debug("Updating cache: {} -> {}", permSID, permId);
-             internalCache.put(permSID, permId);
+            permId = optPermId.orElseThrow(() -> new IllegalArgumentException("Unknown permSID: " + permSID));
+            logger.debug("Updating cache: {} -> {}", permSID, permId);
+            internalCache.put(permSID, permId);
         }
         return permId;
     }
@@ -95,9 +95,12 @@ public class PermIdCache {
         IQueryRequest request = IQueryRequest.builder()
                 .command("permidgetbyname")
                 .addKey("permsid", permSid)
+                .onError(a -> logger.error("Failed to retrieve ID for \"{}\"! {} - {}",
+                        permSid, a.getErrorCode(), a.getErrorMessage()))
                 .build();
 
         BlockingRequest bRequest = new BlockingRequest(request);
+        server.getConnection().sendRequest(request);
         if (bRequest.waitForCompletion()) {
             IQueryEvent.IAnswer answer = bRequest.getAnswer();
 
@@ -113,17 +116,18 @@ public class PermIdCache {
                         if (permid > 0) {
                             return Optional.of(permid);
                         } else {
-                            logger.warn("Failed to retrieve permID from answer!");
+                            logger.warn("Failed to retrieve permID for \"{}\" from answer!", permSid);
                         }
                     } else {
                         logger.debug("Skipping result SID: {}", dataSID);
                     }
                 }
             } else {
-                logger.warn("Non-OK return code for permID lookup: {} - {}", answer.getErrorCode(), answer.getErrorMessage());
+                logger.warn("Non-OK return code for permID (\"{}\")lookup: {} - {}",
+                        permSid, answer.getErrorCode(), answer.getErrorMessage());
             }
         } else {
-            logger.warn("Could not complete blocking request for permID lookup.");
+            logger.error("Could not complete blocking request for permID lookup.");
         }
 
         return Optional.empty();
