@@ -42,6 +42,7 @@ public class DBUserService extends AbstractUserService {
             throw new IllegalArgumentException("TS3 unique ID may not be null, blank or empty!");
         }
 
+        logger.debug("#findUserByUniqueID({})", ts3uniqueID);
         List<TS3User> results = new LinkedList<>();
         withConnection(conn -> {
             String query = "SELECT * FROM clients c WHERE c.client_unique_id = ? AND c.server_id = ?";
@@ -53,6 +54,11 @@ public class DBUserService extends AbstractUserService {
 
     @Override
     public List<IUser> findUserByDBID(int ts3dbID) {
+        if (ts3dbID <= 0) {
+            throw new IllegalArgumentException("TS3 DB ID must be greater than 0!");
+        }
+
+        logger.debug("#findUserByDBID({})", ts3dbID);
         List<TS3User> results = new LinkedList<>();
         withConnection(conn -> {
             String query = "SELECT * FROM clients c WHERE c.client_id = ? AND c.server_id = ?";
@@ -68,6 +74,7 @@ public class DBUserService extends AbstractUserService {
             throw new IllegalArgumentException("Nickname to search for may not be null, blank or empty!");
         }
 
+        logger.debug("#findUserByNickname({})", ts3nickname);
         List<TS3User> results = new LinkedList<>();
         withConnection(conn -> {
             String query = "SELECT * FROM clients c WHERE c.client_nickname LIKE %?% AND c.server_id = ?";
@@ -83,21 +90,22 @@ public class DBUserService extends AbstractUserService {
             statement.setInt(2, server.getInstanceId());
             try (ResultSet result = statement.executeQuery()) {
                 if (!result.isBeforeFirst()) {
-                    logger.warn("Failed to get client for search: {} - no entry present.", search);
-                }
+                    // Apparently, TS3 does not necessarily keep users in the database. We do not want to spam logs in this case.
+                    logger.trace("Failed to get client for search: {} - no entry present.", search);
+                } else {
+                    while (result.next()) {
+                        TS3User user = new TS3User();
+                        user.setProperty(PropertyKeys.Client.DBID, result.getInt("client_id"));
+                        user.setProperty(PropertyKeys.Client.UID, result.getString("client_unique_id"));
+                        user.setProperty(PropertyKeys.Client.NICKNAME, result.getString("client_nickname"));
+                        user.setProperty(PropertyKeys.Client.LAST_JOIN_TIME, result.getLong("client_lastconnected"));
+                        user.setProperty(PropertyKeys.DBClient.TOTAL_CONNECTIONS, result.getInt(PropertyKeys.DBClient.TOTAL_CONNECTIONS));
+                        user.setProperty(PropertyKeys.Client.IPV4_ADDRESS, result.getString("client_lastip"));
+                        applyPermissions(user);
 
-                while (result.next()) {
-                    TS3User user = new TS3User();
-                    user.setProperty(PropertyKeys.Client.DBID, result.getInt("client_id"));
-                    user.setProperty(PropertyKeys.Client.UID, result.getString("client_unique_id"));
-                    user.setProperty(PropertyKeys.Client.NICKNAME, result.getString("client_nickname"));
-                    user.setProperty(PropertyKeys.Client.LAST_JOIN_TIME, result.getLong("client_lastconnected"));
-                    user.setProperty(PropertyKeys.DBClient.TOTAL_CONNECTIONS, result.getInt(PropertyKeys.DBClient.TOTAL_CONNECTIONS));
-                    user.setProperty(PropertyKeys.Client.IPV4_ADDRESS, result.getString("client_lastip"));
-                    applyPermissions(user);
-
-                    results.add(user);
-                    logger.debug("Constructed user: {}/{}", user.getClientDBID(), user.getNickName());
+                        results.add(user);
+                        logger.trace("Constructed user: {}/{}", user.getClientDBID(), user.getNickName());
+                    }
                 }
             }
         } catch (SQLException e) {
