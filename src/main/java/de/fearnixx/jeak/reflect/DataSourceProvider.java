@@ -48,6 +48,9 @@ public class DataSourceProvider extends AbstractSpecialProvider<PersistenceUnit>
             value = unit.get().getDataSource();
 
         } else if (clazz.isAssignableFrom(EntityManager.class)) {
+            logger.warn("[DEPRECATION] Directly injecting entity managers is deprecated as it reserves connections. " +
+                    "Entity managers should be retrieved and closed regularly. E.g. open with begin of a request/event and closed afterwards. " +
+                    "This will ensure connections are returned to the pool.");
             value = unit.get().getEntityManager();
         }
 

@@ -60,14 +60,15 @@ public interface IPersistenceUnit {
     /**
      * Returns the underlying JPA {@link DataSource}.
      * You can use this to open connections for your own use.
+     *
+     * @apiNote Connections have to be closed in order to be returned to the connection pool. Not closing them will leak connections and drain the pool.
      */
     DataSource getDataSource();
 
     /**
      * Opens the door to the Hibernate JPA implementation.
      * Classes annotated with {@link javax.persistence.Entity} are automatically registered with Hibernate.
-     *
-     * @implNote The method returns a new entity manager every time!
+     * @apiNote EntityManager implements {@link AutoCloseable} and should be closed when information processing is done. For example, when an event listener is finished. (Use try-with-resources, when possible.)
      */
     EntityManager getEntityManager();
 }
