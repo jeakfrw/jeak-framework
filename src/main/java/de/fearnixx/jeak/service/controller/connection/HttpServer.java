@@ -11,6 +11,7 @@ import de.fearnixx.jeak.service.controller.controller.ControllerMethod;
 import de.fearnixx.jeak.service.controller.controller.MethodParameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xbill.DNS.RPRecord;
 import spark.Request;
 
 import java.io.IOException;
@@ -88,11 +89,7 @@ public abstract class HttpServer {
      */
     protected Object transformRequestOption(String string, Request request, MethodParameter methodParameter) {
         Object retrievedParameter;
-        if ("application/json".equals(request.contentType())) {
-            retrievedParameter = fromJson(string, methodParameter.getType());
-        } else {
-            retrievedParameter = string;
-        }
+        retrievedParameter = fromJson(string, methodParameter.getType());
         return retrievedParameter;
     }
 
@@ -106,6 +103,11 @@ public abstract class HttpServer {
     protected String getRequestParamName(MethodParameter methodParameter) {
         Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).name();
         return (String) methodParameter.callAnnotationFunction(function, RequestParam.class).get();
+    }
+
+    protected Object getRequestParamType(MethodParameter methodParameter) {
+        Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).type();
+        return methodParameter.callAnnotationFunction(function, RequestParam.class).orElse(String.class);
     }
 
     protected String getPathParamName(MethodParameter methodParameter) {
