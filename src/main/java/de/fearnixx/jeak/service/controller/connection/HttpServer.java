@@ -146,6 +146,9 @@ public abstract class HttpServer {
 
     private Object fromJson(String json, Class<?> clazz) {
         Object deserializedObject = null;
+        if (clazz.equals(String.class)) {
+            return json;
+        }
         try {
             deserializedObject = objectMapper.readValue(json, clazz);
         } catch (IOException e) {
