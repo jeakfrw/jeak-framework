@@ -1,9 +1,6 @@
 package de.fearnixx.jeak.service.controller.testImpls;
 
-import de.fearnixx.jeak.reflect.RequestBody;
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RequestParam;
-import de.fearnixx.jeak.reflect.RestController;
+import de.fearnixx.jeak.reflect.*;
 import de.fearnixx.jeak.service.controller.IResponseEntity;
 import de.fearnixx.jeak.service.controller.RequestMethod;
 import de.fearnixx.jeak.service.controller.ResponseEntity;
@@ -28,6 +25,11 @@ public class TestController {
     @RequestMapping(method = RequestMethod.POST, endpoint = "/body")
     public String sendBody(@RequestBody String string) {
         return "this is the body " + string;
+    }
+
+    @RequestMapping(method = RequestMethod.GET, endpoint = "/int", isSecured = false)
+    public String sendStuff(@RequestParam(name = "num", type = Integer.class) Integer num) {
+        return "received" + num;
     }
 
     public IResponseEntity<String> hallo() {
