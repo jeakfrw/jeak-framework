@@ -14,12 +14,20 @@ public interface IRequestContext {
     <T> Optional<T> optAttribute(String name, Class<T> hint);
 
     final class Attributes {
+
+        /**
+         * {@link IRequestContext}
+         *
+         * @apiNote Self-reference, mainly for internal purposes.
+         */
+        public static final String REQUEST_CONTEXT = "self";
+
         /**
          * {@link IAuthenticationToken}
          *
          * @apiNote Optionally filled, if authentication is successful AND the "Token" authentication scheme is used.
          *
-         * @implNote Required (non-optional) parameter injections cause {@link HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication.
+         * @implNote Required parameter injections cause {@link HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication.
          */
         public static final String AUTHENTICATION_TOKEN = "auth:token:authenticationToken";
 
@@ -27,7 +35,7 @@ public interface IRequestContext {
          * {@link de.fearnixx.jeak.teamspeak.data.IUser}
          *
          * @apiNote Optionally filled, if authentication is successful AND the subject is an user.
-         * @implNote Required (non-optional) parameter injections cause {@link HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication or {@link HttpStatus#FORBIDDEN_403} for principals that aren't users.
+         * @implNote Required parameter injections cause {@link HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication or {@link HttpStatus#FORBIDDEN_403} for principals that aren't users.
          */
         public static final String AUTHENTICATION_USER = "auth:subject:authenticatedUser";
 

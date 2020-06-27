@@ -48,10 +48,11 @@ public class MethodParameter {
      * @return The {@link Annotation} if the parameter is marked by the provided annotation,
      * {@code Optional.empty()} otherwise.
      */
-    public Optional<? extends Annotation> getAnnotation(Class<? extends Annotation> clazz) {
+    public <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz) {
         return annotations.stream()
                 .filter(o -> o.annotationType().equals(clazz))
-                .findFirst();
+                .findFirst()
+                .map(clazz::cast);
     }
 
     /**

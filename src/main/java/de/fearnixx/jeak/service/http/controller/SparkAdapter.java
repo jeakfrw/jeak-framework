@@ -1,26 +1,25 @@
 package de.fearnixx.jeak.service.http.controller;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.reflect.http.PathParam;
-import de.fearnixx.jeak.reflect.http.RequestBody;
-import de.fearnixx.jeak.reflect.http.RequestMapping;
-import de.fearnixx.jeak.reflect.http.RequestParam;
+import de.fearnixx.jeak.reflect.http.*;
 import de.fearnixx.jeak.service.http.RequestMethod;
 import de.fearnixx.jeak.service.http.ResponseEntity;
 import de.fearnixx.jeak.service.http.connection.HttpServer;
 import de.fearnixx.jeak.service.http.connection.IConnectionVerifier;
 import de.fearnixx.jeak.service.http.connection.RestConfiguration;
+import de.fearnixx.jeak.service.http.request.IRequestContext;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.Request;
-import spark.Response;
-import spark.Route;
-import spark.Service;
+import spark.*;
 
+import javax.transaction.UserTransaction;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+
+import static de.fearnixx.jeak.service.http.request.IRequestContext.*;
 
 
 public class SparkAdapter extends HttpServer {
@@ -157,11 +156,53 @@ public class SparkAdapter extends HttpServer {
                     retrievedParameter = transformRequestOption(request.queryMap(getRequestParamName(methodParameter)).value(), request, methodParameter);
                 } else if (methodParameter.hasAnnotation(RequestBody.class)) {
                     retrievedParameter = transformRequestOption(request.body(), request, methodParameter);
+                } else if (methodParameter.hasAnnotation(RequestContext.class)) {
+                    retrievedParameter = transformRequestContext(request, methodParameter);
                 }
                 methodParameters[methodParameter.getPosition()] = retrievedParameter;
             }
         }
         return methodParameters;
+    }
+
+    protected Object transformRequestContext(Request request, MethodParameter methodParameter) {
+        RequestContext annotation = methodParameter.getAnnotation(RequestContext.class).orElseThrow();
+        var attributeIdent = annotation.attribute();
+
+        if (attributeIdent.isBlank()) {
+            return request.attribute(IRequestContext.Attributes.REQUEST_CONTEXT);
+        } else {
+            var storedValue = request.attribute(attributeIdent);
+
+            if (annotation.required() && storedValue == null) {
+                switch (attributeIdent) {
+                    case IRequestContext.Attributes.AUTHENTICATION_USER:
+                        if (request.attribute(IRequestContext.Attributes.AUTHENTICATION_TOKEN) != null) {
+                            // #halt throws RuntimeException!
+                            service.halt(HttpStatus.FORBIDDEN_403, "Only users are allowed to use this endpoint.");
+                        } else {
+                            // #halt throws RuntimeException!
+                            service.halt(HttpStatus.UNAUTHORIZED_401);
+                        }
+                        return null;
+                    case IRequestContext.Attributes.AUTHENTICATION_TOKEN:
+                        // #halt throws RuntimeException!
+                        service.halt(HttpStatus.UNAUTHORIZED_401);
+                        return null;
+                    default:
+                        var msg = String.format("Required context attribute \"%s\" is unset!", attributeIdent);
+                        throw new IllegalStateException(msg);
+                }
+            } else if (storedValue == null) {
+                return null;
+            } else {
+                if (!methodParameter.getType().isAssignableFrom(storedValue.getClass())) {
+                    var msg = String.format("Context attribute is not compatible with parameter type: \"%s\" vs. \"%s\"", storedValue.getClass(), methodParameter.getType());
+                    throw new IllegalStateException(msg);
+                }
+                return storedValue;
+            }
+        }
     }
 
     private void addBeforeHandlingCheck(String path, ControllerMethod controllerMethod) {
