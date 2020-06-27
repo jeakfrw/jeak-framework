@@ -66,7 +66,7 @@ public class TokenAuthService extends Configurable implements ITokenAuthService 
     }
 
     @Override
-    public synchronized void setTokenExpiry(@Nonnull IAuthenticationToken token, @Nullable ZonedDateTime expiryValue) {
+    public synchronized void setTokenExpiry(@Nonnull IAuthenticationToken token, ZonedDateTime expiryValue) {
         Objects.requireNonNull(token, "Provided token cannot be null.");
 
         var tokenNode = getTokensNode().getNode(token.getTokenString());

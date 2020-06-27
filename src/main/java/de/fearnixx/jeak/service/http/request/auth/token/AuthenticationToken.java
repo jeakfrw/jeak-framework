@@ -3,8 +3,6 @@ package de.fearnixx.jeak.service.http.request.auth.token;
 import de.fearnixx.jeak.service.http.request.token.IAuthenticationToken;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -14,7 +12,7 @@ public class AuthenticationToken implements IAuthenticationToken {
     private final IUser tokenOwner;
     private final ZonedDateTime tokenExpiry;
 
-    public AuthenticationToken(@Nonnull String tokenStr, @Nonnull IUser tokenOwner, @Nullable ZonedDateTime tokenExpiry) {
+    public AuthenticationToken(String tokenStr, IUser tokenOwner, ZonedDateTime tokenExpiry) {
         this.tokenStr = tokenStr;
         this.tokenOwner = tokenOwner;
         this.tokenExpiry = tokenExpiry;

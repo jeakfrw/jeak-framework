@@ -1,7 +1,6 @@
 package de.fearnixx.jeak.service.http.request;
 
 import de.fearnixx.jeak.service.http.request.token.IAuthenticationToken;
-import org.eclipse.jetty.http.HttpStatus;
 
 import java.util.Optional;
 
@@ -27,7 +26,7 @@ public interface IRequestContext {
          *
          * @apiNote Optionally filled, if authentication is successful AND the "Token" authentication scheme is used.
          *
-         * @implNote Required parameter injections cause {@link HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication.
+         * @implNote Required parameter injections cause {@link org.eclipse.jetty.http.HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication.
          */
         public static final String AUTHENTICATION_TOKEN = "auth:token:authenticationToken";
 
@@ -35,7 +34,7 @@ public interface IRequestContext {
          * {@link de.fearnixx.jeak.teamspeak.data.IUser}
          *
          * @apiNote Optionally filled, if authentication is successful AND the subject is an user.
-         * @implNote Required parameter injections cause {@link HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication or {@link HttpStatus#FORBIDDEN_403} for principals that aren't users.
+         * @implNote Required parameter injections cause {@link org.eclipse.jetty.http.HttpStatus#UNAUTHORIZED_401} on unsuccessful authentication or {@link org.eclipse.jetty.http.HttpStatus#FORBIDDEN_403} for principals that aren't users.
          */
         public static final String AUTHENTICATION_USER = "auth:subject:authenticatedUser";
 
