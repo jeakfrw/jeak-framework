@@ -1,9 +1,13 @@
 package de.fearnixx.jeak.service.http;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
-import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.reflect.FrameworkService;
+import de.fearnixx.jeak.reflect.IInjectionService;
+import de.fearnixx.jeak.reflect.Inject;
+import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.reflect.http.RestController;
-import de.fearnixx.jeak.service.http.connection.ControllerRequestVerifier;
+import de.fearnixx.jeak.service.IServiceManager;
+import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.http.connection.HttpServer;
 import de.fearnixx.jeak.service.http.connection.RestConfiguration;
 import de.fearnixx.jeak.service.http.controller.ControllerContainer;
@@ -11,6 +15,7 @@ import de.fearnixx.jeak.service.http.controller.IncapableDummyAdapter;
 import de.fearnixx.jeak.service.http.controller.SparkAdapter;
 import de.fearnixx.jeak.service.http.exceptions.RegisterControllerException;
 import de.fearnixx.jeak.service.http.request.auth.token.TokenAuthService;
+import de.fearnixx.jeak.service.http.request.token.ITokenAuthService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +27,15 @@ public class ControllerService implements IControllerService {
 
     private final Map<Class<?>, Object> controllers;
     private final HttpServer httpServer;
-    private final TokenAuthService tokenAuthService;
     private final RestConfiguration restConfiguration;
+
+    private TokenAuthService tokenAuthService;
+
+    @Inject
+    private IServiceManager serviceManager;
+
+    @Inject
+    private IEventService eventService;
 
     @Inject
     private IInjectionService injectionService;
@@ -44,6 +56,9 @@ public class ControllerService implements IControllerService {
     @Listener
     public void onPreInt(IBotStateEvent.IPreInitializeEvent preInitializeEvent) {
         injectionService.injectInto(tokenAuthService);
+        eventService.registerListener(tokenAuthService);
+        serviceManager.registerService(ITokenAuthService.class, tokenAuthService);
+
         injectionService.injectInto(restConfiguration);
         restConfiguration.loadConfig();
         injectionService.injectInto(httpServer);
@@ -71,7 +86,7 @@ public class ControllerService implements IControllerService {
     @Override
     public <T> T provideUnchecked(Class<T> cntrlrClass) {
         Objects.requireNonNull(cntrlrClass, "Controller class type hint cannot be null!");
-        return cntrlrClass.cast( controllers.get(cntrlrClass));
+        return cntrlrClass.cast(controllers.get(cntrlrClass));
     }
 
     @Override
