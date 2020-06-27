@@ -97,7 +97,7 @@ dependencies {
     runtime 'mysql:mysql-connector-java:8.0.19'
     runtime 'org.mariadb.jdbc:mariadb-java-client:2.5.4'
     runtime 'com.sun.mail:smtp:1.6.4'
-    runtime 'com.sun.mail:dsn:1.6.4'
+    runtime 'com.sun.mail:dsn:1.6.5'
     
     testCompile 'junit:junit:4.13'
     testCompile 'org.hamcrest:hamcrest:2.2'
