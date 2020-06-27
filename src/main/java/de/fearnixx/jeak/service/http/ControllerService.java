@@ -10,6 +10,7 @@ import de.fearnixx.jeak.service.http.controller.ControllerContainer;
 import de.fearnixx.jeak.service.http.controller.IncapableDummyAdapter;
 import de.fearnixx.jeak.service.http.controller.SparkAdapter;
 import de.fearnixx.jeak.service.http.exceptions.RegisterControllerException;
+import de.fearnixx.jeak.service.http.request.auth.token.TokenAuthService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,9 +21,9 @@ import java.util.Optional;
 public class ControllerService implements IControllerService {
 
     private final Map<Class<?>, Object> controllers;
-    private HttpServer httpServer;
-    private ControllerRequestVerifier connectionVerifier;
-    private RestConfiguration restConfiguration;
+    private final HttpServer httpServer;
+    private final TokenAuthService tokenAuthService;
+    private final RestConfiguration restConfiguration;
 
     @Inject
     private IInjectionService injectionService;
@@ -32,17 +33,17 @@ public class ControllerService implements IControllerService {
     }
 
     public ControllerService(Map<Class<?>, Object> controllers) {
-        this.connectionVerifier = new ControllerRequestVerifier();
+        this.tokenAuthService = new TokenAuthService();
         this.restConfiguration = new RestConfiguration();
         this.controllers = controllers;
         this.httpServer = IncapableDummyAdapter.EXPERIMENTAL_REST_ENABLED ?
-                new SparkAdapter(connectionVerifier, restConfiguration)
+                new SparkAdapter(restConfiguration, tokenAuthService)
                 : new IncapableDummyAdapter(restConfiguration);
     }
 
     @Listener
     public void onPreInt(IBotStateEvent.IPreInitializeEvent preInitializeEvent) {
-        injectionService.injectInto(connectionVerifier);
+        injectionService.injectInto(tokenAuthService);
         injectionService.injectInto(restConfiguration);
         restConfiguration.loadConfig();
         injectionService.injectInto(httpServer);

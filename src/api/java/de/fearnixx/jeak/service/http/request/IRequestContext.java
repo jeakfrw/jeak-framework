@@ -19,7 +19,7 @@ public interface IRequestContext {
          *
          * @apiNote Self-reference, mainly for internal purposes.
          */
-        public static final String REQUEST_CONTEXT = "self";
+        public static final String REQUEST_CONTEXT = "http:requestContext";
 
         /**
          * {@link IAuthenticationToken}

@@ -5,22 +5,24 @@ import de.fearnixx.jeak.reflect.http.*;
 import de.fearnixx.jeak.service.http.RequestMethod;
 import de.fearnixx.jeak.service.http.ResponseEntity;
 import de.fearnixx.jeak.service.http.connection.HttpServer;
-import de.fearnixx.jeak.service.http.connection.IConnectionVerifier;
 import de.fearnixx.jeak.service.http.connection.RestConfiguration;
-import de.fearnixx.jeak.service.http.controller.MethodParameter;
 import de.fearnixx.jeak.service.http.request.IRequestContext;
+import de.fearnixx.jeak.service.http.request.SparkRequestContext;
+import de.fearnixx.jeak.service.http.request.auth.token.TokenAuthService;
 import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spark.*;
+import spark.Request;
+import spark.Response;
+import spark.Route;
+import spark.Service;
 
-import javax.transaction.UserTransaction;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static de.fearnixx.jeak.service.http.request.IRequestContext.*;
+import static de.fearnixx.jeak.service.http.request.IRequestContext.Attributes;
 
 
 public class SparkAdapter extends HttpServer {
@@ -29,11 +31,12 @@ public class SparkAdapter extends HttpServer {
     public static final int MAX_THREADS = Main.getProperty("jeak.sparkadapter.maxpoolsize", 8);
     public static final int MIN_THREADS = Main.getProperty("jeak.sparkadapter.minpoolsize", 3);
     public static final int TIMEOUT_MILLIS = 30000;
-    private IConnectionVerifier connectionVerifier;
+
+    private final TokenAuthService tokenAuthService;
     private Map<String, String> headers;
     private Service service;
 
-    public SparkAdapter(IConnectionVerifier connectionVerifier, RestConfiguration restConfiguration) {
+    public SparkAdapter(RestConfiguration restConfiguration, TokenAuthService tokenAuthService) {
         super(restConfiguration);
         service = Service.ignite();
         // only use NUM_THREADS, if it was configured
@@ -42,7 +45,7 @@ public class SparkAdapter extends HttpServer {
         } else {
             service.threadPool(MAX_THREADS, MIN_THREADS, TIMEOUT_MILLIS);
         }
-        this.connectionVerifier = connectionVerifier;
+        this.tokenAuthService = tokenAuthService;
     }
 
     /**
@@ -210,19 +213,20 @@ public class SparkAdapter extends HttpServer {
         service.before(path, (request, response) -> {
             controllerContainer.getAnnotation(RestController.class).ifPresent(restController -> {
                 if (getRestConfiguration().rejectUnencryptedTraffic().orElse(RestConfiguration.DEFAULT_HTTPS_REJECT_UNENCRYPTED) && !isProtocolHttps(request)) {
-                    logger.debug("HTTPS enforcement enabled, non HTTPS request for {} blocked", path);
+                    logger.info("HTTPS enforcement enabled, non HTTPS request for {} blocked", path);
                     service.halt(426, "{\"errors\": [\"Use of HTTPS is mandatory for this endpoint\"]}");
                 }
             });
-            controllerMethod.getAnnotation(RequestMapping.class).ifPresent(requestMapping -> {
-                if (requestMapping.isSecured()) {
-                    boolean isAuthorized = connectionVerifier.verifyRequest(path, request.headers("Authorization"));
-                    if (!isAuthorized) {
-                        logger.debug("Authorization for Request to {} failed", path);
-                        service.halt(401);
-                    }
+
+            if (!tokenAuthService.attemptAuthentication(request)) {
+                var mapping = controllerMethod.getAnnotation(RequestMapping.class);
+                if (mapping.isPresent() && mapping.get().requireAuth()) {
+                    logger.info("Unauthenticated HTTP request blocked.");
+                    service.halt(HttpStatus.UNAUTHORIZED_401, "{\"errors\": [\"Authentication is mandatory for this endpoint!\"]");
                 }
-            });
+            }
+
+            request.attribute(Attributes.REQUEST_CONTEXT, new SparkRequestContext(request));
         });
     }
 
@@ -237,15 +241,12 @@ public class SparkAdapter extends HttpServer {
     @Override
     public void start() {
         getRestConfiguration().getPort().ifPresent(service::port);
-        getRestConfiguration().isHttpsEnabled().ifPresent(isHttpsEnabled -> {
-            if (Boolean.TRUE.equals(isHttpsEnabled)) {
-                logger.info("Https enabled");
-                initHttps();
-            } else {
-                logger.info("HTTPS disabled");
-            }
-        });
-
+        if (getRestConfiguration().isHttpsEnabled()) {
+            logger.info("HTTPS enabled");
+            initHttps();
+        } else {
+            logger.info("HTTPS disabled");
+        }
     }
 
     private void initHttps() {

@@ -14,13 +14,25 @@ import java.lang.annotation.Target;
  *
  * endpoint(): REQUIRED Specify the endpoint for the annotated method.
  *
- * isSecured(): Specify whether the calls to this endpoint should use an authorization scheme.
+ * requireAuth(): Specify whether the calls to this endpoint should use an authorization scheme.
  *
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface RequestMapping {
-    RequestMethod method();
+
+    /**
+     * The HTTP method associated with this endpoint.
+     */
+    RequestMethod method() default RequestMethod.GET;
+
+    /**
+     * URI appendix for this endpoint.
+     */
     String endpoint();
-    boolean isSecured() default true;
+
+    /**
+     * Whether or not request against this endpoint <em>MUST BE</em> authenticated.
+     */
+    boolean requireAuth() default true;
 }

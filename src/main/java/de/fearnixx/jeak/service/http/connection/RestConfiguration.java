@@ -84,8 +84,8 @@ public class RestConfiguration extends Configurable {
         return Optional.ofNullable(getConfig().getNode(HTTPS_CONFIG).optValueMap(type).get(value));
     }
 
-    public Optional<Boolean> isHttpsEnabled() {
-        return getValueFromHttpsConfig(HTTPS_ENABLED, Boolean.class);
+    public boolean isHttpsEnabled() {
+        return getValueFromHttpsConfig(HTTPS_ENABLED, Boolean.class).orElse(false);
     }
 
     public Optional<Boolean> isBehindSslProxy() {

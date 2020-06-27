@@ -30,7 +30,7 @@ public class TestController {
         return "this is the body " + string;
     }
 
-    @RequestMapping(method = RequestMethod.GET, endpoint = "/int", isSecured = false)
+    @RequestMapping(method = RequestMethod.GET, endpoint = "/int", requireAuth = false)
     public String sendStuff(@RequestParam(name = "num", type = Integer.class) Integer num) {
         return "received" + num;
     }
