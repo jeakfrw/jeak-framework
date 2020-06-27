@@ -1,7 +1,7 @@
 package de.fearnixx.jeak.service.controller.controller;
 
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RestController;
+import de.fearnixx.jeak.reflect.http.RequestMapping;
+import de.fearnixx.jeak.reflect.http.RestController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

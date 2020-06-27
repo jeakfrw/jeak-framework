@@ -1,10 +1,10 @@
 package de.fearnixx.jeak.service.controller.controller;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.reflect.PathParam;
-import de.fearnixx.jeak.reflect.RequestBody;
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RequestParam;
+import de.fearnixx.jeak.reflect.http.PathParam;
+import de.fearnixx.jeak.reflect.http.RequestBody;
+import de.fearnixx.jeak.reflect.http.RequestMapping;
+import de.fearnixx.jeak.reflect.http.RequestParam;
 import de.fearnixx.jeak.service.controller.RequestMethod;
 import de.fearnixx.jeak.service.controller.ResponseEntity;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;

@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.reflect;
+package de.fearnixx.jeak.reflect.http;
 
 import de.fearnixx.jeak.service.controller.RequestMethod;
 

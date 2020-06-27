@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.controller;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.reflect.http.RestController;
 import de.fearnixx.jeak.service.controller.connection.ControllerRequestVerifier;
 import de.fearnixx.jeak.service.controller.connection.HttpServer;
 import de.fearnixx.jeak.service.controller.connection.RestConfiguration;

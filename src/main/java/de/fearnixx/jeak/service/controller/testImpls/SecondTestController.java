@@ -1,9 +1,9 @@
 package de.fearnixx.jeak.service.controller.testImpls;
 
-import de.fearnixx.jeak.reflect.RequestBody;
-import de.fearnixx.jeak.reflect.RequestMapping;
-import de.fearnixx.jeak.reflect.RequestParam;
-import de.fearnixx.jeak.reflect.RestController;
+import de.fearnixx.jeak.reflect.http.RequestBody;
+import de.fearnixx.jeak.reflect.http.RequestMapping;
+import de.fearnixx.jeak.reflect.http.RequestParam;
+import de.fearnixx.jeak.reflect.http.RestController;
 import de.fearnixx.jeak.service.controller.RequestMethod;
 
 @RestController(endpoint = "/test", pluginId = "testPluginId")

@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.reflect;
+package de.fearnixx.jeak.reflect.http;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
