@@ -4,17 +4,17 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.controller.IRestControllerService;
-import de.fearnixx.jeak.service.controller.exceptions.RegisterControllerException;
-import de.fearnixx.jeak.service.controller.testImpls.SecondTestController;
-import de.fearnixx.jeak.service.controller.testImpls.TestController;
+import de.fearnixx.jeak.service.http.IControllerService;
+import de.fearnixx.jeak.service.http.exceptions.RegisterControllerException;
+import de.fearnixx.jeak.service.http.testImpls.SecondTestController;
+import de.fearnixx.jeak.service.http.testImpls.TestController;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
 
 @JeakBotPlugin(id = "controllertestplugin")
 public class ControllerTestPlugin extends AbstractTestPlugin {
 
     @Inject
-    IRestControllerService restControllerService;
+    IControllerService restControllerService;
 
 
     public ControllerTestPlugin() {

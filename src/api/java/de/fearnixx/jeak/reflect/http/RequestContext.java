@@ -1,6 +1,6 @@
 package de.fearnixx.jeak.reflect.http;
 
-import de.fearnixx.jeak.service.controller.request.IRequestContext;
+import de.fearnixx.jeak.service.http.request.IRequestContext;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

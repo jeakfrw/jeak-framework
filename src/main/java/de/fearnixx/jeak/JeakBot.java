@@ -13,7 +13,7 @@ import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.command.TypedCommandService;
 import de.fearnixx.jeak.service.command.matcher.MatcherRegistry;
-import de.fearnixx.jeak.service.controller.RestControllerService;
+import de.fearnixx.jeak.service.http.ControllerService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
@@ -184,7 +184,7 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new PermissionService());
         initializeService(new UserService());
         initializeService(new TokenService());
-        initializeService(new RestControllerService());
+        initializeService(new ControllerService());
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);
