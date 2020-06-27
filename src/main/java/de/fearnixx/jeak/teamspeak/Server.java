@@ -9,6 +9,7 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
 import de.fearnixx.jeak.teamspeak.query.*;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class Server implements IServer {
     private final Object LOCK = new Object();
 
     private String host;
-    private int port;
+    private int queryPort;
     private String user;
     private String pass;
     private int instanceId;
@@ -55,11 +56,15 @@ public class Server implements IServer {
     private String nickname;
 
     private QueryConnectionAccessor mainConnection;
+    private IDataHolder serverInfoResponse = null;
 
-    public void setCredentials(String host, Integer port, String user, String pass, Integer instanceId, Boolean useSSL, String nickname) {
+    public void setCredentials(String host,
+                               Integer queryPort,
+                               String user, String pass, Integer instanceId,
+                               Boolean useSSL, String nickname) {
         synchronized (LOCK) {
             Objects.requireNonNull(host, "Host may not be null!");
-            Objects.requireNonNull(port, "Port may not be null!");
+            Objects.requireNonNull(queryPort, "Port may not be null!");
             Objects.requireNonNull(user, "Username may not be null!");
             Objects.requireNonNull(pass, "Password may not be null!");
             Objects.requireNonNull(instanceId, "Instance id may not be null!");
@@ -67,7 +72,7 @@ public class Server implements IServer {
             Objects.requireNonNull(nickname, "Nickname may not be null!");
 
             this.host = host;
-            this.port = port;
+            this.queryPort = queryPort;
             this.user = user;
             this.pass = pass;
             this.instanceId = instanceId;
@@ -86,7 +91,7 @@ public class Server implements IServer {
             ensureClosed(true);
 
             try {
-                logger.info("Trying to connect to {}:{}", host, port);
+                logger.info("Trying to connect to {}:{}", host, queryPort);
                 // Notify listeners.
                 BotStateEvent.ConnectEvent.PreConnect preConnectEvent = new BotStateEvent.ConnectEvent.PreConnect();
                 preConnectEvent.setBot(bot);
@@ -99,7 +104,7 @@ public class Server implements IServer {
                 connectionThread.setName("connection-" + connectionCounter.getAndIncrement());
                 connectionThread.start();
             } catch (IOException e) {
-                throw new QueryConnectException("Unable to open QueryConnection to " + host + ":" + port, e);
+                throw new QueryConnectException("Unable to open QueryConnection to " + host + ":" + queryPort, e);
             }
         }
     }
@@ -108,10 +113,10 @@ public class Server implements IServer {
     protected void tcpConnectAndInitialize() throws IOException {
         Socket socket;
         if (!useSSL) {
-            socket = new Socket(host, port);
+            socket = new Socket(host, queryPort);
         } else {
             logger.info("SSL: Enabled.");
-            socket = SSLSocketFactory.getDefault().createSocket(host, port);
+            socket = SSLSocketFactory.getDefault().createSocket(host, queryPort);
             ((SSLSocket) socket).startHandshake();
         }
         socket.setSoTimeout(TS3Connection.SOCKET_TIMEOUT_MILLIS);
@@ -158,6 +163,7 @@ public class Server implements IServer {
 
     private void login(String user, String pass, int instID, Consumer<Boolean> resultCallback) {
         AtomicBoolean useResult = new AtomicBoolean(true);
+        AtomicBoolean loginResult = new AtomicBoolean(true);
         QueryBuilder useCommandBuilder = IQueryRequest.builder()
                 .command(QueryCommands.SERVER.USE_INSTANCE);
         if (USE_VOICE_PORT_FOR_SELECTION) {
@@ -187,8 +193,25 @@ public class Server implements IServer {
                                 ensureClosed(false);
                                 resultCallback.accept(false);
                             }
+                            loginResult.set(false);
                         })
-                        .onSuccess(answer -> resultCallback.accept(true))
+                        .build()
+        );
+
+        mainConnection.sendRequest(
+                IQueryRequest.builder().command(QueryCommands.SERVER.SERVER_INFO)
+                        .onError(answer -> {
+                            if (useResult.get() && loginResult.get()) {
+                                logger.error("Failed to login to retrieve server information? Am I allowed to do that (b_virtualserver_info_view) ? TS3: {} - {}",
+                                        answer.getErrorMessage(), answer.getErrorCode());
+                                ensureClosed(false);
+                                resultCallback.accept(false);
+                            }
+                        })
+                        .onSuccess(answer -> {
+                            serverInfoResponse = answer.getDataChain().get(0);
+                            resultCallback.accept(true);
+                        })
                         .build()
         );
     }
@@ -272,7 +295,25 @@ public class Server implements IServer {
 
     @Override
     public int getPort() {
-        return port;
+        return queryPort;
+    }
+
+    @Override
+    public int getVoicePort() {
+        return optVoicePort()
+                .orElseThrow(() -> new NoSuchElementException("Not connected."));
+    }
+
+    @Override
+    public Optional<Integer> optVoicePort() {
+        return optConnection()
+                .flatMap(conn -> serverInfoResponse.getProperty(PropertyKeys.ServerInfo.PORT)
+                        .map(Integer::parseInt));
+    }
+
+    @Override
+    public Optional<IDataHolder> optServerInfoResponse() {
+        return Optional.ofNullable(serverInfoResponse);
     }
 
     @Override

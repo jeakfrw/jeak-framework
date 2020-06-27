@@ -26,8 +26,13 @@ public class TestController {
     }
 
     @RequestMapping(method = RequestMethod.POST, endpoint = "/body")
-    public String sendBody(@RequestBody() String string) {
+    public String sendBody(@RequestBody String string) {
         return "this is the body " + string;
+    }
+
+    @RequestMapping(method = RequestMethod.GET, endpoint = "/int", isSecured = false)
+    public String sendStuff(@RequestParam(name = "num", type = Integer.class) Integer num) {
+        return "received" + num;
     }
 
     public IResponseEntity<String> hallo() {

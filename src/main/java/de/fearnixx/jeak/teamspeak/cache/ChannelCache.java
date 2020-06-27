@@ -20,9 +20,7 @@ import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +29,7 @@ public class ChannelCache {
     private static final Logger logger = LoggerFactory.getLogger(ChannelCache.class);
 
     private final Map<Integer, TS3Channel> internalCache = new ConcurrentHashMap<>(60);
+    private final List<TS3Channel> sortedCache = new ArrayList<>();
 
     @Inject
     private IEventService eventService;
@@ -131,19 +130,38 @@ public class ChannelCache {
 
             // Update children
             internalCache.forEach((cid, c) -> {
-                int pid = c.getParent();
-                if (pid == 0) return;
-                TS3Channel parent = internalCache.getOrDefault(pid, null);
-                if (parent == null) {
-                    logger.warn("Channel {} has nonexistent parent: {}", cid, c.getParent());
-                    return;
+                int parentId = c.getParent();
+                TS3Channel parent = null;
+                if (parentId != 0) {
+                    parent = internalCache.getOrDefault(parentId, null);
+                    if (parent != null) {
+                        parent.addSubChannel(c);
+                    } else {
+                        logger.warn("Channel has nonexistent parent: {} -> {}", c, c.getParent());
+                    }
                 }
-                parent.addSubChannel(c);
+
+                // Update ordering
+                Integer orderAfterId = c.getOrder();
+                if (orderAfterId == 0 && parentId == 0) {
+                    logger.trace("Suspected top channel: {}", c);
+                } else if (orderAfterId == 0) {
+                    c.setSortAfterChannel(parent);
+                } else {
+                    TS3Channel orderAfterChannel = internalCache.getOrDefault(orderAfterId, null);
+                    if (orderAfterChannel == null) {
+                        logger.warn("Channel order-after target not found in cache! {} -> {}", c, orderAfterId);
+                    }
+                    c.setSortAfterChannel(orderAfterChannel);
+                }
             });
 
             // Ensure children lists to be ordered
             // TODO: Find a better solution than re-sorting the whole list every time!
             internalCache.values().forEach(TS3Channel::sortChildren);
+            sortedCache.clear();
+            sortedCache.addAll(internalCache.values());
+            sortedCache.sort(Comparator.comparingInt(TS3ChannelHolder::getSortingNumber));
             if (firstFill) {
                 logger.info("Channel cache is ready.");
             }
@@ -224,7 +242,7 @@ public class ChannelCache {
 
     public List<IChannel> getChannels() {
         synchronized (internalCache) {
-            return List.copyOf(internalCache.values());
+            return Collections.unmodifiableList(sortedCache);
         }
     }
 

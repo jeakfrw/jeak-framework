@@ -40,6 +40,14 @@ public class TokenService implements ITokenService {
         return token;
     }
 
+    @Override
+    public boolean revokeToken(String token) {
+        if (tokenConfiguration == null) {
+            throw new InvokationBeforeInitializationException("The TokenConfiguration is not initialized");
+        }
+        return tokenConfiguration.deleteToken(token);
+    }
+
     @Listener
     public void onPreInit(IBotStateEvent.IPreInitializeEvent preInitializeEvent) {
         tokenConfiguration = new TokenConfiguration();

@@ -20,4 +20,13 @@ public interface ITokenService {
      * @return The generated token.
      */
     String generateToken(Set<String> endpointSet);
+
+    /**
+     * Revoke a token.
+     *
+     * @param token The token to be revoked.
+     * @return true if the token was successfully revoked,
+     * false otherwise
+     */
+    boolean revokeToken(String token);
 }

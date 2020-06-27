@@ -30,6 +30,7 @@ public class BlockingRequest {
     public boolean waitForCompletion() {
         synchronized (monitor) {
             try {
+                logger.trace("Entering WAIT for request completion.");
                 monitor.wait(maxThreshold);
                 return answer != null;
             } catch (IllegalMonitorStateException e) {

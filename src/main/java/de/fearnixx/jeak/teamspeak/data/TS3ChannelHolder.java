@@ -5,17 +5,15 @@ import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public abstract class TS3ChannelHolder extends BasicDataHolder implements IChannel {
 
     private static final Logger logger = LoggerFactory.getLogger(TS3Channel.class);
 
     private boolean invalidated = false;
-    private final List<IChannel> children;
+    private final List<TS3ChannelHolder> children;
+    private TS3ChannelHolder sortAfter;
 
     public TS3ChannelHolder(){
         super();
@@ -132,7 +130,7 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
         return Collections.unmodifiableList(children);
     }
 
-    public void addSubChannel(IChannel channel) {
+    public void addSubChannel(TS3ChannelHolder channel) {
         int id = getID();
         if (channel.getParent() != id)
             throw new IllegalArgumentException(id + ": Channel " + channel.getID() + "is not my child! :" + channel.getParent());
@@ -144,32 +142,21 @@ public abstract class TS3ChannelHolder extends BasicDataHolder implements IChann
         return getName() + '/' + getID();
     }
 
-    public void sortChildren() {
-        List<IChannel> sortedChildren = new LinkedList<>();
-        int lastId = 0;
-        final int childCount = children.size();
-        int tries = 0;
-        while (sortedChildren.size() < childCount) {
-            tries++;
-            for (IChannel channel : children) {
-                if (channel.getOrder() == lastId) {
-                    sortedChildren.add(channel);
-                    lastId = channel.getID();
-                    break;
-                }
-            }
-
-            if (tries > childCount) {
-                for (IChannel child : children) {
-                    logger.debug("Child: {} -> {}", child, child.getOrder());
-                }
-                logger.warn("Could not sort children of channel {}. Aborted sorting.", this);
-                break;
-            }
-        }
-
-        clearChildren();
-        children.addAll(sortedChildren);
+    public void setSortAfterChannel(TS3ChannelHolder channel) {
+        logger.trace("Sorting after {}", channel);
+        this.sortAfter = channel;
     }
 
+    public int getSortingNumber() {
+        int sortNumber = 1;
+        if (this.sortAfter != null) {
+            sortNumber += this.sortAfter.getSortingNumber();
+            sortNumber += this.sortAfter.children.size();
+        }
+        return sortNumber;
+    }
+
+    public void sortChildren() {
+        children.sort(Comparator.comparingInt(TS3ChannelHolder::getSortingNumber));
+    }
 }

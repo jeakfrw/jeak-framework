@@ -16,12 +16,13 @@ import java.util.function.Consumer;
 
 public class TS3Connection implements AutoCloseable {
 
-    public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 500);
+    public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 100);
     public static final int KEEP_ALIVE_SECS = Main.getProperty("bot.connection.keepalive", 240);
     public static final int KEEP_ALIVE_MILLIS = KEEP_ALIVE_SECS * 1000;
     public static final int MAX_FAILING_KEEP_ALIVE = Main.getProperty("bot.connection.max_keepalive", 1);
     public static final float REQ_DELAY_SOT_FACTOR = Main.getProperty("bot.connection.reqdelay", 0.25f);
-    public static final int REQUEST_DELAY_MILLIS = (int) Math.ceil(SOCKET_TIMEOUT_MILLIS * REQ_DELAY_SOT_FACTOR);
+    private static final float REQ_DELAY_SOT_FACTOR_PER_SECOND_CORRECTION = 1000F / SOCKET_TIMEOUT_MILLIS;
+    public static final int REQUEST_DELAY_MILLIS = (int) Math.ceil(SOCKET_TIMEOUT_MILLIS * REQ_DELAY_SOT_FACTOR_PER_SECOND_CORRECTION * REQ_DELAY_SOT_FACTOR);
 
     private static final Logger logger = LoggerFactory.getLogger(TS3Connection.class);
 

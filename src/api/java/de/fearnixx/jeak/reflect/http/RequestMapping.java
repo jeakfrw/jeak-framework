@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
  *
  * endpoint(): REQUIRED Specify the endpoint for the annotated method.
  *
- * isSecured(): Specify whether or not the calls to this endpoint should use an authorization scheme.
+ * isSecured(): Specify whether the calls to this endpoint should use an authorization scheme.
  *
  */
 @Retention(RetentionPolicy.RUNTIME)

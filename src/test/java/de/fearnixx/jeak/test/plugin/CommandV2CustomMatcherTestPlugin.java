@@ -34,7 +34,7 @@ public class CommandV2CustomMatcherTestPlugin extends AbstractTestPlugin {
     }
 
     @Inject
-    @LocaleUnit(value = "commandv2test", defaultResource = "localization/commandv2test.json")
+    @LocaleUnit(value = "commandService")
     private ILocalizationUnit localeUnit;
 
     @Listener

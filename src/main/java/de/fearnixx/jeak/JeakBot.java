@@ -30,6 +30,8 @@ import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.Server;
 import de.fearnixx.jeak.teamspeak.TS3ConnectionTask;
 import de.fearnixx.jeak.teamspeak.cache.DataCache;
+import de.fearnixx.jeak.teamspeak.voice.connection.VoiceConnectionService;
+import de.fearnixx.jeak.teamspeak.voice.connection.dummy.DummyVoiceConnectionService;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
@@ -54,7 +56,8 @@ public class JeakBot implements Runnable, IBot {
     // * * * STATICS  * * * //
     public static final Charset CHAR_ENCODING = StandardCharsets.UTF_8;
     public static final String VERSION = "@VERSION@";
-    private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", false);
+    private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", true);
+    private static final boolean ENABLE_VOICE_CONNECTIONS = Main.getProperty("jeak.experimental.enable_voiceConnections", false);
 
     private static final Logger logger = LoggerFactory.getLogger(JeakBot.class);
 
@@ -175,6 +178,7 @@ public class JeakBot implements Runnable, IBot {
         } else {
             initializeService(new CommandService());
         }
+
         initializeService(new NotificationService());
         DatabaseService dbSvc = new DatabaseService(new File(confDir, "databases"));
         initializeService(dbSvc);
@@ -185,6 +189,12 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new UserService());
         initializeService(new TokenService());
         initializeService(new ControllerService());
+
+        if (ENABLE_VOICE_CONNECTIONS) {
+            initializeService(new VoiceConnectionService());
+        } else {
+            initializeService(new DummyVoiceConnectionService());
+        }
 
         // TODO: Remove eagerly loading by a better solution
         dbSvc.onLoad(null);

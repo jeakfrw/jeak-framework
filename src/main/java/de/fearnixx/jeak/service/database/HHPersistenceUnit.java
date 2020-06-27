@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.database;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import com.zaxxer.hikari.pool.HikariPool;
+import com.zaxxer.hikari.util.IsolationLevel;
 import de.fearnixx.jeak.util.Configurable;
 import de.mlessmann.confort.api.IConfig;
 import de.mlessmann.confort.api.IConfigNode;
@@ -102,6 +103,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
 
         dataSourceOpts.put("maximumPoolSize", "4");
         dataSourceOpts.put("connectionTimeout", "240000");
+        dataSourceOpts.put("transactionIsolation", IsolationLevel.TRANSACTION_REPEATABLE_READ.name());
         getConfig().getNode("dataSourceOpts")
                 .optMap()
                 .ifPresent(map ->
@@ -131,6 +133,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         }
     }
 
+    @SuppressWarnings("java:S1193")
     private void hardSetDSProperty(String key, String value, HikariConfig hikariConfig) {
         String methodName = "set" + key.substring(0, 1).toUpperCase() + key.substring(1);
         Method setter = HIKARI_CONF_SETTER.getOrDefault(methodName, null);
@@ -245,19 +248,27 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         logger.debug("[{}] Closing & flushing entity managers.", unitId);
         entityManagers.forEach(eM -> {
             try {
-                if (eM.getTransaction().isActive()) {
-                    eM.flush();
+                if (eM.isOpen()) {
+                    if (eM.getTransaction().isActive()) {
+                        eM.flush();
+                    }
+                    eM.close();
                 }
-                eM.close();
-            } catch (PersistenceException e) {
+            } catch (IllegalStateException | PersistenceException e) {
                 logger.warn("[{}] Failed to close entity manager.", unitId, e);
             }
         });
-        logger.debug("[{}] Closing hibernate session factory and registry.", unitId);
-        hibernateSessionFactory.close();
+        try {
+            logger.debug("[{}] Closing hibernate session factory.", unitId);
+            hibernateSessionFactory.close();
+        } catch (IllegalArgumentException | PersistenceException e) {
+            logger.warn("[{}] Failed to close Hibernate session factory.", unitId, e);
+        }
+
+        logger.debug("[{}] Closing Hibernate service registry.", unitId);
         StandardServiceRegistryBuilder.destroy(hibernateServiceRegistry);
 
-        logger.debug("[{}] Closing Hikary source.", unitId);
+        logger.debug("[{}] Closing Hikari source.", unitId);
         hikariDS.close();
     }
 }

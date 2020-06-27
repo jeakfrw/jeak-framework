@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.teamspeak;
 
+import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
@@ -49,12 +50,32 @@ public interface IServer {
     int getPort();
 
     /**
+     * The voice port of the server instance.
+     *
+     * @throws java.util.NoSuchElementException when the query connection is not established.
+     */
+    int getVoicePort();
+
+    /**
+     * The voice port of the server instance.
+     */
+    Optional<Integer> optVoicePort();
+
+    /**
+     * Response object of the <em>serverinfo</em> command retrieved from last execution.
+     *
+     * @see PropertyKeys.ServerInfo for the properties available.
+     */
+    Optional<IDataHolder> optServerInfoResponse();
+
+    /**
      * The server instance ID.
      */
     int getInstanceId();
 
     /**
      * The desired nickname for "clientupdate".
+     *
      * @apiNote This may be different from {@link IQueryConnection#getWhoAmI()}s "client_nickname" which is the actual nickname.
      */
     String getNickname();

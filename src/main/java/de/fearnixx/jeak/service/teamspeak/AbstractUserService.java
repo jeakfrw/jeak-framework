@@ -65,7 +65,7 @@ public abstract class AbstractUserService implements IUserService {
                 .map(IUserProfile::getUniqueId)
                 .orElseThrow(() -> new ConsistencyViolationException(
                         String.format("Profile service did not create a profile for me :(: %s", user)));
-        logger.debug("Client {} got permission UUID: {}", user, uuid);
+        logger.trace("Client {} got permission UUID: {}", user, uuid);
 
         final Integer tsSubject = user.getClientDBID();
         user.setTs3PermSubject(new TS3UserSubject(permService.getTS3Provider(), tsSubject));

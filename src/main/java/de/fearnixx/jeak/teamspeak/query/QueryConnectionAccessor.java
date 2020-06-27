@@ -39,6 +39,7 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         }
 
         dispatcher = injectionService.injectInto(new QueryEventDispatcher());
+        eventService.registerListener(dispatcher);
         connection = new TS3Connection(in, out, this::onAnswer, this::onNotification);
         injectionService.injectInto(connection);
     }
@@ -61,6 +62,12 @@ public class QueryConnectionAccessor extends AbstractQueryConnection implements 
         while (!terminated) {
             try {
                 connection.read();
+            } catch (QueryClosedException e) {
+                BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(false);
+                disconnectEvent.setBot(bot);
+                eventService.fireEvent(disconnectEvent);
+                return;
+
             } catch (IOException e) {
                 logger.error("Failed to read from connection.", e);
                 BotStateEvent.ConnectEvent.Disconnect disconnectEvent = new BotStateEvent.ConnectEvent.Disconnect(false);
