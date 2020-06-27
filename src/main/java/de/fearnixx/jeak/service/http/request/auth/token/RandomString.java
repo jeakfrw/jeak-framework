@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.service.token;
+package de.fearnixx.jeak.service.http.request.auth.token;
 
 import java.security.SecureRandom;
 import java.util.Locale;

@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.service.http.request.auth.token;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
@@ -21,17 +22,20 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.Objects;
-import java.util.UUID;
 import java.util.regex.Pattern;
 
 public class TokenAuthService extends Configurable implements ITokenAuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenAuthService.class);
+    private static final int TOKEN_LENGTH = Main.getProperty("jeak.http.auth.token_length", 128);
+
     private static final String NO_EXPIRY_VALUE = "never";
     public static final String EXPIRY_NODE_NAME = "expiry";
     public static final DateTimeFormatter EXPIRY_FORMAT = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
     private static final Pattern HEADER_EXTRACTION_PATTERN = Pattern.compile("Token (.+)$");
+
+    private final RandomString tokenGenerator = new RandomString(TOKEN_LENGTH);
 
     @Inject
     @Config(category = "rest", id = "token-auth")
@@ -108,7 +112,7 @@ public class TokenAuthService extends Configurable implements ITokenAuthService 
     @Override
     public synchronized IAuthenticationToken generateToken(IUser tokenOwner) {
         Objects.requireNonNull(tokenOwner, "Token owner may not be null!");
-        var tokenStr = UUID.randomUUID().toString().replace("-", "");
+        var tokenStr = tokenGenerator.nextString();
         var tokenInstance = new AuthenticationToken(tokenStr, tokenOwner, null);
 
         var ownerNode = getTokensNode().getNode(tokenOwner.getClientUniqueID());

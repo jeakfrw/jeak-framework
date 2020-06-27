@@ -1,7 +1,0 @@
-{
-  "Hallo": [
-    "/api/testPluginId/test/hello",
-    "/api/testPluginId/test/info",
-    "/api/testPluginId/test/body"
-  ]
-}
