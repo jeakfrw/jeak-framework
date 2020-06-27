@@ -89,16 +89,16 @@ dependencies {
     compile 'net.tomp2p:opus-wrapper:1.4'
     compile 'com.sun.jna:jna:3.0.9'
     compile 'com.github.manevolent:ffmpeg4j:534e72e6e7'
-    
+
     runtime 'org.antlr:antlr4-runtime:4.7.1'
     runtime 'org.apache.logging.log4j:log4j-api:2.13.1'
     runtime 'org.apache.logging.log4j:log4j-core:2.13.1'
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.1'
     runtime 'mysql:mysql-connector-java:8.0.19'
     runtime 'org.mariadb.jdbc:mariadb-java-client:2.5.4'
-    runtime 'com.sun.mail:smtp:1.6.4'
+    runtime 'com.sun.mail:smtp:1.6.5'
     runtime 'com.sun.mail:dsn:1.6.5'
-    
+
     testCompile 'junit:junit:4.13'
     testCompile 'org.hamcrest:hamcrest:2.2'
 }
