@@ -5,9 +5,13 @@ import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Config;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.reflect.LocaleUnit;
+import de.fearnixx.jeak.service.command.ICommandExecutionContext;
+import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.http.request.IRequestContext;
 import de.fearnixx.jeak.service.http.request.token.IAuthenticationToken;
 import de.fearnixx.jeak.service.http.request.token.ITokenAuthService;
+import de.fearnixx.jeak.service.locale.ILocalizationUnit;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.util.Configurable;
@@ -21,13 +25,21 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
+
+import static de.fearnixx.jeak.service.command.spec.Commands.commandSpec;
+import static de.fearnixx.jeak.service.command.spec.Commands.paramSpec;
 
 public class TokenAuthService extends Configurable implements ITokenAuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(TokenAuthService.class);
     private static final int TOKEN_LENGTH = Main.getProperty("jeak.http.auth.token_length", 128);
+    private static final String AUTHENTICATION_TOKEN_PERMISSION = "jeak.command.http.authToken";
+    public static final String AUTHENTICATION_TOKEN_PERMISSION_BASE = AUTHENTICATION_TOKEN_PERMISSION + ".base";
+    public static final String AUTHENTICATION_TOKEN_PERMISSION_OTHER = AUTHENTICATION_TOKEN_PERMISSION + ".other";
+    private static final String MSG_TOKEN_GENERATED = "http.auth.token.generated";
 
     private static final String NO_EXPIRY_VALUE = "never";
     public static final String EXPIRY_NODE_NAME = "expiry";
@@ -43,6 +55,13 @@ public class TokenAuthService extends Configurable implements ITokenAuthService 
 
     @Inject
     private IUserService userService;
+
+    @Inject
+    private ICommandService commandService;
+
+    @Inject
+    @LocaleUnit(value = "jeak.http", defaultResource = "localization/http.json")
+    private ILocalizationUnit localizationUnit;
 
     public TokenAuthService() {
         super(TokenAuthService.class);
@@ -174,6 +193,34 @@ public class TokenAuthService extends Configurable implements ITokenAuthService 
         if (!loadConfig()) {
             event.cancel();
         }
+
+        // Register commands
+        commandService.registerCommand(
+                commandSpec("auth-token", "http:auth-token", "http:authenticationToken")
+                        .permission(AUTHENTICATION_TOKEN_PERMISSION_BASE)
+                        .parameters(paramSpec().optional(paramSpec("user", IUser.class)))
+                        .executor(this::onUserRequestedPermission)
+                        .build());
+    }
+
+    @Listener(order = Listener.Orders.EARLIER)
+    public synchronized void onShutdown(IBotStateEvent.IPreShutdown shutdownEvent) {
+        if (!saveConfig()) {
+            logger.error("Configuration save failed, see preceding error.");
+        }
+    }
+
+    protected void onUserRequestedPermission(ICommandExecutionContext execCtx) {
+        var optTarget = execCtx.getOne("user", IUser.class);
+        if (optTarget.isPresent() && !execCtx.getSender().hasPermission(AUTHENTICATION_TOKEN_PERMISSION_OTHER)) {
+            execCtx.getSender().sendMessage(String.format("You're not allowed to request tokens for others (%s)", AUTHENTICATION_TOKEN_PERMISSION_OTHER));
+            return;
+        }
+
+        var generatedToken = generateToken(optTarget.orElseGet(execCtx::getSender));
+        String notifyMessage = localizationUnit.getContext(execCtx.getSender())
+                .getMessage(MSG_TOKEN_GENERATED, Map.of("token", generatedToken.getTokenString()));
+        execCtx.getSender().sendMessage(notifyMessage);
     }
 
     @Override

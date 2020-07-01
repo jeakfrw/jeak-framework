@@ -1,0 +1,10 @@
+{
+  "langs": {
+    "en": {
+      "http.auth.token.generated": "Auth token generated: %[token]"
+    },
+    "de": {
+      "http.auth.token.generated": "Auth-Token erstellt: %[token]"
+    }
+  }
+}
