@@ -3,6 +3,7 @@ package de.fearnixx.jeak.teamspeak.cache;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
+import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 
 import java.util.List;
 import java.util.Map;
@@ -61,4 +62,14 @@ public interface IDataCache {
      * Returns the configured refresh period for channels in seconds.
      */
     int getChannelRefreshTime();
+
+    /**
+     * Most recently cached version of {@link de.fearnixx.jeak.teamspeak.QueryCommands.SERVER#SERVER_INFO}.
+     */
+    Optional<IDataHolder> getServerInfo();
+
+    /**
+     * Most recently cached version of {@link de.fearnixx.jeak.teamspeak.QueryCommands.SERVER#INSTANCE_INFO}.
+     */
+    Optional<IDataHolder> getInstanceInfo();
 }

@@ -53,6 +53,9 @@ public class ClientCache {
     @Inject
     private IPermissionService permService;
 
+    @Inject
+    private IDataCache dataCache;
+
     // == CLIENTLIST = //
 
     private final IQueryRequest clientListRequest = IQueryRequest.builder()
@@ -212,6 +215,7 @@ public class ClientCache {
         client.setTs3PermSubject(ts3Subject);
         client.setFrameworkSubjectUUID(uuid);
         client.setFrwPermProvider(permService.getFrameworkProvider());
+        client.setDataCache(dataCache);
     }
 
     public Map<Integer, IClient> getClientMap() {

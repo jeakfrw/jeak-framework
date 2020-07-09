@@ -98,6 +98,7 @@ public class EventDataInjector {
         client.setTs3PermSubject(ts3Subject);
         client.setFrameworkSubjectUUID(uuid);
         client.setFrwPermProvider(permService.getFrameworkProvider());
+        client.setDataCache(dataCache);
     }
 
     private void processTargetChannel(QueryEvent.Notification.TargetChannel event) {
