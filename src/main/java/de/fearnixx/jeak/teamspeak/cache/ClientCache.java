@@ -24,10 +24,7 @@ import de.fearnixx.jeak.util.TS3DataFixes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -36,6 +33,7 @@ public class ClientCache {
     private static final Logger logger = LoggerFactory.getLogger(ClientCache.class);
 
     private final Map<Integer, TS3Client> clientCache = new ConcurrentHashMap<>(50);
+    private final List<Runnable> deferredListenerInvocations = new LinkedList<>();
     private final Object LOCK;
 
     @Inject
@@ -112,12 +110,16 @@ public class ClientCache {
     private void refreshClients(IRawQueryEvent.IMessage.IAnswer event) {
         List<IRawQueryEvent.IMessage> objects = event.toList();
         synchronized (LOCK) {
+            // Defer property listener invocations. We do not want them to mess with the cache update!
+            clientCache.forEach((id, cl) -> cl.deferPropListeners(deferredListenerInvocations::add));
+
+            // Generate mapping from the received message.
             final Map<Integer, TS3Client> clientMapping = generateClientMapping(objects);
 
+            // Update internal mapping according to the generated mapping.
             TS3Client oldClientRep;
             Integer oID;
             TS3Client freshClient;
-
             Integer[] cIDs = clientCache.keySet().toArray(new Integer[0]);
             for (int i = clientCache.size() - 1; i >= 0; i--) {
                 oID = cIDs[i];
@@ -127,7 +129,8 @@ public class ClientCache {
                 if (freshClient == null) {
                     // Client removed - invalidate & remove
                     oldClientRep.invalidate();
-                    clientCache.remove(oID);
+                    TS3Client removed = clientCache.remove(oID);
+                    removed.deferPropListeners(null);
 
                 } else {
                     clientMapping.remove(oID);
@@ -141,6 +144,10 @@ public class ClientCache {
             if (firstFill) {
                 logger.info("Client cache is ready.");
             }
+
+            // Disable listener deferral and invoke all caught ones.
+            clientCache.forEach((id, cl) -> cl.deferPropListeners(null));
+            runDeferred();
         }
 
         logger.debug("Clientlist updated");
@@ -216,6 +223,15 @@ public class ClientCache {
         client.setFrameworkSubjectUUID(uuid);
         client.setFrwPermProvider(permService.getFrameworkProvider());
         client.setDataCache(dataCache);
+    }
+
+    private void runDeferred() {
+        try {
+            deferredListenerInvocations.forEach(Runnable::run);
+        } catch (Exception e) {
+            logger.error("Exception caught in deferred property change listener!", e);
+        }
+        deferredListenerInvocations.clear();
     }
 
     public Map<Integer, IClient> getClientMap() {
