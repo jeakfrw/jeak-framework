@@ -29,6 +29,7 @@ public class Main implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final Main INSTANCE = new Main();
     private static final String LIBRARY_PROPERTY = "jna.library.path";
+    private static final boolean IGNORE_STDIN_FAILURE = Main.getProperty("jeak.run.ignoreStdInFail", false);
 
     private final PluginManager pluginManager = new PluginManager();
 
@@ -117,7 +118,6 @@ public class Main implements Runnable {
 
         ExecutorService execSvc = Executors.newSingleThreadExecutor();
 
-
         try (Scanner sysInScanner = new Scanner(System.in)) {
             Supplier<Future<String>> next = () -> execSvc.submit(sysInScanner::nextLine);
             Future<String> futConsoleLine = next.get();
@@ -134,9 +134,12 @@ public class Main implements Runnable {
                 } catch (InterruptedException e) {
                     logger.warn("Interrupted while reading system in? Shutting down...");
                     jeakBot.shutdown();
+                    Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
                     logger.error("PANIC! Failed to read from system in!", e);
-                    jeakBot.shutdown();
+                    if (!IGNORE_STDIN_FAILURE) {
+                        jeakBot.shutdown();
+                    }
                 } catch (TimeoutException e) {
                     // We're just going to ignore this ^^. Probably the admin doesn't want to talk with us anyways.
                 }
