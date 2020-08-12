@@ -85,7 +85,7 @@ dependencies {
     antlr 'org.antlr:antlr4:4.7.2'
 
     compile 'com.github.manevolent:ts3j:1.0'
-    compile 'org.apache.commons:commons-lang3:3.10'
+    compile 'org.apache.commons:commons-lang3:3.11'
     compile 'net.tomp2p:opus-wrapper:1.4'
     compile 'com.sun.jna:jna:3.0.9'
     compile 'com.github.manevolent:ffmpeg4j:534e72e6e7'
