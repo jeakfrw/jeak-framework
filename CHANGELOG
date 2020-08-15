@@ -1,3 +1,18 @@
+## 1.1.6 (Fixes & dependency updates)
++ Added rudimentary HTTPS support
++ Added experimental voice connection support
+~ Some JSON-parsing fixes in the HTTP functionality
+~ Fixed a few bugs where the HTTP-Server ignored several headers for reverse-proxy setups
+~ ``TypedCommandService`` is now enabled by default
+~ Provided a work-around for server administrators who are unaware of their virtualserver id (``use``-command is performed with the ``-voice`` flag)
+~ Reworked internal channel sorting which should now be more consistent
+~ Fixed lazy permission lookups not working (when ``permlist`` command is not allowed)
+~ Implemented parallel dispatching of ``IAnswer`` events to prevent lockups in internal requests
+~ Optimized log-levels of ``DBUserService`` for less log spam
+~ Fixed a bug where in some cases the ``Disconnect`` event wasn't fired causing the framework not to attempt a reconnect
+~ [DEPRECATION] Injection of ``EntityManager`` instances are now discouraged as they force short-lived sessions to remain open
+~ General dependency updates
+
 ## 1.1.0 (Typed commands, Language selection)
 + Added a new command service that allows for declarative commands and typed parameters
 + Added the ability to create custom matchers for plugin specific types in command parameters
