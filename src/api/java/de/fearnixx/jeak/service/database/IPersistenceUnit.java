@@ -81,16 +81,16 @@ public interface IPersistenceUnit {
      * Nesting calls of this function are explicitly permitted in the <b>same thread</b>. In such cases the inner
      * function call will use the same transaction and entity manager.
      *
-     * @param entityManagerConsumer the function which will be run
+     * @param entityManagerFunction the function which will be run
      *
      */
-    <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer);
+    <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction);
 
     /**
      * Just like {@link #withEntityManager(Function)} but with an error callback.
      *
-     * @param entityManagerConsumer the function which will be run
+     * @param entityManagerFunction the function which will be run
      * @param onError               the callback which will be run, if an exceptions occurs during the execution
      */
-    <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer, Consumer<Exception> onError);
+    <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction, Consumer<Exception> onError);
 }
