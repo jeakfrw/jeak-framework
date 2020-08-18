@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.persistence.PersistenceException;
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class HHPersistenceUnit extends Configurable implements IPersistenceUnit, AutoCloseable {
 
@@ -242,13 +244,13 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
     }
 
     @Override
-    public void withEntityManager(Consumer<EntityManager> entityManagerConsumer) {
-        withEntityManager(entityManagerConsumer, e -> {
+    public <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer) {
+        return withEntityManager(entityManagerConsumer, e -> {
         });
     }
 
     @Override
-    public void withEntityManager(Consumer<EntityManager> entityManagerConsumer, Consumer<Exception> onError) {
+    public <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer, Consumer<Exception> onError) {
         EntityManager entityManager = entityManagerLocal.get();
 
         if (entityManager == null) {
@@ -256,22 +258,36 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
             entityManagerLocal.set(entityManager);
         }
 
+        T returnValue = null;
+        final EntityTransaction transaction = entityManager.getTransaction();
+        boolean transactionAlreadyActive = transaction.isActive();
+
         try {
-            entityManager.getTransaction().begin();
-            entityManagerConsumer.accept(entityManager);
-            entityManager.getTransaction().commit();
+            if (!transactionAlreadyActive) {
+                transaction.begin();
+            }
+
+            returnValue = entityManagerConsumer.apply(entityManager);
+
+            if (!transactionAlreadyActive) {
+                transaction.commit();
+            }
         } catch (Exception e) {
             entityManager.getTransaction().rollback();
             logger.error("An exception occurred inside a transaction -> Rolling back.", e);
             onError.accept(e);
         } finally {
 
-            synchronized (entityManagers) {
-                entityManager.close();
-                entityManagerLocal.remove();
-                entityManagers.remove(entityManager);
+            if (!transactionAlreadyActive) {
+                synchronized (entityManagers) {
+                    entityManager.close();
+                    entityManagerLocal.remove();
+                    entityManagers.remove(entityManager);
+                }
             }
         }
+
+        return returnValue;
     }
 
     @Override

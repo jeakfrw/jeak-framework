@@ -3,6 +3,7 @@ package de.fearnixx.jeak.service.database;
 import javax.persistence.EntityManager;
 import javax.sql.DataSource;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Representation of a Hibernate-provided data source/persistence unit.
@@ -74,18 +75,22 @@ public interface IPersistenceUnit {
     EntityManager getEntityManager();
 
     /**
-     * Executes the given consumer with an isolated entity manager in an isolated transaction. The transaction will be
+     * Executes the given function with an isolated entity manager in an isolated transaction. The transaction will be
      * rolled back, if any exception occurs.
+     * <p>
+     * Nesting calls of this function are explicitly permitted in the <b>same thread</b>. In such cases the inner
+     * function call will use the same transaction and entity manager.
      *
-     * @param entityManagerConsumer the consumer which will be run
+     * @param entityManagerConsumer the function which will be run
+     *
      */
-    void withEntityManager(Consumer<EntityManager> entityManagerConsumer);
+    <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer);
 
     /**
-     * Just like {@link #withEntityManager(Consumer)} but with an error callback.
+     * Just like {@link #withEntityManager(Function)} but with an error callback.
      *
-     * @param entityManagerConsumer the consumer which will be run
+     * @param entityManagerConsumer the function which will be run
      * @param onError               the callback which will be run, if an exceptions occurs during the execution
      */
-    void withEntityManager(Consumer<EntityManager> entityManagerConsumer, Consumer<Exception> onError);
+    <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer, Consumer<Exception> onError);
 }
