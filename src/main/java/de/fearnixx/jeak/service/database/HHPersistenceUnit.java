@@ -244,13 +244,13 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
     }
 
     @Override
-    public <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer) {
-        return withEntityManager(entityManagerConsumer, e -> {
+    public <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction) {
+        return withEntityManager(entityManagerFunction, e -> {
         });
     }
 
     @Override
-    public <T> T withEntityManager(Function<EntityManager, T> entityManagerConsumer, Consumer<Exception> onError) {
+    public <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction, Consumer<Exception> onError) {
         EntityManager entityManager = entityManagerLocal.get();
 
         if (entityManager == null) {
@@ -267,7 +267,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
                 transaction.begin();
             }
 
-            returnValue = entityManagerConsumer.apply(entityManager);
+            returnValue = entityManagerFunction.apply(entityManager);
 
             if (!transactionAlreadyActive) {
                 transaction.commit();
