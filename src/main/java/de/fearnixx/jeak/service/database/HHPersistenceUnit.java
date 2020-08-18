@@ -22,7 +22,11 @@ import javax.sql.DataSource;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 public class HHPersistenceUnit extends Configurable implements IPersistenceUnit, AutoCloseable {
 
@@ -38,7 +42,6 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
     }
 
     private final Map<String, String> dataSourceOpts = new HashMap<>();
-    private final List<EntityManager> entityManagers = new LinkedList<>();
     private final IConfig config;
     private final BootstrapServiceRegistry baseRegistry;
     private final String unitId;
@@ -55,6 +58,8 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
     private HikariDataSource hikariDS;
     private StandardServiceRegistry hibernateServiceRegistry;
     private SessionFactory hibernateSessionFactory;
+
+    private ThreadLocal<EntityManager> entityManagerLocal = new ThreadLocal<>();
 
     public HHPersistenceUnit(String unitId, IConfig config, BootstrapServiceRegistry baseRegistry) {
         super(HHPersistenceUnit.class);
@@ -231,12 +236,38 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
 
     @Override
     public EntityManager getEntityManager() {
-        return track(hibernateSessionFactory.createEntityManager());
+        EntityManager entityManager = entityManagerLocal.get();
+
+        if (entityManager == null) {
+            entityManager = hibernateSessionFactory.createEntityManager();
+            entityManagerLocal.set(entityManager);
+        }
+
+        return entityManager;
     }
 
-    private EntityManager track(EntityManager e) {
-        entityManagers.add(e);
-        return e;
+    @Override
+    public void withEntityManager(Consumer<EntityManager> entityManagerConsumer) {
+        withEntityManager(entityManagerConsumer, e -> {
+        });
+    }
+
+    @Override
+    public void withEntityManager(Consumer<EntityManager> entityManagerConsumer, Consumer<Exception> onError) {
+        final EntityManager entityManager = getEntityManager();
+
+        try {
+            entityManager.getTransaction().begin();
+            entityManagerConsumer.accept(entityManager);
+            entityManager.getTransaction().commit();
+        } catch (Exception e) {
+            entityManager.getTransaction().rollback();
+            logger.error("An exception occurred inside a transaction -> Rolling back.", e);
+            onError.accept(e);
+        } finally {
+            entityManager.close();
+            entityManagerLocal.remove();
+        }
     }
 
     @Override
@@ -246,13 +277,14 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
         }
         isClosed = true;
         logger.debug("[{}] Closing & flushing entity managers.", unitId);
-        entityManagers.forEach(eM -> {
+        Optional.ofNullable(entityManagerLocal.get()).ifPresent(eM -> {
             try {
                 if (eM.isOpen()) {
                     if (eM.getTransaction().isActive()) {
                         eM.flush();
                     }
                     eM.close();
+                    entityManagerLocal.remove();
                 }
             } catch (IllegalStateException | PersistenceException e) {
                 logger.warn("[{}] Failed to close entity manager.", unitId, e);

@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.database;
 
 import javax.persistence.EntityManager;
 import javax.sql.DataSource;
+import java.util.function.Consumer;
 
 /**
  * Representation of a Hibernate-provided data source/persistence unit.
@@ -71,4 +72,20 @@ public interface IPersistenceUnit {
      * @apiNote EntityManager implements {@link AutoCloseable} and should be closed when information processing is done. For example, when an event listener is finished. (Use try-with-resources, when possible.)
      */
     EntityManager getEntityManager();
+
+    /**
+     * Executes the given consumer with an isolated entity manager in an isolated transaction. The transaction will be
+     * rolled back, if any exception occurs.
+     *
+     * @param entityManagerConsumer the consumer which will be run
+     */
+    void withEntityManager(Consumer<EntityManager> entityManagerConsumer);
+
+    /**
+     * Just like {@link #withEntityManager(Consumer)} but with an error callback.
+     *
+     * @param entityManagerConsumer the consumer which will be run
+     * @param onError               the callback which will be run, if an exceptions occurs during the execution
+     */
+    void withEntityManager(Consumer<EntityManager> entityManagerConsumer, Consumer<Exception> onError);
 }
