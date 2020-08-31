@@ -75,14 +75,14 @@ public interface IPersistenceUnit {
     EntityManager getEntityManager();
 
     /**
-     * Executes the given function with an isolated entity manager in an isolated transaction. The transaction will be
-     * rolled back, if any exception occurs.
+     * Executes the given function with an newly created entity manager.
+     * Also wraps the consumer into a transaction, which will be rolled back, if any exception occurs.
      * <p>
-     * Nesting calls of this function are explicitly permitted in the <b>same thread</b>. In such cases the inner
-     * function call will use the same transaction and entity manager.
+     * Nested calls of this function are explicitly permitted on the <b>same thread</b>.
+     * In such cases the inner function call will use the same transaction and entity manager.
+     * Subsequent, non-nested calls will receive own entity managers and transactions.
      *
      * @param entityManagerFunction the function which will be run
-     *
      */
     <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction);
 
@@ -91,6 +91,7 @@ public interface IPersistenceUnit {
      *
      * @param entityManagerFunction the function which will be run
      * @param onError               the callback which will be run, if an exceptions occurs during the execution
+     * @implNote When <i>onError</i> is called, the transaction has already been rolled back.
      */
     <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction, Consumer<Exception> onError);
 }

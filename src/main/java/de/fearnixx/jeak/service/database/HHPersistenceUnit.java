@@ -245,7 +245,7 @@ public class HHPersistenceUnit extends Configurable implements IPersistenceUnit,
 
     @Override
     public <T> T withEntityManager(Function<EntityManager, T> entityManagerFunction) {
-        return withEntityManager(entityManagerFunction, e -> {
+        return withEntityManager(entityManagerFunction, err -> {
         });
     }
 
