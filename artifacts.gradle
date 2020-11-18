@@ -5,35 +5,27 @@ compileJava() {
 }
 
 task apiJar(type: Jar) {
-    baseName = project.ext.artifact + '-api'
-    version = project.version
+    classifier 'api'
 
     from sourceSets.api.output
-
-    dependsOn compileApiJava
-}
-
-task apiSourcesJar(type: Jar) {
-    baseName = project.ext.artifact + '-api'
-    version = project.version
-    
     from sourceSets.api.allJava
-    
+
     dependsOn compileApiJava
 }
 
 jar() {
-    baseName = project.ext.artifact
-    version = project.version
-
     from sourceSets.main.output
 
     dependsOn compileJava
+
+    manifest {
+        attributes(
+                'Main-Class': 'de.fearnixx.jeak.Main'
+        )
+    }
 }
 
 task sourcesJar(type: Jar) {
-    baseName = project.ext.artifact
-    version = project.version
     classifier 'sources'
 
     from sourceSets.api.allJava
@@ -43,8 +35,7 @@ task sourcesJar(type: Jar) {
 }
 
 task testJar(type: Jar) {
-    baseName = project.ext.artifact + '-test'
-    version = project.version
+    classifier 'test'
 
     from sourceSets.main.output
     from sourceSets.test.output
@@ -55,7 +46,6 @@ task testJar(type: Jar) {
 
 build {
     dependsOn 'apiJar'
-    dependsOn 'apiSourcesJar'
     dependsOn 'jar'
     dependsOn 'sourcesJar'
 }
