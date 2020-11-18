@@ -2,7 +2,7 @@
 # ./minimal_runscript.sh
 
 # Check if java exists
-if [[ -z "$(which java)" ]]; then
+if [[ -z "$(command -v java)" ]]; then
     printf "Missing dependencies: Java\n"
     exit 1
 fi
@@ -27,17 +27,17 @@ if [[ -z "$JEAK_EXECUTABLE" ]]; then
     fi
 fi
 if [[ -z "$JEAK_EXECUTABLE" ]]; then
-    printf "Cannot find JEAKBOT_EXECUTABLE!\n"
+    printf "Cannot find JEAK_EXECUTABLE!\n"
     exit 1
 fi
 
 # Note: If you're on a Windows environment (w/ bash/shell),
 # please be aware that the cp separator should be ; instead of :
-JEAK_CP="${JEAK_EXECUTABLE}:libraries/*"
+JEAK_CP="libraries/*"
 
-printf "[DJVMARGS] ${JEAK_JVM_ARGS}\n"
-printf "[DARGS] ${JEAK_ARGS}\n"
-printf "[CP] ${JEAK_CP}\n"
+printf '[JVM-Arguments] %s \n' "${JEAK_JVM_ARGS}"
+printf '[Jeak-Arguments] %s \n' "${JEAK_ARGS}"
+printf '[Classpath] %s \n' "${JEAK_CP}"
 
-java -cp ${JEAK_CP} ${JEAK_JVM_ARGS} de.fearnixx.jeak.Main ${JEAK_ARGS}
+java -cp "${JEAK_CP}" ${JEAK_JVM_ARGS} -jar "${JEAK_EXECUTABLE}" ${JEAK_ARGS}
 exit $?
