@@ -23,7 +23,8 @@ public class MailBuilder {
 
     /**
      * Add a "TO" recipient.
-     * @implNote Must be a valid InternetAddress as used in {@code javax.mail}
+     *
+     * @implNote Must be a valid InternetAddress as used in {@code jakarta.mail}
      */
     public MailBuilder to(String recipient) {
         if (!receiversTO.contains(recipient)) {
@@ -34,7 +35,7 @@ public class MailBuilder {
 
     /**
      * Add a "CC" recipient.
-     * @implNote Must be a valid InternetAddress as used in {@code javax.mail}
+     * @implNote Must be a valid InternetAddress as used in {@code jakarta.mail}
      */
     public MailBuilder toCC(String recipient) {
         if (!receiversCC.contains(recipient)) {
@@ -45,7 +46,7 @@ public class MailBuilder {
 
     /**
      * Add a "BCC" recipient.
-     * @implNote Must be a valid InternetAddress as used in {@code javax.mail}
+     * @implNote Must be a valid InternetAddress as used in {@code jakarta.mail}
      */
     public MailBuilder toBCC(String recipient) {
         if (!receiversBCC.contains(recipient)) {

@@ -6,10 +6,10 @@ import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.api.IConfigNode;
 import de.mlessmann.confort.api.except.ParseException;
 import de.mlessmann.confort.api.lang.IConfigLoader;
+import jakarta.mail.MessagingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.mail.MessagingException;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
