@@ -98,7 +98,7 @@ dependencies {
     runtime 'com.sun.mail:smtp:1.6.5'
     runtime 'com.sun.mail:dsn:1.6.5'
 
-    testCompile 'junit:junit:4.13'
+    testCompile 'junit:junit:4.13.1'
     testCompile 'org.hamcrest:hamcrest:2.2'
 }
 
