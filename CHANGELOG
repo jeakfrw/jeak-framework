@@ -1,3 +1,11 @@
+## 1.1.7 (Dependency updates)
+~ Updated dependencies:
+  * Hibernate -> ``5.4.24.Final``
+  * MySQL-Connector -> ``8.0.22``
+  * JUnit -> ``4.13.1``
+  * Jakarta-Mail -> ``2.0.0``
+  * Jackson -> ``2.11.3``
+
 ## 1.1.6 (Fixes & dependency updates)
 + Added rudimentary HTTPS support
 + Added experimental voice connection support
