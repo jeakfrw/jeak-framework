@@ -46,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 /**
@@ -61,9 +62,6 @@ public class JeakBot implements Runnable, IBot {
 
     private static final Logger logger = LoggerFactory.getLogger(JeakBot.class);
 
-    // * * * VOLATILES * * * //
-
-    private volatile boolean initCalled = false;
 
     // * * * FIELDS * * * //
 
@@ -85,6 +83,8 @@ public class JeakBot implements Runnable, IBot {
     private final TS3ConnectionTask connectionTask = new TS3ConnectionTask();
     private Server server;
 
+    private final AtomicBoolean initCalled = new AtomicBoolean(false);
+    private final AtomicBoolean shutdownCalled = new AtomicBoolean(false);
     private final ExecutorService shutdownExecutor = Executors.newSingleThreadExecutor();
 
     // * * * CONSTRUCTION * * * //
@@ -105,14 +105,16 @@ public class JeakBot implements Runnable, IBot {
 
     @Override
     public void run() {
-        logger.info("Initializing JeakBot version {}", VERSION);
-
-        if (initCalled) {
-            throw new IllegalStateException("Reinitialization of JeakBot instances is not supported! Completely shut down beforehand and/or create a new one.");
+        synchronized (initCalled) {
+            if (initCalled.get()) {
+                throw new IllegalStateException("Reinitialization of JeakBot instances is not supported! Completely shut down beforehand and/or create a new one.");
+            }
+            initCalled.set(true);
         }
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
 
         // Bot Pre-Initialization
-        initCalled = true;
+        logger.info("Initializing JeakBot version {}", VERSION);
         plugins = new HashMap<>();
         discoverPlugins();
         doServiceStartup();
@@ -279,11 +281,6 @@ public class JeakBot implements Runnable, IBot {
         String nickName = config.getNode("nick").optString("JeakBot");
         server.setCredentials(host, port, user, pass, ts3InstID, useSSL, nickName);
 
-        Boolean doNetDump = Main.getProperty("bot.connection.netdump", Boolean.FALSE);
-        if (doNetDump) {
-            logger.info("Dedicated net-dumping is currently not implemented. The option will have no effect atm.");
-        }
-
         serviceManager.provideUnchecked(ITaskService.class).runTask(connectionTask);
     }
 
@@ -414,6 +411,12 @@ public class JeakBot implements Runnable, IBot {
     // * * * RUNTIME * * * //
 
     public void shutdown() {
+        synchronized (shutdownCalled) {
+            if (shutdownCalled.get()) {
+                return;
+            }
+            shutdownCalled.set(true);
+        }
 
         // Decouple the shutdown callback from threads running inside the bots context.
         // This avoids any termination interrupts going on inside the framework instance from interrupting our shutdown handler.
