@@ -1,10 +1,13 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'antlr'
+    id 'com.github.johnrengelman.shadow' version '6.1.0'
+}
+
 group 'de.fearnixx'
 version '1.1.7'
 def projectVersion = project.version
-
-apply plugin: 'java'
-apply plugin: 'maven-publish'
-apply plugin: 'antlr'
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
@@ -116,6 +119,6 @@ build {
 }
 
 wrapper {
-    gradleVersion '5.4.1'
+    gradleVersion '6.7.1'
     distributionType = Wrapper.DistributionType.ALL
 }

@@ -1,13 +1,15 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 task zipDistribution(type: Zip) {
-    from jar
-    from 'src/deploy/scripts'
-    into('libraries') {
-        from configurations.runtime
-        exclude { dep -> !dep.file.name.endsWith('.jar') }
+    dependsOn 'shadowJar'
+
+    from("${buildDir}/libs") {
+        include "*-standalone.jar"
+        // For backward compatibility to runners, rename the distributed Jar.
+        rename 'jeakbot-(.*)-standalone.jar', 'jeakbot-$1.jar'
     }
-    into('libraries/licenses') {
+    from 'src/deploy/scripts'
+    into('oss-credits') {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }
@@ -22,13 +24,15 @@ task zipDistribution(type: Zip) {
 }
 
 task tarDistribution(type: Tar) {
-    from jar
-    from 'src/deploy/scripts'
-    into('libraries') {
-        from configurations.runtime
-        exclude { dep -> !dep.file.name.endsWith('.jar') }
+    dependsOn 'shadowJar'
+
+    from("${buildDir}/libs") {
+        include "*-standalone.jar"
+        // For backward compatibility to runners, rename the distributed Jar.
+        rename 'jeakbot-(.*)-standalone.jar', 'jeakbot-$1.jar'
     }
-    into('libraries/licenses') {
+    from 'src/deploy/scripts'
+    into('oss-credits') {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }

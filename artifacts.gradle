@@ -18,11 +18,17 @@ jar() {
 
     dependsOn compileJava
 
-    manifest {
-        attributes(
-                'Main-Class': 'de.fearnixx.jeak.Main'
-        )
-    }
+    manifest.attributes(
+            'Main-Class': 'de.fearnixx.jeak.Main'
+    )
+}
+
+shadowJar() {
+    classifier 'standalone'
+
+    manifest.attributes(
+            'Main-Class': 'de.fearnixx.jeak.Main'
+    )
 }
 
 task sourcesJar(type: Jar) {
@@ -39,7 +45,7 @@ task testJar(type: Jar) {
 
     from sourceSets.main.output
     from sourceSets.test.output
-    
+
     dependsOn compileJava
     dependsOn compileTestJava
 }
@@ -48,4 +54,5 @@ build {
     dependsOn 'apiJar'
     dependsOn 'jar'
     dependsOn 'sourcesJar'
+    dependsOn 'shadowJar'
 }
