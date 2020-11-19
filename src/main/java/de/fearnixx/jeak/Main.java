@@ -136,10 +136,8 @@ public class Main implements Runnable {
                     jeakBot.shutdown();
                     Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
-                    logger.error("PANIC! Failed to read from system in!", e);
-                    if (!IGNORE_STDIN_FAILURE) {
-                        jeakBot.shutdown();
-                    }
+                    logger.info("Failed to read from system in! Console not available.", e);
+                    break;
                 } catch (TimeoutException e) {
                     // We're just going to ignore this ^^. Probably the admin doesn't want to talk with us anyways.
                 }

@@ -413,8 +413,10 @@ public class JeakBot implements Runnable, IBot {
     public void shutdown() {
         synchronized (shutdownCalled) {
             if (shutdownCalled.get()) {
+                logger.debug("Skipping extraneous shutdown call.");
                 return;
             }
+            logger.info("Shutdown requested. (Logging will cease to work if in shutdown hook.)");
             shutdownCalled.set(true);
         }
 
@@ -439,6 +441,7 @@ public class JeakBot implements Runnable, IBot {
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
+                    logger.warn("Shutdown sleep interrupted.");
                     // ignore interruption.
                 }
                 executors.forEach(ExecutorService::shutdownNow);

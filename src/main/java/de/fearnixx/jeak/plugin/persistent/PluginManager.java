@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -84,11 +83,7 @@ public class PluginManager {
 
     public ClassLoader getPluginClassLoader() {
         if (pluginClassLoader == null) {
-            if (includeCP) {
-                pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]), PluginManager.class.getClassLoader());
-            } else {
-                pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]));
-            }
+            pluginClassLoader = getClass().getClassLoader();
         }
         return pluginClassLoader;
     }
