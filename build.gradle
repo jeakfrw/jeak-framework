@@ -98,7 +98,7 @@ dependencies {
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.13.3'
     runtime 'mysql:mysql-connector-java:8.0.22'
     compile 'org.mariadb.jdbc:mariadb-java-client:2.7.0'
-    runtime 'com.sun.mail:smtp:1.6.5'
+    runtime 'com.sun.mail:smtp:2.0.0'
     runtime 'com.sun.mail:dsn:2.0.0'
 
     testCompile 'junit:junit:4.13.1'
