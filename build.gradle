@@ -83,7 +83,7 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-core:2.11.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.11.3'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.11.3'
-    compile 'org.antlr:antlr4:4.7.2'
+    compile 'org.antlr:antlr4:4.9'
     antlr 'org.antlr:antlr4:4.7.2'
 
     compile 'com.github.manevolent:ts3j:1.0'
