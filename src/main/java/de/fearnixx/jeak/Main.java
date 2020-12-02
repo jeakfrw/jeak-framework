@@ -123,7 +123,9 @@ public class Main implements Runnable {
             Future<String> futConsoleLine = next.get();
             while (true) {
                 synchronized (this) {
-                    if (cliTerminated) break;
+                    if (cliTerminated) {
+                        return;
+                    }
                 }
 
                 try {
@@ -137,7 +139,7 @@ public class Main implements Runnable {
                     Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
                     logger.info("Failed to read from system in! Console not available.", e);
-                    break;
+                    return;
                 } catch (TimeoutException e) {
                     // We're just going to ignore this ^^. Probably the admin doesn't want to talk with us anyways.
                 }

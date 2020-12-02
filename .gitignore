@@ -1,8 +1,11 @@
 ## IDEA ##
 out/
 .idea/
-run/
 *.iml
+
+## Applications ##
+run/
+teamspeak3-server*/
 
 ## Gradle ##
 .gradle
