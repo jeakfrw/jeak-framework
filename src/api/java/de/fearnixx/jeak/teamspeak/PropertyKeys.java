@@ -146,6 +146,7 @@ public abstract class PropertyKeys {
 
         public static final String ID = "permid";
         public static final String ID_SHORT = "p";
+        public static final String STRING_ID = "permsid";
         public static final String VALUE = "permval";
         public static final String VALUE_SHORT = "v";
         public static final String VALUE_UNABBREVIATED = "permvalue";

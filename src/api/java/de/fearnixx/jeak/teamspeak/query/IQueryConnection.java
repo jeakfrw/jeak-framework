@@ -4,7 +4,12 @@ import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 
 /**
  * Created by MarkL4YG on 10.06.17.
+ *
+ * @author Magnus Leßmann
+ * @since 1.0.0
+ * @deprecated In favor of {@link ITSQueryConnection} which more appropriately handles different connection channels.
  */
+@Deprecated(since = "1.2.0")
 public interface IQueryConnection extends AutoCloseable {
 
     /**

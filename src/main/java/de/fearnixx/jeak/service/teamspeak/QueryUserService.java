@@ -5,25 +5,24 @@ import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
-import de.fearnixx.jeak.teamspeak.cache.IDataCache;
+import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IUser;
 import de.fearnixx.jeak.teamspeak.data.TS3User;
-import de.fearnixx.jeak.teamspeak.query.BlockingRequest;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 @FrameworkService(serviceInterface = IUserService.class)
 public class QueryUserService extends AbstractUserService {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryUserService.class);
-
-    @Inject
-    private IDataCache dataCache;
 
     @Inject
     private IServer server;
@@ -40,19 +39,28 @@ public class QueryUserService extends AbstractUserService {
         }
 
         IQueryRequest request = IQueryRequest.builder()
-                .command("clientdbfind")
+                .command(QueryCommands.CLIENT.CLIENT_FIND_DB)
                 .addKey("pattern", ts3uniqueID)
                 .addOption("-uid")
                 .build();
 
-        BlockingRequest blockingRequest = new BlockingRequest(request);
-        server.getConnection().sendRequest(request);
-        if (!blockingRequest.waitForCompletion()) {
-            logger.warn("Failed to get client DB ID (by uid) from blocking request.");
+        final IQueryEvent.IAnswer answer;
+        try {
+            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted finding user by unique ID.", e);
+            Thread.currentThread().interrupt();
+            return Collections.emptyList();
+
+        } catch (ExecutionException e) {
+            logger.error("Error finding user by unique ID!", e);
+            return Collections.emptyList();
+
+        } catch (TimeoutException e) {
+            logger.error("Timed out finding user by unique ID! Is the connection overloaded?");
             return Collections.emptyList();
         }
 
-        IQueryEvent.IAnswer answer = blockingRequest.getAnswer();
         if (answer.getErrorCode() != 0) {
             logger.warn("Error while getting client DB ID (by uid): {} - {}", answer.getErrorCode(), answer.getErrorMessage());
             return Collections.emptyList();
@@ -69,18 +77,27 @@ public class QueryUserService extends AbstractUserService {
         }
 
         IQueryRequest request = IQueryRequest.builder()
-                .command("clientdbinfo")
-                .addKey("cldbid", ts3dbID)
+                .command(QueryCommands.CLIENT.CLIENT_FIND_DB)
+                .addKey(PropertyKeys.Client.DBID_S, ts3dbID)
                 .build();
 
-        BlockingRequest blockingRequest = new BlockingRequest(request);
-        server.getConnection().sendRequest(request);
-        if (!blockingRequest.waitForCompletion()) {
-            logger.warn("Failed to get user from blocking request.");
+        IQueryEvent.IAnswer answer;
+        try {
+            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted finding user by DBID.", e);
+            Thread.currentThread().interrupt();
+            return Collections.emptyList();
+
+        } catch (ExecutionException e) {
+            logger.error("Error finding user by DBID!", e);
+            return Collections.emptyList();
+
+        } catch (TimeoutException e) {
+            logger.error("Timed out finding user by DBID! Is the connection overloaded?");
             return Collections.emptyList();
         }
 
-        IQueryEvent.IAnswer answer = blockingRequest.getAnswer();
         if (answer.getErrorCode() != 0) {
             logger.warn("Error getting client from db request: {} - {}", answer.getErrorCode(), answer.getErrorMessage());
             return Collections.emptyList();
@@ -102,26 +119,34 @@ public class QueryUserService extends AbstractUserService {
 
     private void discoverServerGroups(TS3User user) {
         IQueryRequest sgDiscoverRequest = IQueryRequest.builder()
-                .command("servergroupsbyclientid")
-                .addKey("cldbid", user.getClientDBID())
+                .command(QueryCommands.SERVER_GROUP.SERVERGROUP_GET_BYCLIENT)
+                .addKey(PropertyKeys.Client.DBID_S, user.getClientDBID())
                 .build();
 
-        BlockingRequest request = new BlockingRequest(sgDiscoverRequest);
-        server.getConnection().sendRequest(sgDiscoverRequest);
-        if (!request.waitForCompletion()) {
-            logger.error("Could not retrieve server groups of user: {}!", user);
-            user.setProperty(PropertyKeys.Client.GROUPS, "");
+        IQueryEvent.IAnswer answer;
+        try {
+            answer = server.getQueryConnection().promiseRequest(sgDiscoverRequest).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted getting server groups from client.", e);
+            Thread.currentThread().interrupt();
             return;
-        } else {
-            IQueryEvent.IAnswer answer = request.getAnswer();
-            String groups = answer.getDataChain()
-                    .stream()
-                    .map(holder -> holder.getProperty("sgid"))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.joining(","));
-            user.setProperty(PropertyKeys.Client.GROUPS, groups);
+
+        } catch (ExecutionException e) {
+            logger.error("Error getting server groups from client!", e);
+            return;
+
+        } catch (TimeoutException e) {
+            logger.error("Timed out getting server groups from client! Is the connection overloaded?");
+            return;
         }
+
+        String groups = answer.getDataChain()
+                .stream()
+                .map(holder -> holder.getProperty("sgid"))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.joining(","));
+        user.setProperty(PropertyKeys.Client.GROUPS, groups);
     }
 
     @Override
@@ -136,18 +161,27 @@ public class QueryUserService extends AbstractUserService {
         }
 
         IQueryRequest request = IQueryRequest.builder()
-                .command("clientdbfind")
+                .command(QueryCommands.CLIENT.CLIENT_FIND_DB)
                 .addKey("pattern", ts3nickname)
                 .build();
 
-        BlockingRequest blockingRequest = new BlockingRequest(request);
-        server.getConnection().sendRequest(request);
-        if (!blockingRequest.waitForCompletion()) {
-            logger.warn("Failed to get client DB ID (by nickname) from blocking request.");
+        IQueryEvent.IAnswer answer;
+        try {
+            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted finding user by nickname.", e);
+            Thread.currentThread().interrupt();
+            return Collections.emptyList();
+
+        } catch (ExecutionException e) {
+            logger.error("Error finding user by nickname!", e);
+            return Collections.emptyList();
+
+        } catch (TimeoutException e) {
+            logger.error("Timed out finding user by nickname! Is the connection overloaded?");
             return Collections.emptyList();
         }
 
-        IQueryEvent.IAnswer answer = blockingRequest.getAnswer();
         if (answer.getErrorCode() != 0) {
             logger.warn("Error while getting client DB ID (by nickname): {} - {}", answer.getErrorCode(), answer.getErrorMessage());
             return Collections.emptyList();

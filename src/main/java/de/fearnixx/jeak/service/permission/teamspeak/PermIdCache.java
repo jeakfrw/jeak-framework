@@ -8,7 +8,6 @@ import de.fearnixx.jeak.service.task.ITask;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
-import de.fearnixx.jeak.teamspeak.query.BlockingRequest;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +17,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class PermIdCache {
 
@@ -99,35 +100,45 @@ public class PermIdCache {
                         permSid, a.getErrorCode(), a.getErrorMessage()))
                 .build();
 
-        BlockingRequest bRequest = new BlockingRequest(request);
-        server.getConnection().sendRequest(request);
-        if (bRequest.waitForCompletion()) {
-            IQueryEvent.IAnswer answer = bRequest.getAnswer();
+        IQueryEvent.IAnswer answer;
+        try {
+            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while trying to retrieve permission ID.", e);
+            Thread.currentThread().interrupt();
+            return Optional.empty();
 
-            if (answer.getErrorCode() == 0) {
-                List<IDataHolder> chain = answer.getDataChain();
-                for (IDataHolder holder : chain) {
-                    String dataSID = holder.getProperty("permsid").orElse("_");
-                    if (dataSID.equals(permSid)) {
-                        Integer permid = holder.getProperty("permid")
-                                .map(Integer::parseInt)
-                                .orElse(-1);
+        } catch (ExecutionException e) {
+            logger.error("Error lazily retrieving permission ID!", e);
+            return Optional.empty();
 
-                        if (permid > 0) {
-                            return Optional.of(permid);
-                        } else {
-                            logger.warn("Failed to retrieve permID for \"{}\" from answer!", permSid);
-                        }
-                    } else {
-                        logger.debug("Skipping result SID: {}", dataSID);
-                    }
+        } catch (TimeoutException e) {
+            logger.warn("Timed out lazily retrieving permission ID! Is the connection overloaded?");
+            return Optional.empty();
+        }
+
+        if (answer.getErrorCode() == 0) {
+            List<IDataHolder> chain = answer.getDataChain();
+            for (IDataHolder holder : chain) {
+                String dataSID = holder.getProperty("permsid").orElse("_");
+                if (!dataSID.equals(permSid)) {
+                    logger.debug("Skipping result SID: {}", dataSID);
+                    continue;
                 }
-            } else {
-                logger.warn("Non-OK return code for permID (\"{}\")lookup: {} - {}",
-                        permSid, answer.getErrorCode(), answer.getErrorMessage());
+
+                final var permid = holder.getProperty("permid")
+                        .map(Integer::parseInt)
+                        .orElse(-1);
+
+                if (permid > 0) {
+                    return Optional.of(permid);
+                } else {
+                    logger.warn("Failed to retrieve permID for \"{}\" from answer! {}", permSid, holder);
+                }
             }
         } else {
-            logger.error("Could not complete blocking request for permID lookup.");
+            logger.warn("Non-OK return code for permID (\"{}\")lookup: {} - {}",
+                    permSid, answer.getErrorCode(), answer.getErrorMessage());
         }
 
         return Optional.empty();

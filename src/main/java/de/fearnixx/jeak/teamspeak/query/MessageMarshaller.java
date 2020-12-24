@@ -1,39 +1,36 @@
 package de.fearnixx.jeak.teamspeak.query;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.event.IEvent;
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IRawQueryEvent;
-import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.event.query.QueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
-import de.fearnixx.jeak.reflect.Inject;
-import de.fearnixx.jeak.reflect.Listener;
-import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.jeak.teamspeak.except.QueryException;
-import de.fearnixx.jeak.util.NamePatternThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Dispatches events based on incoming {@link de.fearnixx.jeak.event.IRawQueryEvent}s.
- */
-public class QueryEventDispatcher {
+import static de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
 
-    private static final Logger logger = LoggerFactory.getLogger(QueryEventDispatcher.class);
+public class MessageMarshaller {
+
     private static final int FAILED_PERM_ID = Main.getProperty("jeak.queryDispatcher.insuffClientPermId", 2568);
-    private static final int DISPATCHER_POOL_SIZE = Main.getProperty("jeak.queryDispatcher.poolSize", 5);
-    public static final Integer AWAIT_TERMINATION_DELAY = Main.getProperty("jeak.queryDispatcher.terminateDelay", 10000);
+    private static final Logger logger = LoggerFactory.getLogger(MessageMarshaller.class);
+
+    private final List<String> permissionFails = new LinkedList<>();
+    private final AtomicInteger lastNotificationHash = new AtomicInteger();
+    private final AtomicReference<IMessage.INotification> lastEditEvent = new AtomicReference<>();
+    private final IUserService userSvc;
 
     private static final List<String> STD_CHANNELEDIT_PROPS = Arrays.asList(
             PropertyKeys.Channel.ID,
@@ -42,25 +39,38 @@ public class QueryEventDispatcher {
             PropertyKeys.TextMessage.SOURCE_UID,
             "reasonid"
     );
-    private static final List<String> permFails = new LinkedList<>();
 
-    @Inject
-    private IEventService eventService;
+    public MessageMarshaller(IUserService userSvc) {
+        this.userSvc = userSvc;
+    }
 
-    @Inject
-    private IUserService userSvc;
+    public IQueryEvent.IAnswer marshall(RawQueryEvent.Message.Answer event) {
+        IQueryRequest request = event.getRequest();
 
-    private final ExecutorService executor =
-            Executors.newFixedThreadPool(DISPATCHER_POOL_SIZE, new NamePatternThreadFactory("querydispatcher-%d"));
-    private int lastNotificationHash;
-    private IRawQueryEvent.IMessage.INotification lastEditEvent;
+        QueryEvent.Answer answer = new QueryEvent.Answer();
+        answer.setConnection(event.getConnection());
+        answer.setRequest(request);
+        answer.setError(event.getError());
+        answer.setRawReference(event);
 
-    /**
-     * Not dispatched asynchronously as the event is passed on the event service which is already parallel implemented.
-     *
-     * @see de.fearnixx.jeak.event.EventService#fireEvent(IEvent)
-     */
-    public void dispatchNotification(IRawQueryEvent.IMessage.INotification event) {
+        List<IDataHolder> dataHolders = new ArrayList<>(event.toList());
+        answer.setChain(Collections.unmodifiableList(dataHolders));
+
+        if (answer.getErrorCode() == FAILED_PERM_ID) {
+            logger.warn("================================================================================");
+            logger.warn("[PERMS] Insufficient permission error detected: {} - {}",
+                    answer.getErrorCode(), answer.getErrorMessage());
+            logger.warn("================================================================================");
+            final var timeStamp = ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            permissionFails.add(
+                    String.format("\t- %s | %s -> %s (%s)", timeStamp, request.getCommand(), answer.getErrorMessage(), answer.getErrorCode())
+            );
+        }
+
+        return answer;
+    }
+
+    public List<IQueryEvent.INotification> marshall(RawQueryEvent.Message.Notification event) {
         QueryEvent.Notification notification;
         String caption = event.getCaption().toLowerCase();
         int hashCode = event.getHashCode();
@@ -91,7 +101,7 @@ public class QueryEventDispatcher {
             case EventCaptions.CHANNEL_EDITED_DESCR:
                 checkHash = false;
                 if (editResume(event)) {
-                    return;
+                    return Collections.emptyList();
                 } else {
                     notification = new QueryEvent.ChannelEditDescr();
                     break;
@@ -100,7 +110,7 @@ public class QueryEventDispatcher {
             case EventCaptions.CHANNEL_EDITED_PASSWORD:
                 checkHash = false;
                 if (editResume(event)) {
-                    return;
+                    return Collections.emptyList();
                 } else {
                     notification = new QueryEvent.ChannelPasswordChanged();
                     break;
@@ -145,24 +155,26 @@ public class QueryEventDispatcher {
         // === Possible valid skips === //
         if (notification == null) {
             logger.debug("No event type determined. Skipping dispatching.");
-            return;
-        } else if (checkHash && hashCode == lastNotificationHash) {
+            return Collections.emptyList();
+        } else if (checkHash && hashCode == lastNotificationHash.get()) {
             logger.debug("Dropping duplicate {}", caption);
-            return;
+            return Collections.emptyList();
         }
-        lastNotificationHash = hashCode;
+        lastNotificationHash.set(hashCode);
 
         notification.setConnection(event.getConnection());
         notification.setCaption(caption);
 
+        final List<IQueryEvent.INotification> notifications = new LinkedList<>();
         // Loop through chained notifications.
         // Handling inside plugins will be simpler if we do the loop.
         // (Note for future: This may not work asynchronously)
-        RawQueryEvent.Message msg = ((RawQueryEvent.Message) event);
+        RawQueryEvent.Message msg = event;
         do {
             notification.merge(msg);
-            eventService.fireEvent(notification);
+            notifications.add(notification);
         } while ((msg = msg.getNext()) != null);
+        return notifications;
     }
 
     private QueryEvent.ChannelEdit checkEditSuspend(IRawQueryEvent.IMessage.INotification event) {
@@ -176,7 +188,7 @@ public class QueryEventDispatcher {
             }
         }
 
-        lastEditEvent = event;
+        lastEditEvent.set(event);
         if (!deltaFound) {
             logger.debug("Intermitting channelEdit event. No delta found.");
             return null;
@@ -186,82 +198,18 @@ public class QueryEventDispatcher {
     }
 
     private boolean editResume(IRawQueryEvent.IMessage.INotification event) {
-        if (lastEditEvent == null) {
+        if (lastEditEvent.get() == null) {
             logger.error("Failed to resume channelEdit event! No pending event found!");
             return true;
         } else {
             // Merge with last event
             // This allows us to capture multi-edits across normal properties and descr/password
-            event.merge(lastEditEvent);
+            event.merge(lastEditEvent.get());
             return false;
         }
     }
 
-    /**
-     * Asynchronously dispatches done, success and error callbacks on {@link IQueryRequest} objects.
-     */
-    public void dispatchAnswer(IRawQueryEvent.IMessage.IAnswer event) {
-        IQueryRequest request = event.getRequest();
-
-        QueryEvent.Answer answer = new QueryEvent.Answer();
-        answer.setConnection(event.getConnection());
-        answer.setRequest(request);
-        answer.setError(event.getError());
-        answer.setRawReference(event);
-
-        List<IDataHolder> dataHolders = new ArrayList<>(event.toList());
-        answer.setChain(Collections.unmodifiableList(dataHolders));
-
-        if (answer.getErrorCode() == FAILED_PERM_ID) {
-            logger.warn("Insufficient permission error detected: {} - {}",
-                    answer.getErrorCode(), answer.getErrorMessage());
-            permFails.add(String.format("\t%s: %s -> [%s]%s",
-                    LocalDateTime.now().withNano(0).toString(), request.getCommand(),
-                    answer.getErrorCode(), answer.getErrorMessage()));
-        }
-
-        executor.submit(() -> {
-            logger.trace("Working on reqest callback. {}", request.getCommand());
-            // Callbacks are prioritized to event listeners
-            invokeCallbacks(event, request, answer);
-
-            logger.trace("Submitting to event service. {}", request.getCommand());
-            // Fire the processed event
-            eventService.fireEvent(answer);
-        });
-    }
-
-    private void invokeCallbacks(IRawQueryEvent.IMessage.IAnswer event, IQueryRequest request, QueryEvent.Answer answer) {
-        int errorCode = event.getError().getCode();
-        if (errorCode == 0 && request.onSuccess() != null) {
-            request.onSuccess().accept(answer);
-        } else if (errorCode != 0 && request.onError() != null) {
-            request.onError().accept(answer);
-        }
-
-        if (request.onDone() != null) {
-            request.onDone().accept(answer);
-        }
-    }
-
-    @Listener(order = Listener.Orders.LATER)
-    public void onShutdown(IBotStateEvent.IPostShutdown event) {
-        if (!permFails.isEmpty()) {
-            logger.warn("There were missing permissions encountered at runtime. Here's a list of them:\n{}",
-                    String.join("\n", permFails));
-        }
-
-        boolean terminated_successfully = false;
-        try {
-            executor.shutdown();
-            terminated_successfully = executor.awaitTermination(AWAIT_TERMINATION_DELAY, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            logger.error("Got interrupted while awaiting thread termination!", e);
-            Thread.currentThread().interrupt();
-        }
-        if (!terminated_successfully) {
-            logger.warn("Some dispatched callbacks did not terminate gracefully! Either consider increasing the wait timeout or debug what plugin delays the shutdown!");
-            logger.warn("Be aware that the JVM will not exit until ALL threads have terminated!");
-        }
+    public List<String> getPermissionFails() {
+        return Collections.unmodifiableList(permissionFails);
     }
 }

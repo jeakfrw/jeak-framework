@@ -1,11 +1,10 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
-import de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.service.permission.teamspeak.ITS3Permission.PriorityType;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
-import de.fearnixx.jeak.teamspeak.query.BlockingRequest;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,10 +13,14 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by MarkL4YG on 04-Feb-18
- *
+ * <p>
  * Helpful documentation if you want to understand TS3 perms a little better:
  * * http://media.teamspeak.com/ts3_literature/TeamSpeak%203%20Permissions%20Guide.txt
  */
@@ -28,6 +31,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
     public static final Integer EMPTY_RESULT_ID = 1281;
 
     private static final Logger logger = LoggerFactory.getLogger(QueryPermissionProvider.class);
+    public static final String OPTION_PERMSID = "-" + PropertyKeys.Permission.STRING_ID;
 
     private final Map<Integer, TS3PermCache> clientPerms = new HashMap<>();
     private final Map<Integer, TS3PermCache> channelPerms = new HashMap<>();
@@ -75,111 +79,9 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
 
     @Override
     public Optional<ITS3Permission> getClientPermission(Integer clientDBID, String permSID) {
-        IMessage.IAnswer answer = null;
-        TS3PermCache cache = clientPerms.getOrDefault(clientDBID, null);
-        if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
-            LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
-
-            if (cache.getTimestamp().isAfter(cacheLimit)) {
-                answer = cache.getAnswer();
-            }
-        }
-
-        if (answer == null) {
-            IQueryRequest req = IQueryRequest.builder()
-                                             .command(QueryCommands.PERMISSION.CLIENT_LIST_PERMISSIONS)
-                                             .addKey("cldbid", clientDBID)
-                                             .addOption("-permsid")
-                                             .build();
-            BlockingRequest request = new BlockingRequest(req);
-            getServer().getConnection().sendRequest(req);
-            if (request.waitForCompletion()) {
-                answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
-                cache = new TS3PermCache();
-                cache.setResponse(answer);
-                clientPerms.put(clientDBID, cache);
-            } else {
-                logger.warn("Permission lookup for \"{}\" on client \"{}\" did not complete.", permSID, clientDBID);
-                return Optional.empty();
-            }
-        }
-        return permFromList(permSID, answer, ITS3Permission.PriorityType.CLIENT);
-    }
-
-    @Override
-    public Optional<ITS3Permission> getServerGroupPermission(Integer serverGroupID, String permSID) {
-        IMessage.IAnswer answer = null;
-        TS3PermCache cache = serverGroupPerms.getOrDefault(serverGroupID, null);
-        if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
-            LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
-
-            if (cache.getTimestamp().isAfter(cacheLimit)) {
-                answer = cache.getAnswer();
-            }
-        }
-
-        if (answer == null) {
-            IQueryRequest req = IQueryRequest.builder()
-                                             .command(QueryCommands.PERMISSION.SERVERGROUP_LIST_PERMISSIONS)
-                                             .addKey("sgid", serverGroupID)
-                                             .addOption("-permsid")
-                                             .build();
-            BlockingRequest request = new BlockingRequest(req);
-            getServer().getConnection().sendRequest(req);
-            if (request.waitForCompletion()) {
-                answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
-                cache = new TS3PermCache();
-                cache.setResponse(answer);
-                serverGroupPerms.put(serverGroupID, cache);
-            } else {
-                logger.warn("Permission lookup for \"{}\" on server group \"{}\" did not complete.", permSID, serverGroupID);
-                return Optional.empty();
-            }
-        }
-        return permFromList(permSID, answer, ITS3Permission.PriorityType.SERVER_GROUP);
-    }
-
-    @Override
-    public Optional<ITS3Permission> getChannelGroupPermission(Integer channelGroupID, String permSID) {
-        IMessage.IAnswer answer = null;
-        TS3PermCache cache = channelGroupPerms.getOrDefault(channelGroupID, null);
-        if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
-            LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
-
-            if (cache.getTimestamp().isAfter(cacheLimit)) {
-                answer = cache.getAnswer();
-            }
-        }
-
-        if (answer == null) {
-            IQueryRequest req = IQueryRequest.builder()
-                                             .command(QueryCommands.PERMISSION.CHANNEL_GROUP_PERMISSION_LIST)
-                                             .addKey("cgid", channelGroupID)
-                                             .addOption("-permsid")
-                                             .build();
-            BlockingRequest request = new BlockingRequest(req);
-            getServer().getConnection().sendRequest(req);
-            if (request.waitForCompletion()) {
-                answer = ((IMessage.IAnswer) request.getAnswer().getRawReference());
-                cache = new TS3PermCache();
-                cache.setResponse(answer);
-                channelGroupPerms.put(channelGroupID, cache);
-
-            } else {
-                logger.warn("Permission lookup for \"{}\" on channel group \"{}\" did not complete.", permSID, channelGroupID);
-                return Optional.empty();
-            }
-        }
-        return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_GROUP);
-    }
-
-    @Override
-    public Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
-        IMessage.IAnswer answer = null;
-        Map<Integer, TS3PermCache> channelClientMap = channelClientPerms.getOrDefault(channelID, null);
-        TS3PermCache cache;
-        if (channelClientMap != null) {
-            cache = channelClientMap.getOrDefault(clientDBID, null);
+        IQueryEvent.IAnswer answer = null;
+        synchronized (clientPerms) {
+            TS3PermCache cache = clientPerms.getOrDefault(clientDBID, null);
             if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
                 LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
 
@@ -191,25 +93,171 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command(QueryCommands.PERMISSION.CHANNEL_CLIENT_LIST_PERMISSIONS)
-                                             .addKey(PropertyKeys.Channel.ID, channelID)
-                                             .addKey("cldbid", clientDBID)
-                                             .addOption("-permsid")
-                                             .build();
-            BlockingRequest request = new BlockingRequest(req);
-            getServer().getConnection().sendRequest(req);
-            if (request.waitForCompletion()) {
-                answer = ((IMessage.IAnswer) request.getAnswer());
-                cache = new TS3PermCache();
-                cache.setResponse(answer);
-                if (channelClientMap == null) {
-                    channelClientMap = new HashMap<>();
-                    channelClientPerms.put(channelID, channelClientMap);
-                }
-                channelClientMap.put(clientDBID, cache);
-            } else {
-                logger.warn("Permission lookup for \"{}\" on channel \"{}\" for client \"{}\" did not complete.", permSID, channelID, clientDBID);
+                    .command(QueryCommands.PERMISSION.CLIENT_LIST_PERMISSIONS)
+                    .addKey(PropertyKeys.Client.DBID_S, clientDBID)
+                    .addOption(OPTION_PERMSID)
+                    .build();
+            try {
+                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted while querying client permissions.", e);
                 return Optional.empty();
+
+            } catch (ExecutionException e) {
+                logger.error("Error querying client permissions!", e);
+                return Optional.empty();
+
+            } catch (TimeoutException e) {
+                logger.warn("Timed out querying client permissions! Is the connection overloaded?");
+                return Optional.empty();
+            }
+            final var cache = new TS3PermCache();
+            cache.setResponse(answer);
+            synchronized (clientPerms) {
+                clientPerms.put(clientDBID, cache);
+            }
+        }
+        return permFromList(permSID, answer, ITS3Permission.PriorityType.CLIENT);
+    }
+
+    @Override
+    public Optional<ITS3Permission> getServerGroupPermission(Integer serverGroupID, String permSID) {
+        IQueryEvent.IAnswer answer = null;
+        synchronized (serverGroupPerms) {
+            TS3PermCache cache = serverGroupPerms.getOrDefault(serverGroupID, null);
+            if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
+                LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
+
+                if (cache.getTimestamp().isAfter(cacheLimit)) {
+                    answer = cache.getAnswer();
+                }
+            }
+        }
+
+        if (answer == null) {
+            IQueryRequest req = IQueryRequest.builder()
+                    .command(QueryCommands.PERMISSION.SERVERGROUP_LIST_PERMISSIONS)
+                    .addKey("sgid", serverGroupID)
+                    .addOption(OPTION_PERMSID)
+                    .build();
+            try {
+                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted getting server group permissions.", e);
+                Thread.currentThread().interrupt();
+                return Optional.empty();
+
+            } catch (ExecutionException e) {
+                logger.error("Error getting server group permissions!", e);
+                return Optional.empty();
+
+            } catch (TimeoutException e) {
+                logger.error("Timed out getting server group permissions!");
+                return Optional.empty();
+            }
+
+            final var cache = new TS3PermCache();
+            cache.setResponse(answer);
+            synchronized (serverGroupPerms) {
+                serverGroupPerms.put(serverGroupID, cache);
+            }
+        }
+        return permFromList(permSID, answer, ITS3Permission.PriorityType.SERVER_GROUP);
+    }
+
+    @Override
+    public Optional<ITS3Permission> getChannelGroupPermission(Integer channelGroupID, String permSID) {
+        IQueryEvent.IAnswer answer = null;
+        synchronized (channelGroupPerms) {
+            TS3PermCache cache = channelGroupPerms.getOrDefault(channelGroupID, null);
+            if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
+                LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
+
+                if (cache.getTimestamp().isAfter(cacheLimit)) {
+                    answer = cache.getAnswer();
+                }
+            }
+        }
+
+        if (answer == null) {
+            IQueryRequest req = IQueryRequest.builder()
+                    .command(QueryCommands.PERMISSION.CHANNEL_GROUP_PERMISSION_LIST)
+                    .addKey("cgid", channelGroupID)
+                    .addOption(OPTION_PERMSID)
+                    .build();
+            try {
+                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted getting channel group permissions!", e);
+                Thread.currentThread().interrupt();
+                return Optional.empty();
+
+            } catch (ExecutionException e) {
+                logger.error("Error getting channel group permissions!", e);
+                return Optional.empty();
+
+            } catch (TimeoutException e) {
+                logger.error("Timed out getting channel group permission! Is the connection overloaded?");
+                return Optional.empty();
+            }
+
+            final var cache = new TS3PermCache();
+            cache.setResponse(answer);
+            synchronized (channelGroupPerms) {
+                channelGroupPerms.put(channelGroupID, cache);
+            }
+        }
+        return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_GROUP);
+    }
+
+    @Override
+    public Optional<ITS3Permission> getChannelClientPermission(Integer channelID, Integer clientDBID, String permSID) {
+        IQueryEvent.IAnswer answer = null;
+        synchronized (channelClientPerms) {
+            Map<Integer, TS3PermCache> channelClientMap = channelClientPerms.getOrDefault(channelID, null);
+            TS3PermCache cache;
+            if (channelClientMap != null) {
+                cache = channelClientMap.getOrDefault(clientDBID, null);
+                if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
+                    LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
+
+                    if (cache.getTimestamp().isAfter(cacheLimit)) {
+                        answer = cache.getAnswer();
+                    }
+                }
+            }
+        }
+
+        if (answer == null) {
+            IQueryRequest req = IQueryRequest.builder()
+                    .command(QueryCommands.PERMISSION.CHANNEL_CLIENT_LIST_PERMISSIONS)
+                    .addKey(PropertyKeys.Channel.ID, channelID)
+                    .addKey(PropertyKeys.Client.DBID_S, clientDBID)
+                    .addOption(OPTION_PERMSID)
+                    .build();
+
+            try {
+                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted getting channel client permissions.", e);
+                Thread.currentThread().interrupt();
+                return Optional.empty();
+
+            } catch (ExecutionException e) {
+                logger.error("Error getting channel client permissions!", e);
+                return Optional.empty();
+
+            } catch (TimeoutException e) {
+                logger.error("Timed out getting channel client permissions! Is the connection overloaded?");
+                return Optional.empty();
+            }
+
+            final var cache = new TS3PermCache();
+            cache.setResponse(answer);
+            synchronized (channelClientPerms) {
+                var channelClientMap =
+                        channelClientPerms.computeIfAbsent(channelID, id -> new ConcurrentHashMap<>());
+                channelClientMap.put(clientDBID, cache);
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL_CLIENT);
@@ -217,55 +265,61 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
 
     @Override
     public Optional<ITS3Permission> getChannelPermission(Integer channelID, String permSID) {
-        IMessage.IAnswer answer = null;
-        TS3PermCache cache = channelPerms.getOrDefault(channelID, null);
-        if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
-            LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
+        IQueryEvent.IAnswer answer = null;
+        synchronized (channelPerms) {
+            TS3PermCache cache = channelPerms.getOrDefault(channelID, null);
+            if (cache != null && CACHE_TIMEOUT_SECONDS > 0) {
+                LocalDateTime cacheLimit = LocalDateTime.now().minusSeconds(CACHE_TIMEOUT_SECONDS);
 
-            if (cache.getTimestamp().isAfter(cacheLimit)) {
-                answer = cache.getAnswer();
+                if (cache.getTimestamp().isAfter(cacheLimit)) {
+                    answer = cache.getAnswer();
+                }
             }
         }
 
         if (answer == null) {
             IQueryRequest req = IQueryRequest.builder()
-                                             .command(QueryCommands.PERMISSION.CHANNEL_LIST_PERMISSIONS)
-                                             .addKey("cid", channelID)
-                                             .addOption("-permsid")
-                                             .build();
-            BlockingRequest request = new BlockingRequest(req);
-            getServer().getConnection().sendRequest(req);
-            if (request.waitForCompletion()) {
-                answer = ((IMessage.IAnswer) request.getAnswer());
-                cache = new TS3PermCache();
-                cache.setResponse(answer);
-                channelPerms.put(channelID, cache);
-            } else {
-                logger.warn("Permission lookup for \"{}\" on channel \"{}\" did not complete.", permSID, channelID);
+                    .command(QueryCommands.PERMISSION.CHANNEL_LIST_PERMISSIONS)
+                    .addKey(PropertyKeys.Channel.ID, channelID)
+                    .addOption(OPTION_PERMSID)
+                    .build();
+            try {
+                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                logger.warn("Interrupted getting channel permission.", e);
                 return Optional.empty();
+
+            } catch (ExecutionException e) {
+                logger.error("Error getting channel permission!", e);
+                return Optional.empty();
+
+            } catch (TimeoutException e) {
+                logger.error("Timeout getting channel permission! Is the connection overloaded?");
+                return Optional.empty();
+            }
+
+            final var cache = new TS3PermCache();
+            cache.setResponse(answer);
+            synchronized (channelPerms) {
+                channelPerms.put(channelID, cache);
             }
         }
         return permFromList(permSID, answer, ITS3Permission.PriorityType.CHANNEL);
     }
 
-    protected Optional<ITS3Permission> permFromList(String permSID, IMessage.IAnswer answer, ITS3Permission.PriorityType type) {
-
-        if (answer != null && answer.getError().getCode().equals(EMPTY_RESULT_ID)) {
+    protected Optional<ITS3Permission> permFromList(String permSID, IQueryEvent.IAnswer answer, ITS3Permission.PriorityType type) {
+        if (answer == null || !answer.getError().getCode().equals(EMPTY_RESULT_ID)) {
             return Optional.empty();
         }
 
-        while (answer != null) {
-            if (permSID.equals(answer.getProperty("permsid").orElse(null)))
-                break;
-            answer = ((IMessage.IAnswer) answer.getNext());
-        }
-
-        if (answer != null) {
-            TS3Permission perm = new TS3Permission(type, permSID);
-            perm.copyFrom(answer);
-            return Optional.of(perm);
-        }
-        logger.debug("Permission {} not found in list", permSID);
-        return Optional.empty();
+        return answer.getDataChain()
+                .stream()
+                .filter(c -> permSID.equals(c.getProperty(PropertyKeys.Permission.STRING_ID).orElse(null)))
+                .findFirst()
+                .map(permHolder -> {
+                    final var perm = new TS3Permission(type, permSID);
+                    perm.copyFrom(permHolder);
+                    return perm;
+                });
     }
 }
