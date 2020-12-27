@@ -1,9 +1,6 @@
 package de.fearnixx.jeak.teamspeak;
 
-import com.jcraft.jsch.ChannelShell;
-import com.jcraft.jsch.JSch;
-import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
+import com.jcraft.jsch.*;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.service.IServiceManager;
@@ -21,19 +18,31 @@ import org.slf4j.LoggerFactory;
 import tlschannel.ClientTlsChannel;
 
 import javax.net.ssl.SSLContext;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 @SuppressWarnings("java:S2095")
 public class TeamSpeakConnectionFactory {
 
-    public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", 100);
+
+    public static final int SOCKET_TIMEOUT_MILLIS_LEGACY = Main.getProperty("jeak.connection.sotimeout", -1);
+    public static final int SOCKET_TIMEOUT_MILLIS = Main.getProperty("bot.connection.sotimeout", -1);
+    public static final int SOCKET_TIMEOUT_MILLIS_DEFAULT = 100;
+
+    private static int getSocketTimeout() {
+        return Optional.ofNullable(SOCKET_TIMEOUT_MILLIS_LEGACY > 0 ? SOCKET_TIMEOUT_MILLIS_LEGACY : null)
+                .or(() -> Optional.ofNullable(SOCKET_TIMEOUT_MILLIS > 0 ? SOCKET_TIMEOUT_MILLIS : null))
+                .orElse(SOCKET_TIMEOUT_MILLIS_DEFAULT);
+    }
+
     public static final String TEAMSPEAK_SSH_CHANNEL_TYPE = "shell";
 
     public static final String LOCALHOST_ADDR = "localhost";
@@ -54,7 +63,8 @@ public class TeamSpeakConnectionFactory {
     private static final Logger logger = LoggerFactory.getLogger(TeamSpeakConnectionFactory.class);
 
     private static final JSch jSecureChannel = new JSch();
-    private static final String SSH_CONF_HOST_CHECKS = "StrictHostKeyChecking";
+    private static final String SSH_CONFIG_LOCATION = Main.getProperty("jeak.connection.ssh_config", "./ssh_config.properties");
+    private static final String SSH_ACCEPTED_HOST_KEYS = Main.getProperty("jeak.connection.ssh_hostkeys", "");
 
     public static boolean requiresLoginCommands(URIContainer connURI) {
         return SCHEME_PLAINTEXT.equals(connURI.getOriginalUri().getScheme())
@@ -107,7 +117,7 @@ public class TeamSpeakConnectionFactory {
             final var input = channel.getInputStream();
             final var output = channel.getOutputStream();
             ((ChannelShell) channel).setPty(false);
-            channel.connect(SOCKET_TIMEOUT_MILLIS);
+            channel.connect(getSocketTimeout());
             return createConnection(StreamBasedChannel.create(input, output));
         } catch (JSchException e) {
             throw new QueryConnectException("Failed to establish SSH connection!", e);
@@ -129,9 +139,39 @@ public class TeamSpeakConnectionFactory {
 
         final var session = jSecureChannel.getSession(user, host, port);
         session.setPassword(password);
-        session.setConfig(SSH_CONF_HOST_CHECKS, "no");
-        session.connect(SOCKET_TIMEOUT_MILLIS);
+        applySSHProperties(session);
+        session.connect(getSocketTimeout());
         return session;
+    }
+
+    protected void applySSHProperties(Session session) {
+        final var sshConfigPath = new File(SSH_CONFIG_LOCATION).getAbsoluteFile().toPath();
+        if (Files.exists(sshConfigPath)) {
+            Properties configuration = new Properties();
+            try (final var confReader = new FileReader(sshConfigPath.toFile())) {
+                logger.info("Loading SSH configuration file: {}", sshConfigPath);
+                configuration.load(confReader);
+                session.setConfig(configuration);
+            } catch (IOException e) {
+                logger.error("Failed to load ssh properties from: \"{}\"", sshConfigPath, e);
+            }
+        }
+
+        if (!SSH_ACCEPTED_HOST_KEYS.isBlank()) {
+            Arrays.stream(SSH_ACCEPTED_HOST_KEYS.split(" *, *"))
+                    .filter(s -> s != null && !s.isBlank())
+                    .map(Base64.getDecoder()::decode)
+                    .map(key -> {
+                        try {
+                            return new HostKey(session.getHost(), key);
+                        } catch (JSchException e) {
+                            logger.error("Failed to add host public key! {}", key, e);
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .forEach(key -> session.getHostKeyRepository().add(key, null));
+        }
     }
 
     /**
