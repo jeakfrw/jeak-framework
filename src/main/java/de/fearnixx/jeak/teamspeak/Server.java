@@ -39,6 +39,7 @@ public class Server implements IServer {
 
     private static final String MSG_NOT_CONNECTED = "Not connected.";
     private static final boolean USE_VOICE_PORT_FOR_SELECTION = Main.getProperty("jeak.ts3.connectByVoicePort", false);
+    private static final boolean OPEN_RAW_LISTENERS = Main.getProperty("jeak.ts3.openRawListeners", false);
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final AtomicInteger connectionCounter = new AtomicInteger();
 
@@ -132,6 +133,11 @@ public class Server implements IServer {
                 disconnectEvent.setBot(bot);
                 eventService.fireEvent(disconnectEvent);
             });
+            if (!OPEN_RAW_LISTENERS) {
+                mainConnection.lockListeners("Connection managed by Jeak-framework! Please use the listeners and request callbacks instead.");
+            } else {
+                logger.warn("[CONSISTENCY] Enabling raw connection listeners bypasses framework mechanisms and should not be used.");
+            }
 
             // Dispatch connection thread.
             Thread connectionThread = new Thread(mainConnection);

@@ -56,6 +56,15 @@ public interface ITSQueryConnection extends AutoCloseable {
     void onClosed(BiConsumer<ITSQueryConnection, Boolean> closeConsumer);
 
     /**
+     * Locks the methods {@link #onNotification(Consumer)}, {@link #onAnswer(Consumer)} and {@link #onClosed(BiConsumer)}.
+     * Causes an {@link IllegalStateException} to be thrown by those methods with the provided reason being the exception message.
+     *
+     * @throws IllegalStateException when listeners are already locked.
+     * @implNote By design, this is not reversible.
+     */
+    void lockListeners(String reason);
+
+    /**
      * Gracefully closes this connection.
      * This should be preferred to {@link #close()}
      */

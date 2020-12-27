@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -39,6 +40,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     private final List<Consumer<IQueryEvent.INotification>> notificationListeners = new ArrayList<>();
     private final List<Consumer<IQueryEvent.IAnswer>> answerListeners = new ArrayList<>();
     private final List<BiConsumer<ITSQueryConnection, Boolean>> closeListeners = new ArrayList<>();
+    private final AtomicReference<String> lockListenersReason = new AtomicReference<>();
     private final AtomicLong lastRequestTSP = new AtomicLong(System.currentTimeMillis());
     private final AtomicLong lastReceivedTSP = new AtomicLong(0);
     private final AtomicBoolean gracefullyClosed = new AtomicBoolean(false);
@@ -80,20 +82,30 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
 
     @Override
     public synchronized void onNotification(Consumer<IQueryEvent.INotification> notificationConsumer) {
+        assertListenersUnlocked();
         Objects.requireNonNull(notificationConsumer, "Notification listener may not be null!");
         notificationListeners.add(notificationConsumer);
     }
 
     @Override
     public synchronized void onAnswer(Consumer<IQueryEvent.IAnswer> answerConsumer) {
+        assertListenersUnlocked();
         Objects.requireNonNull(answerConsumer, "Answer listener may not be null!");
         answerListeners.add(answerConsumer);
     }
 
     @Override
     public synchronized void onClosed(BiConsumer<ITSQueryConnection, Boolean> closeConsumer) {
+        assertListenersUnlocked();
         Objects.requireNonNull(closeConsumer, "Close listener may not be null!");
         closeListeners.add(closeConsumer);
+    }
+
+    protected synchronized void assertListenersUnlocked() {
+        final String reason = lockListenersReason.get();
+        if (reason != null) {
+            throw new IllegalStateException("Listeners locked: " + reason);
+        }
     }
 
     protected boolean isActive() {
@@ -112,6 +124,12 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
         if (messageChannel.isOpen()) {
             messageChannel.close();
         }
+    }
+
+    @Override
+    public synchronized void lockListeners(String reason) {
+        assertListenersUnlocked();
+        lockListenersReason.set(reason);
     }
 
     protected void uncheckedClose(boolean graceful) {
