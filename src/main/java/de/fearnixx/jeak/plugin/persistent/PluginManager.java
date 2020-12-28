@@ -1,13 +1,8 @@
 package de.fearnixx.jeak.plugin.persistent;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.scanners.TypeElementsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
+import io.github.classgraph.ClassGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +19,29 @@ public class PluginManager {
     // * * * STATICS * * * //
 
     private static final Logger logger = LoggerFactory.getLogger(PluginManager.class);
+    private static final boolean VERBOSE_SCAN = Main.getProperty("jeak.pluginmanager.verboseScan", false);
+    private static final String MARKER_ANNOTATION_NAME = JeakBotPlugin.class.getSimpleName();
+    private static final String[] EXCLUDED_PACKAGES = {
+            "sun",
+            "java",
+            "com.google",
+            "com.fasterxml",
+            "com.oracle",
+            "com.sun",
+            "com.ibm",
+            "net.bytebuddy",
+            "net.jcip",
+            "org.jboss",
+            "org.classpath",
+            "org.dom4j",
+            "org.ietf",
+            "org.reflections",
+            "org.slf4j",
+            "org.w3c",
+            "org.xml",
+            "org.omg",
+            "org.eclipse"
+    };
 
     private static volatile PluginManager INST;
 
@@ -64,21 +82,21 @@ public class PluginManager {
         }
         scanPluginSources();
 
-        Reflections reflect = getPluginScanner(getPluginClassLoader());
-
-        var annotatedTypes = reflect.getTypesAnnotatedWith(JeakBotPlugin.class, true);
-        List<Class<?>> candidates = new ArrayList<>(annotatedTypes);
-        logger.info("Found {} plugin candidates", candidates.size());
-        candidates.forEach(c -> {
-            Optional<PluginRegistry> r = PluginRegistry.getFor(c);
-            if (r.isPresent()) {
-                if (registryMap.containsKey(r.get().getID())) {
-                    logger.warn("Duplicate plugin ID found! {}", r.get().getID());
-                    return;
+        final var scanner = getPluginScanner(getPluginClassLoader());
+        try (final var result = scanner.scan()) {
+            final var candidates = result.getClassesWithAnnotation(MARKER_ANNOTATION_NAME).loadClasses(true);
+            logger.info("Found {} plugin candidates", candidates.size());
+            candidates.forEach(c -> {
+                Optional<PluginRegistry> r = PluginRegistry.getFor(c);
+                if (r.isPresent()) {
+                    if (registryMap.containsKey(r.get().getID())) {
+                        logger.warn("Duplicate plugin ID found! {}", r.get().getID());
+                        return;
+                    }
+                    registryMap.put(r.get().getID(), r.get());
                 }
-                registryMap.put(r.get().getID(), r.get());
-            }
-        });
+            });
+        }
     }
 
     public ClassLoader getPluginClassLoader() {
@@ -88,36 +106,19 @@ public class PluginManager {
         return pluginClassLoader;
     }
 
-    public Reflections getPluginScanner(ClassLoader classLoader) {
-        ConfigurationBuilder builder = new ConfigurationBuilder()
-                .setUrls(urlList)
-                .addClassLoader(classLoader)
-                .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner())
-                .filterInputsBy(new FilterBuilder()
-                        .excludePackage("sun.")
-                        .excludePackage("java.")
-                        .excludePackage("com.google")
-                        .excludePackage("com.fasterxml")
-                        .excludePackage("com.oracle")
-                        .excludePackage("com.sun")
-                        .excludePackage("net.bytebuddy")
-                        .excludePackage("net.jcip")
-                        .excludePackage("org.jboss")
-                        .excludePackage("org.classpath")
-                        .excludePackage("org.dom4j")
-                        .excludePackage("org.ietf")
-                        .excludePackage("org.reflections")
-                        .excludePackage("org.slf4j")
-                        .excludePackage("org.w3c")
-                        .excludePackage("org.xml")
-                        .excludePackage("org.omg")
-                );
-
+    public ClassGraph getPluginScanner(ClassLoader classLoader) {
+        final var classGraph = new ClassGraph()
+                .verbose(VERBOSE_SCAN)
+                .enableClassInfo()
+                .enableAnnotationInfo()
+                .rejectPackages(EXCLUDED_PACKAGES);
         if (includeCP) {
-            logger.info("Including classpath");
-            builder.addUrls(ClasspathHelper.forJavaClassPath());
+            logger.info("Including classpath.");
+            classGraph.addClassLoader(ClassLoader.getSystemClassLoader());
+        } else {
+            classGraph.addClassLoader(classLoader);
         }
-        return new Reflections(builder);
+        return classGraph;
     }
 
     public List<URL> getPluginUrls() {
@@ -146,11 +147,6 @@ public class PluginManager {
                     logger.warn("Failed to construct plugin URL. HOW DID YOU DO THIS???", e);
                 }
             });
-
-            if (includeCP) {
-                // This is required for Java versions where the system classloader is not an URLClassLoader.
-                urlList.addAll(ClasspathHelper.forJavaClassPath());
-            }
         }
     }
 
