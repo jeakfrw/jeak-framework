@@ -72,12 +72,16 @@ public class OpusEncoder implements AutoCloseable {
 
         IntBuffer errorBuffer = IntBuffer.allocate(1);
 
-        encoder = Opus.INSTANCE.opus_encoder_create(
-                sampleRate,
-                channels,
-                Opus.OPUS_APPLICATION_AUDIO,
-                errorBuffer
-        );
+        try {
+            encoder = Opus.INSTANCE.opus_encoder_create(
+                    sampleRate,
+                    channels,
+                    Opus.OPUS_APPLICATION_AUDIO,
+                    errorBuffer
+            );
+        } catch (UnsatisfiedLinkError e) {
+            throw new IllegalStateException("OPUS codec not available. Please check your system setup and library path!", e);
+        }
 
         if (encoder == null) throw new NullPointerException("encoder");
 
