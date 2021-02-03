@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * Framework representation for TeamSpeak query commands.
+ * Framework representation for TeamSpeak query commands
+ *
+ * @author Magnus Leßmann
+ * @since 1.0.0
  */
 public interface IQueryRequest {
 

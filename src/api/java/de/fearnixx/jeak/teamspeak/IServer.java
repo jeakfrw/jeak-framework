@@ -7,25 +7,28 @@ import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import java.util.Optional;
 
 /**
- * Created by MarkL4YG on 28-Jan-18
+ * Representation of a virtual server to which Jeak will connect or is connected.
  */
 public interface IServer {
 
     /**
      * Connect with the last connection details.
+     *
+     * @throws de.fearnixx.jeak.teamspeak.except.QueryConnectException when the connection failed.
      */
     void connect();
 
     /**
-     * Provides access to the main query connection.
+     * Provides access to the main query connection which is managed by Jeak.
+     *
      * @throws java.util.NoSuchElementException when the server is not connected.
-     * * @implNote identity may change through reconnects! Do not store reference.
-     * * @implNote in event-listeners, it is generally safe to assume that the connection is active
+     * @implNote Identity may change through reconnects! Do not store reference. In event-listeners, it is generally safe to assume that the connection is active.
      */
     IQueryConnection getConnection();
 
     /**
-     * @see #getConnection()
+     * Provides access to the main query connection.
+     * Does not throw when the connection is inactive but will provide an empty optional instead.
      */
     Optional<IQueryConnection> optConnection();
 
@@ -36,8 +39,16 @@ public interface IServer {
 
     /**
      * Returns a {@link IQueryRequest} that can be used to send a server-wide message
+     *
+     * @deprecated In favor of {@link #broadcastTextMessage(String)} since its naming is more precise.
      */
+    @Deprecated(since = "1.2.0")
     IQueryRequest sendMessage(String message);
+
+    /**
+     * Returns a {@link IQueryRequest} that can be used to broadcast a server-wide message, when sent through a connection.
+     */
+    IQueryRequest broadcastTextMessage(String message);
 
     /**
      * The hostname used to connect to the server.
@@ -77,6 +88,8 @@ public interface IServer {
      * The desired nickname for "clientupdate".
      *
      * @apiNote This may be different from {@link IQueryConnection#getWhoAmI()}s "client_nickname" which is the actual nickname.
+     * @deprecated This is a connection-specific internal detail and is misplaced in the server API.
      */
+    @Deprecated(since = "1.2.0")
     String getNickname();
 }

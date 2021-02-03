@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -56,6 +58,7 @@ public class JeakBot implements Runnable, IBot {
 
     // * * * STATICS  * * * //
     public static final Charset CHAR_ENCODING = StandardCharsets.UTF_8;
+    public static final URI DEFAULT_CONNECTION_URI = URI.create("telnet://localhost:10011?user=serveradmin&password=admin&instance=1&nickname=Jeak");
     public static final String VERSION = "@VERSION@";
     private static final boolean ENABLE_TYPED_COMMANDS = Main.getProperty("jeak.experimental.enable_typedCommands", true);
     private static final boolean ENABLE_VOICE_CONNECTIONS = Main.getProperty("jeak.experimental.enable_voiceConnections", false);
@@ -133,7 +136,11 @@ public class JeakBot implements Runnable, IBot {
 
         eventService.fireEvent(event);
         if (event.isCanceled()) {
+            logger.warn("===========================================================================");
+            logger.warn("");
             logger.warn("An initialization task has requested the bot to cancel startup. Doing that.");
+            logger.warn("");
+            logger.warn("===========================================================================");
             shutdown();
             return;
         }
@@ -272,14 +279,25 @@ public class JeakBot implements Runnable, IBot {
      * Reads connection credentials and schedules the task used to connect to the TS3 server.
      */
     protected void scheduleConnect() {
-        String host = config.getNode("host").asString();
-        Integer port = config.getNode("port").asInteger();
-        String user = config.getNode("user").asString();
-        String pass = config.getNode("pass").asString();
-        Integer ts3InstID = config.getNode("instance").asInteger();
-        Boolean useSSL = config.getNode("ssl").optBoolean(false);
-        String nickName = config.getNode("nick").optString("JeakBot");
-        server.setCredentials(host, port, user, pass, ts3InstID, useSSL, nickName);
+        if (!config.getNode("host").isVirtual()) {
+            logger.warn("[DEPRECATION] Using single properties for the connection configuration is deprecated. Please use 'connectionUri' instead.");
+            String host = config.getNode("host").asString();
+            Integer port = config.getNode("port").asInteger();
+            String user = config.getNode("user").asString();
+            String pass = config.getNode("pass").asString();
+            Boolean useSSL = config.getNode("ssl").optBoolean(false);
+            Integer ts3InstID = config.getNode("instance").asInteger();
+            String nickName = config.getNode("nick").optString("JeakBot");
+            server.setCredentials(host, port, user, pass, ts3InstID, useSSL, nickName);
+        } else {
+            String connectionUri = config.getNode("connectionUri")
+                    .optString().orElseThrow(() -> new IllegalArgumentException("Connection URI is not configured as string!"));
+            try {
+                server.setConnectionURI(new URI(connectionUri));
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("Connection URI is malformed!", e);
+            }
+        }
 
         serviceManager.provideUnchecked(ITaskService.class).runTask(connectionTask);
     }
@@ -331,33 +349,9 @@ public class JeakBot implements Runnable, IBot {
         config = configRep.getRoot();
         boolean rewrite = false;
 
-        if (!config.getNode("host").isPrimitive()) {
-            config.getNode("host").setString("localhost");
-            rewrite = true;
-        }
-
-        if (!config.getNode("port").isPrimitive()) {
-            config.getNode("port").setInteger(10011);
-            rewrite = true;
-        }
-
-        if (!config.getNode("user").isPrimitive()) {
-            config.getNode("user").setString("serveradmin");
-            rewrite = true;
-        }
-
-        if (!config.getNode("pass").isPrimitive()) {
-            config.getNode("pass").setString("password");
-            rewrite = true;
-        }
-
-        if (!config.getNode("instance").isPrimitive()) {
-            config.getNode("instance").setInteger(1);
-            rewrite = true;
-        }
-
-        if (!config.getNode("nick").isPrimitive()) {
-            config.getNode("nick").setString("JeakBot");
+        if (config.getNode("connectionUri").optString("").isBlank()
+                && config.getNode("host").isVirtual()) {
+            config.getNode("connectionUri").setString(DEFAULT_CONNECTION_URI.toString());
             rewrite = true;
         }
 
@@ -366,7 +360,11 @@ public class JeakBot implements Runnable, IBot {
                 logger.error("Failed to rewrite configuration. Aborting startup, just in case.");
                 event.cancel();
             }
+            logger.warn("======================================================================================");
+            logger.warn("");
             logger.warn("One or more settings have been set to default values. Please review the configuration.");
+            logger.warn("");
+            logger.warn("======================================================================================");
             event.cancel();
         }
     }

@@ -113,7 +113,7 @@ public class TS3ConnectionTask implements ITask {
     @Listener(order = Listener.Orders.SYSTEM)
     public void onPreConnectFailed(IBotStateEvent.IConnectStateEvent.IConnectFailed event) {
         BotStateEvent.ConnectEvent.ConnectFailed fEvent = ((BotStateEvent.ConnectEvent.ConnectFailed) event);
-        fEvent.setAttempts(failedAttempts.incrementAndGet());
+        fEvent.setAttempts(failedAttempts.get());
         fEvent.setMaxAttempts(MAX_RECONNECT_TRIES);
     }
 

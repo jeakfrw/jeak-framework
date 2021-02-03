@@ -5,23 +5,21 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 /**
  * Basic implementation of the {@link IDataHolder} interface.
  */
 public class BasicDataHolder implements IDataHolder {
 
-    private final Object LOCK = new Object();
     private Map<String, String> values;
 
     public BasicDataHolder() {
         values = Collections.synchronizedMap(new LinkedHashMap<>());
     }
 
-    public Map<String, String> getValues() {
-        synchronized (LOCK) {
-            return values;
-        }
+    public synchronized Map<String, String> getValues() {
+        return values;
     }
 
     @Override
@@ -30,20 +28,16 @@ public class BasicDataHolder implements IDataHolder {
     }
 
     @Override
-    public Optional<String> getProperty(String key) {
-        synchronized (LOCK) {
-            return Optional.ofNullable(values.getOrDefault(key, null));
-        }
+    public synchronized Optional<String> getProperty(String key) {
+        return Optional.ofNullable(values.getOrDefault(key, null));
     }
 
     @Override
-    public void setProperty(String key, String value) {
-        synchronized (LOCK) {
-            if (value == null)
-                values.remove(key);
-            else
-                values.put(key, value);
-        }
+    public synchronized void setProperty(String key, String value) {
+        if (value == null)
+            values.remove(key);
+        else
+            values.put(key, value);
     }
 
     @Override
@@ -51,20 +45,24 @@ public class BasicDataHolder implements IDataHolder {
         setProperty(key, value != null ? value.toString() : null);
     }
 
-    public IDataHolder copyFrom(IDataHolder other) {
-        synchronized (LOCK) {
-            this.values = new ConcurrentHashMap<>();
-            return merge(other);
-        }
+    public synchronized IDataHolder copyFrom(IDataHolder other) {
+        this.values = new ConcurrentHashMap<>();
+        return merge(other);
     }
 
-    public IDataHolder merge(IDataHolder other) {
-        synchronized (LOCK) {
-            for (Map.Entry<String, String> entry : other.getValues().entrySet()) {
-                this.values.put(entry.getKey(), entry.getValue());
-            }
+    public synchronized IDataHolder merge(IDataHolder other) {
+        for (Map.Entry<String, String> entry : other.getValues().entrySet()) {
+            this.values.put(entry.getKey(), entry.getValue());
         }
-
         return this;
+    }
+
+    @Override
+    public String toString() {
+        final var mapBody = getValues().entrySet()
+                .stream()
+                .map(e -> String.format("%s=%s", e.getKey(), e.getValue()))
+                .collect(Collectors.joining(","));
+        return String.format("BasicDataHolder{values=%s}", mapBody);
     }
 }

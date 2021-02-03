@@ -9,22 +9,26 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
-import de.fearnixx.jeak.teamspeak.query.*;
+import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import de.fearnixx.jeak.teamspeak.query.TSQueryConnectionDelegate;
+import de.fearnixx.jeak.teamspeak.query.event.EventDispatcher;
+import de.fearnixx.jeak.util.URIContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.IOException;
-import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Created by MarkL4YG on 28-Jan-18
@@ -32,9 +36,11 @@ import java.util.function.Consumer;
 @FrameworkService(serviceInterface = IServer.class)
 public class Server implements IServer {
 
+    private static final String MSG_NOT_CONNECTED = "Not connected.";
+    private static final boolean USE_VOICE_PORT_FOR_SELECTION = Main.getProperty("jeak.ts3.connectByVoicePort", false);
+    private static final boolean OPEN_RAW_LISTENERS = Main.getProperty("jeak.ts3.openRawListeners", false);
     private static final Logger logger = LoggerFactory.getLogger(Server.class);
     private static final AtomicInteger connectionCounter = new AtomicInteger();
-    private static final boolean USE_VOICE_PORT_FOR_SELECTION = Main.getProperty("jeak.ts3.connectByVoicePort", false);
 
     @Inject
     public IEventService eventService;
@@ -43,177 +49,144 @@ public class Server implements IServer {
     public IInjectionService injectService;
 
     @Inject
+    private IDataCache dataCache;
+
+    @Inject
     public IBot bot;
 
-    private final Object LOCK = new Object();
+    private final Object instanceLock = new Object();
 
-    private String host;
-    private int queryPort;
-    private String user;
-    private String pass;
-    private int instanceId;
-    private boolean useSSL;
-    private String nickname;
+    private EventDispatcher eventDispatcher = new EventDispatcher();
+    private TeamSpeakConnectionFactory connector = new TeamSpeakConnectionFactory();
+    private TSQueryConnectionDelegate mainConnection;
+    private URIContainer connectionURI;
 
-    private QueryConnectionAccessor mainConnection;
-    private IDataHolder serverInfoResponse = null;
-
+    /**
+     * @deprecated #setCredentials has been replaced by {@link #setConnectionURI}
+     */
+    @Deprecated
     public void setCredentials(String host,
                                Integer queryPort,
                                String user, String pass, Integer instanceId,
-                               Boolean useSSL, String nickname) {
-        synchronized (LOCK) {
-            Objects.requireNonNull(host, "Host may not be null!");
-            Objects.requireNonNull(queryPort, "Port may not be null!");
-            Objects.requireNonNull(user, "Username may not be null!");
-            Objects.requireNonNull(pass, "Password may not be null!");
-            Objects.requireNonNull(instanceId, "Instance id may not be null!");
-            Objects.requireNonNull(useSSL, "SSL flag may not be null!");
-            Objects.requireNonNull(nickname, "Nickname may not be null!");
+                               boolean useSSL, String nickname) {
+        Objects.requireNonNull(host, "Host may not be null!");
+        Objects.requireNonNull(queryPort, "Port may not be null!");
+        Objects.requireNonNull(user, "Username may not be null!");
+        Objects.requireNonNull(pass, "Password may not be null!");
+        Objects.requireNonNull(instanceId, "Instance id may not be null!");
+        Objects.requireNonNull(nickname, "Nickname may not be null!");
 
-            this.host = host;
-            this.queryPort = queryPort;
-            this.user = user;
-            this.pass = pass;
-            this.instanceId = instanceId;
-            this.useSSL = useSSL;
-            this.nickname = nickname;
+        String portKey;
+        if (USE_VOICE_PORT_FOR_SELECTION) {
+            portKey = TeamSpeakConnectionFactory.QUERY_VOICEPORT;
+        } else {
+            portKey = TeamSpeakConnectionFactory.QUERY_INSTANCE;
         }
+        final var scheme = useSSL ? TeamSpeakConnectionFactory.SCHEME_TLS_PLAINTEXT : TeamSpeakConnectionFactory.SCHEME_PLAINTEXT;
+        final var queryArr = new String[][]{
+                {TeamSpeakConnectionFactory.QUERY_USER, URLEncoder.encode(user)},
+                {TeamSpeakConnectionFactory.QUERY_PASS, URLEncoder.encode(pass)},
+                {portKey, Integer.toString(instanceId)},
+                {TeamSpeakConnectionFactory.QUERY_NICKNAME, URLEncoder.encode(nickname)}
+        };
+        final var queryParams = Arrays.stream(queryArr)
+                .map(a -> Arrays.stream(a)
+                        .map(URLEncoder::encode)
+                        .collect(Collectors.joining("=")))
+                .collect(Collectors.joining("&"));
+        try {
+            setConnectionURI(new URI(String.format("%s://%s:%s?%s", scheme, host, queryPort, queryParams)));
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("The provided connection parameters are not valid!", e);
+        }
+    }
+
+    public void setConnectionURI(URI connectionURI) {
+        this.connectionURI = URIContainer.of(connectionURI);
     }
 
     @Override
     public void connect() {
-        synchronized (LOCK) {
-            if (host == null) {
-                throw new IllegalStateException("Cannot connect without credentials");
+        synchronized (instanceLock) {
+            if (mainConnection != null && !mainConnection.isClosed()) {
+                throw new IllegalStateException("Cannot call #connect on established connection!");
             }
 
-            ensureClosed(true);
-
-            try {
-                logger.info("Trying to connect to {}:{}", host, queryPort);
-                // Notify listeners.
-                BotStateEvent.ConnectEvent.PreConnect preConnectEvent = new BotStateEvent.ConnectEvent.PreConnect();
-                preConnectEvent.setBot(bot);
-                eventService.fireEvent(preConnectEvent);
-
-                tcpConnectAndInitialize();
-
-                // Dispatch connection thread.
-                Thread connectionThread = new Thread(mainConnection);
-                connectionThread.setName("connection-" + connectionCounter.getAndIncrement());
-                connectionThread.start();
-            } catch (IOException e) {
-                throw new QueryConnectException("Unable to open QueryConnection to " + host + ":" + queryPort, e);
+            if (!connector.cdiDone()) {
+                injectService.injectInto(connector);
+                injectService.injectInto(eventDispatcher);
             }
-        }
-    }
 
-    @SuppressWarnings("squid:S2095")
-    protected void tcpConnectAndInitialize() throws IOException {
-        Socket socket;
-        if (!useSSL) {
-            socket = new Socket(host, queryPort);
-        } else {
-            logger.info("SSL: Enabled.");
-            socket = SSLSocketFactory.getDefault().createSocket(host, queryPort);
-            ((SSLSocket) socket).startHandshake();
-        }
-        socket.setSoTimeout(TS3Connection.SOCKET_TIMEOUT_MILLIS);
+            // Notify listeners.
+            BotStateEvent.ConnectEvent.PreConnect preConnectEvent = new BotStateEvent.ConnectEvent.PreConnect();
+            preConnectEvent.setBot(bot);
+            eventService.fireEvent(preConnectEvent);
 
-        mainConnection = new QueryConnectionAccessor();
-        injectService.injectInto(mainConnection);
-        mainConnection.initialize(socket.getInputStream(), socket.getOutputStream());
-
-        login(user, pass, instanceId, result -> {
-            if (!result) {
-                BotStateEvent failedEvent = new BotStateEvent.ConnectEvent.ConnectFailed();
-                failedEvent.setBot(bot);
-                eventService.fireEvent(failedEvent);
+            // Establish connection.
+            mainConnection = new TSQueryConnectionDelegate(connector.establishConnection(connectionURI));
+            mainConnection.onAnswer(eventDispatcher::dispatchAnswer);
+            mainConnection.onNotification(eventDispatcher::dispatchNotification);
+            mainConnection.onClosed((conn, graceful) -> {
+                BotStateEvent.ConnectEvent.Disconnect disconnectEvent =
+                        new BotStateEvent.ConnectEvent.Disconnect(graceful);
+                disconnectEvent.setBot(bot);
+                eventService.fireEvent(disconnectEvent);
+            });
+            if (!OPEN_RAW_LISTENERS) {
+                mainConnection.lockListeners("Connection managed by Jeak-framework! Please use the listeners and request callbacks instead.");
             } else {
-                logger.info("Connected successfully.");
-                subscribeToEvents();
-                mainConnection.setNickName(nickname);
-                // Notify listeners.
-                BotStateEvent.ConnectEvent.PostConnect postConnectEvent = new BotStateEvent.ConnectEvent.PostConnect();
-                postConnectEvent.setBot(bot);
-                eventService.fireEvent(postConnectEvent);
+                logger.warn("[CONSISTENCY] Enabling raw connection listeners bypasses framework mechanisms and should not be used.");
             }
-        });
+
+            // Dispatch connection thread.
+            Thread connectionThread = new Thread(mainConnection);
+            connectionThread.setName("connection-" + connectionCounter.getAndIncrement());
+            connectionThread.start();
+
+            if (!connector.useInstance(mainConnection, mainConnection.getURI())) {
+                logger.warn("==========================");
+                logger.warn("Instance selection failed!");
+                logger.warn("==========================");
+                ensureClosed();
+                throw new QueryConnectException("Instance selection failed!");
+            }
+            if (TeamSpeakConnectionFactory.requiresLoginCommands(mainConnection.getURI())
+                    && !connector.attemptLogin(mainConnection, mainConnection.getURI())) {
+                logger.warn("=============");
+                logger.warn("Login failed!");
+                logger.warn("=============");
+                ensureClosed();
+                throw new QueryConnectException("Login failed!");
+            }
+            logger.info("Connected!");
+            subscribeToEvents();
+
+            // Notify listeners.
+            BotStateEvent.ConnectEvent.PostConnect postConnectEvent = new BotStateEvent.ConnectEvent.PostConnect();
+            postConnectEvent.setBot(bot);
+            eventService.fireEvent(postConnectEvent);
+            mainConnection.setNickName(
+                    connectionURI.optSingleQuery(TeamSpeakConnectionFactory.QUERY_NICKNAME).orElse("Jeak")
+            );
+        }
     }
 
-    protected void ensureClosed(boolean emitDisconnect) {
-        if (mainConnection != null && !mainConnection.isClosed()) {
-            logger.debug("Closing active connection for reconnection.");
-            try {
-                // To unify the lost connection event, we will close before the event is fired.
-                // This way, the order is the same as when the connection has been dropped from remote.
-                mainConnection.close();
-
-                if (emitDisconnect) {
-                    BotStateEvent.ConnectEvent.Disconnect event = new BotStateEvent.ConnectEvent.Disconnect(false);
-                    event.setBot(bot);
-                    eventService.fireEvent(event);
+    protected void ensureClosed() {
+        synchronized (instanceLock) {
+            if (mainConnection != null && !mainConnection.isClosed()) {
+                logger.debug("Closing active connection for reconnection.");
+                try {
+                    // To unify the lost connection event, we will close before the event is fired.
+                    // This way, the order is the same as when the connection has been dropped from remote.
+                    mainConnection.close();
+                    logger.info("=======================================================");
+                    logger.info("Connection aborted. See log above for more information.");
+                    logger.info("=======================================================");
+                } catch (Exception e) {
+                    logger.warn("Failed to close active connection - will abandon.", e);
                 }
-            } catch (Exception e) {
-                logger.warn("Failed to close active connection - will abandon.", e);
             }
         }
-    }
-
-    private void login(String user, String pass, int instID, Consumer<Boolean> resultCallback) {
-        AtomicBoolean useResult = new AtomicBoolean(true);
-        AtomicBoolean loginResult = new AtomicBoolean(true);
-        QueryBuilder useCommandBuilder = IQueryRequest.builder()
-                .command(QueryCommands.SERVER.USE_INSTANCE);
-        if (USE_VOICE_PORT_FOR_SELECTION) {
-            useCommandBuilder.addKey("port", instID);
-        } else {
-            useCommandBuilder.addOption(Integer.toString(instID));
-        }
-
-        mainConnection.sendRequest(
-                useCommandBuilder
-                        .onError(answer -> {
-                            logger.error("Failed to use desired instance: {}", answer.getError().getMessage());
-                            ensureClosed(false);
-                            useResult.set(false);
-                            resultCallback.accept(false);
-                        })
-                        .build()
-        );
-
-        mainConnection.sendRequest(
-                IQueryRequest.builder().command(QueryCommands.SERVER.LOGIN)
-                        .addOption(user)
-                        .addOption(pass)
-                        .onError(answer -> {
-                            if (useResult.get()) {
-                                logger.error("Failed to login to server: {}", answer.getError().getMessage());
-                                ensureClosed(false);
-                                resultCallback.accept(false);
-                            }
-                            loginResult.set(false);
-                        })
-                        .build()
-        );
-
-        mainConnection.sendRequest(
-                IQueryRequest.builder().command(QueryCommands.SERVER.SERVER_INFO)
-                        .onError(answer -> {
-                            if (useResult.get() && loginResult.get()) {
-                                logger.error("Failed to login to retrieve server information? Am I allowed to do that (b_virtualserver_info_view) ? TS3: {} - {}",
-                                        answer.getErrorMessage(), answer.getErrorCode());
-                                ensureClosed(false);
-                                resultCallback.accept(false);
-                            }
-                        })
-                        .onSuccess(answer -> {
-                            serverInfoResponse = answer.getDataChain().get(0);
-                            resultCallback.accept(true);
-                        })
-                        .build()
-        );
     }
 
     private void subscribeToEvents() {
@@ -258,20 +231,25 @@ public class Server implements IServer {
     /* * * Utility * * */
 
     @Override
-    public IQueryRequest sendMessage(String message) {
+    public IQueryRequest broadcastTextMessage(String message) {
         return IQueryRequest.builder()
                 .command(QueryCommands.TEXTMESSAGE_SEND)
                 .addKey(PropertyKeys.TextMessage.TARGET_TYPE, TargetType.SERVER)
-                .addKey(PropertyKeys.TextMessage.TARGET_ID, instanceId)
+                .addKey(PropertyKeys.TextMessage.TARGET_ID, getInstanceId())
                 .addKey(PropertyKeys.TextMessage.MESSAGE, message)
                 .build();
+    }
+
+    @Override
+    public IQueryRequest sendMessage(String message) {
+        return broadcastTextMessage(message);
     }
 
     /* * * MISC * * */
 
     public IQueryConnection getConnection() {
         return optConnection()
-                .orElseThrow(() -> new NoSuchElementException("Not connected."));
+                .orElseThrow(() -> new NoSuchElementException(MSG_NOT_CONNECTED));
     }
 
     @Override
@@ -290,50 +268,67 @@ public class Server implements IServer {
 
     @Override
     public String getHost() {
-        return host;
+        return Optional.ofNullable(connectionURI.getOriginalUri().getHost()).orElse("localhost");
     }
 
     @Override
     public int getPort() {
-        return queryPort;
+        final var uriPort = connectionURI.getOriginalUri().getPort();
+        return uriPort > 0 ? uriPort : 10011;
     }
 
     @Override
     public int getVoicePort() {
         return optVoicePort()
-                .orElseThrow(() -> new NoSuchElementException("Not connected."));
+                .orElseThrow(() -> new NoSuchElementException(MSG_NOT_CONNECTED));
     }
 
     @Override
     public Optional<Integer> optVoicePort() {
-        return optConnection()
-                .flatMap(conn -> serverInfoResponse.getProperty(PropertyKeys.ServerInfo.PORT)
+        return optServerInfoResponse()
+                .flatMap(resp -> resp.getProperty(PropertyKeys.ServerInfo.PORT)
                         .map(Integer::parseInt));
     }
 
     @Override
     public Optional<IDataHolder> optServerInfoResponse() {
-        return Optional.ofNullable(serverInfoResponse);
+        return dataCache.getServerInfo();
     }
 
     @Override
     public int getInstanceId() {
-        return instanceId;
+        final var serverInfo = dataCache.getInstanceInfo()
+                .orElseThrow(() -> new IllegalStateException("Server information not known!"));
+        return serverInfo.getProperty(PropertyKeys.ServerInfo.ID)
+                .map(Integer::parseInt)
+                .orElseThrow(() -> new IllegalStateException("Server instance ID unknown?!"));
     }
 
+    /**
+     * @deprecated Since multiple connection modes are now supported, this should rather be taken from the connection URI.
+     */
+    @Deprecated
     public boolean isUseSSL() {
-        return useSSL;
+        return TeamSpeakConnectionFactory.SCHEME_TLS_PLAINTEXT.equals(connectionURI.getOriginalUri().getScheme());
     }
 
     @Override
     public String getNickname() {
-        return nickname;
+        return optConnection()
+                .orElseThrow(() -> new IllegalStateException("Not connected"))
+                .getWhoAmI()
+                .getProperty(PropertyKeys.Client.NICKNAME)
+                .orElse("unknown");
     }
 
     @Listener
     public void onShutdown(IBotStateEvent.IPreShutdown event) {
         if (isConnected()) {
-            mainConnection.shutdown();
+            try {
+                mainConnection.shutdown();
+            } catch (Exception e) {
+                logger.error("Failed to close connection on shutdown!", e);
+            }
         }
     }
 }
