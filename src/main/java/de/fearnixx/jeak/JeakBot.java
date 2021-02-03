@@ -149,7 +149,6 @@ public class JeakBot implements Runnable, IBot {
     }
 
     protected void discoverPlugins() {
-        pMgr.setIncludeCP(true);
         pMgr.load();
     }
 

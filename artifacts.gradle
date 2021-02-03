@@ -5,12 +5,18 @@ compileJava() {
 }
 
 task apiJar(type: Jar) {
-    classifier 'api'
+    archiveBaseName = "${project.ext.artifact}-api"
 
     from sourceSets.api.output
-    from sourceSets.api.allJava
 
     dependsOn compileApiJava
+}
+
+task apiSourcesJar(type: Jar) {
+    archiveBaseName = "${project.ext.artifact}-api"
+    classifier "sources"
+
+    from sourceSets.api.allJava
 }
 
 jar() {
@@ -52,6 +58,7 @@ task testJar(type: Jar) {
 
 build {
     dependsOn 'apiJar'
+    dependsOn 'apiSourcesJar'
     dependsOn 'jar'
     dependsOn 'sourcesJar'
     dependsOn 'shadowJar'

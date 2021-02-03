@@ -8,6 +8,7 @@ import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
+import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.teamspeak.cache.IDataCache;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -49,7 +51,7 @@ public class Server implements IServer {
     public IInjectionService injectService;
 
     @Inject
-    private IDataCache dataCache;
+    private IServiceManager serviceManager;
 
     @Inject
     public IBot bot;
@@ -158,6 +160,8 @@ public class Server implements IServer {
                 ensureClosed();
                 throw new QueryConnectException("Login failed!");
             }
+
+
             logger.info("Connected!");
             subscribeToEvents();
 
@@ -292,12 +296,26 @@ public class Server implements IServer {
 
     @Override
     public Optional<IDataHolder> optServerInfoResponse() {
-        return dataCache.getServerInfo();
+        final var request = IQueryRequest.builder().command(QueryCommands.SERVER.SERVER_INFO)
+                .build();
+
+        try {
+            return Optional.of(getConnection().promiseRequest(request).get())
+                    .map(a -> a.getDataChain().get(0));
+
+        } catch (InterruptedException e) {
+            logger.warn("Interrupted while retrieving server info.");
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        } catch (ExecutionException e) {
+            logger.error("Unknown error retrieving server info.", e);
+            return Optional.empty();
+        }
     }
 
     @Override
     public int getInstanceId() {
-        final var serverInfo = dataCache.getInstanceInfo()
+        final var serverInfo = serviceManager.provideUnchecked(IDataCache.class).getInstanceInfo()
                 .orElseThrow(() -> new IllegalStateException("Server information not known!"));
         return serverInfo.getProperty(PropertyKeys.ServerInfo.ID)
                 .map(Integer::parseInt)
