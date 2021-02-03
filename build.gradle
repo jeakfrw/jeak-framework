@@ -1,3 +1,5 @@
+import org.apache.tools.ant.filters.ReplaceTokens
+
 plugins {
     id 'java'
     id 'maven-publish'
@@ -113,7 +115,18 @@ apply from: './artifacts.gradle'
 apply from: './distribution.gradle'
 apply from: './publication.gradle'
 
+import org.apache.tools.ant.filters.ReplaceTokens
+task processSourceReplacements(type: org.gradle.api.tasks.Sync) {
+    from sourceSets.main.java
+    inputs.property "version", version
+    filter(ReplaceTokens, tokens: [
+            VERSION: version
+    ])
+    into "$buildDir/src"
+}
+
 compileJava {
+    source = processSourceReplacements.outputs
     options.compilerArgs << "-Xlint:deprecation"
 }
 

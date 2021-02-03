@@ -1,5 +1,6 @@
 package de.fearnixx.jeak.plugin.persistent;
 
+import de.fearnixx.jeak.JeakBot;
 import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.IEvent;
 import de.fearnixx.jeak.plugin.PluginContainer;
@@ -7,6 +8,7 @@ import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.util.Common;
+import de.fearnixx.jeak.util.SemVerComparator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class PluginRegistry {
         }
         id = tag.id();
         if (!IGNORE_PLUGINID_RESTRICTION && !PLUGIN_ID_VALIDATON.matcher(id).matches()) {
-            logger.error("Plugin ID: {} is invalid! (Must match: {})",  this.id, PLUGIN_ID_VALIDATON);
+            logger.error("Plugin ID: {} is invalid! (Must match: {})", this.id, PLUGIN_ID_VALIDATON);
             return false;
         }
         version = Common.stripVersion(tag.version());
@@ -67,9 +69,21 @@ public class PluginRegistry {
             logger.warn("Plugin ID: {} is using an invalid version: {}", this.id, tag.version());
             version = null;
         }
-
-        // TODO: Bot version verification implementation
         buildAgainst = tag.builtAgainst();
+        if (!buildAgainst.isBlank()) {
+            try {
+                logger.trace("Checking version compatibility for plugin: {}/{}", id, buildAgainst);
+                if (!SemVerComparator.compare(buildAgainst, JeakBot.VERSION)) {
+                    logger.error("Incompatible plugin detected: '{}' is built against Jeak {} but we are on {}", id, buildAgainst, JeakBot.VERSION);
+                    return false;
+                }
+            } catch (IllegalArgumentException e) {
+                logger.error(String.format("Error checking plugin version compatibility (%s)", id), e);
+                return false;
+            }
+        } else {
+            logger.warn("Cannot check version compatibility of plugin {}: No built-against info given.", id);
+        }
 
         if (tag.depends().length == 0) {
             HARD_depends = Collections.emptyList();
