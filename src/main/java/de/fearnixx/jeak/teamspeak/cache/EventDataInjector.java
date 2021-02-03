@@ -116,13 +116,31 @@ public class EventDataInjector {
         Optional<String> optChannelID = event.getProperty("cid");
         if (optChannelID.isPresent()) {
             Integer channelID = Integer.valueOf(optChannelID.get());
-            TS3Channel client;
+            TS3Channel channel;
             synchronized (LOCK) {
-                client = dataCache.unsafeGetChannels().getOrDefault(channelID, null);
+                channel = dataCache.unsafeGetChannels().getOrDefault(channelID, null);
             }
 
-            if (client != null) {
-                event.setChannel(client);
+            if (channel != null) {
+                event.setChannel(channel);
+                return;
+            }
+        } else if (event instanceof QueryEvent.Notification.ChannelTextMessage) {
+            // Work-around for TS versions where channel messages just don't include the channel ID.
+            final var channel = dataCache.getServer()
+                    .getConnection()
+                    .getWhoAmI()
+                    .getProperty("client_channel_id")
+                    .map(Integer::parseInt)
+                    .map(cid -> {
+                        synchronized (LOCK) {
+                            return dataCache.unsafeGetChannels().getOrDefault(cid, null);
+                        }
+                    })
+                    .orElse(null);
+
+            if (channel != null) {
+                event.setChannel(channel);
                 return;
             }
         }

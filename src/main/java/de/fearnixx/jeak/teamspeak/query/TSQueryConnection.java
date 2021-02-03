@@ -5,6 +5,7 @@ import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent.Message;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
+import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.api.ITSMessageChannel;
 import de.fearnixx.jeak.teamspeak.query.api.ITSQueryConnection;
 import de.fearnixx.jeak.util.URIContainer;
@@ -22,7 +23,6 @@ import java.util.function.Consumer;
 
 public class TSQueryConnection implements ITSQueryConnection, Runnable {
 
-    public static final IQueryRequest KEEPALIVE_REQUEST = IQueryRequest.builder().command(QueryCommands.WHOAMI).build();
     public static final int KEEP_ALIVE_SECS = Main.getProperty("bot.connection.keepalive", 240);
     public static final int KEEP_ALIVE_MILLIS = KEEP_ALIVE_SECS * 1000;
     public static final long READ_TIMEOUT_MILLIS = KEEP_ALIVE_MILLIS * 2L;
@@ -35,6 +35,11 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     private final ITSMessageChannel messageChannel;
     private final StandardMessageMarshaller marshaller;
     private final AtomicBoolean terminated = new AtomicBoolean(false);
+
+    private final AtomicReference<IDataHolder> whoAmIResponse = new AtomicReference<>();
+    private final IQueryRequest KEEPALIVE_REQUEST = IQueryRequest.builder()
+            .command(QueryCommands.WHOAMI)
+            .build();
 
     private final Thread serialChannelHost;
     private final Queue<IQueryRequest> requestQueue = new LinkedList<>();
@@ -60,6 +65,10 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
 
     public URIContainer getURI() {
         return createdWithURI;
+    }
+
+    public Optional<IDataHolder> getWhoAmIResponse() {
+        return Optional.ofNullable(whoAmIResponse.get());
     }
 
     @Override
@@ -238,6 +247,14 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     protected void dispatchAnswer(Message.Answer message) {
         final var marshalled = marshaller.marshall(message);
         synchronized (this) {
+            // Intercept whoami-requests and store their answer.
+            if (QueryCommands.WHOAMI.equals(marshalled.getRequest().getCommand())
+                    && marshalled.getErrorCode() == 0
+                    && marshalled.getRequest().getOptions().isEmpty()
+                    && marshalled.getRequest().getDataChain().stream().allMatch(c -> c.getValues().isEmpty())) {
+                whoAmIResponse.set(marshalled.getDataChain().get(0));
+            }
+
             lastReceivedTSP.set(System.currentTimeMillis());
             this.answerListeners.forEach(it -> it.accept(marshalled));
         }

@@ -7,9 +7,7 @@ import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.api.ITSQueryConnection;
 import de.fearnixx.jeak.util.URIContainer;
 
-import java.util.Optional;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -20,12 +18,6 @@ import java.util.function.Consumer;
  */
 public class TSQueryConnectionDelegate implements IQueryConnection, ITSQueryConnection {
 
-    private final AtomicReference<IDataHolder> whoamiAnswer = new AtomicReference<>();
-    private final IQueryRequest whoAmIRequest =
-            IQueryRequest.builder()
-                    .command(QueryCommands.WHOAMI)
-                    .onSuccess(answer -> whoamiAnswer.set(answer.getDataChain().get(0)))
-                    .build();
     private final ITSQueryConnection delegate;
 
     public TSQueryConnectionDelegate(ITSQueryConnection delegate) {
@@ -38,8 +30,8 @@ public class TSQueryConnectionDelegate implements IQueryConnection, ITSQueryConn
 
     @Override
     public IDataHolder getWhoAmI() {
-        return Optional.ofNullable(whoamiAnswer.get())
-                .orElseThrow(() -> new IllegalStateException("WhoAmI-Response not known yet."));
+        return ((TSQueryConnection) delegate).getWhoAmIResponse()
+                .orElseThrow(() -> new IllegalStateException("WhoAmI now known yet!"));
     }
 
     @Override

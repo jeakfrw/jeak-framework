@@ -7,6 +7,7 @@ import de.fearnixx.jeak.reflect.IInjectionService;
 import de.fearnixx.jeak.reflect.Inject;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.data.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,9 @@ public class DataCache implements IDataCache {
 
     @Inject
     private IInjectionService injectionService;
+
+    @Inject
+    private IServer server;
 
     private final Object LOCK = new Object();
     private final ChannelCache channelCache = new ChannelCache(LOCK);
@@ -117,5 +121,9 @@ public class DataCache implements IDataCache {
     @Override
     public Optional<IDataHolder> getInstanceInfo() {
         return genericInfoCache.getInstanceInfo();
+    }
+
+    public IServer getServer() {
+        return server;
     }
 }

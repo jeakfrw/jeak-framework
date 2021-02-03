@@ -165,6 +165,9 @@ public class Server implements IServer {
             logger.info("Connected!");
             subscribeToEvents();
 
+            // Initialize WhoAmI-Information
+            mainConnection.queueRequest(IQueryRequest.builder().command(QueryCommands.WHOAMI).build());
+
             // Notify listeners.
             BotStateEvent.ConnectEvent.PostConnect postConnectEvent = new BotStateEvent.ConnectEvent.PostConnect();
             postConnectEvent.setBot(bot);
