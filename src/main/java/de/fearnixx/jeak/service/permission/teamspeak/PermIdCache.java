@@ -102,7 +102,7 @@ public class PermIdCache {
 
         IQueryEvent.IAnswer answer;
         try {
-            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+            answer = server.getConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Interrupted while trying to retrieve permission ID.", e);
             Thread.currentThread().interrupt();

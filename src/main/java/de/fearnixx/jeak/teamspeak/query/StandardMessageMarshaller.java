@@ -22,10 +22,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static de.fearnixx.jeak.event.IRawQueryEvent.IMessage;
 
-public class MessageMarshaller {
+public class StandardMessageMarshaller {
 
     private static final int FAILED_PERM_ID = Main.getProperty("jeak.queryDispatcher.insuffClientPermId", 2568);
-    private static final Logger logger = LoggerFactory.getLogger(MessageMarshaller.class);
+    private static final Logger logger = LoggerFactory.getLogger(StandardMessageMarshaller.class);
 
     private final List<String> permissionFails = new LinkedList<>();
     private final AtomicInteger lastNotificationHash = new AtomicInteger();
@@ -40,7 +40,7 @@ public class MessageMarshaller {
             "reasonid"
     );
 
-    public MessageMarshaller(IUserService userSvc) {
+    public StandardMessageMarshaller(IUserService userSvc) {
         this.userSvc = userSvc;
     }
 

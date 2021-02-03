@@ -6,6 +6,7 @@ import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent.Message;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
 import de.fearnixx.jeak.teamspeak.query.api.ITSMessageChannel;
+import de.fearnixx.jeak.teamspeak.query.api.ITSQueryConnection;
 import de.fearnixx.jeak.util.URIContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +33,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
 
     private URIContainer createdWithURI;
     private final ITSMessageChannel messageChannel;
-    private final MessageMarshaller marshaller;
+    private final StandardMessageMarshaller marshaller;
     private final AtomicBoolean terminated = new AtomicBoolean(false);
 
     private final Thread serialChannelHost;
@@ -45,7 +46,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     private final AtomicLong lastReceivedTSP = new AtomicLong(0);
     private final AtomicBoolean gracefullyClosed = new AtomicBoolean(false);
 
-    public TSQueryConnection(ITSMessageChannel messageChannel, MessageMarshaller marshaller) {
+    public TSQueryConnection(ITSMessageChannel messageChannel, StandardMessageMarshaller marshaller) {
         this.messageChannel = messageChannel;
         this.marshaller = marshaller;
         this.messageChannel.setNotificationCallback(this::dispatchNotification);
@@ -108,7 +109,8 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
         }
     }
 
-    protected boolean isActive() {
+    @Override
+    public boolean isActive() {
         synchronized (this) {
             return messageChannel.isOpen();
         }

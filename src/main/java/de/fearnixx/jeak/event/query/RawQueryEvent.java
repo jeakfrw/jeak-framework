@@ -4,7 +4,7 @@ import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.query.ITSQueryConnection;
+import de.fearnixx.jeak.teamspeak.query.api.ITSQueryConnection;
 
 import java.util.ArrayList;
 import java.util.List;

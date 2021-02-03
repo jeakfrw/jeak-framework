@@ -46,7 +46,7 @@ public class QueryUserService extends AbstractUserService {
 
         final IQueryEvent.IAnswer answer;
         try {
-            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+            answer = server.getConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Interrupted finding user by unique ID.", e);
             Thread.currentThread().interrupt();
@@ -83,7 +83,7 @@ public class QueryUserService extends AbstractUserService {
 
         IQueryEvent.IAnswer answer;
         try {
-            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+            answer = server.getConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Interrupted finding user by DBID.", e);
             Thread.currentThread().interrupt();
@@ -125,7 +125,7 @@ public class QueryUserService extends AbstractUserService {
 
         IQueryEvent.IAnswer answer;
         try {
-            answer = server.getQueryConnection().promiseRequest(sgDiscoverRequest).get(10, TimeUnit.SECONDS);
+            answer = server.getConnection().promiseRequest(sgDiscoverRequest).get(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Interrupted getting server groups from client.", e);
             Thread.currentThread().interrupt();
@@ -167,7 +167,7 @@ public class QueryUserService extends AbstractUserService {
 
         IQueryEvent.IAnswer answer;
         try {
-            answer = server.getQueryConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
+            answer = server.getConnection().promiseRequest(request).get(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             logger.warn("Interrupted finding user by nickname.", e);
             Thread.currentThread().interrupt();

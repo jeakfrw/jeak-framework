@@ -3,12 +3,11 @@ package de.fearnixx.jeak.teamspeak;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.query.ITSQueryConnection;
 
 import java.util.Optional;
 
 /**
- * Created by MarkL4YG on 28-Jan-18
+ * Representation of a virtual server to which Jeak will connect or is connected.
  */
 public interface IServer {
 
@@ -20,39 +19,18 @@ public interface IServer {
     void connect();
 
     /**
-     * Provides access to the main query connection.
+     * Provides access to the main query connection which is managed by Jeak.
      *
      * @throws java.util.NoSuchElementException when the server is not connected.
-     * @implNote identity may change through reconnects! Do not store reference. In event-listeners, it is generally safe to assume that the connection is active
-     * @deprecated Affected by deprecation of {@link IQueryConnection}. Use {@link #getQueryConnection()} instead.
+     * @implNote Identity may change through reconnects! Do not store reference. In event-listeners, it is generally safe to assume that the connection is active.
      */
-    @Deprecated(since = "1.2.0")
     IQueryConnection getConnection();
 
     /**
-     * @see #getConnection()
-     * @deprecated Affected by deprecation of {@link IQueryConnection}. Use {@link #optQueryConnection()} instead.
+     * Provides access to the main query connection.
+     * Does not throw when the connection is inactive but will provide an empty optional instead.
      */
-    @Deprecated(since = "1.2.0")
     Optional<IQueryConnection> optConnection();
-
-    /**
-     * Provides access to the main query connection.
-     *
-     * @throws IllegalStateException when the server is not connected.
-     * @apiNote Identity will change through reconnects. Do <strong>not</strong> store this reference.
-     * @implNote In event-listeners, it is generally safe to assume the connection is active.
-     */
-    ITSQueryConnection getQueryConnection();
-
-    /**
-     * Provides access to the main query connection.
-     * Returned value will be {@link Optional#empty()} when the connection is currently offline.
-     *
-     * @apiNote Identity will change through reconnects. Do <strong>not</strong> store this reference.
-     * @implNote In event-listeners, it is generally safe to assume the connection is active.
-     */
-    Optional<ITSQueryConnection> optQueryConnection();
 
     /**
      * Whether or not an active connection is available.
@@ -110,6 +88,8 @@ public interface IServer {
      * The desired nickname for "clientupdate".
      *
      * @apiNote This may be different from {@link IQueryConnection#getWhoAmI()}s "client_nickname" which is the actual nickname.
+     * @deprecated This is a connection-specific internal detail and is misplaced in the server API.
      */
+    @Deprecated(since = "1.2.0")
     String getNickname();
 }

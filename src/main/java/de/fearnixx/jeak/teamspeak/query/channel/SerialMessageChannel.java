@@ -108,7 +108,7 @@ public class SerialMessageChannel implements ITSMessageChannel {
 
     protected void receivedLine(String line) {
         if (line == null || line.isBlank()) {
-            logger.debug("Skipping blank line.");
+            logger.trace("Skipping blank line.");
             return;
         }
 
