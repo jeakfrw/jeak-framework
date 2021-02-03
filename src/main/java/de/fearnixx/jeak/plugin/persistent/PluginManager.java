@@ -1,19 +1,15 @@
 package de.fearnixx.jeak.plugin.persistent;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.reflect.JeakBotPlugin;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.scanners.TypeElementsScanner;
-import org.reflections.util.ClasspathHelper;
-import org.reflections.util.ConfigurationBuilder;
-import org.reflections.util.FilterBuilder;
+import io.github.classgraph.ClassGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -24,6 +20,29 @@ public class PluginManager {
     // * * * STATICS * * * //
 
     private static final Logger logger = LoggerFactory.getLogger(PluginManager.class);
+    private static final boolean VERBOSE_SCAN = Main.getProperty("jeak.pluginmanager.verboseScan", false);
+    private static final String MARKER_ANNOTATION_NAME = JeakBotPlugin.class.getName();
+    private static final String[] EXCLUDED_PACKAGES = {
+            "sun",
+            "java",
+            "com.google",
+            "com.fasterxml",
+            "com.oracle",
+            "com.sun",
+            "com.ibm",
+            "net.bytebuddy",
+            "net.jcip",
+            "org.jboss",
+            "org.classpath",
+            "org.dom4j",
+            "org.ietf",
+            "org.reflections",
+            "org.slf4j",
+            "org.w3c",
+            "org.xml",
+            "org.omg",
+            "org.eclipse"
+    };
 
     private static volatile PluginManager INST;
 
@@ -43,7 +62,6 @@ public class PluginManager {
 
     private final List<File> sources = new ArrayList<>();
     private final List<URL> urlList = new ArrayList<>();
-    private boolean includeCP;
     private ClassLoader pluginClassLoader;
     private final Map<String, PluginRegistry> registryMap = new HashMap<>();
 
@@ -54,74 +72,37 @@ public class PluginManager {
             sources.add(dir);
     }
 
-    public List<File> getSources() {
-        return sources;
-    }
-
     public void load() {
         if (registryMap.size() > 0) {
             return;
         }
         scanPluginSources();
 
-        Reflections reflect = getPluginScanner(getPluginClassLoader());
-
-        var annotatedTypes = reflect.getTypesAnnotatedWith(JeakBotPlugin.class, true);
-        List<Class<?>> candidates = new ArrayList<>(annotatedTypes);
-        logger.info("Found {} plugin candidates", candidates.size());
-        candidates.forEach(c -> {
-            Optional<PluginRegistry> r = PluginRegistry.getFor(c);
-            if (r.isPresent()) {
-                if (registryMap.containsKey(r.get().getID())) {
-                    logger.warn("Duplicate plugin ID found! {}", r.get().getID());
-                    return;
+        logger.debug("Scanning for plugin classes.");
+        final var scanner = getPluginScanner();
+        try (final var result = scanner.scan()) {
+            final var candidates = result.getClassesWithAnnotation(MARKER_ANNOTATION_NAME).loadClasses(true);
+            logger.info("Found {} plugin candidates", candidates.size());
+            candidates.forEach(c -> {
+                Optional<PluginRegistry> r = PluginRegistry.getFor(c);
+                if (r.isPresent()) {
+                    if (registryMap.containsKey(r.get().getID())) {
+                        logger.warn("Duplicate plugin ID found! {}", r.get().getID());
+                        return;
+                    }
+                    registryMap.put(r.get().getID(), r.get());
                 }
-                registryMap.put(r.get().getID(), r.get());
-            }
-        });
-    }
-
-    public ClassLoader getPluginClassLoader() {
-        if (pluginClassLoader == null) {
-            pluginClassLoader = getClass().getClassLoader();
+            });
         }
-        return pluginClassLoader;
     }
 
-    public Reflections getPluginScanner(ClassLoader classLoader) {
-        ConfigurationBuilder builder = new ConfigurationBuilder()
-                .setUrls(urlList)
-                .addClassLoader(classLoader)
-                .setScanners(new TypeElementsScanner(), new SubTypesScanner(false), new TypeAnnotationsScanner())
-                .filterInputsBy(new FilterBuilder()
-                        .excludePackage("sun.")
-                        .excludePackage("java.")
-                        .excludePackage("com.google")
-                        .excludePackage("com.fasterxml")
-                        .excludePackage("com.oracle")
-                        .excludePackage("com.sun")
-                        .excludePackage("net.bytebuddy")
-                        .excludePackage("net.jcip")
-                        .excludePackage("org.jboss")
-                        .excludePackage("org.classpath")
-                        .excludePackage("org.dom4j")
-                        .excludePackage("org.ietf")
-                        .excludePackage("org.reflections")
-                        .excludePackage("org.slf4j")
-                        .excludePackage("org.w3c")
-                        .excludePackage("org.xml")
-                        .excludePackage("org.omg")
-                );
-
-        if (includeCP) {
-            logger.info("Including classpath");
-            builder.addUrls(ClasspathHelper.forJavaClassPath());
-        }
-        return new Reflections(builder);
-    }
-
-    public List<URL> getPluginUrls() {
-        return urlList;
+    public ClassGraph getPluginScanner() {
+        return new ClassGraph()
+                .verbose(VERBOSE_SCAN)
+                .enableClassInfo()
+                .enableAnnotationInfo()
+                .overrideClassLoaders(pluginClassLoader, ClassLoader.getSystemClassLoader())
+                .rejectPackages(EXCLUDED_PACKAGES);
     }
 
     private void scanPluginSources() {
@@ -130,13 +111,17 @@ public class PluginManager {
         } else {
             sources.forEach(f -> {
                 try {
-                    if (f.isFile() && f.getName().endsWith(".jar"))
-                        urlList.add(f.toURI().toURL());
-                    else if (f.isDirectory()) {
+                    if (f.isFile() && f.getName().endsWith(".jar")) {
+                        final var jarURL = f.toURI().toURL();
+                        logger.debug("Found plugin jar: {}", jarURL);
+                        urlList.add(jarURL);
+                    } else if (f.isDirectory()) {
                         File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
                         if (files != null) {
                             for (File f2 : files) {
-                                urlList.add(f2.toURI().toURL());
+                                final var jarURL = f2.toURI().toURL();
+                                logger.debug("Found plugin jar: {}", jarURL);
+                                urlList.add(jarURL);
                             }
                         }
                     } else {
@@ -146,12 +131,8 @@ public class PluginManager {
                     logger.warn("Failed to construct plugin URL. HOW DID YOU DO THIS???", e);
                 }
             });
-
-            if (includeCP) {
-                // This is required for Java versions where the system classloader is not an URLClassLoader.
-                urlList.addAll(ClasspathHelper.forJavaClassPath());
-            }
         }
+        pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]), getClass().getClassLoader());
     }
 
     public Map<String, PluginRegistry> getAllPlugins() {
@@ -166,11 +147,7 @@ public class PluginManager {
         return registryMap.size();
     }
 
-    public boolean isIncludeCP() {
-        return includeCP;
-    }
-
-    public void setIncludeCP(boolean includeCP) {
-        this.includeCP = includeCP;
+    public ClassLoader getPluginClassLoader() {
+        return pluginClassLoader;
     }
 }

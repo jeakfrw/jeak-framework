@@ -11,7 +11,6 @@ import de.mlessmann.confort.api.lang.IConfigLoader;
 import de.mlessmann.confort.config.FileConfig;
 import org.hibernate.boot.registry.BootstrapServiceRegistry;
 import org.hibernate.boot.registry.BootstrapServiceRegistryBuilder;
-import org.reflections.Reflections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +36,6 @@ public class DatabaseService implements IDatabaseService {
 
     private final File dbDir;
 
-    private ClassLoader entityClassLoader;
     private BootstrapServiceRegistry baseRegistry;
     private final Map<String, HHPersistenceUnit> persistenceUnits = new ConcurrentHashMap<>();
 
@@ -65,11 +63,10 @@ public class DatabaseService implements IDatabaseService {
         List<File> dataSourceFiles = getDatabaseConfigurations();
 
         if (!dataSourceFiles.isEmpty()) {
-            this.entityClassLoader = pluginManager.getPluginClassLoader();
             checkClasses();
 
             BootstrapServiceRegistryBuilder baseRegistryBuilder = new BootstrapServiceRegistryBuilder();
-            baseRegistryBuilder.applyClassLoader(entityClassLoader);
+            baseRegistryBuilder.applyClassLoader(pluginManager.getPluginClassLoader());
             this.baseRegistry = baseRegistryBuilder.build();
 
             for (File dataSourceFile : dataSourceFiles) {
@@ -99,12 +96,14 @@ public class DatabaseService implements IDatabaseService {
             if (ENTITIES.isEmpty()) {
                 logger.debug("Searching Entities.");
 
-                Reflections reflect = pluginManager.getPluginScanner(entityClassLoader);
-                Set<Class<?>> types = reflect.getTypesAnnotatedWith(Entity.class);
-                types.forEach(entityType -> {
-                    logger.debug("Found: {}", entityType.getName());
-                    ENTITIES.add(entityType);
-                });
+                final var scanner = pluginManager.getPluginScanner();
+                try (final var result = scanner.scan()) {
+                    List<Class<?>> types = result.getClassesWithAnnotation(Entity.class.getName()).loadClasses(true);
+                    types.forEach(entityType -> {
+                        logger.debug("Found: {}", entityType.getName());
+                        ENTITIES.add(entityType);
+                    });
+                }
             }
         }
     }
