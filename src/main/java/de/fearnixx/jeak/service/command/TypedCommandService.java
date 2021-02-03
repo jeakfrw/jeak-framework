@@ -1,11 +1,10 @@
 package de.fearnixx.jeak.service.command;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.antlr.CommandExecutionCtxLexer;
-import de.fearnixx.jeak.antlr.CommandExecutionCtxParser;
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.*;
+import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.command.cmds.HelpCommand;
 import de.fearnixx.jeak.service.command.matcher.*;
 import de.fearnixx.jeak.service.command.matcher.meta.FirstOfMatcher;
@@ -26,11 +25,6 @@ import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.data.IDataHolder;
-import de.mlessmann.confort.lang.RuntimeParseException;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CodePointCharStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.atn.PredictionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +61,7 @@ public class TypedCommandService extends CommandService {
     private ILocalizationUnit locales;
 
     @Inject
-    private IUserService userSvc;
+    private IServiceManager serviceManager;
 
     @Inject
     private IServer server;
@@ -197,7 +191,7 @@ public class TypedCommandService extends CommandService {
             return;
         }
 
-        CommandExecutionContext commCtx = new CommandExecutionContext(txtEvent.getTarget(), info, userSvc);
+        CommandExecutionContext commCtx = new CommandExecutionContext(txtEvent.getTarget(), info, serviceManager.provideUnchecked(IUserService.class));
         commCtx.copyFrom(txtEvent);
         commCtx.setCaption(txtEvent.getCaption());
         commCtx.setClient(txtEvent.getTarget());
