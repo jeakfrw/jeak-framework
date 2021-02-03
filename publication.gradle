@@ -22,11 +22,15 @@ publishing {
     publications {
         api(MavenPublication) {
             artifact apiJar
-            artifact apiSourcesJar
+            artifact apiSourcesJar {
+                classifier 'sources'
+            }
         }
         framework(MavenPublication) {
             artifact jar
-            artifact sourcesJar
+            artifact sourcesJar {
+                classifier 'sources'
+            }
         }
     }
 }
