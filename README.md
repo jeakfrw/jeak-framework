@@ -13,17 +13,16 @@ Plugins can be programmed in a way that developers may be familiar from [the Spo
 |Language           |![ShieldsIO](https://img.shields.io/github/languages/top/jeakfrw/jeak-framework.svg?style=flat-square)|
 |Latest (stable)    |![ShieldsIO](https://img.shields.io/github/tag/jeakfrw/jeak-framework.svg?color=success&style=flat-square)  |[/releases](https://github.com/jeakfrw/jeak-framework/releases)
 |Latest (bleeding)  |![ShieldsIO](https://img.shields.io/github/tag-pre/jeakfrw/jeak-framework.svg?color=yellow&style=flat-square) |[/releases](https://github.com/jeakfrw/jeak-framework/releases)
-|CI (1.X.X-stable)  |[![buddy pipeline](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192846/badge.svg?token=22548d502f11240ea437ccc14a4348c352915b0cf82518920be9d2c98bdcb9dd "buddy pipeline")](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192846) |[View on Buddy](https://app.buddy.works/m-lessmann/jeak-framework/pipelines)|
-|CI (1.X.X-bleeding)|[![buddy pipeline](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192314/badge.svg?token=22548d502f11240ea437ccc14a4348c352915b0cf82518920be9d2c98bdcb9dd "buddy pipeline")](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192314) |[View on Buddy](https://app.buddy.works/m-lessmann/jeak-framework/pipelines)
+|CI (1.X.X-stable)  |[![buddy pipeline](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192846/badge.svg?token=c96165ce0ba77d6a72d2c19083a7078a0041dc98e12de3f29e414d4927762d09 "buddy pipeline")](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192846) |[View on Buddy](https://app.buddy.works/m-lessmann/jeak-framework/pipelines)|
+|CI (1.X.X-bleeding)|[![buddy pipeline](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192314/badge.svg?token=c96165ce0ba77d6a72d2c19083a7078a0041dc98e12de3f29e414d4927762d09 "buddy pipeline")](https://app.buddy.works/m-lessmann/jeak-framework/pipelines/pipeline/192314) |[View on Buddy](https://app.buddy.works/m-lessmann/jeak-framework/pipelines)
 |Automated Code Rev |[![CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/jeak-framework/badge)](https://www.codefactor.io/repository/github/jeakfrw/jeak-framework)|[View on CodeFactor](https://www.codefactor.io/repository/github/jeakfrw/jeak-framework)|
 |Security (Snyk)    |[![Known Vulnerabilities](https://snyk.io/test/github/jeakfrw/jeak-framework/badge.svg)](https://snyk.io/test/github/jeakfrw/jeak-framework) [1]
 |Security (WhiteSrc)|See "Security" tab|[/network/alerts](https://github.com/jeakfrw/jeak-framework/network/alerts)
 |OS-Support         |![ShieldsIO](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20MacOS-informational.svg?style=flat-square)    |
-|Status             |![ShieldsIO](https://img.shields.io/maintenance/yes/2020.svg?style=flat-square)
+|Status             |![ShieldsIO](https://img.shields.io/maintenance/yes/2021.svg?style=flat-square)
 |Discord            |![ShieldsIO](https://img.shields.io/discord/533021399560880141.svg?style=flat-square)|[Discord Invite](https://discord.gg/DPYR5aB)|  
 
-> [1]: [CVE-2018-10237](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-10237) has been ignored as we do not use Guava for data deserialization. The vulnerability is introduced by org.reflections which we use for classpath scanning. (The attack vector is over the network where Reflections and thus Guava is not used.) __The reflections update for this CVE seems to be incompatible at the moment and needs to be investigated at some point.__   
-_Note: Although we ignore vulnerabilities that do not apply to our distribution environment, we will apply patches when possible just to address concerns and deviated environments._  
+> _Note: Although we ignore vulnerabilities that do not apply to our distribution environment, we will apply patches when possible just to address concerns and deviated environments._
 
 # Links
 * [Project license](./LICENSE)
