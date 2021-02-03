@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.*;
 
 /**
@@ -20,7 +21,7 @@ public class PluginManager {
 
     private static final Logger logger = LoggerFactory.getLogger(PluginManager.class);
     private static final boolean VERBOSE_SCAN = Main.getProperty("jeak.pluginmanager.verboseScan", false);
-    private static final String MARKER_ANNOTATION_NAME = JeakBotPlugin.class.getSimpleName();
+    private static final String MARKER_ANNOTATION_NAME = JeakBotPlugin.class.getName();
     private static final String[] EXCLUDED_PACKAGES = {
             "sun",
             "java",
@@ -61,7 +62,6 @@ public class PluginManager {
 
     private final List<File> sources = new ArrayList<>();
     private final List<URL> urlList = new ArrayList<>();
-    private boolean includeCP;
     private ClassLoader pluginClassLoader;
     private final Map<String, PluginRegistry> registryMap = new HashMap<>();
 
@@ -72,17 +72,14 @@ public class PluginManager {
             sources.add(dir);
     }
 
-    public List<File> getSources() {
-        return sources;
-    }
-
     public void load() {
         if (registryMap.size() > 0) {
             return;
         }
         scanPluginSources();
 
-        final var scanner = getPluginScanner(getPluginClassLoader());
+        logger.debug("Scanning for plugin classes.");
+        final var scanner = getPluginScanner();
         try (final var result = scanner.scan()) {
             final var candidates = result.getClassesWithAnnotation(MARKER_ANNOTATION_NAME).loadClasses(true);
             logger.info("Found {} plugin candidates", candidates.size());
@@ -99,30 +96,13 @@ public class PluginManager {
         }
     }
 
-    public ClassLoader getPluginClassLoader() {
-        if (pluginClassLoader == null) {
-            pluginClassLoader = getClass().getClassLoader();
-        }
-        return pluginClassLoader;
-    }
-
-    public ClassGraph getPluginScanner(ClassLoader classLoader) {
-        final var classGraph = new ClassGraph()
+    public ClassGraph getPluginScanner() {
+        return new ClassGraph()
                 .verbose(VERBOSE_SCAN)
                 .enableClassInfo()
                 .enableAnnotationInfo()
+                .overrideClassLoaders(pluginClassLoader, ClassLoader.getSystemClassLoader())
                 .rejectPackages(EXCLUDED_PACKAGES);
-        if (includeCP) {
-            logger.info("Including classpath.");
-            classGraph.addClassLoader(ClassLoader.getSystemClassLoader());
-        } else {
-            classGraph.addClassLoader(classLoader);
-        }
-        return classGraph;
-    }
-
-    public List<URL> getPluginUrls() {
-        return urlList;
     }
 
     private void scanPluginSources() {
@@ -131,13 +111,17 @@ public class PluginManager {
         } else {
             sources.forEach(f -> {
                 try {
-                    if (f.isFile() && f.getName().endsWith(".jar"))
-                        urlList.add(f.toURI().toURL());
-                    else if (f.isDirectory()) {
+                    if (f.isFile() && f.getName().endsWith(".jar")) {
+                        final var jarURL = f.toURI().toURL();
+                        logger.debug("Found plugin jar: {}", jarURL);
+                        urlList.add(jarURL);
+                    } else if (f.isDirectory()) {
                         File[] files = f.listFiles(f2 -> f2.getName().endsWith(".jar"));
                         if (files != null) {
                             for (File f2 : files) {
-                                urlList.add(f2.toURI().toURL());
+                                final var jarURL = f2.toURI().toURL();
+                                logger.debug("Found plugin jar: {}", jarURL);
+                                urlList.add(jarURL);
                             }
                         }
                     } else {
@@ -148,6 +132,7 @@ public class PluginManager {
                 }
             });
         }
+        pluginClassLoader = new URLClassLoader(urlList.toArray(new URL[0]), getClass().getClassLoader());
     }
 
     public Map<String, PluginRegistry> getAllPlugins() {
@@ -162,11 +147,7 @@ public class PluginManager {
         return registryMap.size();
     }
 
-    public boolean isIncludeCP() {
-        return includeCP;
-    }
-
-    public void setIncludeCP(boolean includeCP) {
-        this.includeCP = includeCP;
+    public ClassLoader getPluginClassLoader() {
+        return pluginClassLoader;
     }
 }
