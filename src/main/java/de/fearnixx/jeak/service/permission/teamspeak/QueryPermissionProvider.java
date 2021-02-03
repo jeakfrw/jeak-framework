@@ -98,7 +98,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                     .addOption(OPTION_PERMSID)
                     .build();
             try {
-                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+                answer = getServer().getConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Interrupted while querying client permissions.", e);
                 return Optional.empty();
@@ -141,7 +141,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                     .addOption(OPTION_PERMSID)
                     .build();
             try {
-                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+                answer = getServer().getConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Interrupted getting server group permissions.", e);
                 Thread.currentThread().interrupt();
@@ -186,7 +186,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                     .addOption(OPTION_PERMSID)
                     .build();
             try {
-                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+                answer = getServer().getConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Interrupted getting channel group permissions!", e);
                 Thread.currentThread().interrupt();
@@ -237,7 +237,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                     .build();
 
             try {
-                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+                answer = getServer().getConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Interrupted getting channel client permissions.", e);
                 Thread.currentThread().interrupt();
@@ -284,7 +284,7 @@ public class QueryPermissionProvider extends AbstractTS3PermissionProvider imple
                     .addOption(OPTION_PERMSID)
                     .build();
             try {
-                answer = getServer().getQueryConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
+                answer = getServer().getConnection().promiseRequest(req).get(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 logger.warn("Interrupted getting channel permission.", e);
                 return Optional.empty();

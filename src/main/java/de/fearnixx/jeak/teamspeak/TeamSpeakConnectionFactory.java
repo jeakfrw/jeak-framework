@@ -7,9 +7,9 @@ import de.fearnixx.jeak.service.IServiceManager;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.query.ITSQueryConnection;
-import de.fearnixx.jeak.teamspeak.query.MessageMarshaller;
-import de.fearnixx.jeak.teamspeak.query.TSQueryConnectionWrapper;
+import de.fearnixx.jeak.teamspeak.query.StandardMessageMarshaller;
+import de.fearnixx.jeak.teamspeak.query.TSQueryConnection;
+import de.fearnixx.jeak.teamspeak.query.api.ITSQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.channel.SerialMessageChannel;
 import de.fearnixx.jeak.teamspeak.query.channel.StreamBasedChannel;
 import de.fearnixx.jeak.util.URIContainer;
@@ -72,17 +72,17 @@ public class TeamSpeakConnectionFactory {
     }
 
     @Inject
-    private IServiceManager serviceManager;
+    protected IServiceManager serviceManager;
 
-    protected MessageMarshaller createMarshaller() {
-        return new MessageMarshaller(serviceManager.provideUnchecked(IUserService.class));
+    protected StandardMessageMarshaller createMarshaller() {
+        return new StandardMessageMarshaller(serviceManager.provideUnchecked(IUserService.class));
     }
 
-    protected TSQueryConnectionWrapper createConnection(ByteChannel messageChannel) {
-        return new TSQueryConnectionWrapper(new SerialMessageChannel(messageChannel), createMarshaller());
+    protected TSQueryConnection createConnection(ByteChannel messageChannel) {
+        return new TSQueryConnection(new SerialMessageChannel(messageChannel), createMarshaller());
     }
 
-    protected TSQueryConnectionWrapper connectWithSocket(ByteChannel socketChannel) throws IOException {
+    protected TSQueryConnection connectWithSocket(ByteChannel socketChannel) throws IOException {
         return createConnection(socketChannel);
     }
 
@@ -110,7 +110,7 @@ public class TeamSpeakConnectionFactory {
         return ClientTlsChannel.newBuilder(rawChannel, sslContext).build();
     }
 
-    protected TSQueryConnectionWrapper connectWithSSH(URIContainer connectionURI) {
+    protected TSQueryConnection connectWithSSH(URIContainer connectionURI) {
         try {
             final var session = getSSHSession(connectionURI);
             final var channel = session.openChannel(TEAMSPEAK_SSH_CHANNEL_TYPE);
@@ -187,7 +187,7 @@ public class TeamSpeakConnectionFactory {
         }
 
         logger.info("Trying to connect to TeamSpeak on {}", connUri);
-        TSQueryConnectionWrapper conn;
+        TSQueryConnection conn;
         try {
             switch (connUri.getOriginalUri().getScheme()) {
                 case SCHEME_PLAINTEXT:
@@ -213,8 +213,7 @@ public class TeamSpeakConnectionFactory {
         return conn;
     }
 
-    public boolean useInstance(TSQueryConnectionWrapper conn) {
-        final var connURI = conn.getURI();
+    public boolean useInstance(ITSQueryConnection connection, URIContainer connURI) {
         final var commandBuilder =
                 IQueryRequest.builder().command(QueryCommands.SERVER.USE_INSTANCE);
         if (connURI.hasQuery(QUERY_VOICEPORT) && !connURI.hasQuery(QUERY_INSTANCE)) {
@@ -227,7 +226,7 @@ public class TeamSpeakConnectionFactory {
         }
 
         try {
-            final var answer = conn.promiseRequest(commandBuilder.build()).get();
+            final var answer = connection.promiseRequest(commandBuilder.build()).get();
             return answer.getErrorCode() == 0;
 
         } catch (InterruptedException e) {
@@ -241,14 +240,13 @@ public class TeamSpeakConnectionFactory {
         }
     }
 
-    public boolean attemptLogin(TSQueryConnectionWrapper conn) {
-        final var connURI = conn.getURI();
+    public boolean attemptLogin(ITSQueryConnection connection, URIContainer connURI) {
         final var request = IQueryRequest.builder().command(QueryCommands.SERVER.LOGIN)
                 .addOption(connURI.optSingleQuery(TeamSpeakConnectionFactory.QUERY_USER).orElse(TeamSpeakConnectionFactory.QUERY_USERNAME_DEFAULT))
                 .addOption(connURI.optSingleQuery(TeamSpeakConnectionFactory.QUERY_PASS).orElseThrow())
                 .build();
         try {
-            final var answer = conn.promiseRequest(request).get();
+            final var answer = connection.promiseRequest(request).get();
             return answer.getErrorCode() == 0;
 
         } catch (InterruptedException e) {

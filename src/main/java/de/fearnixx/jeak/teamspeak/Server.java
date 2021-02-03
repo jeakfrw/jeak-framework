@@ -14,8 +14,7 @@ import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.query.ITSQueryConnection;
-import de.fearnixx.jeak.teamspeak.query.TSQueryConnectionWrapper;
+import de.fearnixx.jeak.teamspeak.query.TSQueryConnectionDelegate;
 import de.fearnixx.jeak.teamspeak.query.event.EventDispatcher;
 import de.fearnixx.jeak.util.URIContainer;
 import org.slf4j.Logger;
@@ -59,7 +58,7 @@ public class Server implements IServer {
 
     private EventDispatcher eventDispatcher = new EventDispatcher();
     private TeamSpeakConnectionFactory connector = new TeamSpeakConnectionFactory();
-    private TSQueryConnectionWrapper mainConnection;
+    private TSQueryConnectionDelegate mainConnection;
     private URIContainer connectionURI;
 
     /**
@@ -124,7 +123,7 @@ public class Server implements IServer {
             eventService.fireEvent(preConnectEvent);
 
             // Establish connection.
-            mainConnection = (TSQueryConnectionWrapper) connector.establishConnection(connectionURI);
+            mainConnection = new TSQueryConnectionDelegate(connector.establishConnection(connectionURI));
             mainConnection.onAnswer(eventDispatcher::dispatchAnswer);
             mainConnection.onNotification(eventDispatcher::dispatchNotification);
             mainConnection.onClosed((conn, graceful) -> {
@@ -144,7 +143,7 @@ public class Server implements IServer {
             connectionThread.setName("connection-" + connectionCounter.getAndIncrement());
             connectionThread.start();
 
-            if (!connector.useInstance(mainConnection)) {
+            if (!connector.useInstance(mainConnection, mainConnection.getURI())) {
                 logger.warn("==========================");
                 logger.warn("Instance selection failed!");
                 logger.warn("==========================");
@@ -152,7 +151,7 @@ public class Server implements IServer {
                 throw new QueryConnectException("Instance selection failed!");
             }
             if (TeamSpeakConnectionFactory.requiresLoginCommands(mainConnection.getURI())
-                    && !connector.attemptLogin(mainConnection)) {
+                    && !connector.attemptLogin(mainConnection, mainConnection.getURI())) {
                 logger.warn("=============");
                 logger.warn("Login failed!");
                 logger.warn("=============");
@@ -255,21 +254,6 @@ public class Server implements IServer {
 
     @Override
     public Optional<IQueryConnection> optConnection() {
-        if (isConnected()) {
-            return Optional.of(mainConnection);
-        } else {
-            return Optional.empty();
-        }
-    }
-
-    @Override
-    public ITSQueryConnection getQueryConnection() {
-        return optQueryConnection()
-                .orElseThrow(() -> new IllegalStateException(MSG_NOT_CONNECTED));
-    }
-
-    @Override
-    public Optional<ITSQueryConnection> optQueryConnection() {
         if (isConnected()) {
             return Optional.of(mainConnection);
         } else {

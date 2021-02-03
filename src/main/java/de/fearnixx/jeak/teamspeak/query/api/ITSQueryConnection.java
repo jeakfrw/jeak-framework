@@ -1,7 +1,8 @@
-package de.fearnixx.jeak.teamspeak.query;
+package de.fearnixx.jeak.teamspeak.query.api;
 
 import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.IQueryEvent.IAnswer;
+import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
@@ -14,7 +15,7 @@ import java.util.function.Consumer;
  * @see de.fearnixx.jeak.teamspeak.query.IQueryConnection for the previous, deprecated contract.
  * @since 1.2.0
  */
-public interface ITSQueryConnection extends AutoCloseable {
+public interface ITSQueryConnection extends AutoCloseable, Runnable {
 
     /**
      * Queues a request for submission to the server.
@@ -63,6 +64,11 @@ public interface ITSQueryConnection extends AutoCloseable {
      * @implNote By design, this is not reversible.
      */
     void lockListeners(String reason);
+
+    /**
+     * Returns whether this connection is currently alive and connected.
+     */
+    boolean isActive();
 
     /**
      * Gracefully closes this connection.
