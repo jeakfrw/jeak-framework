@@ -63,12 +63,14 @@ public class InjectionService implements IInjectionService {
             }
 
             // Inject the value
-            optTarget.ifPresent(value -> {
+            optTarget.ifPresentOrElse(value -> {
                 try {
                     setFieldValue(victim, field, value);
                 } catch (IllegalAccessException e) {
                     logger.error("Failed injection of class {} into object of class {}", field.getType(), clazz.toString(), e);
                 }
+            }, () -> {
+                logger.warn("Unsatisfied injection: {} into object of class {}", field.getType(), clazz.toString());
             });
         }
         return victim;
