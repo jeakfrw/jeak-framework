@@ -82,9 +82,12 @@ public class Mp3AudioPlayer extends AudioPlayer {
         }
 
         try {
-            audioSourceSubstream.close();
+            if (audioSourceSubstream != null && !stopped) {
+                audioSourceSubstream.close();
+            }
+            close();
         } catch (Exception e) {
-            throw new RuntimeException("Audio stream could not be closed!");
+            throw new RuntimeException("Audio stream could not be closed!", e);
         }
 
         stopped = true;
@@ -255,15 +258,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void setAudioStream(InputStream inputStream) {
-
-        if (audioSourceSubstream != null && !stopped) {
-            try {
-                audioSourceSubstream.close();
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
+        stop();
         audioSourceSubstream = createAudioInputStream(inputStream);
     }
 
