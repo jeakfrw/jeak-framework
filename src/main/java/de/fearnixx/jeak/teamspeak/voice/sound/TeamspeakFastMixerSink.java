@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sound.sampled.AudioFormat;
+import java.util.Arrays;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -260,7 +261,7 @@ public class TeamspeakFastMixerSink implements Microphone {
             LOGGER.info("Starting TeamspeakFastMixerSink...");
 
             // Flush buffers, clear outgoing packet queues.
-            for (int i = 0; i < sampleBuffer.length; i++) sampleBuffer[i] = 0f;
+            Arrays.fill(sampleBuffer, 0f);
             samplePosition = 0;
             availableInput = bufferSize;
             packetQueue.clear();
@@ -402,7 +403,7 @@ public class TeamspeakFastMixerSink implements Microphone {
         return getAudioFormat().getChannels();
     }
 
-    private final class OpusPacket {
+    private static final class OpusPacket {
         private final int samples;
         private final byte[] bytes;
 
