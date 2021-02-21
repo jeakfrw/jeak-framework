@@ -77,6 +77,18 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public synchronized void stop() {
+        stopStream();
+
+        try {
+            if (endOfStreamCallback != null) {
+                endOfStreamCallback.run();
+            }
+        } catch (Exception e) {
+            LOGGER.error("An exception occurred in an end-of-stream callback of an Mp3-Audio-Player!", e);
+        }
+    }
+
+    private void stopStream() {
         if (playing) {
             pause();
         }
@@ -91,14 +103,6 @@ public class Mp3AudioPlayer extends AudioPlayer {
         }
 
         stopped = true;
-
-        try {
-            if (endOfStreamCallback != null) {
-                endOfStreamCallback.run();
-            }
-        } catch (Exception e) {
-            LOGGER.error("An exception occurred in an end-of-stream callback of an Mp3-Audio-Player!", e);
-        }
     }
 
     @Override
@@ -258,7 +262,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void setAudioStream(InputStream inputStream) {
-        stop();
+        stopStream();
         audioSourceSubstream = createAudioInputStream(inputStream);
     }
 
