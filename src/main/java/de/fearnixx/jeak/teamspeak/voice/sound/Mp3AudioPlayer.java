@@ -212,6 +212,11 @@ public class Mp3AudioPlayer extends AudioPlayer {
         }
     }
 
+    @Override
+    public double getVolume(double volume) {
+        return volume;
+    }
+
     public void setVolume(double volume) {
         if (volume < 0 || volume > 1) {
             throw new IllegalArgumentException("Volume out of range: " + volume);

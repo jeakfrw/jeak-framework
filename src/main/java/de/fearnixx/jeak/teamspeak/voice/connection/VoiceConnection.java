@@ -11,6 +11,7 @@ import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
+import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
@@ -44,14 +45,15 @@ public class VoiceConnection implements IVoiceConnection {
     private final IntSupplier portSupplier;
     private final IEventService eventService;
     private final ExecutorService connectionExecutorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService clientUpdateExecutorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService clientMessageExecutorService = Executors.newSingleThreadExecutor();
 
     private LocalTeamspeakClientSocket ts3jClientSocket;
 
     private boolean connected;
 
-    private IUserService userService;
-
-    private IBot bot;
+    private final IUserService userService;
+    private final IBot bot;
 
     private boolean shouldForwardTextMessages;
 
@@ -115,6 +117,7 @@ public class VoiceConnection implements IVoiceConnection {
 
                     this.connected = true;
                     clientConnectionInformation.setClientId(ts3jClientSocket.getClientId());
+                    updateDescription(clientConnectionInformation.getClientDescription());
 
                     onSuccess.run();
                 }
@@ -208,7 +211,7 @@ public class VoiceConnection implements IVoiceConnection {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         } catch (IOException | ExecutionException | TimeoutException e) {
-            //We assume that the server is not reachable for this connection. Therefor it is declared disconnected
+            //We assume that the server is not reachable for this connection. Therefore it is declared disconnected
             LOGGER.warn("An exception occurred while the voice connection with the identifier {} " +
                     "tried to disconnect from the server.", clientConnectionInformation.getIdentifier(), e
             );
@@ -262,6 +265,80 @@ public class VoiceConnection implements IVoiceConnection {
         }
 
         return true;
+    }
+
+    @Override
+    public void sendPrivateMessage(IClient client, String message) {
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("A private message must be non-null and not empty!");
+        }
+
+        clientMessageExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.sendPrivateMessage(client.getClientID(), message);
+                    } catch (IOException | CommandException e) {
+                        LOGGER.error(
+                                "A error occurred when trying to send the message {} to client #{}",
+                                message, client.getClientID()
+                        );
+                    } catch (TimeoutException e) {
+                        LOGGER.error("A timeout occurred when trying to send a private message.", e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void sendChannelMessage(IChannel channel, String message) {
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("A channel message must be non-null and not empty!");
+        }
+
+        clientMessageExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.sendChannelMessage(channel.getID(), message);
+                    } catch (IOException | CommandException e) {
+                        LOGGER.error(
+                                "A error occurred when trying to send the message {} to channel #{}", message, channel.getID()
+                        );
+                    } catch (TimeoutException e) {
+                        LOGGER.error("A timeout occurred when trying to send a channel message.", e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void poke(IClient client) {
+        poke(client, "");
+    }
+
+    @Override
+    public void poke(IClient client, String message) {
+        String pokeMsg = message == null ? "" : message;
+
+        clientMessageExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.clientPoke(client.getClientID(), pokeMsg);
+                    } catch (IOException | CommandException e) {
+                        LOGGER.error(
+                                "A error occurred when trying to poke client #{} with message {}",
+                                client.getClientID(), message
+                        );
+                    } catch (TimeoutException e) {
+                        LOGGER.error("A timeout occurred when trying to poke a client.", e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
     }
 
     @Override
@@ -325,6 +402,37 @@ public class VoiceConnection implements IVoiceConnection {
         if (connected && !ts3jClientSocket.getNickname().equals(nickname)) {
             ts3jClientSocket.setNickname(nickname);
         }
+    }
+
+    @Override
+    public void setClientDescription(String description) {
+        if (description == null) {
+            description = "";
+        }
+
+        clientConnectionInformation.setClientDescription(description);
+
+        if (connected) {
+            updateDescription(description);
+        }
+    }
+
+    private void updateDescription(String description) {
+        clientUpdateExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.setDescription(description);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (IOException | ExecutionException e) {
+                        LOGGER.error("Failed to update client description to '{}'", description, e);
+                    } catch (TimeoutException e) {
+                        LOGGER.error("Timeout during client description update", e);
+                    } catch (CommandException e) {
+                        LOGGER.error("Invalid command sent to update client description to '{}'", description, e);
+                    }
+                }
+        );
     }
 
     @Override

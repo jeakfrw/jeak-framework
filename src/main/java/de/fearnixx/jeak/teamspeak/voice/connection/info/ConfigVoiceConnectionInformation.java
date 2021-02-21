@@ -15,11 +15,12 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigVoiceConnectionInformation.class);
 
-    private static final String NICKNAME_NODE = "nickname";
     private static final String IDENTITY_NODE = "identity";
-    private IConfig configRef;
+    private static final String NICKNAME_NODE = "nickname";
+    private static final String DESCRIPTION_NODE = "description";
+    private final IConfig configRef;
 
-    private String identifier;
+    private final String identifier;
 
     public ConfigVoiceConnectionInformation(IConfig configRef, String identifier) {
         this.identifier = identifier;
@@ -49,13 +50,6 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
     }
 
     @Override
-    public void setClientNickname(String clientNickname) {
-        getInfoNode().getNode(NICKNAME_NODE).setString(clientNickname);
-
-        save();
-    }
-
-    @Override
     public void setLocalIdentity(LocalIdentity localIdentity) {
 
         final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -67,7 +61,18 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
         }
 
         getInfoNode().getNode(IDENTITY_NODE).setString(outputStream.toString());
+        save();
+    }
 
+    @Override
+    public void setClientNickname(String clientNickname) {
+        getInfoNode().getNode(NICKNAME_NODE).setString(clientNickname);
+        save();
+    }
+
+    @Override
+    public void setClientDescription(String clientDescription) {
+        getInfoNode().getNode(DESCRIPTION_NODE).setString(clientDescription);
         save();
     }
 
@@ -99,6 +104,17 @@ public class ConfigVoiceConnectionInformation extends AbstractVoiceConnectionInf
 
         if (node.isVirtual()) {
             return identifier;
+        }
+
+        return node.asString();
+    }
+
+    @Override
+    public String getClientDescription() {
+        final IConfigNode node = getInfoNode().getNode(DESCRIPTION_NODE);
+
+        if (node.isVirtual()) {
+            return "";
         }
 
         return node.asString();

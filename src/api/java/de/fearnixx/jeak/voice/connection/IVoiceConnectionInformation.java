@@ -19,6 +19,11 @@ public interface IVoiceConnectionInformation {
     String getClientNickname();
 
     /**
+     * @return description of the client
+     */
+    String getClientDescription();
+
+    /**
      * @return the client unique id of the voice connection.
      */
     String getClientUniqueId();

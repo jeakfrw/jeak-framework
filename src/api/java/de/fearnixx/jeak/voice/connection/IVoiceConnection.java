@@ -1,6 +1,8 @@
 package de.fearnixx.jeak.voice.connection;
 
 import de.fearnixx.jeak.event.IQueryEvent;
+import de.fearnixx.jeak.teamspeak.data.IChannel;
+import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
@@ -13,7 +15,7 @@ import java.util.function.Consumer;
  * A VoiceConnection may be requested by using {@link IVoiceConnectionService#requestVoiceConnection(String, Consumer)}.
  * <p>
  * The retrieved connection will be not connected to the server, but it will already own a valid
- * teamspeak identity and can be connected to the server by calling {@link #connect(Runnable, Runnable)}.
+ * teamspeak identity and can be connected to the server by calling {@link #connect(Runnable, Consumer)}.
  */
 public interface IVoiceConnection {
 
@@ -61,6 +63,37 @@ public interface IVoiceConnection {
     boolean sendToChannel(int channelId, String password);
 
     /**
+     * Sends a text message to the given client
+     *
+     * @param client  target of the message
+     * @param message Non-null and non-empty message
+     */
+    void sendPrivateMessage(IClient client, String message);
+
+    /**
+     * Sends a text message to the given channel
+     *
+     * @param channel target of the message
+     * @param message Non-null and non-empty message
+     */
+    void sendChannelMessage(IChannel channel, String message);
+
+    /**
+     * Pokes a client.
+     *
+     * @param client target of the message
+     */
+    void poke(IClient client);
+
+    /**
+     * Pokes a client with a message. Poke with no message if it is null or empty.
+     *
+     * @param client  target of the message
+     * @param message message
+     */
+    void poke(IClient client, String message);
+
+    /**
      * Registers an Audio-Player with the respective type for the client-connection if the client is connected
      *
      * @return the audio player
@@ -91,6 +124,15 @@ public interface IVoiceConnection {
      * @param nickname new nickname (may equal the old, but not null or an empty string)
      */
     void setClientNickname(String nickname);
+
+    /**
+     * Alters the voice connection information of the voice connection and sets the description of the client.
+     * <p>
+     * Setting null or empty string, removes the description
+     *
+     * @param description new description
+     */
+    void setClientDescription(String description);
 
     /**
      * Sets a flag for this voice connection whether incoming text messages should be forwarded
