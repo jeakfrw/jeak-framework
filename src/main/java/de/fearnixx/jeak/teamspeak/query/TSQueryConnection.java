@@ -249,13 +249,13 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
                 error.setTsConnection(__delegatedThis());
 
                 final var answer = new RawQueryEvent.Message.Answer(req);
-                answer.setTsConnection(this);
+                answer.setTsConnection(__delegatedThis());
                 answer.setError(error);
                 dispatchAnswer(answer);
                 return true;
             });
             final boolean gracefulState = gracefullyClosed.get();
-            closeListeners.forEach(it -> it.accept(this, gracefulState));
+            closeListeners.forEach(it -> it.accept(__delegatedThis(), gracefulState));
         }
 
         // Close connection
