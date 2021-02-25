@@ -127,9 +127,7 @@ public class VoiceConnection implements IVoiceConnection {
     private void handleTextMessageEvent(TextMessageEvent e) {
 
         eventService.fireEvent(
-                new VoiceConnectionTextMessageEvent(
-                        clientConnectionInformation.getIdentifier(), e
-                )
+                new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
         );
 
         if (shouldForwardTextMessages) {
@@ -169,8 +167,7 @@ public class VoiceConnection implements IVoiceConnection {
                     return;
                 default:
                     throw new IllegalStateException(
-                            "Received text message event with unsupported target mode "
-                                    + e.getTargetMode() + "!"
+                            "Received text message event with unsupported target mode " + e.getTargetMode() + "!"
                     );
             }
 
@@ -178,17 +175,9 @@ public class VoiceConnection implements IVoiceConnection {
             textMessageEvent.setConnection(connection);
             textMessageEvent.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
             textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_ID, invokerId);
-            textMessageEvent.setProperty(
-                    PropertyKeys.TextMessage.SOURCE_UID,
-                    client.getClientUniqueID()
-            );
-            textMessageEvent.setProperty(
-                    PropertyKeys.TextMessage.SOURCE_NICKNAME,
-                    client.getNickName()
-            );
-            textMessageEvent.setProperty(
-                    PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode()
-            );
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_UID, client.getClientUniqueID());
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_NICKNAME, client.getNickName());
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode());
 
             eventService.fireEvent(textMessageEvent);
         }
@@ -201,6 +190,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public synchronized void disconnect(String reason) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to disconnect a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
         try {
             if (ts3jClientSocket.getMicrophone() != null
                     && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(IAudioPlayer.class)) {
@@ -232,6 +229,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public boolean sendToChannel(int channelId, String password) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to move a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return false;
+        }
+
         try {
             ts3jClientSocket.clientMove(ts3jClientSocket.getClientId(), channelId, password);
         } catch (InterruptedException ie) {
@@ -269,6 +274,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public void sendPrivateMessage(IClient client, String message) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to send a private message using a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
         if (message == null || message.isBlank()) {
             throw new IllegalArgumentException("A private message must be non-null and not empty!");
         }
@@ -293,6 +306,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public void sendChannelMessage(IChannel channel, String message) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to send a channel message using a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
         if (message == null || message.isBlank()) {
             throw new IllegalArgumentException("A channel message must be non-null and not empty!");
         }
@@ -321,6 +342,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public void poke(IClient client, String message) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to poke a client using a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
         String pokeMsg = message == null ? "" : message;
 
         clientMessageExecutorService.submit(
