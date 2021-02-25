@@ -228,10 +228,10 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
                 error.setNext(error);
                 error.setProperty("id", "-1");
                 error.setProperty("msg", "Connection closed.");
-                error.setConnection((IQueryConnection) this);
+                error.setTsConnection(this);
 
                 final var answer = new RawQueryEvent.Message.Answer(req);
-                answer.setConnection((IQueryConnection) this);
+                answer.setTsConnection(this);
                 answer.setError(error);
                 dispatchAnswer(answer);
                 return true;
@@ -245,6 +245,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     }
 
     protected void dispatchAnswer(Message.Answer message) {
+        message.setTsConnection(this);
         final var marshalled = marshaller.marshall(message);
         synchronized (this) {
             // Intercept whoami-requests and store their answer.
@@ -261,15 +262,12 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     }
 
     protected void dispatchNotification(Message.Notification notification) {
+        notification.setTsConnection(this);
         synchronized (this) {
             lastReceivedTSP.set(System.currentTimeMillis());
+            marshaller.marshall(notification)
+                    .forEach(marshalled -> notificationListeners.forEach(it -> it.accept(marshalled)));
         }
-        marshaller.marshall(notification)
-                .forEach(marshalled -> {
-                    synchronized (this) {
-                        notificationListeners.forEach(it -> it.accept(marshalled));
-                    }
-                });
     }
 
     protected synchronized void assertUnterminated() {

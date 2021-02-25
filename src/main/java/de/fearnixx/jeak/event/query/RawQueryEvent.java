@@ -20,10 +20,6 @@ public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
         return (IQueryConnection) tsConnection;
     }
 
-    public void setConnection(IQueryConnection queryConnection) {
-        this.tsConnection = (ITSQueryConnection) queryConnection;
-    }
-
     public void setTsConnection(ITSQueryConnection tsConnection) {
         this.tsConnection = tsConnection;
     }

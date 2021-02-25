@@ -145,7 +145,7 @@ public class TypedCommandService extends CommandService {
             IClient sender = txtEvent.getSender();
             String message = locales.getContext(sender.getCountryCode())
                     .getMessage("command.notFound", Map.of("command", command));
-            txtEvent.getConnection().sendRequest(sender.sendMessage(message));
+            txtEvent.getConnection().queueRequest(sender.sendMessage(message));
         }
     }
 
