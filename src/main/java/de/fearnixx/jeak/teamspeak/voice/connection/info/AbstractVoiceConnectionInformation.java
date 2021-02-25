@@ -11,6 +11,8 @@ public abstract class AbstractVoiceConnectionInformation implements IVoiceConnec
 
     public abstract void setClientNickname(String clientNickname);
 
+    public abstract void setClientDescription(String clientDescription);
+
     public abstract void setLocalIdentity(LocalIdentity localIdentity);
 
     public abstract LocalIdentity getTeamspeakIdentity();

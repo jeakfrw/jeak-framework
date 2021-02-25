@@ -13,12 +13,12 @@ import java.util.function.Consumer;
  * A VoiceConnection may be requested by using {@link IVoiceConnectionService#requestVoiceConnection(String, Consumer)}.
  * <p>
  * The retrieved connection will be not connected to the server, but it will already own a valid
- * teamspeak identity and can be connected to the server by calling {@link #connect(Runnable, Runnable)}.
+ * teamspeak identity and can be connected to the server by calling {@link #connect(Runnable, Consumer)}.
  */
 public interface IVoiceConnection {
 
     /**
-     * Connects the client to the server. Depending on the result of the connection process
+     * Asynchronously connects the client to the server. Depending on the result of the connection process
      * the respective callback will be executed.
      * <p>
      * If the connection is already connected to the server no callback will be executed since there is no
@@ -61,6 +61,36 @@ public interface IVoiceConnection {
     boolean sendToChannel(int channelId, String password);
 
     /**
+     * Asynchronously sends a text message to a client
+     *
+     * @param clientId id of the target client
+     * @param message  Non-null and non-empty message
+     */
+    void sendPrivateMessage(int clientId, String message);
+
+    /**
+     * Asynchronously sends a text message to the current channel
+     *
+     * @param message Non-null and non-empty message
+     */
+    void sendChannelMessage(String message);
+
+    /**
+     * Asynchronously pokes a client.
+     *
+     * @param clientId id of the target client
+     */
+    void poke(int clientId);
+
+    /**
+     * Asynchronously pokes a client with a message. Poke with no message if it is null or empty.
+     *
+     * @param clientId id of the target client
+     * @param message  message
+     */
+    void poke(int clientId, String message);
+
+    /**
      * Registers an Audio-Player with the respective type for the client-connection if the client is connected
      *
      * @return the audio player
@@ -91,6 +121,15 @@ public interface IVoiceConnection {
      * @param nickname new nickname (may equal the old, but not null or an empty string)
      */
     void setClientNickname(String nickname);
+
+    /**
+     * Alters the voice connection information of the voice connection and sets the description of the client.
+     * <p>
+     * Setting null or empty string, removes the description
+     *
+     * @param description new description
+     */
+    void setClientDescription(String description);
 
     /**
      * Sets a flag for this voice connection whether incoming text messages should be forwarded
