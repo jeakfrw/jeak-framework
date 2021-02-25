@@ -11,7 +11,6 @@ import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.EventCaptions;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
-import de.fearnixx.jeak.teamspeak.data.IChannel;
 import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.voice.connection.event.VoiceConnectionTextMessageEvent;
@@ -126,9 +125,7 @@ public class VoiceConnection implements IVoiceConnection {
 
     private void handleTextMessageEvent(TextMessageEvent e) {
 
-        eventService.fireEvent(
-                new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e)
-        );
+        eventService.fireEvent(new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e));
 
         if (shouldForwardTextMessages) {
             final IQueryConnection connection;
@@ -148,8 +145,7 @@ public class VoiceConnection implements IVoiceConnection {
 
             switch (e.getTargetMode()) {
                 case CLIENT:
-                    QueryEvent.ClientTextMessage clientTextMessage =
-                            new QueryEvent.ClientTextMessage(userService);
+                    QueryEvent.ClientTextMessage clientTextMessage = new QueryEvent.ClientTextMessage(userService);
 
                     clientTextMessage.setClient(client);
                     textMessageEvent = clientTextMessage;
@@ -167,7 +163,7 @@ public class VoiceConnection implements IVoiceConnection {
                     return;
                 default:
                     throw new IllegalStateException(
-                            "Received text message event with unsupported target mode " + e.getTargetMode() + "!"
+                            "Received text message event with unsupported target mode: " + e.getTargetMode()
                     );
             }
 
@@ -273,7 +269,7 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public void sendPrivateMessage(IClient client, String message) {
+    public void sendPrivateMessage(int clientId, String message) {
         if (!connected) {
             LOGGER.warn(
                     "Tried to send a private message using a disconnected voice connection! Identifier: {}",
@@ -289,11 +285,10 @@ public class VoiceConnection implements IVoiceConnection {
         clientMessageExecutorService.submit(
                 () -> {
                     try {
-                        ts3jClientSocket.sendPrivateMessage(client.getClientID(), message);
+                        ts3jClientSocket.sendPrivateMessage(clientId, message);
                     } catch (IOException | CommandException e) {
                         LOGGER.error(
-                                "A error occurred when trying to send the message {} to client #{}",
-                                message, client.getClientID()
+                                "An error occurred when trying to send the message {} to client #{}", message, clientId
                         );
                     } catch (TimeoutException e) {
                         LOGGER.error("A timeout occurred when trying to send a private message.", e);
@@ -305,7 +300,7 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public void sendChannelMessage(IChannel channel, String message) {
+    public void sendChannelMessage(String message) {
         if (!connected) {
             LOGGER.warn(
                     "Tried to send a channel message using a disconnected voice connection! Identifier: {}",
@@ -321,11 +316,12 @@ public class VoiceConnection implements IVoiceConnection {
         clientMessageExecutorService.submit(
                 () -> {
                     try {
-                        ts3jClientSocket.sendChannelMessage(channel.getID(), message);
+                        //Since a client can only send channel text messages to its own channel, supplying a channel id
+                        //does not make sense. Therefore a default value is used, expecting TS3J to send the channel message
+                        //to the current channel regardless of the value of channelId.
+                        ts3jClientSocket.sendChannelMessage(1, message);
                     } catch (IOException | CommandException e) {
-                        LOGGER.error(
-                                "A error occurred when trying to send the message {} to channel #{}", message, channel.getID()
-                        );
+                        LOGGER.error("An error occurred when trying to send the channel message '{}'", message);
                     } catch (TimeoutException e) {
                         LOGGER.error("A timeout occurred when trying to send a channel message.", e);
                     } catch (InterruptedException e) {
@@ -336,12 +332,12 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
-    public void poke(IClient client) {
-        poke(client, "");
+    public void poke(int clientId) {
+        poke(clientId, "");
     }
 
     @Override
-    public void poke(IClient client, String message) {
+    public void poke(int clientId, String message) {
         if (!connected) {
             LOGGER.warn(
                     "Tried to poke a client using a disconnected voice connection! Identifier: {}",
@@ -355,12 +351,9 @@ public class VoiceConnection implements IVoiceConnection {
         clientMessageExecutorService.submit(
                 () -> {
                     try {
-                        ts3jClientSocket.clientPoke(client.getClientID(), pokeMsg);
+                        ts3jClientSocket.clientPoke(clientId, pokeMsg);
                     } catch (IOException | CommandException e) {
-                        LOGGER.error(
-                                "A error occurred when trying to poke client #{} with message {}",
-                                client.getClientID(), message
-                        );
+                        LOGGER.error("An error occurred when trying to poke client #{} with message {}", clientId, message);
                     } catch (TimeoutException e) {
                         LOGGER.error("A timeout occurred when trying to poke a client.", e);
                     } catch (InterruptedException e) {
@@ -435,14 +428,12 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public void setClientDescription(String description) {
-        if (description == null) {
-            description = "";
-        }
+        String desc = description == null ? "" : description;
 
-        clientConnectionInformation.setClientDescription(description);
+        clientConnectionInformation.setClientDescription(desc);
 
         if (connected) {
-            updateDescription(description);
+            updateDescription(desc);
         }
     }
 
@@ -467,5 +458,15 @@ public class VoiceConnection implements IVoiceConnection {
     @Override
     public void setShouldForwardTextMessages(boolean shouldForwardTextMessages) {
         this.shouldForwardTextMessages = shouldForwardTextMessages;
+    }
+
+    public void shutdown() {
+        if (connected) {
+            disconnect();
+        }
+
+        connectionExecutorService.shutdown();
+        clientUpdateExecutorService.shutdown();
+        clientMessageExecutorService.shutdown();
     }
 }

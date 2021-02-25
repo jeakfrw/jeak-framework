@@ -1,8 +1,6 @@
 package de.fearnixx.jeak.voice.connection;
 
 import de.fearnixx.jeak.event.IQueryEvent;
-import de.fearnixx.jeak.teamspeak.data.IChannel;
-import de.fearnixx.jeak.teamspeak.data.IClient;
 import de.fearnixx.jeak.voice.sound.AudioType;
 import de.fearnixx.jeak.voice.sound.IAudioPlayer;
 
@@ -20,7 +18,7 @@ import java.util.function.Consumer;
 public interface IVoiceConnection {
 
     /**
-     * Connects the client to the server. Depending on the result of the connection process
+     * Asynchronously connects the client to the server. Depending on the result of the connection process
      * the respective callback will be executed.
      * <p>
      * If the connection is already connected to the server no callback will be executed since there is no
@@ -63,35 +61,34 @@ public interface IVoiceConnection {
     boolean sendToChannel(int channelId, String password);
 
     /**
-     * Sends a text message to the given client
+     * Asynchronously sends a text message to a client
      *
-     * @param client  target of the message
+     * @param clientId id of the target client
+     * @param message  Non-null and non-empty message
+     */
+    void sendPrivateMessage(int clientId, String message);
+
+    /**
+     * Asynchronously sends a text message to the current channel
+     *
      * @param message Non-null and non-empty message
      */
-    void sendPrivateMessage(IClient client, String message);
+    void sendChannelMessage(String message);
 
     /**
-     * Sends a text message to the given channel
+     * Asynchronously pokes a client.
      *
-     * @param channel target of the message
-     * @param message Non-null and non-empty message
+     * @param clientId id of the target client
      */
-    void sendChannelMessage(IChannel channel, String message);
+    void poke(int clientId);
 
     /**
-     * Pokes a client.
+     * Asynchronously pokes a client with a message. Poke with no message if it is null or empty.
      *
-     * @param client target of the message
+     * @param clientId id of the target client
+     * @param message  message
      */
-    void poke(IClient client);
-
-    /**
-     * Pokes a client with a message. Poke with no message if it is null or empty.
-     *
-     * @param client  target of the message
-     * @param message message
-     */
-    void poke(IClient client, String message);
+    void poke(int clientId, String message);
 
     /**
      * Registers an Audio-Player with the respective type for the client-connection if the client is connected
