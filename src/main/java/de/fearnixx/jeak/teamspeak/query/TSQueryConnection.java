@@ -51,6 +51,9 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     private final AtomicLong lastReceivedTSP = new AtomicLong(0);
     private final AtomicBoolean gracefullyClosed = new AtomicBoolean(false);
 
+    @Deprecated
+    private final AtomicReference<ITSQueryConnection> delegationTarget = new AtomicReference<>();
+
     public TSQueryConnection(ITSMessageChannel messageChannel, StandardMessageMarshaller marshaller) {
         this.messageChannel = messageChannel;
         this.marshaller = marshaller;
@@ -65,6 +68,21 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
 
     public URIContainer getURI() {
         return createdWithURI;
+    }
+
+    @Deprecated
+    public void setDelegationTarget(ITSQueryConnection connection) {
+        delegationTarget.set(connection);
+    }
+
+    /**
+     * Since the old and new contract differ from each other, the current implementation allows delegation of itself.
+     * This reference is used e.g. in propagated events.
+     */
+    @Deprecated
+    protected ITSQueryConnection __delegatedThis() {
+        final var delegate = delegationTarget.get();
+        return delegate != null ? delegate : this;
     }
 
     public Optional<IDataHolder> getWhoAmIResponse() {
@@ -228,7 +246,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
                 error.setNext(error);
                 error.setProperty("id", "-1");
                 error.setProperty("msg", "Connection closed.");
-                error.setTsConnection(this);
+                error.setTsConnection(__delegatedThis());
 
                 final var answer = new RawQueryEvent.Message.Answer(req);
                 answer.setTsConnection(this);
@@ -245,7 +263,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     }
 
     protected void dispatchAnswer(Message.Answer message) {
-        message.setTsConnection(this);
+        message.setTsConnection(__delegatedThis());
         final var marshalled = marshaller.marshall(message);
         synchronized (this) {
             // Intercept whoami-requests and store their answer.
@@ -262,7 +280,7 @@ public class TSQueryConnection implements ITSQueryConnection, Runnable {
     }
 
     protected void dispatchNotification(Message.Notification notification) {
-        notification.setTsConnection(this);
+        notification.setTsConnection(__delegatedThis());
         synchronized (this) {
             lastReceivedTSP.set(System.currentTimeMillis());
             marshaller.marshall(notification)

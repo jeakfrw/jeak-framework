@@ -20,8 +20,9 @@ public class TSQueryConnectionDelegate implements IQueryConnection, ITSQueryConn
 
     private final ITSQueryConnection delegate;
 
-    public TSQueryConnectionDelegate(ITSQueryConnection delegate) {
+    public TSQueryConnectionDelegate(TSQueryConnection delegate) {
         this.delegate = delegate;
+        delegate.setDelegationTarget(this);
     }
 
     public URIContainer getURI() {

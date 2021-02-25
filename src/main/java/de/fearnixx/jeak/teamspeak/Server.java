@@ -15,6 +15,7 @@ import de.fearnixx.jeak.teamspeak.data.IDataHolder;
 import de.fearnixx.jeak.teamspeak.except.QueryConnectException;
 import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import de.fearnixx.jeak.teamspeak.query.TSQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.TSQueryConnectionDelegate;
 import de.fearnixx.jeak.teamspeak.query.event.EventDispatcher;
 import de.fearnixx.jeak.util.URIContainer;
@@ -125,7 +126,7 @@ public class Server implements IServer {
             eventService.fireEvent(preConnectEvent);
 
             // Establish connection.
-            mainConnection = new TSQueryConnectionDelegate(connector.establishConnection(connectionURI));
+            mainConnection = new TSQueryConnectionDelegate((TSQueryConnection) connector.establishConnection(connectionURI));
             mainConnection.onAnswer(eventDispatcher::dispatchAnswer);
             mainConnection.onNotification(eventDispatcher::dispatchNotification);
             mainConnection.onClosed((conn, graceful) -> {
