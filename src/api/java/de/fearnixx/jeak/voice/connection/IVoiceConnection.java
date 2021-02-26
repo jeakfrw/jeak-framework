@@ -111,9 +111,14 @@ public interface IVoiceConnection {
     IAudioPlayer getRegisteredAudioPlayer();
 
     /**
-     * @return information regarding the voice connection
+     * @return information regarding the voice connection. Also accessible and editable if the voice connection is not connected.
      */
     IVoiceConnectionInformation getVoiceConnectionInformation();
+
+    /**
+     * @return the current client id of the voice connection
+     */
+    int getClientId();
 
     /**
      * Alters the voice connection information of the voice connection and sets the nickname of the client.

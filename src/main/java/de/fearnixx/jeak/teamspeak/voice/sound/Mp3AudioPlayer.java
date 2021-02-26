@@ -213,7 +213,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
     }
 
     @Override
-    public double getVolume(double volume) {
+    public double getVolume() {
         return volume;
     }
 

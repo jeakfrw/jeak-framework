@@ -3,6 +3,7 @@ package de.fearnixx.jeak.teamspeak.voice.connection;
 import com.github.manevolent.ts3j.identity.LocalIdentity;
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.Main;
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
@@ -10,6 +11,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.NotificationReason;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
@@ -18,6 +20,8 @@ import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionStore;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.config.FileConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.security.GeneralSecurityException;
@@ -32,6 +36,8 @@ import java.util.function.IntSupplier;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
 public class VoiceConnectionService implements IVoiceConnectionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(VoiceConnectionService.class);
 
     private static final int CONNECTION_FACTORY_POOL_SIZE = Main.getProperty("jeak.voice_connection.construction_poolSize", 2);
 
@@ -58,7 +64,10 @@ public class VoiceConnectionService implements IVoiceConnectionService {
         requestExecutorService.execute(
                 () -> {
                     synchronized (clientConnections) {
+                        logger.info("Request for voice connection {}", identifier);
+
                         if (clientConnections.containsKey(identifier)) {
+                            logger.debug("Voice connection already requested.");
                             final VoiceConnection clientConnection = clientConnections.get(identifier);
 
                             if (clientConnection.isConnected()) {
@@ -82,6 +91,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                             );
 
                             if (newClientConnectionInformation.getTeamspeakIdentity() == null) {
+                                logger.debug("Creating new TS-identity.");
                                 final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
                                 newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
                             }
@@ -99,6 +109,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                         );
 
                         clientConnections.put(identifier, clientConnection);
+                        logger.info("Successfully constructed voice connection {}. Running callback.", identifier);
 
                         onRequestFinished.accept(Optional.of(clientConnection));
                     }
@@ -107,7 +118,30 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     }
 
     @Listener
+    public void onLeaveEvent(IQueryEvent.INotification.IClientLeave event) {
+        NotificationReason reason = event.getReason();
+
+        if (reason == NotificationReason.SERVER_KICK || reason == NotificationReason.BANNED) {
+            Optional<String> optKickedIdentifier = clientConnections.entrySet().stream()
+                    .filter(e -> e.getValue().getClientId() == event.getTarget().getClientID())
+                    .map(Map.Entry::getKey)
+                    .findFirst();
+
+            if (optKickedIdentifier.isPresent()) {
+                String kickedIdentifier = optKickedIdentifier.get();
+                logger.warn(
+                        "Voice connection {} has been kicked or banned from the server. Removing from connection cache.",
+                        kickedIdentifier
+                );
+
+                clientConnections.remove(kickedIdentifier);
+            }
+        }
+    }
+
+    @Listener
     public void postShutdown(IBotStateEvent.IPostShutdown event) {
+        logger.info("Running shutdown.");
         clientConnections.values().forEach(VoiceConnection::shutdown);
         clientConnections.clear();
     }

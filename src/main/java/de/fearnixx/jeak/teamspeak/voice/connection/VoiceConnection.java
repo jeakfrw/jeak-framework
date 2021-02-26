@@ -412,6 +412,11 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
+    public int getClientId() {
+        return ts3jClientSocket.getClientId();
+    }
+
+    @Override
     public synchronized void setClientNickname(String nickname) {
         if (nickname == null || nickname.length() < 3 || nickname.length() > 31) {
             throw new IllegalArgumentException(
