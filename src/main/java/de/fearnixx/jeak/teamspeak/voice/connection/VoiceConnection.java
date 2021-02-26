@@ -412,6 +412,11 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
+    public int getClientId() {
+        return ts3jClientSocket.getClientId();
+    }
+
+    @Override
     public synchronized void setClientNickname(String nickname) {
         if (nickname == null || nickname.length() < 3 || nickname.length() > 31) {
             throw new IllegalArgumentException(
@@ -458,6 +463,10 @@ public class VoiceConnection implements IVoiceConnection {
     @Override
     public void setShouldForwardTextMessages(boolean shouldForwardTextMessages) {
         this.shouldForwardTextMessages = shouldForwardTextMessages;
+    }
+
+    void setConnected(boolean connected) {
+        this.connected = connected;
     }
 
     public void shutdown() {

@@ -56,8 +56,8 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
 
         if (soundDir.isDirectory()) {
             Arrays.stream(Objects.requireNonNull(soundDir.listFiles()))
-                    .filter(f -> f.getName().toLowerCase().endsWith(".mp3"))
                     .map(File::getName)
+                    .filter(name -> name.toLowerCase().endsWith(".mp3"))
                     .forEach(sounds::add);
         }
 
@@ -99,7 +99,8 @@ public class Mp3PlayerPlugin extends AbstractTestPlugin {
     }
 
     private void createVoiceConnection(String identifier, String uuid) {
-        voiceConnectionStore.prepareVoiceConnection(identifier,
+        voiceConnectionStore.prepareVoiceConnection(
+                identifier,
                 voiceConnection ->
                         voiceConnection.connect(
                                 () -> {

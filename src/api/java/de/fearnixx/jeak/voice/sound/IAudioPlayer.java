@@ -84,7 +84,7 @@ public interface IAudioPlayer {
      *
      * @return volume in range [0,1]
      */
-    double getVolume(double volume);
+    double getVolume();
 
     /**
      * @return the type which the audio player is designated for

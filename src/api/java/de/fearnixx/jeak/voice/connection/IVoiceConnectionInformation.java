@@ -4,7 +4,7 @@ package de.fearnixx.jeak.voice.connection;
 import java.util.Optional;
 
 /**
- * Represents information of a voice connection
+ * Represents information of a voice connection which are editable even if the voice connection is not connected.
  */
 public interface IVoiceConnectionInformation {
 
