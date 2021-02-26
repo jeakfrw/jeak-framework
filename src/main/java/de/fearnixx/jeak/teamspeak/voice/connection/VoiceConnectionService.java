@@ -57,25 +57,18 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     private boolean isDatabaseConnected = false;
 
-    private final Map<String, VoiceConnection> clientConnections = new ConcurrentHashMap<>();
+    private final Map<String, VoiceConnection> voiceConnections = new ConcurrentHashMap<>();
 
     @Override
-    public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
+    public void requestVoiceConnection(String identifier, Consumer<IVoiceConnection> onRequestFinished) {
         requestExecutorService.execute(
                 () -> {
-                    synchronized (clientConnections) {
+                    synchronized (voiceConnections) {
                         logger.info("Request for voice connection {}", identifier);
 
-                        if (clientConnections.containsKey(identifier)) {
-                            logger.debug("Voice connection already requested.");
-                            final VoiceConnection clientConnection = clientConnections.get(identifier);
-
-                            if (clientConnection.isConnected()) {
-                                onRequestFinished.accept(Optional.empty());
-                                return;
-                            }
-
-                            onRequestFinished.accept(Optional.of(clientConnection));
+                        if (voiceConnections.containsKey(identifier)) {
+                            logger.debug("Voice connection already requested. Retrieving from cache.");
+                            onRequestFinished.accept(voiceConnections.get(identifier));
                             return;
                         }
 
@@ -99,7 +92,8 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
                         final IntSupplier portSupplier = () -> server.optVoicePort()
                                 .orElseThrow(() -> new IllegalStateException("Couldn't get voice port! Query not connected yet?"));
-                        final VoiceConnection clientConnection = new VoiceConnection(
+
+                        final VoiceConnection voiceConnection = new VoiceConnection(
                                 newClientConnectionInformation,
                                 server.getHost(),
                                 portSupplier,
@@ -108,10 +102,10 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                                 userService
                         );
 
-                        clientConnections.put(identifier, clientConnection);
+                        voiceConnections.put(identifier, voiceConnection);
                         logger.info("Successfully constructed voice connection {}. Running callback.", identifier);
 
-                        onRequestFinished.accept(Optional.of(clientConnection));
+                        onRequestFinished.accept(voiceConnection);
                     }
                 }
         );
@@ -122,19 +116,15 @@ public class VoiceConnectionService implements IVoiceConnectionService {
         NotificationReason reason = event.getReason();
 
         if (reason == NotificationReason.SERVER_KICK || reason == NotificationReason.BANNED) {
-            Optional<String> optKickedIdentifier = clientConnections.entrySet().stream()
+            Optional<String> optKickedIdentifier = voiceConnections.entrySet().stream()
                     .filter(e -> e.getValue().getClientId() == event.getTarget().getClientID())
                     .map(Map.Entry::getKey)
                     .findFirst();
 
             if (optKickedIdentifier.isPresent()) {
                 String kickedIdentifier = optKickedIdentifier.get();
-                logger.warn(
-                        "Voice connection {} has been kicked or banned from the server. Removing from connection cache.",
-                        kickedIdentifier
-                );
-
-                clientConnections.remove(kickedIdentifier);
+                logger.warn("Voice connection {} has been kicked or banned from the server.", kickedIdentifier);
+                voiceConnections.get(kickedIdentifier).setConnected(false);
             }
         }
     }
@@ -142,8 +132,8 @@ public class VoiceConnectionService implements IVoiceConnectionService {
     @Listener
     public void postShutdown(IBotStateEvent.IPostShutdown event) {
         logger.info("Running shutdown.");
-        clientConnections.values().forEach(VoiceConnection::shutdown);
-        clientConnections.clear();
+        voiceConnections.values().forEach(VoiceConnection::shutdown);
+        voiceConnections.clear();
     }
 
     @Listener

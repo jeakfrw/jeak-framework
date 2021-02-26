@@ -465,6 +465,10 @@ public class VoiceConnection implements IVoiceConnection {
         this.shouldForwardTextMessages = shouldForwardTextMessages;
     }
 
+    void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
     public void shutdown() {
         if (connected) {
             disconnect();

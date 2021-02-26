@@ -10,8 +10,8 @@ import java.util.function.Consumer;
 
 public class VoiceConnectionStore implements IVoiceConnectionStore {
 
-    private Map<String, IVoiceConnection> connectionStore = new ConcurrentHashMap<>();
-    private VoiceConnectionService voiceConnectionService;
+    private final Map<String, IVoiceConnection> connectionStore = new ConcurrentHashMap<>();
+    private final VoiceConnectionService voiceConnectionService;
 
     VoiceConnectionStore(VoiceConnectionService voiceConnectionService) {
         this.voiceConnectionService = voiceConnectionService;
@@ -20,21 +20,18 @@ public class VoiceConnectionStore implements IVoiceConnectionStore {
     @Override
     public void prepareVoiceConnection(String identifier) {
         voiceConnectionService.requestVoiceConnection(
-                identifier, optionalVoiceConnection -> optionalVoiceConnection.ifPresent(
-                        voiceConnection -> connectionStore.put(identifier, voiceConnection)
-                )
+                identifier, voiceConnection -> connectionStore.put(identifier, voiceConnection)
         );
     }
 
     @Override
     public void prepareVoiceConnection(String identifier, Consumer<IVoiceConnection> onRegistrationFinished) {
         voiceConnectionService.requestVoiceConnection(
-                identifier, optionalVoiceConnection -> optionalVoiceConnection.ifPresent(
-                        voiceConnection -> {
-                            connectionStore.put(identifier, voiceConnection);
-                            onRegistrationFinished.accept(voiceConnection);
-                        }
-                )
+                identifier,
+                voiceConnection -> {
+                    connectionStore.put(identifier, voiceConnection);
+                    onRegistrationFinished.accept(voiceConnection);
+                }
         );
     }
 
