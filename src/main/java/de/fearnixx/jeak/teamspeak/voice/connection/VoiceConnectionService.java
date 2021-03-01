@@ -117,7 +117,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
         if (reason == NotificationReason.SERVER_KICK || reason == NotificationReason.BANNED) {
             Optional<String> optKickedIdentifier = voiceConnections.entrySet().stream()
-                    .filter(e -> e.getValue().getClientId() == event.getTarget().getClientID())
+                    .filter(connectionEntry -> event.getTarget().getClientID().equals(connectionEntry.getValue().getClientId()))
                     .map(Map.Entry::getKey)
                     .findFirst();
 
