@@ -35,6 +35,7 @@ public interface IQueryConnection extends AutoCloseable {
      * @param req The request to send
      * @deprecated In favor of the more fittingly named {@link #queueRequest(IQueryRequest)}
      */
+    @Deprecated
     void sendRequest(IQueryRequest req);
 
     /**

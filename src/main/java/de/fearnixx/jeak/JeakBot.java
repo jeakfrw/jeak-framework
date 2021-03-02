@@ -220,7 +220,6 @@ public class JeakBot implements Runnable, IBot {
     }
 
     protected void loadPlugins() {
-
         // Load all plugins - This is where dependencies are being enforced
         Map<String, PluginRegistry> regMap = pMgr.getAllPlugins();
         regMap.forEach((n, pr) -> loadPlugin(regMap, n, pr));

@@ -1,15 +1,18 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 task zipDistribution(type: Zip) {
-    dependsOn 'shadowJar'
+    dependsOn 'jar'
 
     from("${buildDir}/libs") {
-        include "*-standalone.jar"
-        // For backward compatibility to runners, rename the distributed Jar.
-        rename 'jeakbot-(.*)-standalone.jar', 'jeakbot-$1.jar'
+        include(jar.archiveFileName.get())
+        rename(jar.archiveFileName.get().toString(), "jeakbot.jar")
     }
     from 'src/deploy/scripts'
-    into('oss-credits') {
+    into('libraries') {
+        from configurations.runtime
+        exclude { dep -> !dep.file.name.endsWith('.jar') }
+    }
+    into('libraries/licenses') {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }
@@ -24,15 +27,18 @@ task zipDistribution(type: Zip) {
 }
 
 task tarDistribution(type: Tar) {
-    dependsOn 'shadowJar'
+    dependsOn 'jar'
 
     from("${buildDir}/libs") {
-        include "*-standalone.jar"
-        // For backward compatibility to runners, rename the distributed Jar.
-        rename 'jeakbot-(.*)-standalone.jar', 'jeakbot-$1.jar'
+        include(jar.archiveFileName.get())
+        rename(jar.archiveFileName.get(), "jeakbot.jar")
     }
     from 'src/deploy/scripts'
-    into('oss-credits') {
+    into('libraries') {
+        from configurations.runtime
+        exclude { dep -> !dep.file.name.endsWith('.jar') }
+    }
+    into('libraries/licenses') {
         from 'src/deploy/licenses'
         exclude { lic -> !lic.file.name.endsWith('.txt') }
     }
@@ -41,7 +47,7 @@ task tarDistribution(type: Tar) {
         fileMode = 0755
         exclude { f -> f.file.name.endsWith('.jks') || f.file.name.endsWith('.pem') || f.file.name.endsWith('.der') }
     }
-    into('plugins'){
+    into('plugins') {
         from 'run/.gitkeep'
     }
 

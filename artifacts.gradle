@@ -25,18 +25,10 @@ jar() {
     dependsOn compileJava
 
     manifest.attributes(
-            'Main-Class': 'de.fearnixx.jeak.Main'
+            'Main-Class': 'de.fearnixx.jeak.Main',
+            'Class-Path': 'libraries/* plugins/*',
     )
 }
-
-shadowJar() {
-    classifier 'standalone'
-
-    manifest.attributes(
-            'Main-Class': 'de.fearnixx.jeak.Main'
-    )
-}
-
 task sourcesJar(type: Jar) {
     classifier 'sources'
 
@@ -57,9 +49,10 @@ task testJar(type: Jar) {
 }
 
 build {
+    println("ArchiveName: ${jar.archiveFileName.get()}")
+
     dependsOn 'apiJar'
     dependsOn 'apiSourcesJar'
     dependsOn 'jar'
     dependsOn 'sourcesJar'
-    dependsOn 'shadowJar'
 }
