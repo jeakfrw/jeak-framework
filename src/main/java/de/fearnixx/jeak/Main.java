@@ -149,7 +149,6 @@ public class Main implements Runnable {
 
     private void populatePluginSources() {
         pluginManager.addSource(new File("plugins"));
-        pluginManager.addSource(new File("libraries"));
     }
 
     private void startBot() {
