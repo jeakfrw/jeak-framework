@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 public class DummyVoiceConnectionService implements IVoiceConnectionService {
 
     @Override
-    public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
+    public void requestVoiceConnection(String identifier, Consumer<IVoiceConnection> onRequestFinished) {
         //Do nothing
     }
 

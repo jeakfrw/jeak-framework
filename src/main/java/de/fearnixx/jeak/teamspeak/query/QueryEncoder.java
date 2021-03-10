@@ -1,9 +1,14 @@
 package de.fearnixx.jeak.teamspeak.query;
 
 /**
- * Created by MarkL4YG on 31.05.17.
+ * Encoder and Decoder utility class for the telnet-like TeamSpeak query protocol.
+ * Currently (Dec. 2020), this applies to telnet, telnet-tls and ssh connections.
  */
 public class QueryEncoder {
+
+    private QueryEncoder() {
+    }
+
     public static final char ESCAPE_CHAR = '\\';
     public static final char[] critChars = {
             '\\',

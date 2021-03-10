@@ -3,6 +3,7 @@ package de.fearnixx.jeak.teamspeak.voice.connection;
 import com.github.manevolent.ts3j.identity.LocalIdentity;
 import de.fearnixx.jeak.IBot;
 import de.fearnixx.jeak.Main;
+import de.fearnixx.jeak.event.IQueryEvent;
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.FrameworkService;
 import de.fearnixx.jeak.reflect.Inject;
@@ -10,6 +11,7 @@ import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.event.IEventService;
 import de.fearnixx.jeak.service.teamspeak.IUserService;
 import de.fearnixx.jeak.teamspeak.IServer;
+import de.fearnixx.jeak.teamspeak.NotificationReason;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.AbstractVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.ConfigVoiceConnectionInformation;
 import de.fearnixx.jeak.teamspeak.voice.connection.info.DbVoiceConnectionInformation;
@@ -18,6 +20,8 @@ import de.fearnixx.jeak.voice.connection.IVoiceConnectionService;
 import de.fearnixx.jeak.voice.connection.IVoiceConnectionStore;
 import de.mlessmann.confort.LoaderFactory;
 import de.mlessmann.confort.config.FileConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.security.GeneralSecurityException;
@@ -32,6 +36,8 @@ import java.util.function.IntSupplier;
 
 @FrameworkService(serviceInterface = IVoiceConnectionService.class)
 public class VoiceConnectionService implements IVoiceConnectionService {
+
+    private static final Logger logger = LoggerFactory.getLogger(VoiceConnectionService.class);
 
     private static final int CONNECTION_FACTORY_POOL_SIZE = Main.getProperty("jeak.voice_connection.construction_poolSize", 2);
 
@@ -51,22 +57,18 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
     private boolean isDatabaseConnected = false;
 
-    private final Map<String, VoiceConnection> clientConnections = new ConcurrentHashMap<>();
+    private final Map<String, VoiceConnection> voiceConnections = new ConcurrentHashMap<>();
 
     @Override
-    public void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished) {
+    public void requestVoiceConnection(String identifier, Consumer<IVoiceConnection> onRequestFinished) {
         requestExecutorService.execute(
                 () -> {
-                    synchronized (clientConnections) {
-                        if (clientConnections.containsKey(identifier)) {
-                            final VoiceConnection clientConnection = clientConnections.get(identifier);
+                    synchronized (voiceConnections) {
+                        logger.info("Request for voice connection {}", identifier);
 
-                            if (clientConnection.isConnected()) {
-                                onRequestFinished.accept(Optional.empty());
-                                return;
-                            }
-
-                            onRequestFinished.accept(Optional.of(clientConnection));
+                        if (voiceConnections.containsKey(identifier)) {
+                            logger.debug("Voice connection already requested. Retrieving from cache.");
+                            onRequestFinished.accept(voiceConnections.get(identifier));
                             return;
                         }
 
@@ -82,6 +84,7 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                             );
 
                             if (newClientConnectionInformation.getTeamspeakIdentity() == null) {
+                                logger.debug("Creating new TS-identity.");
                                 final LocalIdentity teamspeakIdentity = createTeamspeakIdentity();
                                 newClientConnectionInformation.setLocalIdentity(teamspeakIdentity);
                             }
@@ -89,7 +92,8 @@ public class VoiceConnectionService implements IVoiceConnectionService {
 
                         final IntSupplier portSupplier = () -> server.optVoicePort()
                                 .orElseThrow(() -> new IllegalStateException("Couldn't get voice port! Query not connected yet?"));
-                        final VoiceConnection clientConnection = new VoiceConnection(
+
+                        final VoiceConnection voiceConnection = new VoiceConnection(
                                 newClientConnectionInformation,
                                 server.getHost(),
                                 portSupplier,
@@ -98,19 +102,38 @@ public class VoiceConnectionService implements IVoiceConnectionService {
                                 userService
                         );
 
-                        clientConnections.put(identifier, clientConnection);
+                        voiceConnections.put(identifier, voiceConnection);
+                        logger.info("Successfully constructed voice connection {}. Running callback.", identifier);
 
-                        onRequestFinished.accept(Optional.of(clientConnection));
+                        onRequestFinished.accept(voiceConnection);
                     }
                 }
         );
     }
 
     @Listener
+    public void onLeaveEvent(IQueryEvent.INotification.IClientLeave event) {
+        NotificationReason reason = event.getReason();
+
+        if (reason == NotificationReason.SERVER_KICK || reason == NotificationReason.BANNED) {
+            Optional<String> optKickedIdentifier = voiceConnections.entrySet().stream()
+                    .filter(connectionEntry -> event.getTarget().getClientID().equals(connectionEntry.getValue().getClientId()))
+                    .map(Map.Entry::getKey)
+                    .findFirst();
+
+            if (optKickedIdentifier.isPresent()) {
+                String kickedIdentifier = optKickedIdentifier.get();
+                logger.warn("Voice connection {} has been kicked or banned from the server.", kickedIdentifier);
+                voiceConnections.get(kickedIdentifier).setConnected(false);
+            }
+        }
+    }
+
+    @Listener
     public void postShutdown(IBotStateEvent.IPostShutdown event) {
-        clientConnections.values().stream()
-                .filter(VoiceConnection::isConnected)
-                .forEach(VoiceConnection::disconnect);
+        logger.info("Running shutdown.");
+        voiceConnections.values().forEach(VoiceConnection::shutdown);
+        voiceConnections.clear();
     }
 
     @Listener

@@ -44,14 +44,15 @@ public class VoiceConnection implements IVoiceConnection {
     private final IntSupplier portSupplier;
     private final IEventService eventService;
     private final ExecutorService connectionExecutorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService clientUpdateExecutorService = Executors.newSingleThreadExecutor();
+    private final ExecutorService clientMessageExecutorService = Executors.newSingleThreadExecutor();
 
     private LocalTeamspeakClientSocket ts3jClientSocket;
 
     private boolean connected;
 
-    private IUserService userService;
-
-    private IBot bot;
+    private final IUserService userService;
+    private final IBot bot;
 
     private boolean shouldForwardTextMessages;
 
@@ -115,6 +116,7 @@ public class VoiceConnection implements IVoiceConnection {
 
                     this.connected = true;
                     clientConnectionInformation.setClientId(ts3jClientSocket.getClientId());
+                    updateDescription(clientConnectionInformation.getClientDescription());
 
                     onSuccess.run();
                 }
@@ -123,11 +125,7 @@ public class VoiceConnection implements IVoiceConnection {
 
     private void handleTextMessageEvent(TextMessageEvent e) {
 
-        eventService.fireEvent(
-                new VoiceConnectionTextMessageEvent(
-                        clientConnectionInformation.getIdentifier(), e
-                )
-        );
+        eventService.fireEvent(new VoiceConnectionTextMessageEvent(clientConnectionInformation.getIdentifier(), e));
 
         if (shouldForwardTextMessages) {
             final IQueryConnection connection;
@@ -147,8 +145,7 @@ public class VoiceConnection implements IVoiceConnection {
 
             switch (e.getTargetMode()) {
                 case CLIENT:
-                    QueryEvent.ClientTextMessage clientTextMessage =
-                            new QueryEvent.ClientTextMessage(userService);
+                    QueryEvent.ClientTextMessage clientTextMessage = new QueryEvent.ClientTextMessage(userService);
 
                     clientTextMessage.setClient(client);
                     textMessageEvent = clientTextMessage;
@@ -166,8 +163,7 @@ public class VoiceConnection implements IVoiceConnection {
                     return;
                 default:
                     throw new IllegalStateException(
-                            "Received text message event with unsupported target mode "
-                                    + e.getTargetMode() + "!"
+                            "Received text message event with unsupported target mode: " + e.getTargetMode()
                     );
             }
 
@@ -175,17 +171,9 @@ public class VoiceConnection implements IVoiceConnection {
             textMessageEvent.setConnection(connection);
             textMessageEvent.setProperty(PropertyKeys.TextMessage.MESSAGE, e.getMessage());
             textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_ID, invokerId);
-            textMessageEvent.setProperty(
-                    PropertyKeys.TextMessage.SOURCE_UID,
-                    client.getClientUniqueID()
-            );
-            textMessageEvent.setProperty(
-                    PropertyKeys.TextMessage.SOURCE_NICKNAME,
-                    client.getNickName()
-            );
-            textMessageEvent.setProperty(
-                    PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode()
-            );
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_UID, client.getClientUniqueID());
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.SOURCE_NICKNAME, client.getNickName());
+            textMessageEvent.setProperty(PropertyKeys.TextMessage.TARGET_TYPE, e.getTargetMode());
 
             eventService.fireEvent(textMessageEvent);
         }
@@ -198,6 +186,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public synchronized void disconnect(String reason) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to disconnect a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
         try {
             if (ts3jClientSocket.getMicrophone() != null
                     && ts3jClientSocket.getMicrophone().getClass().isAssignableFrom(IAudioPlayer.class)) {
@@ -208,7 +204,7 @@ public class VoiceConnection implements IVoiceConnection {
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
         } catch (IOException | ExecutionException | TimeoutException e) {
-            //We assume that the server is not reachable for this connection. Therefor it is declared disconnected
+            //We assume that the server is not reachable for this connection. Therefore it is declared disconnected
             LOGGER.warn("An exception occurred while the voice connection with the identifier {} " +
                     "tried to disconnect from the server.", clientConnectionInformation.getIdentifier(), e
             );
@@ -229,6 +225,14 @@ public class VoiceConnection implements IVoiceConnection {
 
     @Override
     public boolean sendToChannel(int channelId, String password) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to move a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return false;
+        }
+
         try {
             ts3jClientSocket.clientMove(ts3jClientSocket.getClientId(), channelId, password);
         } catch (InterruptedException ie) {
@@ -262,6 +266,101 @@ public class VoiceConnection implements IVoiceConnection {
         }
 
         return true;
+    }
+
+    @Override
+    public void sendPrivateMessage(int clientId, String message) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to send a private message using a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("A private message must be non-null and not empty!");
+        }
+
+        clientMessageExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.sendPrivateMessage(clientId, message);
+                    } catch (IOException | CommandException e) {
+                        LOGGER.error(
+                                "An error occurred when trying to send the message {} to client #{}", message, clientId
+                        );
+                    } catch (TimeoutException e) {
+                        LOGGER.error("A timeout occurred when trying to send a private message.", e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void sendChannelMessage(String message) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to send a channel message using a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
+        if (message == null || message.isBlank()) {
+            throw new IllegalArgumentException("A channel message must be non-null and not empty!");
+        }
+
+        clientMessageExecutorService.submit(
+                () -> {
+                    try {
+                        //Since a client can only send channel text messages to its own channel, supplying a channel id
+                        //does not make sense. Therefore a default value is used, expecting TS3J to send the channel message
+                        //to the current channel regardless of the value of channelId.
+                        ts3jClientSocket.sendChannelMessage(1, message);
+                    } catch (IOException | CommandException e) {
+                        LOGGER.error("An error occurred when trying to send the channel message '{}'", message);
+                    } catch (TimeoutException e) {
+                        LOGGER.error("A timeout occurred when trying to send a channel message.", e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void poke(int clientId) {
+        poke(clientId, "");
+    }
+
+    @Override
+    public void poke(int clientId, String message) {
+        if (!connected) {
+            LOGGER.warn(
+                    "Tried to poke a client using a disconnected voice connection! Identifier: {}",
+                    clientConnectionInformation.getIdentifier()
+            );
+            return;
+        }
+
+        String pokeMsg = message == null ? "" : message;
+
+        clientMessageExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.clientPoke(clientId, pokeMsg);
+                    } catch (IOException | CommandException e) {
+                        LOGGER.error("An error occurred when trying to poke client #{} with message {}", clientId, message);
+                    } catch (TimeoutException e) {
+                        LOGGER.error("A timeout occurred when trying to poke a client.", e);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
+        );
     }
 
     @Override
@@ -313,6 +412,11 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
+    public int getClientId() {
+        return ts3jClientSocket.getClientId();
+    }
+
+    @Override
     public synchronized void setClientNickname(String nickname) {
         if (nickname == null || nickname.length() < 3 || nickname.length() > 31) {
             throw new IllegalArgumentException(
@@ -328,7 +432,50 @@ public class VoiceConnection implements IVoiceConnection {
     }
 
     @Override
+    public void setClientDescription(String description) {
+        String desc = description == null ? "" : description;
+
+        clientConnectionInformation.setClientDescription(desc);
+
+        if (connected) {
+            updateDescription(desc);
+        }
+    }
+
+    private void updateDescription(String description) {
+        clientUpdateExecutorService.submit(
+                () -> {
+                    try {
+                        ts3jClientSocket.setDescription(description);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (IOException | ExecutionException e) {
+                        LOGGER.error("Failed to update client description to '{}'", description, e);
+                    } catch (TimeoutException e) {
+                        LOGGER.error("Timeout during client description update", e);
+                    } catch (CommandException e) {
+                        LOGGER.error("Invalid command sent to update client description to '{}'", description, e);
+                    }
+                }
+        );
+    }
+
+    @Override
     public void setShouldForwardTextMessages(boolean shouldForwardTextMessages) {
         this.shouldForwardTextMessages = shouldForwardTextMessages;
+    }
+
+    void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
+    public void shutdown() {
+        if (connected) {
+            disconnect();
+        }
+
+        connectionExecutorService.shutdown();
+        clientUpdateExecutorService.shutdown();
+        clientMessageExecutorService.shutdown();
     }
 }

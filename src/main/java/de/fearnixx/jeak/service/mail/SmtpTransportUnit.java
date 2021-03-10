@@ -1,17 +1,17 @@
 package de.fearnixx.jeak.service.mail;
 
 import de.mlessmann.confort.api.IConfigNode;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.activation.FileDataSource;
+import jakarta.mail.*;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
+import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.activation.DataHandler;
-import javax.activation.DataSource;
-import javax.activation.FileDataSource;
-import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
 import java.nio.charset.Charset;
 import java.util.Optional;
 import java.util.Properties;
@@ -134,7 +134,7 @@ public class SmtpTransportUnit implements ITransportUnit {
                                 } else if (a.isPathSource()) {
                                     attachmentSource = new FileDataSource(a.getPathSource().toFile().getAbsoluteFile());
                                 } else if (a.isNativeSource()) {
-                                    attachmentSource = a.getNativeSource();
+                                    attachmentSource = ((DataSource) a.getNativeSource());
                                 } else {
                                     logger.warn("Failed to attach unknown attachment type! {}", a);
                                     return;

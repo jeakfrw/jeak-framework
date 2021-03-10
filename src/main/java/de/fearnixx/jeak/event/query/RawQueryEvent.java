@@ -2,8 +2,9 @@ package de.fearnixx.jeak.event.query;
 
 import de.fearnixx.jeak.event.IRawQueryEvent;
 import de.fearnixx.jeak.teamspeak.data.BasicDataHolder;
+import de.fearnixx.jeak.teamspeak.query.IQueryConnection;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
-import de.fearnixx.jeak.teamspeak.query.QueryConnectionAccessor;
+import de.fearnixx.jeak.teamspeak.query.api.ITSQueryConnection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,14 +14,18 @@ import java.util.List;
  */
 public class RawQueryEvent extends BasicDataHolder implements IRawQueryEvent {
 
-    public QueryConnectionAccessor connection;
+    private ITSQueryConnection tsConnection;
 
-    public void setConnection(QueryConnectionAccessor connection) {
-        this.connection = connection;
+    public IQueryConnection getConnection() {
+        return (IQueryConnection) tsConnection;
     }
 
-    public QueryConnectionAccessor getConnection() {
-        return connection;
+    public void setTsConnection(ITSQueryConnection tsConnection) {
+        this.tsConnection = tsConnection;
+    }
+
+    public ITSQueryConnection getTsConnection() {
+        return tsConnection;
     }
 
     public static abstract class Message extends RawQueryEvent implements IRawQueryEvent.IMessage {

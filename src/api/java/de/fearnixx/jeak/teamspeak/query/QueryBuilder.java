@@ -14,7 +14,9 @@ import java.util.function.Consumer;
  * (Name shortened from `QueryRequestBuilder` for readability reasons).
  * Constructs a new object implementing {@link IQueryRequest} using the builder-pattern.
  *
+ * @author Magnus Leßmann
  * @see IQueryRequest for the actual meanings of the methods.
+ * @since 1.0.0
  */
 @SuppressWarnings({"UnusedReturnValue", "WeakerAccess"})
 public class QueryBuilder {

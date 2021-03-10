@@ -8,12 +8,17 @@ import com.github.manevolent.ts3j.identity.LocalIdentity;
 public class DbVoiceConnectionInformation extends AbstractVoiceConnectionInformation {
 
     @Override
+    public void setLocalIdentity(LocalIdentity localIdentity) {
+        //STUB
+    }
+
+    @Override
     public void setClientNickname(String clientNickname) {
         //STUB
     }
 
     @Override
-    public void setLocalIdentity(LocalIdentity localIdentity) {
+    public void setClientDescription(String clientDescription) {
         //STUB
     }
 
@@ -29,6 +34,11 @@ public class DbVoiceConnectionInformation extends AbstractVoiceConnectionInforma
 
     @Override
     public String getClientNickname() {
+        return null;
+    }
+
+    @Override
+    public String getClientDescription() {
         return null;
     }
 }

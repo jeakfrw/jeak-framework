@@ -9,6 +9,8 @@ import de.fearnixx.jeak.service.permission.teamspeak.ITS3ServerGroupSubject;
 import de.fearnixx.jeak.service.permission.teamspeak.TS3UserSubject;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.QueryCommands;
+import de.fearnixx.jeak.teamspeak.cache.IDataCache;
+import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
 import de.fearnixx.jeak.teamspeak.query.QueryBuilder;
 
@@ -22,6 +24,19 @@ public class TS3User extends TS3UserHolder {
 
     private UUID frameworkSubject;
     private IPermissionProvider frwPermProvider;
+    private IDataCache dataCache;
+
+    @Override
+    protected int getDefaultSGID() {
+        return dataCache.getServerInfo()
+                .flatMap(info -> info.getProperty(PropertyKeys.ServerInfo.DEFAULT_SERVER_GROUP))
+                .map(Integer::parseInt)
+                .orElseThrow(() -> new ConsistencyViolationException("Unset or incomplete server info: Failed default server group lookup!"));
+    }
+
+    public void setDataCache(IDataCache dataCache) {
+        this.dataCache = dataCache;
+    }
 
     public void setTs3PermSubject(TS3UserSubject ts3PermSubject) {
         if (this.ts3PermSubject != null) {

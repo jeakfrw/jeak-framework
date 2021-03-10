@@ -2,8 +2,8 @@ package de.fearnixx.jeak.teamspeak;
 
 public enum KickType {
 
-    FROM_SERVER(4),
-    FROM_CHANNEL(5);
+    FROM_SERVER(5),
+    FROM_CHANNEL(4);
 
     private final int queryNumber;
 

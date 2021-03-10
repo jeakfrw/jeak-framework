@@ -4,17 +4,20 @@ import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.event.query.RawQueryEvent.Message;
 import de.fearnixx.jeak.teamspeak.except.QueryParseException;
 import de.fearnixx.jeak.teamspeak.query.IQueryRequest;
+import de.fearnixx.jeak.teamspeak.query.api.ITSParser;
+import de.fearnixx.jeak.teamspeak.query.api.QuerySyntaxException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
  * Created by Life4YourGames on 05.07.17.
  */
-public class QueryParser {
+public class QueryParser implements ITSParser {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryParser.class);
 
@@ -43,20 +46,44 @@ public class QueryParser {
      */
     private ParseContext<Message.Answer> context;
     private int greetingPos = 0;
-    private final Consumer<Boolean> onGreetingStatus;
 
+    private final AtomicReference<Consumer<Boolean>> onGreetingStatus = new AtomicReference<>();
+    private final AtomicReference<Consumer<Message.Notification>> onNotification = new AtomicReference<>();
+    private final AtomicReference<Consumer<Message.Answer>> onAnswer = new AtomicReference<>();
 
-    private final Consumer<Message.Notification> onNotification;
-    private final Consumer<Message.Answer> onAnswer;
+    public QueryParser(Supplier<IQueryRequest> currentRequestSupplier) {
+        this(null, null, null, currentRequestSupplier);
+    }
 
+    @Deprecated
     public QueryParser(Consumer<Message.Notification> onNotification,
                        Consumer<Message.Answer> onAnswer,
                        Consumer<Boolean> onGreetingStatus,
                        Supplier<IQueryRequest> requestSupplier) {
-        this.onNotification = onNotification;
-        this.onAnswer = onAnswer;
-        this.onGreetingStatus = onGreetingStatus;
+        this.onNotification.set(onNotification);
+        this.onAnswer.set(onAnswer);
+        this.onGreetingStatus.set(onGreetingStatus);
         this.requestSupplier = requestSupplier;
+    }
+
+    @Override
+    public void setOnGreetingCallback(Consumer<Boolean> greetingCompletedConsumer) {
+        onGreetingStatus.set(greetingCompletedConsumer);
+    }
+
+    @Override
+    public void setOnAnswerCallback(Consumer<Message.Answer> answerConsumer) {
+        onAnswer.set(answerConsumer);
+    }
+
+    @Override
+    public void setOnNotificationCallback(Consumer<Message.Notification> notificationConsumer) {
+        onNotification.set(notificationConsumer);
+    }
+
+    @Override
+    public void parseLine(String line) throws QuerySyntaxException {
+        parse(line);
     }
 
     /**
@@ -65,17 +92,16 @@ public class QueryParser {
      * @param input The next line to parse
      * @return The message if finished - Notifications are one-liners thus don't interrupt receiving other messages
      */
-    public Optional<Message> parse(String input) {
-
+    public Optional<Message> parse(String input) throws QuerySyntaxException {
         if (greetingPos < Symbols.GREETINGS.length) {
             if (input.startsWith(Symbols.GREETINGS[greetingPos])) {
                 greetingPos++;
                 logger.debug("Received greeting part: {}", greetingPos);
 
-                onGreetingStatus.accept(greetingPos >= Symbols.GREETINGS.length);
+                onGreetingStatus.get().accept(greetingPos >= Symbols.GREETINGS.length);
                 return Optional.empty();
             } else {
-                throw new IllegalStateException("Invalid DATA received while awaiting greeting.");
+                throw new QuerySyntaxException("Invalid DATA received while awaiting greeting.");
             }
         }
 
@@ -110,7 +136,7 @@ public class QueryParser {
             return Optional.empty();
 
         } catch (Exception ex) {
-            throw new QueryParseException("An exception was encountered during parsing.", ex);
+            throw new QuerySyntaxException("An exception was encountered during parsing.", ex);
         }
     }
 
@@ -125,7 +151,7 @@ public class QueryParser {
 
         if (parseInfo.isError) {
             // This message is an isError message
-            Message.ErrorMessage errorMessage = new Message.ErrorMessage(internalProvideRequest());
+            final var errorMessage = new Message.ErrorMessage(internalProvideRequest());
             context.setError(errorMessage);
         }
 
@@ -186,20 +212,20 @@ public class QueryParser {
     }
 
     private void onNotification(Message.Notification event) {
-        if (this.onNotification != null)
-            this.onNotification.accept(event);
+        if (this.onNotification.get() != null)
+            this.onNotification.get().accept(event);
     }
 
     private void onAnswer(Message.Answer event) {
-        if (this.onAnswer != null)
-            this.onAnswer.accept(event);
+        if (this.onAnswer.get() != null)
+            this.onAnswer.get().accept(event);
     }
 
     private IQueryRequest internalProvideRequest() {
         IQueryRequest request = requestSupplier.get();
 
         if (request == null) {
-            throw new QueryParseException("Request may not be null for anwers!");
+            throw new QueryParseException("Request may not be null for answers!");
         }
 
         return request;

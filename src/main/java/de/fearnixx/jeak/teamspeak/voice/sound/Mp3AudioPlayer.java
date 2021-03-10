@@ -77,17 +77,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public synchronized void stop() {
-        if (playing) {
-            pause();
-        }
-
-        try {
-            audioSourceSubstream.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Audio stream could not be closed!");
-        }
-
-        stopped = true;
+        stopStream();
 
         try {
             if (endOfStreamCallback != null) {
@@ -96,6 +86,23 @@ public class Mp3AudioPlayer extends AudioPlayer {
         } catch (Exception e) {
             LOGGER.error("An exception occurred in an end-of-stream callback of an Mp3-Audio-Player!", e);
         }
+    }
+
+    private void stopStream() {
+        if (playing) {
+            pause();
+        }
+
+        try {
+            if (audioSourceSubstream != null && !stopped) {
+                audioSourceSubstream.close();
+            }
+            close();
+        } catch (Exception e) {
+            throw new RuntimeException("Audio stream could not be closed!", e);
+        }
+
+        stopped = true;
     }
 
     @Override
@@ -205,6 +212,11 @@ public class Mp3AudioPlayer extends AudioPlayer {
         }
     }
 
+    @Override
+    public double getVolume() {
+        return volume;
+    }
+
     public void setVolume(double volume) {
         if (volume < 0 || volume > 1) {
             throw new IllegalArgumentException("Volume out of range: " + volume);
@@ -255,15 +267,7 @@ public class Mp3AudioPlayer extends AudioPlayer {
 
     @Override
     public void setAudioStream(InputStream inputStream) {
-
-        if (audioSourceSubstream != null && !stopped) {
-            try {
-                audioSourceSubstream.close();
-            } catch (Exception e) {
-                throw new IllegalStateException(e);
-            }
-        }
-
+        stopStream();
         audioSourceSubstream = createAudioInputStream(inputStream);
     }
 

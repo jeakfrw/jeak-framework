@@ -5,8 +5,7 @@ compileJava() {
 }
 
 task apiJar(type: Jar) {
-    baseName = project.ext.artifact + '-api'
-    version = project.version
+    archiveBaseName = "${project.ext.artifact}-api"
 
     from sourceSets.api.output
 
@@ -14,26 +13,23 @@ task apiJar(type: Jar) {
 }
 
 task apiSourcesJar(type: Jar) {
-    baseName = project.ext.artifact + '-api'
-    version = project.version
-    
+    archiveBaseName = "${project.ext.artifact}-api"
+    classifier "sources"
+
     from sourceSets.api.allJava
-    
-    dependsOn compileApiJava
 }
 
 jar() {
-    baseName = project.ext.artifact
-    version = project.version
-
     from sourceSets.main.output
 
     dependsOn compileJava
-}
 
+    manifest.attributes(
+            'Main-Class': 'de.fearnixx.jeak.Main',
+            'Class-Path': 'libraries/* plugins/*',
+    )
+}
 task sourcesJar(type: Jar) {
-    baseName = project.ext.artifact
-    version = project.version
     classifier 'sources'
 
     from sourceSets.api.allJava
@@ -43,17 +39,18 @@ task sourcesJar(type: Jar) {
 }
 
 task testJar(type: Jar) {
-    baseName = project.ext.artifact + '-test'
-    version = project.version
+    classifier 'test'
 
     from sourceSets.main.output
     from sourceSets.test.output
-    
+
     dependsOn compileJava
     dependsOn compileTestJava
 }
 
 build {
+    println("ArchiveName: ${jar.archiveFileName.get()}")
+
     dependsOn 'apiJar'
     dependsOn 'apiSourcesJar'
     dependsOn 'jar'

@@ -1,6 +1,5 @@
 package de.fearnixx.jeak.service.mail;
 
-import javax.activation.DataSource;
 import java.io.File;
 import java.nio.file.Path;
 
@@ -40,14 +39,16 @@ public interface IAttachment {
     Path getPathSource();
 
     /**
-     * Plugins can also directly use the {@link javax.activation} classes for attachments.
+     * Plugins can also directly use the {@link jakarta.activation} classes for attachments.
      * Whether or not this representation should be used.
      */
     boolean isNativeSource();
 
     /**
-     * The {@link DataSource} representation of the attachment.
+     * The {@link jakarta.activation.DataSource} representation of the attachment.
+     *
      * @implNote Allows for non-file representations to be used. Such as {@link javax.activation.URLDataSource}.
+     * @apiNote Uses object to prevent enforcing a dependency on Jakarta Mail for the api module.
      */
-    DataSource getNativeSource();
+    Object getNativeSource();
 }

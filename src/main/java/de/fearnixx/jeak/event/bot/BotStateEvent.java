@@ -1,5 +1,8 @@
 package de.fearnixx.jeak.event.bot;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -15,9 +18,14 @@ public class BotStateEvent extends BotEvent implements IBotStateEvent {
 
     public static class Initialize extends BotStateEvent implements IInitializeEvent {
 
+        private static final Logger logger = LoggerFactory.getLogger(Initialize.class);
+
         private boolean canceled = false;
 
         public void cancel() {
+            if (logger.isTraceEnabled()) {
+                logger.trace("Initialization cancelled.", new Exception());
+            }
             canceled = true;
         }
 

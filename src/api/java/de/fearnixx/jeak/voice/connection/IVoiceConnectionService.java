@@ -1,6 +1,5 @@
 package de.fearnixx.jeak.voice.connection;
 
-import java.util.Optional;
 import java.util.function.Consumer;
 
 /**
@@ -9,19 +8,22 @@ import java.util.function.Consumer;
 public interface IVoiceConnectionService {
 
     /**
-     * Requests the {@link IVoiceConnection} with the given identifier. Requesting corresponds to making the
-     * voice connection with this identifier available to connect to the server at any time.
+     * Requests a {@link IVoiceConnection} with the given identifier.
      * <p>
      * If the given identifier is not known, a new voice connection with its very own identity is created.
      * It will be accessible by this identifier in the future.
      * <p>
-     * The provided callback will contain the requested voice connection if no error occurred during the request
-     * or identity creation. The voice connection will NOT be connected to the server.
+     * Voice connections that have already been requested are retrieved from an internal cache.
+     * <p>
+     * The provided callback will be executed using the requested voice connection.
+     * <p>
+     * The voice connection might be connected to the server if it was requested and connected earlier.
+     * After the first request, a voice connection is not connected to the server.
      *
      * @param identifier        identifier of the connection
      * @param onRequestFinished callback to handle the requested voice connection
      */
-    void requestVoiceConnection(String identifier, Consumer<Optional<IVoiceConnection>> onRequestFinished);
+    void requestVoiceConnection(String identifier, Consumer<IVoiceConnection> onRequestFinished);
 
     /**
      * Creates a new {@link IVoiceConnectionStore} which will be using this service for requesting {@link IVoiceConnection}.

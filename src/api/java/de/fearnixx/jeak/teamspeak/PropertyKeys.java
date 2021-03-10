@@ -38,6 +38,7 @@ public abstract class PropertyKeys {
         public static final String ID = "clid";
         public static final String CHANNEL_ID = Channel.ID;
         public static final String DBID = "client_database_id";
+        public static final String DBID_S = "cldbid";
         public static final String UID = "client_unique_identifier";
         public static final String NICKNAME = "client_nickname";
         public static final String NICKNAME_PHONETIC = "client_nickname_phonetic";
@@ -145,6 +146,7 @@ public abstract class PropertyKeys {
 
         public static final String ID = "permid";
         public static final String ID_SHORT = "p";
+        public static final String STRING_ID = "permsid";
         public static final String VALUE = "permval";
         public static final String VALUE_SHORT = "v";
         public static final String VALUE_UNABBREVIATED = "permvalue";

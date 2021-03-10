@@ -80,6 +80,13 @@ public interface IAudioPlayer {
     void setVolume(double volume);
 
     /**
+     * Gets the volume of the audio player
+     *
+     * @return volume in range [0,1]
+     */
+    double getVolume();
+
+    /**
      * @return the type which the audio player is designated for
      */
     AudioType getAudioType();

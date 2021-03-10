@@ -1,7 +1,12 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
 task zipDistribution(type: Zip) {
-    from jar
+    dependsOn 'jar'
+
+    from("${buildDir}/libs") {
+        include(jar.archiveFileName.get())
+        rename(jar.archiveFileName.get().toString(), "jeakbot.jar")
+    }
     from 'src/deploy/scripts'
     into('libraries') {
         from configurations.runtime
@@ -22,7 +27,12 @@ task zipDistribution(type: Zip) {
 }
 
 task tarDistribution(type: Tar) {
-    from jar
+    dependsOn 'jar'
+
+    from("${buildDir}/libs") {
+        include(jar.archiveFileName.get())
+        rename(jar.archiveFileName.get(), "jeakbot.jar")
+    }
     from 'src/deploy/scripts'
     into('libraries') {
         from configurations.runtime
@@ -37,7 +47,7 @@ task tarDistribution(type: Tar) {
         fileMode = 0755
         exclude { f -> f.file.name.endsWith('.jks') || f.file.name.endsWith('.pem') || f.file.name.endsWith('.der') }
     }
-    into('plugins'){
+    into('plugins') {
         from 'run/.gitkeep'
     }
 

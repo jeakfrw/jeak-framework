@@ -71,5 +71,6 @@ public abstract class AbstractUserService implements IUserService {
         user.setTs3PermSubject(new TS3UserSubject(permService.getTS3Provider(), tsSubject));
         user.setFrameworkSubjectUUID(uuid);
         user.setFrwPermProvider(permService.getFrameworkProvider());
+        user.setDataCache(dataCache);
     }
 }

@@ -1,15 +1,28 @@
 package de.fearnixx.jeak.teamspeak.data;
 
+import de.fearnixx.jeak.Main;
 import de.fearnixx.jeak.event.query.RawQueryEvent;
 import de.fearnixx.jeak.teamspeak.PropertyKeys;
 import de.fearnixx.jeak.teamspeak.except.ConsistencyViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUser {
+
+    // Whether or not having no groups assigned should auto-return an assignment to the default group.
+    private static final boolean INHERIT_DEFAULT_GRP_ON_NONE = Main.getProperty("jeak.ts3.inheritDefaultGroup", true);
+
+    private static final Logger logger = LoggerFactory.getLogger(TS3UserHolder.class);
+
+    protected abstract int getDefaultSGID();
 
     public String getClientUniqueID() {
         Optional<String> optProperty = getProperty(PropertyKeys.Client.UID);
@@ -63,12 +76,28 @@ public abstract class TS3UserHolder extends RawQueryEvent.Message implements IUs
 
         String s = optProperty.orElseThrow(
                 () -> new ConsistencyViolationException("Client has no server groups").setSourceObject(this));
-        String[] sIDs = s.split(",");
-        Integer[] ids = new Integer[sIDs.length];
-        for (int i = 0; i < sIDs.length; i++) {
-            ids[i] = Integer.parseInt(sIDs[i]);
+
+        if (!s.isBlank()) {
+            return Arrays.stream(s.split(","))
+                    .filter(sID -> sID != null && !sID.isBlank())
+                    .map(sID -> {
+                        try {
+                            return Integer.parseInt(sID);
+                        } catch (NumberFormatException e) {
+                            logger.warn("Invalid group ID from TS: {} in {}", sID, this, new ConsistencyViolationException(e));
+                            return -1;
+                        }
+                    })
+                    .filter(id -> id > 0)
+                    .collect(Collectors.toUnmodifiableList());
+        } else {
+            // No groups: Apply default group?
+            if (INHERIT_DEFAULT_GRP_ON_NONE) {
+                return List.of(getDefaultSGID());
+            } else {
+                return Collections.emptyList();
+            }
         }
-        return List.of(ids);
     }
 
     @Override

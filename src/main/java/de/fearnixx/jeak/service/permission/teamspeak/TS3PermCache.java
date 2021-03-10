@@ -1,15 +1,16 @@
 package de.fearnixx.jeak.service.permission.teamspeak;
 
-import de.fearnixx.jeak.event.IRawQueryEvent.IMessage.IAnswer;
+import de.fearnixx.jeak.event.IQueryEvent;
 
 import java.time.LocalDateTime;
 
 /**
- * Created by MarkL4YG on 07-Feb-18
+ * @author MarkL4YG
+ * @since 1.0
  */
 public class TS3PermCache {
 
-    private IAnswer answer;
+    private IQueryEvent.IAnswer answer;
     private LocalDateTime timestamp;
 
     public TS3PermCache() {
@@ -20,12 +21,12 @@ public class TS3PermCache {
         return timestamp;
     }
 
-    public void setResponse(IAnswer answer) {
+    public void setResponse(IQueryEvent.IAnswer answer) {
         this.answer = answer;
         this.timestamp = LocalDateTime.now();
     }
 
-    public IAnswer getAnswer() {
+    public IQueryEvent.IAnswer getAnswer() {
         return answer;
     }
 }
