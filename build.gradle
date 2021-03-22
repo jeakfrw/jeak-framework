@@ -69,7 +69,7 @@ sourceSets {
 
 dependencies {
     apiCompile 'de.mlessmann:confort-api:1.1.0-rc.2'
-    apiCompile 'org.hibernate:hibernate-core:5.4.24.Final'
+    apiCompile 'org.hibernate:hibernate-core:5.4.30.Final'
     apiCompile 'org.slf4j:slf4j-api:1.7.30'
 
     compile sourceSets.api.output
