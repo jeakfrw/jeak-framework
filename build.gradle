@@ -104,6 +104,29 @@ dependencies {
     runtime 'com.sun.mail:smtp:1.6.5'
     runtime 'com.sun.mail:dsn:2.0.0'
 
+    // BEGIN: Rewrite Jetty due to CVE-2021-28165
+    compile('org.eclipse.jetty:jetty-server') {
+        version {
+            strictly '9.4.41.v20210516'
+        }
+    }
+    compile('org.eclipse.jetty:jetty-webapp') {
+        version {
+            strictly '9.4.41.v20210516'
+        }
+    }
+    compile('org.eclipse.jetty.websocket:websocket-server') {
+        version {
+            strictly '9.4.41.v20210516'
+        }
+    }
+    compile('org.eclipse.jetty.websocket:websocket-servlet') {
+        version {
+            strictly '9.4.41.v20210516'
+        }
+    }
+    // END: Rewrite Jetty
+
     testCompile 'junit:junit:4.13.1'
     testCompile 'org.hamcrest:hamcrest:2.2'
 }
