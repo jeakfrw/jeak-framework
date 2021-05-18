@@ -126,6 +126,13 @@ dependencies {
         }
     }
     // END: Rewrite Jetty
+    // BEGIN: Rewrite JUnit due to CVE-2020-15250
+    runtime('junit:junit') {
+        version {
+            strictly '4.13.1'
+        }
+    }
+    // END: Rewrite JUnit
 
     testCompile 'junit:junit:4.13.1'
     testCompile 'org.hamcrest:hamcrest:2.2'
