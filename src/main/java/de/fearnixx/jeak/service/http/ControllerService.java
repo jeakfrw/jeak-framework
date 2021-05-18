@@ -17,10 +17,7 @@ import de.fearnixx.jeak.service.http.exceptions.RegisterControllerException;
 import de.fearnixx.jeak.service.http.request.auth.token.TokenAuthService;
 import de.fearnixx.jeak.service.http.request.token.ITokenAuthService;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @FrameworkService(serviceInterface = IControllerService.class)
 public class ControllerService implements IControllerService {
@@ -62,9 +59,12 @@ public class ControllerService implements IControllerService {
         injectionService.injectInto(restConfiguration);
         restConfiguration.loadConfig();
         injectionService.injectInto(httpServer);
-        httpServer.start();
     }
 
+    @Listener
+    public void onInit(IBotStateEvent.IInitializeEvent event) {
+        httpServer.start();
+    }
 
     @Override
     public <T> void registerController(Class<T> cntrlrClass, T instance) {
@@ -91,7 +91,7 @@ public class ControllerService implements IControllerService {
 
     @Override
     public Map<Class<?>, Object> provideAll() {
-        return controllers;
+        return Collections.unmodifiableMap(controllers);
     }
 
     private <T> boolean doesControllerAlreadyExist(T restController) {
@@ -101,11 +101,11 @@ public class ControllerService implements IControllerService {
         }
         return controllers.keySet().stream()
                 .filter(aClass -> extractPluginId(aClass).equals(extractPluginId(controllerClass)))
-                .anyMatch(aClass -> extractControllerName(aClass).equals(extractControllerName(controllerClass)));
+                .anyMatch(aClass -> extractControllerPath(aClass).equals(extractControllerPath(controllerClass)));
     }
 
-    private String extractControllerName(Class<?> clazz) {
-        return clazz.getAnnotation(RestController.class).endpoint();
+    private String extractControllerPath(Class<?> clazz) {
+        return clazz.getAnnotation(RestController.class).path();
     }
 
     private String extractPluginId(Class<?> clazz) {

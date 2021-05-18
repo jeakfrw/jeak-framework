@@ -8,14 +8,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Mark a method as method to be available via the controller.
+ * Designates a method as being a receiver for HTTP-requests.
  *
- * method(): REQUIRED Specify the used HTTP-method.
- *
- * endpoint(): REQUIRED Specify the endpoint for the annotated method.
- *
- * requireAuth(): Specify whether the calls to this endpoint should use an authorization scheme.
- *
+ * @since 1.2.0 (experimental)
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
@@ -30,9 +25,4 @@ public @interface RequestMapping {
      * URI appendix for this endpoint.
      */
     String endpoint();
-
-    /**
-     * Whether or not request against this endpoint <em>MUST BE</em> authenticated.
-     */
-    boolean requireAuth() default true;
 }

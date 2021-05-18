@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.test.plugin;
+package de.fearnixx.jeak.test.plugin.http;
 
 import de.fearnixx.jeak.event.bot.IBotStateEvent;
 import de.fearnixx.jeak.reflect.Inject;
@@ -6,18 +6,16 @@ import de.fearnixx.jeak.reflect.JeakBotPlugin;
 import de.fearnixx.jeak.reflect.Listener;
 import de.fearnixx.jeak.service.http.IControllerService;
 import de.fearnixx.jeak.service.http.exceptions.RegisterControllerException;
-import de.fearnixx.jeak.service.http.testImpls.SecondTestController;
-import de.fearnixx.jeak.service.http.testImpls.TestController;
 import de.fearnixx.jeak.test.AbstractTestPlugin;
 
-@JeakBotPlugin(id = "controllertestplugin")
-public class ControllerTestPlugin extends AbstractTestPlugin {
+@JeakBotPlugin(id = "httptestplugin")
+public class HTTPTestPlugin extends AbstractTestPlugin {
 
     @Inject
     IControllerService restControllerService;
 
 
-    public ControllerTestPlugin() {
+    public HTTPTestPlugin() {
         super();
         addTest("register_successful");
         addTest("register_duplicated_controller");
@@ -32,6 +30,5 @@ public class ControllerTestPlugin extends AbstractTestPlugin {
         } catch (RegisterControllerException e) {
             success("register_duplicated_controller");
         }
-
     }
 }

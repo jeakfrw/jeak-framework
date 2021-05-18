@@ -1,27 +1,27 @@
-package de.fearnixx.jeak.service.http.testImpls;
+package de.fearnixx.jeak.test.plugin.http;
 
-import de.fearnixx.jeak.reflect.http.RequestBody;
 import de.fearnixx.jeak.reflect.http.RequestMapping;
-import de.fearnixx.jeak.reflect.http.RequestParam;
 import de.fearnixx.jeak.reflect.http.RestController;
+import de.fearnixx.jeak.reflect.http.params.QueryParam;
+import de.fearnixx.jeak.reflect.http.params.RequestBody;
 import de.fearnixx.jeak.service.http.IResponseEntity;
 import de.fearnixx.jeak.service.http.RequestMethod;
 import de.fearnixx.jeak.service.http.ResponseEntity;
 import org.eclipse.jetty.http.HttpStatus;
 
-@RestController(pluginId = "testPluginId", endpoint = "/test")
+@RestController(pluginId = "testPluginId", path = "/test")
 public class TestController {
 
-    @RequestMapping(method = RequestMethod.GET, endpoint = "/hello")
+    @RequestMapping(endpoint = "/hello")
     public ResponseEntity<DummyObject> hello() {
-        return new ResponseEntity.Builder<DummyObject>(new DummyObject("Finn", 20))
+        return new ResponseEntity.Builder<>(new DummyObject("Finn", 20))
                 .withHeader("Cache-Control", "max-age=0")
                 .withStatus(HttpStatus.OK_200)
                 .build();
     }
 
-    @RequestMapping(method = RequestMethod.GET, endpoint = "/info")
-    public String returnSentInfo(@RequestParam(name = "name") String name) {
+    @RequestMapping(endpoint = "/info")
+    public String returnSentInfo(@QueryParam(name = "name") String name) {
         return "received " + name;
     }
 
@@ -30,11 +30,12 @@ public class TestController {
         return "this is the body " + string;
     }
 
-    @RequestMapping(method = RequestMethod.GET, endpoint = "/int", requireAuth = false)
-    public String sendStuff(@RequestParam(name = "num", type = Integer.class) Integer num) {
+    @RequestMapping(endpoint = "/int")
+    public String sendStuff(@QueryParam(name = "num") Integer num) {
         return "received" + num;
     }
 
+    @RequestMapping(endpoint = "/hallo")
     public IResponseEntity<String> hallo() {
         return new ResponseEntity.Builder<String>()
                 .withHeader("some-header", "GET")

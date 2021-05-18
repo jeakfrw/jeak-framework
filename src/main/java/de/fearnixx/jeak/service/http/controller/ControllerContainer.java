@@ -2,6 +2,7 @@ package de.fearnixx.jeak.service.http.controller;
 
 import de.fearnixx.jeak.reflect.http.RequestMapping;
 import de.fearnixx.jeak.reflect.http.RestController;
+import de.fearnixx.jeak.service.http.ControllerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,7 @@ public class ControllerContainer {
 
     private String extractControllerRoute(Object o) {
         RestController annotation = o.getClass().getAnnotation(RestController.class);
-        return annotation.pluginId().concat(annotation.endpoint());
+        return ControllerUtil.joinWithSlash(annotation.pluginId(), annotation.path());
     }
 
     /**
@@ -67,7 +68,7 @@ public class ControllerContainer {
         return controllerMethod.invoke(controllerObject, methodParameters);
     }
 
-    public Object getControllerObject() {
+    public Object getControllerInstance() {
         return controllerObject;
     }
 

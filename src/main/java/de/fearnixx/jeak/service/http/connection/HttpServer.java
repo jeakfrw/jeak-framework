@@ -4,17 +4,13 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.fearnixx.jeak.reflect.http.PathParam;
-import de.fearnixx.jeak.reflect.http.RequestContext;
-import de.fearnixx.jeak.reflect.http.RequestParam;
+import de.fearnixx.jeak.reflect.http.params.PathParam;
+import de.fearnixx.jeak.reflect.http.params.QueryParam;
 import de.fearnixx.jeak.service.http.controller.ControllerContainer;
 import de.fearnixx.jeak.service.http.controller.ControllerMethod;
 import de.fearnixx.jeak.service.http.controller.MethodParameter;
-import de.fearnixx.jeak.service.http.request.IRequestContext;
-import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xbill.DNS.RPRecord;
 import spark.Request;
 
 import java.io.IOException;
@@ -97,20 +93,19 @@ public abstract class HttpServer {
     }
 
     /**
-     * Retrieve the name from a {@link RequestParam} annotated value. Only call the method, if you are sure the used
-     * {@link MethodParameter} is annotated with an {@link RequestParam}.
+     * Retrieve the name from a {@link QueryParam} annotated value. Only call the method, if you are sure the used
+     * {@link MethodParameter} is annotated with an {@link QueryParam}.
      *
      * @param methodParameter
      * @return The name of the annotated variable.
      */
     protected String getRequestParamName(MethodParameter methodParameter) {
-        Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).name();
-        return (String) methodParameter.callAnnotationFunction(function, RequestParam.class).get();
+        Function<Annotation, Object> function = annotation -> ((QueryParam) annotation).name();
+        return (String) methodParameter.callAnnotationFunction(function, QueryParam.class).get();
     }
 
-    protected Object getRequestParamType(MethodParameter methodParameter) {
-        Function<Annotation, Object> function = annotation -> ((RequestParam) annotation).type();
-        return methodParameter.callAnnotationFunction(function, RequestParam.class).orElse(String.class);
+    protected Class<?> getRequestParamType(MethodParameter methodParameter) {
+        return methodParameter.getType();
     }
 
     protected String getPathParamName(MethodParameter methodParameter) {

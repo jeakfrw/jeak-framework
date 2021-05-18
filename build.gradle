@@ -12,6 +12,7 @@ def projectVersion = project.version
 
 sourceCompatibility = JavaVersion.VERSION_11
 targetCompatibility = JavaVersion.VERSION_11
+def isRelease = true
 
 if (project.hasProperty("preRelease")) {
     apply from: './pre-release.gradle'
@@ -21,6 +22,7 @@ if (project.hasProperty("preRelease")) {
     projectVersion += "-rc." + i
 
 } else if (!project.hasProperty('release')) {
+    isRelease = false
     projectVersion += '-SNAPSHOT'
 }
 
@@ -125,7 +127,10 @@ task processSourceReplacements(type: org.gradle.api.tasks.Sync) {
 }
 
 compileJava {
-    source = processSourceReplacements.outputs
+    if (isRelease) {
+        source = processSourceReplacements.outputs
+    }
+
     options.compilerArgs << "-Xlint:deprecation"
 }
 

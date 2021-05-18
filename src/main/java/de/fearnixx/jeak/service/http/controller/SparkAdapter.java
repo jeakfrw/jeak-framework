@@ -1,7 +1,12 @@
 package de.fearnixx.jeak.service.http.controller;
 
 import de.fearnixx.jeak.Main;
-import de.fearnixx.jeak.reflect.http.*;
+import de.fearnixx.jeak.reflect.http.RequestMapping;
+import de.fearnixx.jeak.reflect.http.RestController;
+import de.fearnixx.jeak.reflect.http.params.PathParam;
+import de.fearnixx.jeak.reflect.http.params.QueryParam;
+import de.fearnixx.jeak.reflect.http.params.RequestBody;
+import de.fearnixx.jeak.reflect.http.params.RequestContext;
 import de.fearnixx.jeak.service.http.RequestMethod;
 import de.fearnixx.jeak.service.http.ResponseEntity;
 import de.fearnixx.jeak.service.http.connection.HttpServer;
@@ -156,7 +161,7 @@ public class SparkAdapter extends HttpServer {
                 Object retrievedParameter = null;
                 if (methodParameter.hasAnnotation(PathParam.class)) {
                     retrievedParameter = transformRequestOption(request.params(getPathParamName(methodParameter)), request, methodParameter);
-                } else if (methodParameter.hasAnnotation(RequestParam.class)) {
+                } else if (methodParameter.hasAnnotation(QueryParam.class)) {
                     retrievedParameter = transformRequestOption(request.queryMap(getRequestParamName(methodParameter)).value(), request, methodParameter);
                 } else if (methodParameter.hasAnnotation(RequestBody.class)) {
                     retrievedParameter = transformRequestOption(request.body(), request, methodParameter);
@@ -220,7 +225,7 @@ public class SparkAdapter extends HttpServer {
 
             if (!tokenAuthService.attemptAuthentication(request)) {
                 var mapping = controllerMethod.getAnnotation(RequestMapping.class);
-                if (mapping.isPresent() && mapping.get().requireAuth()) {
+                if (mapping.isPresent()) {
                     logger.info("Unauthenticated HTTP request blocked.");
                     service.halt(HttpStatus.UNAUTHORIZED_401, "{\"errors\": [\"Authentication is mandatory for this endpoint!\"]");
                 }

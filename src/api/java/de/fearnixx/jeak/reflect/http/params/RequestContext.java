@@ -1,4 +1,4 @@
-package de.fearnixx.jeak.reflect.http;
+package de.fearnixx.jeak.reflect.http.params;
 
 import de.fearnixx.jeak.service.http.request.IRequestContext;
 
@@ -19,7 +19,7 @@ public @interface RequestContext {
 
     /**
      * Denotes the attribute name to be used for the lookup.
-     * If none, the parameter injection will attempt to insert the {@link IRequestContext} instance.
+     * If empty, the parameter injection will attempt to insert the {@link IRequestContext} instance.
      *
      * @see IRequestContext.Attributes for more information on available attributes.
      */
