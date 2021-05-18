@@ -1,3 +1,15 @@
+## 1.2.0 (Query connection enhancements)
+~ Another major rework of the query connection:
+  * Added support for TS3-SSH connections
+  * Created a more dynamic interface for connection/message handling for future updates
+~ Updated dependencies:
+  * MariaDB-Connector -> ``2.7.3``
+  * Hibernate -> ``5.4.31.Final``
+  * classgraph -> ``4.8.105``
+  * HikariCP -> ``4.0.3``
+  * log4j -> ``2.14.1``
+~ Removed MySQL-Connector for licensing concerns [!Admins: Be aware!]
+
 ## 1.1.7 (Dependency updates)
 ~ Updated dependencies:
   * Hibernate -> ``5.4.24.Final``
