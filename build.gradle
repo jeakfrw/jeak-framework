@@ -101,7 +101,7 @@ dependencies {
     runtime 'org.apache.logging.log4j:log4j-core:2.14.1'
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
     compile 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
-    runtime 'com.sun.mail:smtp:1.6.5'
+    runtime 'com.sun.mail:smtp:2.0.1'
     runtime 'com.sun.mail:dsn:2.0.0'
 
     // BEGIN: Rewrite Jetty due to CVE-2021-28165
