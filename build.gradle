@@ -75,7 +75,7 @@ dependencies {
     compile sourceSets.api.output
 
     compile 'de.mlessmann:confort:1.1.0-rc.2'
-    compile 'io.github.classgraph:classgraph:4.8.98'
+    compile 'io.github.classgraph:classgraph:4.8.105'
     compile 'org.hibernate:hibernate-core:5.4.24.Final'
     compile 'org.slf4j:slf4j-api:1.7.29'
     compile 'com.zaxxer:HikariCP:3.4.5'
