@@ -79,7 +79,7 @@ dependencies {
     compile 'org.hibernate:hibernate-core:5.4.24.Final'
     compile 'org.slf4j:slf4j-api:1.7.29'
     compile 'com.zaxxer:HikariCP:4.0.3'
-    compile 'com.sun.mail:jakarta.mail:2.0.0'
+    compile 'com.sun.mail:jakarta.mail:2.0.1'
     compile 'com.sparkjava:spark-core:2.9.3'
     compile 'com.fasterxml.jackson.core:jackson-core:2.12.1'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.12.1'
