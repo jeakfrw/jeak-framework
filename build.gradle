@@ -134,7 +134,7 @@ dependencies {
     }
     // END: Rewrite JUnit
 
-    testCompile 'junit:junit:4.13.1'
+    testCompile 'junit:junit:4.13.2'
     testCompile 'org.hamcrest:hamcrest:2.2'
 }
 
