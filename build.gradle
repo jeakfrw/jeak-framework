@@ -97,7 +97,7 @@ dependencies {
     compile 'com.github.manevolent:ffmpeg4j:534e72e6e7'
 
     runtime 'org.antlr:antlr4-runtime:4.7.2'
-    runtime 'org.apache.logging.log4j:log4j-api:2.14.0'
+    runtime 'org.apache.logging.log4j:log4j-api:2.14.1'
     runtime 'org.apache.logging.log4j:log4j-core:2.14.1'
     runtime 'org.apache.logging.log4j:log4j-slf4j-impl:2.14.1'
     compile 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
