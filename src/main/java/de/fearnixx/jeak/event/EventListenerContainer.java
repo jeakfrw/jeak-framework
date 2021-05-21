@@ -27,26 +27,26 @@ public class EventListenerContainer {
     private static final Logger logger = LoggerFactory.getLogger(EventListenerContainer.class);
     private static final MethodType LISTENER_INTERFACE_TYPE = MethodType.methodType(BiConsumer.class);
     private static final MethodType LISTENER_LAMBDA_METHOD_TYPE = MethodType.methodType(void.class, Object.class, Object.class);
-    public static final Boolean FAST_LAMBDAS_ENABLED = Main.getProperty("jeak.frw.enableLambdaEvents", false);
+    public static final boolean FAST_LAMBDAS_ENABLED = Main.getProperty("jeak.frw.enableLambdaEvents", false);
 
     private static final Map<String, BiConsumer<Object, IEvent>> lambdaCache = new ConcurrentHashMap<>();
+    private static final String EVENT_PASS_FAILED_MSG = "Failed to pass \"%s\" to %s";
+    private static final String EVENT_PASS_FAILED_ACCESS_MSG = "Failed to pass \"%s\" to %s. Access to listener was denied!";
 
-    private String listenerFQN;
-    private Listener annotation;
-    private Object victim;
-    private BiConsumer<Object, IEvent> eventConsumer;
-    private Class<IEvent> listensTo;
+    private final String listenerFQN;
+    private final Listener annotation;
+    private final Object victim;
+    private final BiConsumer<Object, IEvent> eventConsumer;
+    private final Class<IEvent> listensTo;
 
     public EventListenerContainer(Object victim, Method method) {
         Class<?>[] paramTypes = method.getParameterTypes();
         if (paramTypes.length != 1) {
-            throw new IllegalArgumentException("Cannot register listener " + victim.getClass() + '#'
-                    + method.getName() + ": Wrong number of parameters");
+            throw new IllegalArgumentException(String.format("Cannot register listener %s#%s: Wrong number of parameters", victim.getClass(), method.getName()));
         }
 
         if (!IEvent.class.isAssignableFrom(paramTypes[0]))
-            throw new IllegalArgumentException("Cannot register listener " + victim.getClass() + "#"
-                    + method.getName() + ": Wrong parameter type!");
+            throw new IllegalArgumentException(String.format("Cannot register listener %s#%s: Wrong parameter type!", victim.getClass(), method.getName()));
 
         //noinspection unchecked - Assignable check is done above
         listensTo = (Class<IEvent>) paramTypes[0];
@@ -54,50 +54,72 @@ public class EventListenerContainer {
         this.victim = victim;
         this.listenerFQN = method.getDeclaringClass().getName() + '#' + method.getName();
 
-        eventConsumer = constructIfNotCached(listenerFQN, () -> constructLambda(method));
+        eventConsumer = constructIfNotCached(listenerFQN, () -> constructConsumer(method));
     }
 
-    private BiConsumer<Object, IEvent> constructLambda(Method method) {
+    /**
+     * Constructs a consumer that can be invoked when an event is fired.
+     * The consumer takes the listeners object instance as its first and the event as its second argument.
+     */
+    protected BiConsumer<Object, IEvent> constructConsumer(Method method) {
         if (FAST_LAMBDAS_ENABLED) {
-            try {
-                MethodHandles.Lookup lookupHandle = MethodHandles.lookup();
-                MethodHandle listenerMethod = lookupHandle.unreflect(method);
-
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Trying to construct listener-lambda for: {}", listenerMethod.type().toMethodDescriptorString());
-                }
-
-                CallSite callSite = LambdaMetafactory.metafactory(
-                        lookupHandle,
-                        "accept",
-                        LISTENER_INTERFACE_TYPE,
-                        LISTENER_LAMBDA_METHOD_TYPE,
-                        listenerMethod,
-                        listenerMethod.type());
-                MethodHandle factory = callSite.getTarget();
-                // Lambda will match the provided signature.
-                //noinspection unchecked
-                return (BiConsumer<Object, IEvent>) factory.invoke();
-
-            } catch (IllegalAccessError e) {
-                String msg = MessageFormat.format("Failed to get method handle for listener: {0}", listenerFQN);
-                throw new ListenerConstructionException(msg, e);
-            } catch (LambdaConversionException e) {
-                String msg = MessageFormat.format("Failed to construct lambda for event listener: {0}", listenerFQN);
-                throw new ListenerConstructionException(msg, e);
-            } catch (Throwable e) {
-                String msg = MessageFormat.format("Failed to get lambda for event listener: {0}", listenerFQN);
-                throw new ListenerConstructionException(msg, e);
-            }
+            return buildLambdaConsumer(method);
         } else {
-            return (lambdaVictim, event) -> {
-                try {
-                    method.invoke(lambdaVictim, event);
-                } catch (IllegalAccessException | InvocationTargetException e) {
-                    throw new RelayedInvokationException(e);
-                }
-            };
+            return buildReflectiveConsumer(method);
         }
+    }
+
+    private BiConsumer<Object, IEvent> buildLambdaConsumer(Method method) {
+        try {
+            MethodHandles.Lookup lookupHandle = MethodHandles.lookup();
+            MethodHandle listenerMethod = lookupHandle.unreflect(method);
+
+            if (logger.isDebugEnabled()) {
+                logger.debug("Trying to construct listener-lambda for: {}", listenerMethod.type().toMethodDescriptorString());
+            }
+
+            var callSite = LambdaMetafactory.metafactory(
+                    lookupHandle,
+                    "accept",
+                    LISTENER_INTERFACE_TYPE,
+                    LISTENER_LAMBDA_METHOD_TYPE,
+                    listenerMethod,
+                    listenerMethod.type());
+            MethodHandle factory = callSite.getTarget();
+            // Lambda will match the provided signature.
+            //noinspection unchecked
+            return (BiConsumer<Object, IEvent>) factory.invoke();
+
+        } catch (IllegalAccessError e) {
+            String msg = MessageFormat.format("Failed to get method handle for listener: {0}", listenerFQN);
+            throw new ListenerConstructionException(msg, e);
+        } catch (LambdaConversionException e) {
+            String msg = MessageFormat.format("Failed to construct lambda for event listener: {0}", listenerFQN);
+            throw new ListenerConstructionException(msg, e);
+        } catch (Throwable e) {
+            String msg = MessageFormat.format("Failed to get lambda for event listener: {0}", listenerFQN);
+            throw new ListenerConstructionException(msg, e);
+        }
+    }
+
+    /**
+     * @deprecated Classical way of dynamically invoking methods. This one should be phased out in the future for the lambda factory.
+     */
+    @Deprecated
+    private BiConsumer<Object, IEvent> buildReflectiveConsumer(Method method) {
+        return (lambdaVictim, event) -> {
+            try {
+                method.invoke(lambdaVictim, event);
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException(String.format(EVENT_PASS_FAILED_ACCESS_MSG, event.getClass().getName(), listenerFQN), e);
+
+            } catch (InvocationTargetException e) {
+                if (e.getCause() != null) {
+                    throw new RelayedInvokationException(e.getCause());
+                }
+                throw new RelayedInvokationException(String.format(EVENT_PASS_FAILED_MSG, event.getClass().getName(), listenerFQN), e);
+            }
+        };
     }
 
     public Short getOrder() {
@@ -118,15 +140,18 @@ public class EventListenerContainer {
         }
         try {
             eventConsumer.accept(victim, event);
+        } catch (EventAbortException | ConsistencyViolationException e) {
+            // These two have special handling - we want to catch them upstream.
+            throw e;
         } catch (RelayedInvokationException e) {
+            // We caught an invocation target exception (probably from the reflective method invocation)
+            // Throw the actual cause.
             Throwable cause = e.getCause();
-            if (cause instanceof EventAbortException || cause instanceof ConsistencyViolationException) {
-                throw e;
-            }
-
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, cause);
+            throw new EventInvocationException(String.format(EVENT_PASS_FAILED_MSG, event.getClass().getName(), listenerFQN), cause);
         } catch (Exception e) {
-            throw new EventInvocationException("Failed to pass \"" + event.getClass().getName() + "\" to " + listenerFQN, e);
+            // We caught ANY other exception.
+            // Rethrow this as something unchecked which the service is aware of so we don't block other listeners.
+            throw new EventInvocationException(String.format(EVENT_PASS_FAILED_MSG, event.getClass().getName(), listenerFQN), e);
         }
     }
 
