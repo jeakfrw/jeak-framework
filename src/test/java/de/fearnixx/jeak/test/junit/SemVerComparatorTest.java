@@ -62,4 +62,11 @@ public class SemVerComparatorTest {
         final var V2 = "1.1.1-SNAPSHOT";
         assertTrue(SemVerComparator.compare(V1, V2));
     }
+
+    @Test
+    public void testBugfixIndependentIfMinorNotMatching() {
+        final var V1 = "1.0.1";
+        final var V2 = "1.2.0-rc.2";
+        assertTrue(SemVerComparator.compare(V1, V2));
+    }
 }

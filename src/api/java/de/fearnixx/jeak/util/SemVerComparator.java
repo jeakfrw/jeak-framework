@@ -58,14 +58,17 @@ public abstract class SemVerComparator {
         };
 
         if (nums[POS_MAJOR] != nums[POS_MAJOR + OFFSET]) {
+            // Major versions incompatible
             return false;
 
         } else if (nums[POS_MINOR] > nums[POS_MINOR + OFFSET]) {
+            // Dependent minor is higher than target minor: Incompatible additions.
             return false;
 
-        } else if (nums[POS_BUGFIX] > nums[POS_BUGFIX + OFFSET]) {
-            return false;
         }
-        return true;
+
+        return nums[POS_MINOR] != nums[POS_MINOR + OFFSET]
+                // Only if minors are the same, must the dependent bugfix be compatible.
+                || nums[POS_BUGFIX] <= nums[POS_BUGFIX + OFFSET];
     }
 }
