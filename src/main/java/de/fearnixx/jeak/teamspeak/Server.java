@@ -319,7 +319,7 @@ public class Server implements IServer {
 
     @Override
     public int getInstanceId() {
-        final var serverInfo = serviceManager.provideUnchecked(IDataCache.class).getInstanceInfo()
+        final var serverInfo = serviceManager.provideUnchecked(IDataCache.class).getServerInfo()
                 .orElseThrow(() -> new IllegalStateException("Server information not known!"));
         return serverInfo.getProperty(PropertyKeys.ServerInfo.ID)
                 .map(Integer::parseInt)
