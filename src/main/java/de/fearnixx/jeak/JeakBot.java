@@ -13,9 +13,9 @@ import de.fearnixx.jeak.service.command.CommandService;
 import de.fearnixx.jeak.service.command.ICommandService;
 import de.fearnixx.jeak.service.command.TypedCommandService;
 import de.fearnixx.jeak.service.command.matcher.MatcherRegistry;
-import de.fearnixx.jeak.service.controller.RestControllerService;
 import de.fearnixx.jeak.service.database.DatabaseService;
 import de.fearnixx.jeak.service.event.IEventService;
+import de.fearnixx.jeak.service.http.ControllerService;
 import de.fearnixx.jeak.service.locale.LocalizationService;
 import de.fearnixx.jeak.service.mail.MailService;
 import de.fearnixx.jeak.service.notification.NotificationService;
@@ -23,7 +23,6 @@ import de.fearnixx.jeak.service.permission.base.PermissionService;
 import de.fearnixx.jeak.service.profile.ProfileService;
 import de.fearnixx.jeak.service.task.ITaskService;
 import de.fearnixx.jeak.service.teamspeak.UserService;
-import de.fearnixx.jeak.service.token.TokenService;
 import de.fearnixx.jeak.service.util.UtilCommands;
 import de.fearnixx.jeak.task.TaskService;
 import de.fearnixx.jeak.teamspeak.IServer;
@@ -195,8 +194,7 @@ public class JeakBot implements Runnable, IBot {
         initializeService(new ProfileService(new File(confDir, "profiles")));
         initializeService(new PermissionService());
         initializeService(new UserService());
-        initializeService(new TokenService());
-        initializeService(new RestControllerService());
+        initializeService(new ControllerService());
 
         if (ENABLE_VOICE_CONNECTIONS) {
             initializeService(new VoiceConnectionService());
