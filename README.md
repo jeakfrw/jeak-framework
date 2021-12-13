@@ -1,5 +1,20 @@
 # JeakBot TeamSpeak 3 Plugin Framework  
-
+  
+---
+  
+# ⚠ PROJECT DISCONTINUED ⚠ #  
+Due to a shortage of spare time to properly maintain this project, development effectively halted in Dec 2020.  
+As of now (Aug 2021), the project is still on hold and cannot be actively maintained.  
+  
+In the future, there might be a re-code of the framework using the Spring framework but for now that's future music.  
+We _may or may not_ occasionally push bug fixes, help with issues/questions or even restart development on the project.  
+  
+Pull requests are still welcome but may take some time to review. (Which is why this repository is not archived at the moment.)  
+  
+  
+---
+  
+  
 ## TS3 Servers on the next level!
 
 The JeakBot-Framework connects to the TeamSpeak server using the _TS3 server query interface_.  
