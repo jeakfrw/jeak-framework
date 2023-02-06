@@ -32,10 +32,10 @@ jar() {
 task sourcesJar(type: Jar) {
     classifier 'sources'
 
-    from sourceSets.api.allJava
+//    from sourceSets.api.allJava
     from sourceSets.main.allJava
 
-//    dependsOn compileJava
+    dependsOn compileJava
 }
 
 task testJar(type: Jar) {
