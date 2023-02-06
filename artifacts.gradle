@@ -16,7 +16,7 @@ task apiSourcesJar(type: Jar) {
     archiveBaseName = "${project.ext.artifact}-api"
     classifier "sources"
 
-    from sourceSets.api.allJava
+//    from sourceSets.api.allJava
 }
 
 jar() {
