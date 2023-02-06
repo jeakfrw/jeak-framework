@@ -35,7 +35,7 @@ task sourcesJar(type: Jar) {
     from sourceSets.api.allJava
     from sourceSets.main.allJava
 
-    dependsOn compileJava
+//    dependsOn compileJava
 }
 
 task testJar(type: Jar) {
