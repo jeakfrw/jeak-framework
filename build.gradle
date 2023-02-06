@@ -33,9 +33,6 @@ project.ext {
 
 repositories {
     mavenLocal()
-    maven {
-        url uri('https://nexus.fearnixx.de/repository/maven-public')
-    }
     mavenCentral()
 }
 
