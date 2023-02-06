@@ -9,7 +9,7 @@ task zipDistribution(type: Zip) {
     }
     from 'src/deploy/scripts'
     into('libraries') {
-        from configurations.runtime
+        from configurations.runtimeOnly
         exclude { dep -> !dep.file.name.endsWith('.jar') }
     }
     into('libraries/licenses') {
@@ -35,7 +35,7 @@ task tarDistribution(type: Tar) {
     }
     from 'src/deploy/scripts'
     into('libraries') {
-        from configurations.runtime
+        from configurations.runtimeOnly
         exclude { dep -> !dep.file.name.endsWith('.jar') }
     }
     into('libraries/licenses') {
