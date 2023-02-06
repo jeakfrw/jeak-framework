@@ -66,13 +66,13 @@ sourceSets {
 }
 
 dependencies {
-    apiImplementation 'de.mlessmann:confort-api:1.1.2'
+    apiImplementation 'de.mlessmann:confort-api:1.1.3-SNAPSHOT'
     apiImplementation 'org.hibernate:hibernate-core:5.6.3.Final'
     apiImplementation 'org.slf4j:slf4j-api:1.7.32'
 
     implementation sourceSets.api.output
 
-    implementation 'de.mlessmann:confort:1.1.2'
+    implementation 'de.mlessmann:confort:1.1.3-SNAPSHOT'
     implementation 'io.github.classgraph:classgraph:4.8.138'
     implementation 'org.hibernate:hibernate-core:5.6.3.Final'
     implementation 'org.slf4j:slf4j-api:1.7.32'
