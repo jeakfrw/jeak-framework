@@ -101,9 +101,9 @@ dependencies {
     implementation 'com.github.manevolent:ffmpeg4j:534e72e6e7'
 
     runtimeOnly 'org.antlr:antlr4-runtime:4.11.1'
-    runtimeOnly 'org.apache.logging.log4j:log4j-api:2.17.1'
-    runtimeOnly 'org.apache.logging.log4j:log4j-core:2.17.1'
-    runtimeOnly 'org.apache.logging.log4j:log4j-slf4j-impl:2.17.1'
+    runtimeOnly 'org.apache.logging.log4j:log4j-api:2.19.0'
+    runtimeOnly 'org.apache.logging.log4j:log4j-core:2.19.0'
+    runtimeOnly 'org.apache.logging.log4j:log4j-slf4j2-impl:2.19.0'
     implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.3'
     runtimeOnly 'com.sun.mail:smtp:2.0.1'
     runtimeOnly 'com.sun.mail:dsn:2.0.1'
