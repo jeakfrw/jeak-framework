@@ -112,6 +112,11 @@ public class TeamSpeakConnectionFactory {
 
     protected TSQueryConnection connectWithSSH(URIContainer connectionURI) {
         try {
+            final var openSSHKnownHosts = new File(".ssh/known_hosts").getAbsoluteFile();
+            if (Files.exists(openSSHKnownHosts.toPath())) {
+                jSecureChannel.setKnownHosts(openSSHKnownHosts.getAbsolutePath());
+            }
+
             final var session = getSSHSession(connectionURI);
             final var channel = session.openChannel(TEAMSPEAK_SSH_CHANNEL_TYPE);
             final var input = channel.getInputStream();
